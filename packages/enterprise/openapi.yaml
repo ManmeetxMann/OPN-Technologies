@@ -132,6 +132,9 @@ components:
         enableTesting:
           type: boolean
           default: false
+        enablePaymentForBooking:
+          type: boolean
+          default: false
       required:
         - name
 
@@ -589,31 +592,31 @@ components:
         isOrganizeAdmin:
           type: boolean
       required:
-        - adminForLabIds	
-        - email	
-        - isBulkUploadAdmin	
-        - isCheckInAdmin	
-        - isClinicUser	
-        - isConfirmResultAdmin	
-        - isDueTodayAdmin	
-        - isGenerateAdmin	
-        - isLabAppointmentsAdmin	
-        - isLabResultsAdmin	
-        - isLabUser	
-        - isLookupAdmin	
-        - isManagementDashboardAdmin	
-        - isOpnSuperAdmin	
-        - isPackageAdmin	
-        - isRapidResultOrgAdmin	
-        - isRapidResultSenderAdmin	
-        - isReceivingAdmin	
-        - isSingleResultSendAdmin	
-        - isTestAppointmentsAdmin	
-        - isTestReportsAdmin	
-        - isTestRunsAdmin	
-        - isTransportsRunsAdmin	
-        - organizationId	
-        - showReporting	
+        - adminForLabIds
+        - email
+        - isBulkUploadAdmin
+        - isCheckInAdmin
+        - isClinicUser
+        - isConfirmResultAdmin
+        - isDueTodayAdmin
+        - isGenerateAdmin
+        - isLabAppointmentsAdmin
+        - isLabResultsAdmin
+        - isLabUser
+        - isLookupAdmin
+        - isManagementDashboardAdmin
+        - isOpnSuperAdmin
+        - isPackageAdmin
+        - isRapidResultOrgAdmin
+        - isRapidResultSenderAdmin
+        - isReceivingAdmin
+        - isSingleResultSendAdmin
+        - isTestAppointmentsAdmin
+        - isTestReportsAdmin
+        - isTestRunsAdmin
+        - isTransportsRunsAdmin
+        - organizationId
+        - showReporting
         - superAdminForOrganizationIds
         - isOrganizeAdmin
 
@@ -1271,20 +1274,20 @@ components:
           type: string
           enum:
             [
-              StatusInfo
-              PassAvailable
-              CompleteAssessment
-              UpdateAssessment
-              BadgeExpiry
-              TempCheckRequired
-              ViewNegativeTemp
-              ViewPositiveTemp
-              BookPCR
-              BookingDetailsPCR
-              CheckInPCR
-              ResultReadiness
-              ViewNegativePCR
-              ViewPositivePCR
+                StatusInfo
+                  PassAvailable
+                  CompleteAssessment
+                  UpdateAssessment
+                  BadgeExpiry
+                  TempCheckRequired
+                  ViewNegativeTemp
+                  ViewPositiveTemp
+                  BookPCR
+                  BookingDetailsPCR
+                  CheckInPCR
+                  ResultReadiness
+                  ViewNegativePCR
+                  ViewPositivePCR
             ]
           nullable: false
 
@@ -1302,7 +1305,7 @@ components:
           type: string
         style:
           type: string
-        
+
     ResponseOfOrganizationConnection:
       type: object
       additionalProperties: false
@@ -1595,7 +1598,8 @@ components:
                   count:
                     type: number
                 example: [{"date": "2020-09-01T13:00:00.000Z","count": 1},{"date": "2020-09-01T17:00:00.000Z","count": 1}]
-
+            dailyExposuresCount:
+              type: number
         status:
           type: object
           additionalProperties: false
@@ -1879,6 +1883,44 @@ components:
               nullable: true
               type: string
 
+    ResponseOfResultAdmins:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                avatar:
+                  type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+        page:
+          type: number
+
     ResponseOfUsersByOrganization:
       type: object
       additionalProperties: false
@@ -1944,7 +1986,7 @@ components:
             message:
               nullable: true
               type: string
-    
+
     ResponseOfRecommendations:
       type: object
       additionalProperties: false
@@ -1972,7 +2014,7 @@ components:
             message:
               nullable: true
               type: string
-    
+
     ResponseOfHealthPass:
       type: object
       additionalProperties: false
@@ -1990,6 +2032,10 @@ components:
                 expiry:
                   type: string
                 dateOfBirth:
+                  type: string
+                travelID:
+                  type: string
+                travelIDIssuingCountry:
                   type: string
                 tests:
                   type: array
@@ -3374,6 +3420,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
+  /enterprise/api/v1/users/result-admins:
+    get:
+      summary: Get result admins
+      description: Get result admins for comments
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Threads
+      responses:
+        '200':
+          description: Successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfResultAdmins'
+
   /enterprise/api/v3/users:
     post:
       summary: Account Registration
@@ -3985,7 +4047,7 @@ paths:
       tags:
         - Account Management
       parameters:
-        - in: query
+        - in: path
           name: dependentId
           schema:
             type: string

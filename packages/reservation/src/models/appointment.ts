@@ -1,8 +1,9 @@
 import {firestore} from 'firebase-admin'
-import {isSameOrBefore} from '../utils/datetime.helper'
+import {isSameOrBefore, makeRegularIsoDate} from '../utils/datetime.helper'
 
 import {PageableRequestFilter} from '../../../common/src/types/request'
 import {formatDateRFC822Local} from '../utils/datetime.helper'
+import {ReservationPushTypes} from '../types/appointment-push'
 
 export enum AppointmentStatus {
   Pending = 'Pending',
@@ -77,6 +78,7 @@ export type AppointmentDBModel = {
   locationAddress?: string
   testType: TestTypes
   labId?: string
+  scheduledPushesToSend?: Array<ReservationPushTypes>
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
@@ -166,6 +168,8 @@ export enum TestTypes {
   Antibody_All = 'Antibody_All',
   Antibody_IgM = 'Antibody_IgM',
   PulseOxygenCheck = 'PulseOxygenCheck',
+  ExpressPCR = 'ExpressPCR',
+  allExceptAntigen = 'allExceptAntigen', // @TODO Remove this after correcting flag
 }
 
 export type PostAdminScanHistoryRequest = {
@@ -197,9 +201,7 @@ export type CreateAppointmentRequest = {
   agreeToConductFHHealthAssessment: boolean
   receiveResultsViaEmail: boolean
   receiveNotificationsFromGov: boolean
-  organizationId: string
   userId: string
-  packageCode: string
 }
 
 export type AppointmentByOrganizationRequest = PageableRequestFilter & {
@@ -210,6 +212,8 @@ export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   barCode?: string
   appointmentStatus?: AppointmentStatus[]
   labId?: string
+  testType?: TestTypes
+  userId?: string
 }
 
 //Update to Acuity Service
@@ -372,7 +376,6 @@ export const appointmentUiDTOResponse = (
     dateOfBirth: appointment.dateOfBirth,
     transportRunId: appointment.transportRunId,
     deadline: formatDateRFC822Local(appointment.deadline),
-    latestResult: appointment.latestResult,
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
     organizationName: appointment.organizationName,
@@ -397,7 +400,7 @@ export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): Use
   id: appointment.id,
   QRCode: appointment.barCode,
   showQrCode:
-    isSameOrBefore(appointment.dateOfAppointment) &&
+    isSameOrBefore(makeRegularIsoDate(appointment.dateOfAppointment)) &&
     appointment.appointmentStatus !== AppointmentStatus.Canceled,
   firstName: appointment.firstName,
   lastName: appointment.lastName,
@@ -456,7 +459,8 @@ export type RescheduleAppointmentDTO = {
   dateTime: string
   organizationId?: string
   userID: string
-  isLabUser: boolean
+  isOpnSuperAdmin: boolean
+  isClinicUser: boolean
 }
 
 export type UpdateTransPortRun = {

@@ -14,6 +14,7 @@ export type User = {
   base64Photo: string
   organizationIds?: string[]
   email?: string
+  phoneNumber?: string
   admin?: AdminProfile | FieldValue
   authUserId?: string | FieldValue
   delegates: null | string[]
@@ -78,10 +79,12 @@ export type AuthUser = Auditable & {
   organizationIds: string[]
   authUserId?: string
   email?: string
+  phoneNumber?: string
   photo?: string // photo url
   phone?: Phone
   registrationId?: string
   memberId?: string
+  stripeCustomerId?: string
 }
 
 // TODO: this duplicates the user in the enterprise service

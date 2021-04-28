@@ -8,12 +8,19 @@ export type TestResultSpecsForSending = {
   notify: boolean
   resultDate: Date
   resultAnalysis: Spec[]
+  comment: string
+}
+
+export enum TemplateTypes {
+  pcr1 = 'PCR-1',
+  pcr2 = 'PCR-2',
+  antiBody = 'Anti-Body',
 }
 
 export type TestResultRequestData = TestResultSpecsForSending & {
   barCode: string
   sendUpdatedResults?: boolean
-  templateId: string
+  templateId: TemplateTypes
   labId: string
   fileName?: string
 }
@@ -23,13 +30,14 @@ export type TestResultsMetaData = {
   resultDate: Date
   action: PCRResultActions
   autoResult: ResultTypes
+  comment?: string
 }
 
 export type BulkTestResultRequest = {
   reportTrackerId?: string
   results: TestResultRequestData[]
   resultDate: Date
-  templateId: string
+  templateId: TemplateTypes
   labId: string
   fileName?: string
 }
@@ -45,6 +53,10 @@ type ResultsForHistory = ResultSpecs & {
   reCollectNumber: string
   result: string
   runNumber: string
+  resultMetaData: {
+    autoResult: string
+    comment: string
+  }
 }
 
 export type TestResultHistoryResponseDTO = {

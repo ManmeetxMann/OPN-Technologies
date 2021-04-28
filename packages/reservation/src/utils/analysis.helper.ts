@@ -1,4 +1,4 @@
-import {GroupedSpecs, Spec} from '../models/pcr-test-results'
+import {AnalyseTypes, GroupedSpecs, Spec} from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 const groups = [
@@ -60,6 +60,26 @@ const validations = [
   },
 ]
 
+export const normalizeAnalysis = (specs: Spec[]): Spec[] => {
+  return specs.map((spec) => {
+    if (typeof spec.value === 'string') {
+      if (spec.value.toUpperCase() === AnalyseTypes.POSITIVE) {
+        return {
+          label: spec.label,
+          value: '+',
+        }
+      }
+      if (spec.value.toUpperCase() === AnalyseTypes.NEGATIVE) {
+        return {
+          label: spec.label,
+          value: '-',
+        }
+      }
+    }
+    return spec
+  })
+}
+
 export const validateAnalysis = (specs: Spec[]): void => {
   specs.forEach((spec) => {
     const validator = validations.find(({column}) => column === spec.label)
@@ -78,13 +98,13 @@ const channelLabelMapping = new Map([
   ['quasarNgene', 'N gene'],
   ['quasarCt', 'C(t)'],
 
-  ['ORF1abCt', 'ORF1ab Ct'],
-  ['SGeneCt', 'S gene Ct'],
-  ['NGeneCt', 'N gene Ct'],
-  ['MS2Ct', 'MS2 Ct'],
+  ['ORF1abCt', 'C(t)'],
+  ['SGeneCt', 'C(t)'],
+  ['NGeneCt', 'C(t)'],
+  ['MS2Ct', 'C(t)'],
   ['ORF1ab', 'ORF1ab'],
-  ['NGene', 'S gene'],
-  ['SGene', 'N gene'],
+  ['NGene', 'N gene'],
+  ['SGene', 'S gene'],
   ['MS2', 'MS2'],
 
   ['IgAResult', 'IgAResult'],

@@ -4,7 +4,6 @@ import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-
 import {Config} from '../../../../common/src/utils/config'
 import {RapidAntigenEmailResultDTO} from '../../models/rapid-antigen-test-results'
 import {Spec} from '../../models/pcr-test-results'
-import {ResultTypes} from '../../models/appointment'
 
 const tableLayouts: TableLayouts = {
   mainTable: {
@@ -77,15 +76,20 @@ const companyInfoHeader = (): Content => {
   }
 }
 
-const getFillColorForResultsCell = (result: ResultTypes): string => {
-  if (result === ResultTypes.PresumptivePositive) {
+const getFillColorForResultsCell = (result: string): string => {
+  if (result && (result.toUpperCase() === 'POSITIVE' || result === '+')) {
     return '#FF0000'
-  } else if (result === ResultTypes.Positive) {
-    return '#FF0000'
-  } else if (result === ResultTypes.Indeterminate) {
+  } else if (result && result.toUpperCase() === 'INDETERMINATE') {
     return '#B7B7B7'
   }
   return '#6AA84F'
+}
+
+const getColorForResultsCell = (result: string): string => {
+  if (result && result.toUpperCase() === 'INDETERMINATE') {
+    return '#000000'
+  }
+  return '#FFFFFF'
 }
 
 const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: string): Content => {
@@ -171,11 +175,11 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
       layout: 'mainTable',
       table: {
         headerRows: 1,
-        widths: [150, 30, 50, 50, 90],
+        widths: [140, 40, 50, 50, 90],
         body: [
           [
             {text: 'Type', bold: true},
-            {text: 'Antibody IgA, IgG, IgM Test', bold: true, colSpan: 4},
+            {text: 'Antibody IgG, IgM Test', bold: true, colSpan: 4},
           ],
           [
             {text: 'Antibody Specimen Type', bold: true},
@@ -185,6 +189,10 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
             {text: 'Methodology', bold: true},
             {text: 'Chemiluminescence', colSpan: 4},
           ],
+          /*[
+            {text: 'Test Equipment', bold: true},
+            {text: 'Approved by Health Canada (IO authorization 312782)', colSpan: 4},
+          ],*/
           [
             {text: 'Indication', bold: true},
             {text: 'Suspected Exposure to COVID-19', colSpan: 4},
@@ -196,17 +204,20 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
     {
       layout: 'mainTable',
       table: {
-        headerRows: 3,
-        widths: [150, 30, 40, 60, 90],
+        headerRows: 2,
+        widths: [140, 25, 30, 70, 105],
         body: [
           [
-            {text: 'Antibody Cut-off Index Values', bold: true, rowSpan: 3},
-            {text: 'IgA'},
-            {text: resultAnalysis(params.resultAnalysis, 'IgA')?.value},
+            {text: 'Antibody Cut-off Index Values', bold: true, rowSpan: 2},
+            {text: 'IgG'},
+            {text: resultAnalysis(params.resultAnalysis, 'IgG')?.value},
             {
-              text: resultAnalysis(params.resultAnalysis, 'IgAResult')?.value,
+              text: resultAnalysis(params.resultAnalysis, 'IgGResult')?.value,
               fillColor: getFillColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'IgAResult')?.value as ResultTypes,
+                resultAnalysis(params.resultAnalysis, 'IgGResult')?.value as string,
+              ),
+              color: getColorForResultsCell(
+                resultAnalysis(params.resultAnalysis, 'IgGResult')?.value as string,
               ),
             },
             {
@@ -215,18 +226,7 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
                 '0.8 - < 1.0 = Indeterminate \n' +
                 '≥ 1.0 = Positive\n' +
                 '< 0.8 = Negative',
-              rowSpan: 3,
-            },
-          ],
-          [
-            {},
-            {text: 'IgG'},
-            {text: resultAnalysis(params.resultAnalysis, 'IgG')?.value},
-            {
-              text: resultAnalysis(params.resultAnalysis, 'IgGResult')?.value,
-              fillColor: getFillColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'IgGResult')?.value as ResultTypes,
-              ),
+              rowSpan: 2,
             },
           ],
           [
@@ -236,7 +236,10 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
             {
               text: resultAnalysis(params.resultAnalysis, 'IgMResult')?.value,
               fillColor: getFillColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'IgMResult')?.value as ResultTypes,
+                resultAnalysis(params.resultAnalysis, 'IgMResult')?.value as string,
+              ),
+              color: getColorForResultsCell(
+                resultAnalysis(params.resultAnalysis, 'IgMResult')?.value as string,
               ),
             },
           ],

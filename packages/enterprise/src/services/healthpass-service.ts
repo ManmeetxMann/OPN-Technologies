@@ -2,7 +2,7 @@ import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {ForbiddenException} from '../../../common/src/exceptions/forbidden-exception'
 import {UserModel} from '../../../common/src/data/user'
-import {safeTimestamp, isPassed} from '../../../common/src/utils/datetime-util'
+import {safeTimestamp, isPassed, GenericTimestamp} from '../../../common/src/utils/datetime-util'
 import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
 
@@ -12,12 +12,12 @@ import {OrganizationModel} from '../repository/organization.repository'
 import {UserActionsRepository} from '../repository/action-items.repository'
 import {ActionItem} from '../models/action-items'
 
-import {PassportStatuses} from '../../../passport/src/models/passport'
+import {PassportStatuses, PassportType} from '../../../passport/src/models/passport'
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 import {ResultTypes} from '../../../reservation/src/models/appointment'
 
 import moment from 'moment'
-import {HealthPassType, HealthPass} from '../types/health-pass'
+import {Bages, HealthPass} from '../types/health-pass'
 import {PulseOxygenStatuses} from '../../../reservation/src/models/pulse-oxygen'
 
 export class HealthpassService {
@@ -57,6 +57,26 @@ export class HealthpassService {
     })
     return items
   }
+  getEarliestValid(): moment.Moment {
+    const validDuration = parseInt(Config.get('PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'))
+    const validDurationAgo = moment(now()).utc().subtract(validDuration, 'hours')
+    const rolloverHour = parseInt(Config.get('PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS'))
+    const lastRollover = moment(now())
+      .utc()
+      .set({hour: rolloverHour, minute: 0, second: 0, millisecond: 0})
+    if (lastRollover.isAfter(now())) {
+      lastRollover.subtract(1, 'day')
+    }
+    return lastRollover.isSameOrAfter(validDurationAgo) ? lastRollover : validDurationAgo
+  }
+
+  getEarliestValidPCR(): moment.Moment {
+    const PCRDuration = parseInt(Config.get('PCR_VALIDITY_HOURS'))
+    return moment(now()).utc().subtract(PCRDuration, 'hours')
+  }
+
+  notStale = (ts: GenericTimestamp): boolean =>
+    this.getEarliestValid().isSameOrBefore(safeTimestamp(ts))
 
   async getHealthPass(userId: string, orgId: string): Promise<HealthPass> {
     const items = await this.getItems(userId, orgId)
@@ -74,29 +94,15 @@ export class HealthpassService {
       }
     }
     const expiry = safeTimestamp(items.latestPassport.expiry).toISOString()
-    const validDuration = parseInt(Config.get('PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'))
-    const validDurationAgo = moment(now()).utc().subtract(validDuration, 'hours')
-    const rolloverHour = parseInt(Config.get('PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS'))
-    const lastRollover = moment(now())
-      .utc()
-      .set({hour: rolloverHour, minute: 0, second: 0, millisecond: 0})
-    if (lastRollover.isAfter(now())) {
-      lastRollover.subtract(1, 'day')
-    }
-    const earliestValid = lastRollover.isSameOrAfter(validDurationAgo)
-      ? lastRollover
-      : validDurationAgo
+    const earliestValidPCR = this.getEarliestValidPCR()
 
-    const PCRDuration = parseInt(Config.get('PCR_VALIDITY_HOURS'))
-    const earliestValidPCR = moment(now()).utc().subtract(PCRDuration, 'hours')
-    const notStale = (ts) => earliestValid.isSameOrBefore(safeTimestamp(ts))
     if (
       items.latestAttestation?.status === PassportStatuses.Proceed &&
-      notStale(items.latestAttestation.timestamp)
+      this.notStale(items.latestAttestation.timestamp)
     ) {
       tests.push({
         date: safeTimestamp(items.latestAttestation.timestamp).toISOString(),
-        type: HealthPassType.Attestation,
+        type: PassportType.Attestation,
         id: items.latestAttestation.attestationId,
         status: items.latestAttestation.status,
         style: 'GREEN',
@@ -104,11 +110,11 @@ export class HealthpassService {
     }
     if (
       items.latestTemperature?.status === TemperatureStatuses.Proceed &&
-      notStale(items.latestTemperature.timestamp)
+      this.notStale(items.latestTemperature.timestamp)
     ) {
       tests.push({
         date: safeTimestamp(items.latestTemperature.timestamp).toISOString(),
-        type: HealthPassType.Temperature,
+        type: PassportType.Temperature,
         id: items.latestTemperature.temperatureId,
         status: items.latestTemperature.status,
         style: 'GREEN',
@@ -120,7 +126,7 @@ export class HealthpassService {
     ) {
       tests.push({
         date: safeTimestamp(items.PCRTestResult.timestamp).toISOString(),
-        type: HealthPassType.PCR,
+        type: PassportType.PCR,
         id: items.PCRTestResult.testId,
         status: items.PCRTestResult.result,
         style: 'GREEN',
@@ -128,11 +134,11 @@ export class HealthpassService {
     }
     if (
       items.latestPulse?.status === PulseOxygenStatuses.Passed &&
-      notStale(items.latestPulse.timestamp)
+      this.notStale(items.latestPulse.timestamp)
     ) {
       tests.push({
         date: safeTimestamp(items.latestPulse.timestamp).toISOString(),
-        type: HealthPassType.PulseOxygenCheck,
+        type: PassportType.PulseOxygenCheck,
         id: items.latestPulse.pulseId,
         status: items.latestPulse.status,
         style: 'GREEN',
@@ -141,21 +147,73 @@ export class HealthpassService {
     return {tests, expiry, status}
   }
 
-  async getDobFromLastPCR(pass: HealthPass): Promise<string | null> {
+  async getMetadataFromLastPCR(
+    pass: HealthPass,
+  ): Promise<{
+    dateOfBirth: string | null
+    travelIDIssuingCountry: string | null
+    travelID: string | null
+  }> {
     const testsPCR = pass.tests
-      .filter((test) => test.type === HealthPassType.PCR)
+      .filter((test) => test.type === PassportType.PCR)
       .sort((current, next) => {
-        const currentDate = new Date(current.date).getDate()
-        const nextDate = new Date(next.date).getDate()
+        const currentDate = new Date(current.date).valueOf()
+        const nextDate = new Date(next.date).valueOf()
         return nextDate - currentDate
       })
 
     if (testsPCR[0]) {
       const testId = testsPCR[0].id
       const appointment = await this.appointmentService.getAppointmentOnlyDBById(testId)
-      return appointment.dateOfBirth
+      if (appointment) {
+        const {dateOfBirth, travelID, travelIDIssuingCountry} = appointment
+        return {
+          dateOfBirth: dateOfBirth || null,
+          travelIDIssuingCountry: travelIDIssuingCountry || null,
+          travelID: travelID || null,
+        }
+      }
+    }
+    return {
+      dateOfBirth: null,
+      travelIDIssuingCountry: null,
+      travelID: null,
+    }
+  }
+
+  async getBages(userId: string, organizationId: string): Promise<Bages> {
+    const items = await this.getItems(userId, organizationId)
+
+    if (
+      items.latestPassport &&
+      (items.latestPassport.status === PassportStatuses.Pending ||
+        isPassed(safeTimestamp(items.latestPassport.expiry)))
+    ) {
+      return {
+        hasSelfTestBadge: false,
+        hasTempBadge: false,
+        hasPCRBadge: false,
+        hasPulseBadge: false,
+        hasVaccineBadge: false,
+      }
     }
 
-    return null
+    const earliestValidPCR = this.getEarliestValidPCR()
+
+    return {
+      hasSelfTestBadge: Boolean(
+        items.latestAttestation &&
+          items.latestAttestation?.status !== PassportStatuses.Pending &&
+          this.notStale(items.latestAttestation.timestamp),
+      ),
+      hasTempBadge: Boolean(items?.latestTemperature?.status),
+      hasPCRBadge: Boolean(
+        items.PCRTestResult &&
+          items.PCRTestResult.result !== ResultTypes.Pending &&
+          earliestValidPCR.isSameOrBefore(safeTimestamp(items.PCRTestResult.timestamp)),
+      ),
+      hasPulseBadge: Boolean(items?.latestPulse?.status),
+      hasVaccineBadge: false,
+    }
   }
 }

@@ -1,23 +1,24 @@
 import {ResultTypes} from '../../../reservation/src/models/appointment'
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
-import {PassportStatuses} from '../../../passport/src/models/passport'
+import {PassportStatuses, PassportType} from '../../../passport/src/models/passport'
 import {PulseOxygenStatuses} from '../../../reservation/src/models/pulse-oxygen'
-
-export enum HealthPassType {
-  Attestation = 'Attestation',
-  Temperature = 'Temperature',
-  PCR = 'PCR',
-  PulseOxygenCheck = 'PulseOxygenCheck',
-}
 
 export type HealthPass = {
   expiry: string
   tests: {
     id: string
     date: string
-    type: HealthPassType
+    type: PassportType
     status: PassportStatuses | TemperatureStatuses | ResultTypes | PulseOxygenStatuses
     style: string
   }[]
   status: PassportStatuses
+}
+
+export type Bages = {
+  hasSelfTestBadge: boolean
+  hasTempBadge: boolean
+  hasPCRBadge: boolean
+  hasPulseBadge: boolean
+  hasVaccineBadge: boolean
 }

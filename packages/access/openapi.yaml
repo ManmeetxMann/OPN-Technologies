@@ -709,24 +709,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfStatistics'
 
-  /admin/createToken:
-    post:
-      description: Exchange status-token for an access-token
-      security:
-        - bearerAuthJWT: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StatusTokenExchangeRequest'
-      responses:
-        '200':
-          description: Successfully exchanged
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfAccess'
-
   /admin/{organizationId}/locations/accessible:
     get:
       description: Get locations for quick checkins
@@ -853,22 +835,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfStatistics'
 
-  /user/enter:
-    post:
-      description: Handle self user's entrance
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SelfEntryOrExitRequest'
-      responses:
-        '200':
-          description: Successfully handled
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfEnterOrExit'
-
   /triggerReports:
     get:
       description: Triggers reports to be sent for the current hour. Likely to become inaccessible except via cron. This is a GET request with side effects, be cautious!
@@ -914,19 +880,3 @@ paths:
       responses:
         '200':
           description: Success
-
-  /user/exit:
-    post:
-      description: Handle self user's exit
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SelfEntryOrExitRequest'
-      responses:
-        '200':
-          description: Successfully handled
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfEnterOrExit'

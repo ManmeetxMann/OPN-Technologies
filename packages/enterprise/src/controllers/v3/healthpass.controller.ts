@@ -15,11 +15,6 @@ import {
   organizationSummaryDTOResponse,
 } from '../../models/organization'
 import {userDTO} from '../../../../common/src/data/user'
-import {HealthPassType} from '../../types/health-pass'
-import {PassportStatuses} from '../../../../passport/src/models/passport'
-import {TemperatureStatuses} from '../../../../reservation/src/models/temperature'
-import {ResultTypes} from '../../../../reservation/src/models/appointment'
-import {PulseOxygenStatuses} from '../../../../reservation/src/models/pulse-oxygen'
 
 class RecommendationController implements IControllerBase {
   public router = express.Router()
@@ -58,12 +53,18 @@ class RecommendationController implements IControllerBase {
             if (!pass.expiry) {
               return null
             }
-            const dateOfBirth = await this.passService.getDobFromLastPCR(pass)
+            const {
+              dateOfBirth,
+              travelID,
+              travelIDIssuingCountry,
+            } = await this.passService.getMetadataFromLastPCR(pass)
             return {
               user: userDTO(user),
               group: organizationGroupDTOResponse(group),
               ...pass,
               dateOfBirth,
+              travelID,
+              travelIDIssuingCountry,
             }
           }),
         )
@@ -86,30 +87,7 @@ class RecommendationController implements IControllerBase {
         authenticatedUser: User
       }
 
-      const pass = await this.passService.getHealthPass(authenticatedUser.id, organizationId)
-
-      let badges = {
-        hasSelfTestBadge: false,
-        hasTempBadge: false,
-        hasPCRBadge: false,
-        hasPulseBadge: false,
-        hasVaccineBadge: false,
-      }
-
-      if (pass.tests) {
-        const attestation = pass.tests.find(({type}) => type === HealthPassType.Attestation)
-        const temperature = pass.tests.find(({type}) => type === HealthPassType.Temperature)
-        const PCR = pass.tests.find(({type}) => type === HealthPassType.PCR)
-        const pulse = pass.tests.find(({type}) => type === HealthPassType.PulseOxygenCheck)
-
-        badges = {
-          hasSelfTestBadge: attestation?.status === PassportStatuses.Proceed,
-          hasTempBadge: temperature?.status === TemperatureStatuses.Proceed,
-          hasPCRBadge: PCR?.status === ResultTypes.Negative,
-          hasPulseBadge: pulse?.status === PulseOxygenStatuses.Passed,
-          hasVaccineBadge: false,
-        }
-      }
+      const badges = await this.passService.getBages(authenticatedUser.id, organizationId)
 
       res.json(actionSuccess(badges))
     } catch (error) {

@@ -1,4 +1,4 @@
-import Joi from 'joi'
+import * as Joi from 'joi'
 import {FirestoreTimestamp} from '../../../common/src/utils/joi-extensions'
 
 export default Joi.object({
@@ -45,6 +45,7 @@ export default Joi.object({
       'EmergencyRapidAntigen',
       'Antibody_All',
       'Antibody_IgM',
+      'ExpressPCR',
     ),
   testKitBatchID: Joi.string().allow(null),
   //updatedAt: FirestoreTimestamp.isValid().required(), //Added after validation

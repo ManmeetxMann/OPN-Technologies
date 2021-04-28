@@ -7,6 +7,7 @@ import {assertHasAuthorityOnDependent} from '../../middleware/user-dependent-aut
 import {AuthService} from '../../../../common/src/service/auth/auth-service'
 import {AdminApprovalService} from '../../../../common/src/service/user/admin-service'
 import {UserService} from '../../services/user-service'
+import {UserSyncService} from '../../services/user-sync-service'
 import {OrganizationService} from '../../services/organization-service'
 import {MagicLinkService} from '../../../../common/src/service/messaging/magiclink-service'
 import {CreateUserRequest} from '../../types/new-user'
@@ -28,10 +29,14 @@ import {uniq, flatten} from 'lodash'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {AuthShortCodeService} from '../../services/auth-short-code-service'
 import moment from 'moment'
+import {LogInfo} from '../../../../common/src/utils/logging-setup'
+import {getUserId} from '../../../../common/src/utils/auth'
+import {UserLogsEvents as events} from '../../types/new-user'
 
 const authService = new AuthService()
 const adminApprovalService = new AdminApprovalService()
 const userService = new UserService()
+const userSyncService = new UserSyncService()
 const organizationService = new OrganizationService()
 const magicLinkService = new MagicLinkService()
 const authShortCodeService = new AuthShortCodeService()
@@ -112,6 +117,30 @@ const create: Handler = async (req, res, next): Promise<void> => {
       email: authUser.email,
       authUserId: authUser.uid,
       active: true,
+    })
+
+    await userSyncService.create(
+      {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: (user.phone && user.phone.number && `${user.phone.number}`) || '',
+        photoUrl: user.photo,
+        firebaseKey: user.id,
+        patientPublicId: '', // @TODO Remove this field after merging PR related to this field
+        registrationId: user.registrationId || '',
+        dateOfBirth: '',
+        dependants: [],
+        delegates: [],
+      },
+      {
+        authUserId: user.authUserId as string,
+        email: user.email,
+      },
+    )
+
+    LogInfo(events.create, events.createUser, {
+      newUser: user,
+      createdBy: 'API',
     })
 
     res.json(actionSucceed(userDTOResponse(user)))
@@ -206,7 +235,17 @@ const update: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as AuthUser
     const source = req.body as UpdateUserRequest
+    const oldUser = await userService.getById(authenticatedUser.id)
     const updatedUser = await userService.update(authenticatedUser.id, source)
+
+    await userSyncService.update(updatedUser.id, source)
+
+    LogInfo(events.update, events.updateUser, {
+      oldUser,
+      updatedUser,
+      updatedBy: getUserId(res.locals.authenticatedUser),
+    })
+
     res.json(actionSucceed(userDTOResponse(updatedUser)))
   } catch (error) {
     next(error)
@@ -528,7 +567,9 @@ const updateDependent: Handler = async (req, res, next): Promise<void> => {
   try {
     const {dependentId} = req.params
     const updateRequest = req.body as UpdateUserRequest
-    await userService.update(dependentId, updateRequest)
+    const user = await userService.update(dependentId, updateRequest)
+
+    await userSyncService.update(user.id, updateRequest)
 
     res.json(actionSucceed())
   } catch (error) {

@@ -1,7 +1,10 @@
 import {Config} from '../../../common/src/utils/config'
 import {DeadlineLabel} from '../models/appointment'
 import {firestore} from 'firebase-admin'
-import moment from 'moment-timezone'
+
+// Must to be require otherwise import to V2 fails
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const moment = require('moment-timezone')
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 const rapidDeadlineTime = Config.get('RAPID_ALERGEN_DEADLINE_MIN')
@@ -53,6 +56,10 @@ export const makeUtcIsoDate = (date: string, time: string): string => {
 
 export const makeDefaultIsoDate = (date: string, time: string): string => {
   return moment(`${date}T${time}`).tz(timeZone).toISOString()
+}
+
+export const makeRegularIsoDate = (date: string): string => {
+  return new Date(date).toISOString()
 }
 
 export const makeDeadlineForFilter = (date: Date | string): firestore.Timestamp => {

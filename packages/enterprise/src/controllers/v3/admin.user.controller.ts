@@ -14,9 +14,14 @@ import {UsersByOrganizationRequest} from '../../types/user-organization-request'
 import {OrganizationGroup} from '../../models/organization'
 import {flatten} from 'lodash'
 import {AuthUser} from '../../../../common/src/data/user'
+import {UserSyncService} from '../../services/user-sync-service'
+import {LogInfo} from '../../../../common/src/utils/logging-setup'
+import {getUserId} from '../../../../common/src/utils/auth'
+import {UserLogsEvents as events} from '../../types/new-user'
 
 const userService = new UserService()
 const organizationService = new OrganizationService()
+const userSyncService = new UserSyncService()
 
 /**
  * Get all users for a given org-id
@@ -104,6 +109,24 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
       organizationId,
     })
 
+    await userSyncService.create({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: (user.phone && user.phone.number && `${user.phone.number}`) || '',
+      photoUrl: user.photo,
+      firebaseKey: user.id,
+      patientPublicId: '', // @TODO Remove this field after merging PR related to this field
+      registrationId: user.registrationId || '',
+      dateOfBirth: '',
+      dependants: [],
+      delegates: [],
+    })
+
+    LogInfo(events.createUser, events.createUser, {
+      newUser: user,
+      createdBy: getUserId(res.locals.authenticatedUser),
+    })
+
     await organizationService.addUserToGroup(organizationId, groupId, user.id)
 
     if (memberId) {
@@ -123,7 +146,15 @@ const updateUser: Handler = async (req, res, next): Promise<void> => {
   try {
     const {organizationId, groupId, ...source} = req.body as UpdateUserByAdminRequest
     const {userId} = req.params
+    const oldUser = await userService.getById(userId)
     const updatedUser = await userService.updateByAdmin(userId, source)
+
+    await userSyncService.updateByAdmin(updatedUser.id, source)
+    LogInfo(events.updateUser, events.updateUser, {
+      oldUser,
+      updatedUser,
+      updatedBy: getUserId(res.locals.authenticatedUser),
+    })
 
     // Assert that the group exists
     await organizationService.getGroup(organizationId, groupId)

@@ -2,8 +2,9 @@ import {NextFunction, Request, Response, Router} from 'express'
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
-import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {LabService} from '../../../services/lab.service'
+import {getUserId} from '../../../../../common/src/utils/auth'
 
 class AdminLabController implements IControllerBase {
   public path = '/reservation/admin'
@@ -38,8 +39,11 @@ class AdminLabController implements IControllerBase {
         templateId: string
         assay: string
       }
-      const result = await this.labService.save({name, templateId, assay})
-      res.json(actionSucceed(result))
+
+      const createdBy = getUserId(res.locals.authenticatedUser)
+      const result = await this.labService.save({name, templateId, assay, createdBy})
+
+      res.json(actionSuccess(result, 'Lab created successfully'))
     } catch (error) {
       next(error)
     }

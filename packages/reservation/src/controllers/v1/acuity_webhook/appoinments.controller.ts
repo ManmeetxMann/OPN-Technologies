@@ -37,7 +37,7 @@ class AppointmentWebhookController implements IControllerBase {
           appointmentTypeID,
           action,
         },
-        '/reservation/internal/api/v1/appointments/sync',
+        '/reservation/internal/api/v1/appointments/sync-from-acuity',
       )
       res.json(actionSucceed('Task Successfully Created'))
     } catch (error) {

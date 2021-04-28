@@ -1,13 +1,14 @@
-import Joi from 'joi'
+import * as Joi from 'joi'
 
 export default Joi.object({
-  registrationId: Joi.string().allow(null),
+  registrationId: Joi.string().allow(null, ''),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
   dateOfBirth: Joi.string(),
   base64Photo: Joi.string().allow(''),
   organizationIds: Joi.array(),
-  email: Joi.string(),
+  email: Joi.string().allow(null),
+  phoneNumber: Joi.string().allow(null),
   admin: Joi.object().allow(null),
   authUserId: Joi.string().allow(null),
   delegates: Joi.array().allow(null),

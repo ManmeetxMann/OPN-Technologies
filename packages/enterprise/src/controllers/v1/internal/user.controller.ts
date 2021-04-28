@@ -8,11 +8,15 @@ import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {OrganizationService} from '../../../services/organization-service'
 import {AuthService} from '../../../../../common/src/service/auth/auth-service'
 import {UserAddressService} from '../../../services/user-address-service'
+import {UserSyncService} from '../../../services/user-sync-service'
+import {LogInfo} from '../../../../../common/src/utils/logging-setup'
+import {UserLogsEvents as events} from '../../../types/new-user'
 
 class UserController implements IControllerBase {
   public path = '/enterprise/internal/api/v1/user'
   public router = express.Router()
   private userService = new UserService()
+  private userSyncService = new UserSyncService()
   private organizationService = new OrganizationService()
   private authService = new AuthService()
   private userAddressService = new UserAddressService()
@@ -71,6 +75,30 @@ class UserController implements IControllerBase {
           readTermsAndConditions,
           receiveResultsViaEmail,
           receiveNotificationsFromGov,
+        })
+
+        await this.userSyncService.create(
+          {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            phoneNumber: '',
+            photoUrl: user.base64Photo ?? null,
+            firebaseKey: user.id,
+            patientPublicId: '',
+            registrationId: user.registrationId || '', // @TODO Remove this field after merging PR related to this field
+            dateOfBirth: '',
+            dependants: [],
+            delegates: [],
+          },
+          {
+            authUserId: user.authUserId as string,
+            email: user.email,
+          },
+        )
+
+        LogInfo(events.findOrCreateUser, events.createUser, {
+          newUser: user,
+          createdBy: 'WEBHOOK',
         })
 
         // add user in public group

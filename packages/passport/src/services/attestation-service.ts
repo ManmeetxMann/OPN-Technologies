@@ -10,7 +10,7 @@ import {serverTimestamp} from '../../../common/src/utils/times'
 import PassportAdapter from '../../../common/src/adapters/passport'
 
 import {Attestation, AttestationModel} from '../models/attestation'
-import {PassportStatus, PassportStatuses} from '../models/passport'
+import {PassportStatus, PassportStatuses, PassportType} from '../models/passport'
 import {ExposureResult} from '../types/status-changes-result'
 
 import {TraceModel, TraceRepository} from '../../../access/src/repository/trace.repository'
@@ -74,7 +74,13 @@ export class AttestationService {
               att.status as PassportStatuses,
               org.enableTemperatureCheck,
             )
-            return this.adapter.createPassport(userId, att.organizationId, passportStatus, att.id)
+            return this.adapter.createPassport(
+              userId,
+              att.organizationId,
+              passportStatus,
+              PassportType.Attestation,
+              att.id,
+            )
           }),
         )
         return att

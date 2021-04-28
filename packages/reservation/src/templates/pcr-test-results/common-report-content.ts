@@ -2,7 +2,7 @@ import path from 'path'
 
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
 import {Config} from '../../../../common/src/utils/config'
-import {ResultTypes} from '../../models/appointment'
+import {ResultTypes, TestTypes} from '../../models/appointment'
 import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
 import {groupByChannel} from '../../utils/analysis.helper'
 
@@ -156,7 +156,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
   }
 
   const dataTestDetails = [
-    ['Test', 'RT-PCR (Reverse Transcription Polymerase Chain Reaction)'],
+    ['Test', 'NAAT, RT-PCR (Reverse Transcription Polymerase Chain Reaction)'],
     ['Equipment approved by \n Health Canada', params.labAssay],
   ]
 
@@ -203,6 +203,10 @@ const documentFooter = (): Content => {
   }
 }
 const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
+  if (params.testType === TestTypes.ExpressPCR) {
+    return []
+  }
+
   const groupedAnalysis = groupByChannel(params.resultAnalysis)
 
   return [

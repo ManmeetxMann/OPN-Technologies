@@ -11,7 +11,7 @@ import {PassportService} from '../../../services/passport-service'
 import {AlertService} from '../../../services/alert-service'
 import {AttestationService} from '../../../services/attestation-service'
 
-import {Passport, PassportStatuses, PassportStatus} from '../../../models/passport'
+import {Passport, PassportStatuses, PassportStatus, PassportType} from '../../../models/passport'
 
 class PassportController implements IControllerBase {
   public path = '/passport/internal/api/v1'
@@ -39,10 +39,11 @@ class PassportController implements IControllerBase {
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {userId, organizationId, status, attestationId} = req.body as {
+      const {userId, organizationId, status, attestationId, type} = req.body as {
         userId: string
         organizationId: string
         status: string
+        type: string
         attestationId: string
       }
       const user = await this.userService.findOneSilently(userId)
@@ -60,14 +61,24 @@ class PassportController implements IControllerBase {
         ].includes(status as PassportStatuses)
       )
         throw new BadRequestException(`${status} is not a valid status`)
-      const passport = await this.passportService.create(
+      if (
+        ![
+          PassportType.Attestation,
+          PassportType.PCR,
+          PassportType.PulseOxygenCheck,
+          PassportType.Temperature,
+        ].includes(type as PassportType)
+      )
+        throw new BadRequestException(`${type} is not a valid passport type`)
+      const {passport, created} = await this.passportService.create(
         status as PassportStatus,
         userId,
         [],
         false,
         organizationId,
+        type as PassportType,
       )
-      this.alertIfNeeded(passport, attestationId)
+      if (created) this.alertIfNeeded(passport, attestationId)
       res.json(actionSucceed())
     } catch (error) {
       next(error)

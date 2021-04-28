@@ -29,6 +29,11 @@ const messageBody = (): Content => {
       bold: true,
       decoration: 'underline',
     },
+    /*{
+      text:
+        ' \n\nA positive test result indicates that antibodies to SARS-CoV-2 were detected, and the individual has potentially been exposed to SARS-CoV-2.',
+      lineHeight: 1.1,
+    }*/
     {
       text:
         ' \n\nThe human immune system antibody response has been studied for decades. In general, IgM' +

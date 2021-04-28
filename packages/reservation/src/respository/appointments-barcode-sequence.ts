@@ -1,34 +1,36 @@
 import {AppoinmentBarCodeSequenceDBModel} from '../models/appointment'
-import DataModel from '../../../common/src/data/datamodel.base'
-import DataStore from '../../../common/src/data/datastore'
-import {Config} from '../../../common/src/utils/config'
 
-export class AppointmentsBarCodeSequence extends DataModel<AppoinmentBarCodeSequenceDBModel> {
+import {Config} from '../../../common/src/utils/config'
+import {firebaseAdmin} from '../../../common/src/utils/firebase'
+
+export class AppointmentsBarCodeSequence {
   public rootPath = 'appointment-barcode-sequence'
-  readonly zeroSet = []
-  constructor(dataStore: DataStore) {
-    super(dataStore)
+  private firestore
+  constructor() {
+    this.firestore = firebaseAdmin.firestore()
   }
 
+  /**
+   * Use lib firestore directly not firestore-simple for transactions
+   */
   public async getNextBarCode(): Promise<null | AppoinmentBarCodeSequenceDBModel> {
     const prefix = Config.get('BARCODE_SEQ_PREFIX') ?? 'TEST'
-    const barcodesCollection = this.datastore.firestoreORM.collection({path: this.rootPath})
-    const sequence = barcodesCollection.docRef(prefix)
+    const barcodesDocument = this.firestore.collection(this.rootPath).doc(prefix)
 
-    let result = null
-    await this.datastore.firestoreORM.runTransaction(async (tx) => {
-      const doc = await tx.get(sequence)
-      const sequenceExists = doc.data()
-      if (sequenceExists) {
-        const newBarcode = sequenceExists.barCodeNumber + 1
-        result = {id: doc.id, barCodeNumber: newBarcode}
-        tx.update(sequence, result)
+    const newBarCode = await this.firestore.runTransaction(async (transaction) => {
+      const doc = await transaction.get(barcodesDocument)
+      const docData = doc.data()
+      let newBarCode = null
+      if (!docData) {
+        newBarCode = 1000000000
+        await transaction.set(barcodesDocument, {barCodeNumber: newBarCode})
       } else {
-        result = {id: prefix, barCodeNumber: 1000000000}
-        tx.set(sequence, result)
+        newBarCode = docData.barCodeNumber + 1
+        await transaction.update(barcodesDocument, {barCodeNumber: newBarCode})
       }
+      return newBarCode
     })
 
-    return result
+    return {id: prefix, barCodeNumber: newBarCode}
   }
 }

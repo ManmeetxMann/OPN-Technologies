@@ -126,9 +126,15 @@ export class RecommendationService {
           .endOf('day')
           .isSameOrAfter(safeTimestamp(appointment.date))
         return [
-          Recommendations.CompleteAssessment,
           isToday ? Recommendations.CheckInPCR : Recommendations.BookingDetailsPCR,
+          Recommendations.CompleteAssessment,
         ]
+      }
+      // checked in, but may still be in the future
+      if (appointment?.status === AppointmentStatus.CheckedIn) {
+        const alreadyHappened = moment(now()).isSameOrAfter(safeTimestamp(appointment.date))
+        if (!alreadyHappened)
+          return [Recommendations.CompleteAssessment, Recommendations.CheckInPCR]
       }
       if (
         !latestTest ||
@@ -145,6 +151,14 @@ export class RecommendationService {
       // stop
       if (
         items.PCRTestResult &&
+        [ResultTypes.Inconclusive, ResultTypes.Indeterminate].includes(items.PCRTestResult.result)
+      ) {
+        // inconcusive test
+        return [Recommendations.BookPCR, Recommendations.BadgeExpiry]
+      }
+
+      if (
+        items.PCRTestResult &&
         [
           ResultTypes.Positive,
           ResultTypes.PreliminaryPositive,
@@ -155,7 +169,7 @@ export class RecommendationService {
         return [Recommendations.BadgeExpiry, Recommendations.ViewPositivePCR]
       }
       // bad attestation
-      return [Recommendations.BadgeExpiry, Recommendations.CompleteAssessment]
+      return [Recommendations.BadgeExpiry, Recommendations.BookPCR]
     }
     if (status == PassportStatuses.Proceed) {
       // proceed
@@ -239,7 +253,7 @@ export class RecommendationService {
         break
       }
       case Recommendations.TempCheckRequired: {
-        title = 'Complete a Temperature Check'
+        title = 'Complete a Pulse/Temp Check'
         body = 'Verify your badge with a check'
         break
       }
@@ -288,12 +302,10 @@ export class RecommendationService {
     ])
 
     let actions: Recommendations[] = []
-    if (org.enableTemperatureCheck) {
-      actions = this.getRecommendationsTemperature(items)
-    }
-    // TODO: better way to test if org is PCR only?
-    else if (items.PCRTestResult || items.scheduledPCRTest) {
+    if (org.enableTesting) {
       actions = this.getRecommendationsPCR(items)
+    } else if (org.enableTemperatureCheck) {
+      actions = this.getRecommendationsTemperature(items)
     }
     // Default: attestation only
     else {

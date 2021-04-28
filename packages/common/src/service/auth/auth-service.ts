@@ -2,11 +2,18 @@ import {FirebaseManager} from '../../utils/firebase'
 import {MagicLinkMail} from '../messaging/magiclink-service'
 import {Config} from '../../utils/config'
 
+export enum SignInProvides {
+  password = 'password',
+  phone = 'phone',
+}
+
 export interface AuthUser {
   uid: string
+  signInProvider: SignInProvides
   email?: string
   emailVerified: boolean
   customClaims?: Record<string, unknown>
+  phoneNumber?: string
 }
 
 /**
@@ -109,8 +116,10 @@ export class AuthService {
       if (decodedToken !== undefined) {
         return {
           uid: decodedToken.uid,
+          signInProvider: SignInProvides[decodedToken.firebase.sign_in_provider],
           email: decodedToken.email,
           emailVerified: decodedToken.email_verified ?? false,
+          phoneNumber: decodedToken.phone_number,
         }
       }
     } catch (error) {
@@ -129,6 +138,7 @@ export class AuthService {
         const [uid, email] = authToken.split('///')
         return {
           uid,
+          signInProvider: SignInProvides.password,
           email,
           emailVerified: true,
         }

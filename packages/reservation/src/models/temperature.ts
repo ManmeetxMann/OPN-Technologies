@@ -6,6 +6,7 @@ export type Temperature = {
   locationId: string
   userId: string
   status: TemperatureStatuses
+  createdBy: string
 }
 
 export type TemperatureDBModel = Temperature & {

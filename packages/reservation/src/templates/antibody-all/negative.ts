@@ -29,6 +29,15 @@ const messageBody = (): Content => {
       bold: true,
       decoration: 'underline',
     },
+    /*{
+      text:
+        ' \n\nA negative test result means that SARS-CoV-2 specific antibodies were not present in the specimen above the limit of detection.' +
+        '  However, patients tested early after infection may not have detectable antibodies despite active infection; in addition,' +
+        '  it is not certain that all infected patients will develop a detectable antibody response to SARS-CoV2 infection.' +
+        '  A negative result should not be used to rule out infection. Direct testing of SARS-CoV-2 (PCR testing)' +
+        '  should be performed if acute infection is suspected.',
+      lineHeight: 1.1,
+    }*/
     {
       text:
         ' \n\nThe human immune system antibody response has been studied for decades. In general, IgM' +

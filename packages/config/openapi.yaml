@@ -107,6 +107,16 @@ paths:
 
     get:
       description: Get Config
+      parameters:
+        - in: header
+          name: application_name
+          schema:
+            type: string
+            enum:
+              [
+                  FHHealth,
+                  OPN,
+              ]
       responses:
         "200":
           description: Successfully registered
