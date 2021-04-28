@@ -22,10 +22,7 @@ export class CartController {
   })
   @Roles([RequiredUserPermission.RegUser])
   @InternalType(InternalAuthTypes.OpnSchedulerKey)
-  async add(@Headers('opn-scheduler-key') opnSchedulerKey: string): Promise<ResponseWrapper<void>> {
-    if (opnSchedulerKey !== this.configService.get('OPN_SCHEDULER_KEY')) {
-      throw new UnauthorizedException('Invalid Scheduler Key')
-    }
+  async add(): Promise<ResponseWrapper<void>> {
     await this.userCardService.cleanupUserCart()
     return ResponseWrapper.actionSucceed(null)
   }
