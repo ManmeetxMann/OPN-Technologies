@@ -23,12 +23,10 @@ import {CartController} from './controller/public/v1/cart.controller'
 })
 class App {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthMiddleware)
-      .forRoutes({
-        path: '*',
-        method: RequestMethod.ALL,
-      })
+    consumer.apply(AuthMiddleware).forRoutes({
+      path: '*',
+      method: RequestMethod.ALL,
+    })
   }
 }
 

@@ -41,6 +41,7 @@ export class UserCardService {
 
   private hstTax = 0.13
   public timeSlotNotAvailMsg = 'Time Slot Unavailable: Book Another Slot'
+  private cartChunkSize = 20
 
   constructor(private configService: ConfigService) {}
 
@@ -176,7 +177,7 @@ export class UserCardService {
     let iteration = 1
     let done = false
     while (!done) {
-      const userCarts = await this.userCartRepository.fetchAllWithPagination(iteration, 2)
+      const userCarts = await this.userCartRepository.fetchAllWithPagination(iteration, this.cartChunkSize)
       for (const userCart of userCarts) {
         const updatedDateMoment = firestoreTimeStampToUTC(userCart.updateOn).add(
           expirationHours,
