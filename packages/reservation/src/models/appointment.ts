@@ -79,6 +79,7 @@ export type AppointmentDBModel = {
   testType: TestTypes
   labId?: string
   scheduledPushesToSend?: Array<ReservationPushTypes>
+  checkedInOn?: firestore.Timestamp
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard

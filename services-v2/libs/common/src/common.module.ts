@@ -13,6 +13,8 @@ import {FirebaseAuthService} from './services/auth/firebase-auth.service'
 import {AuthGuard} from './guard/auth.guard'
 import {InternalGuard} from './guard/internal.guard'
 
+import {Config} from '@opn-common-v1/utils/config'
+
 /**
  * TODO:
  * 1. Joi model for env variables
@@ -20,7 +22,13 @@ import {InternalGuard} from './guard/internal.guard'
  */
 @Global()
 @Module({
-  imports: [ConfigModule.forRoot(), AuthGuard, InternalGuard],
+  imports: [
+    ConfigModule.forRoot({
+      load: [Config.getAll],
+    }),
+    AuthGuard,
+    InternalGuard
+  ],
   providers: [CommonService, FirebaseAuthService],
   exports: [
     CommonService,
