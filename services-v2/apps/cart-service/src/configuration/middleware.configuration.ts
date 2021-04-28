@@ -1,1 +1,1 @@
-export const internalUrls = ['/internal/api/v1/cart/remove-expired-items']
+export const internalUrls = ['/api/v1/internal/cart/remove-expired-items']

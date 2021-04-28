@@ -13,7 +13,7 @@ export class InternalGuard implements CanActivate {
       context.getHandler(),
     )
     const req = context.switchToHttp().getRequest()
-    return this.validateInternalAuth(req.raw.locals, authType.internalAuthType)
+    return this.validateInternalAuth(req.raw.locals, authType?.internalAuthType)
   }
 
   private async validateInternalAuth(

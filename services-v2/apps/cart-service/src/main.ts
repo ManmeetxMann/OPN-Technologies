@@ -13,12 +13,11 @@ import {UserCardService} from '@opn-services/cart/service/user-cart.service'
 import {StripeService} from '@opn-services/cart/service/stripe.service'
 
 // Controllers
-import {CartController as InternalCartController} from './controller/internal/v1/cart.controller'
 import {CartController} from './controller/v1/public/cart.controller'
 import {CartInternalController} from './controller/v1/internal/cart.controller'
 @Module({
   imports: [CommonModule, StripeService, AppoinmentService, UserService],
-  controllers: [CartController, CartInternalController, InternalCartController],
+  controllers: [CartController, CartInternalController],
   providers: [UserCardService, StripeService, AppoinmentService, UserService],
 })
 class App {
