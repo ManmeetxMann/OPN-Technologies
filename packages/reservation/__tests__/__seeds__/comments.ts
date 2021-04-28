@@ -20,6 +20,10 @@ export const createComment = async (
     internal: false,
     replyTo: null,
     testResultId: dataOverwrite.testResultId,
+    timestamps: {
+      createdAt: firestore.Timestamp.fromDate(new Date()),
+      updatedAt: null,
+    },
     testDataCreator,
   }
   //console.log(data)

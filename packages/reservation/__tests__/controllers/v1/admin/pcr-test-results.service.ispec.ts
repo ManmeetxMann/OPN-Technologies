@@ -6,6 +6,7 @@ import {
   deletePCRTestResultByTestDataCreator,
 } from '../../../__seeds__/pcr-test-results'
 import {createComment, deleteCommentByTestDataCreator} from '../../../__seeds__/comments'
+import {createUser} from '../../../__seeds__/user'
 
 //jest.spyOn(global.console, 'error').mockImplementation()
 //jest.spyOn(global.console, 'info').mockImplementation()
@@ -22,9 +23,11 @@ const labID1 = 'Lab1'
 const barCode = 'BAR1'
 const pcrTestId = `commentPcrTestId1`
 const commentTestId = 'commentTestId1'
+const userId = 'USER1'
 
 describe('PCRTestResultController', () => {
   beforeAll(async () => {
+    await createUser({id: userId, organizationIds: [organizationId]}, testDataCreator)
     await deletePCRTestResultByTestDataCreator(testDataCreator)
     await createPCRTestResult(
       {
@@ -135,7 +138,7 @@ describe('PCRTestResultController', () => {
         .get(url)
         .set('authorization', 'Bearer CorporateUserForTEST1')
       expect(result.status).toBe(200)
-      expect(result.body.data.length).toBe(3)
+      expect(result.body.data.length).toBe(4)
       done()
     })
 
@@ -191,20 +194,6 @@ describe('PCRTestResultController', () => {
       done()
     })
 
-    test('comment to pcr results successfully', async (done) => {
-      const url = `/reservation/admin/api/v1/test-results/${pcrTestId}/comment`
-      const result = await request(server.app)
-        .post(url)
-        .set('authorization', 'Bearer LabUser')
-        .send({
-          comment: 'Hi, my testing comment',
-          attachmentUrls: ['https://via.placeholder.com/200'],
-          internal: false,
-        })
-      expect(result.status).toBe(200)
-      expect(typeof result.body.data.id).toBe('string')
-      done()
-    })
     test('comment to pcr results successfully', async (done) => {
       const url = `/reservation/admin/api/v1/test-results/${pcrTestId}/comment`
       const result = await request(server.app)
