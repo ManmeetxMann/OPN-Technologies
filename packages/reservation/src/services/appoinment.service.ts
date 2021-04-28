@@ -1581,10 +1581,11 @@ export class AppoinmentService {
 
     await this.appointmentStatusChange(appointmentId, AppointmentStatus.CheckedIn, userId)
 
-    const saved = await this.appointmentsRepository.changeAppointmentStatus(
-      appointmentId,
-      AppointmentStatus.CheckedIn,
-    )
+    const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
+      appointmentStatus: AppointmentStatus.CheckedIn,
+      checkedInOn: makeFirestoreTimestamp(moment()),
+    })
+
     this.postPubsub(saved, 'updated')
     return saved
   }
