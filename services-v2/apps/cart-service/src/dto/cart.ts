@@ -146,6 +146,13 @@ export class CartAddDto {
   userId: string
 }
 
+export class CartUpdateRequestDto extends CartAddDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  cartItemId: string
+}
+
 export class CartAddRequestDto {
   @ApiProperty({type: [CartAddDto]})
   @IsDefined()
