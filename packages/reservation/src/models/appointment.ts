@@ -168,6 +168,7 @@ export enum TestTypes {
   Antibody_All = 'Antibody_All',
   Antibody_IgM = 'Antibody_IgM',
   PulseOxygenCheck = 'PulseOxygenCheck',
+  ExpressPCR = 'ExpressPCR',
   allExceptAntigen = 'allExceptAntigen', // @TODO Remove this after correcting flag
 }
 
