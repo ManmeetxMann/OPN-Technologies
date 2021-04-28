@@ -20,9 +20,8 @@ export class CartController {
   @ApiHeader({
     name: 'opn-scheduler-key',
   })
-  @Roles([RequiredUserPermission.RegUser])
   @InternalType(InternalAuthTypes.OpnSchedulerKey)
-  async add(): Promise<ResponseWrapper<void>> {
+  async cleanUp(): Promise<ResponseWrapper<void>> {
     await this.userCardService.cleanupUserCart()
     return ResponseWrapper.actionSucceed(null)
   }
