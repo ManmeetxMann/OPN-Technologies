@@ -45,6 +45,7 @@ export default Joi.object({
       'EmergencyRapidAntigen',
       'Antibody_All',
       'Antibody_IgM',
+      'ExpressPCR',
     ),
   testKitBatchID: Joi.string().allow(null),
   //updatedAt: FirestoreTimestamp.isValid().required(), //Added after validation
