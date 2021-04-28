@@ -117,8 +117,18 @@ export class RecommendationService {
     const passportExpiry = passport ? safeTimestamp(passport.expiry) : null
     const latestTest = items.PCRTestResult
     const appointment = items.scheduledPCRTest
+    const PCRDuration = parseInt(Config.get('PCR_VALIDITY_HOURS'))
+    const earliestValidPCR = moment(now()).utc().subtract(PCRDuration, 'hours')
 
     if (!passport || isPassed(passportExpiry) || passport.status === PassportStatuses.Pending) {
+      // expired PCR test and appointment not booked
+      if (
+        (appointment && isPassed(safeTimestamp(appointment?.date))) &&
+        (latestTest && !earliestValidPCR.isSameOrBefore(safeTimestamp(latestTest.timestamp)))
+      ) {
+        // need to book a test
+        return [Recommendations.BookPCR]
+      }
       // pending
       if (appointment?.status === AppointmentStatus.Pending) {
         const isToday = moment(now())
