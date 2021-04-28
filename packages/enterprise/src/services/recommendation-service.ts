@@ -123,8 +123,10 @@ export class RecommendationService {
     if (!passport || isPassed(passportExpiry) || passport.status === PassportStatuses.Pending) {
       // expired PCR test and appointment not booked
       if (
-        (appointment && isPassed(safeTimestamp(appointment?.date))) &&
-        (latestTest && !earliestValidPCR.isSameOrBefore(safeTimestamp(latestTest.timestamp)))
+        appointment &&
+        isPassed(safeTimestamp(appointment?.date)) &&
+        latestTest &&
+        !earliestValidPCR.isSameOrBefore(safeTimestamp(latestTest.timestamp))
       ) {
         // need to book a test
         return [Recommendations.BookPCR]
