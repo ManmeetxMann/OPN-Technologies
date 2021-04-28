@@ -7,6 +7,7 @@ const collectionName = 'pcr-test-results'
 // : Promise<unknown>
 export const createPCRTestResult = async (
   dataOverwrite: {
+    id?: string
     appointmentId?: string
     dateTime: string
     deadline: string
@@ -55,7 +56,11 @@ export const createPCRTestResult = async (
   data.testType = dataOverwrite.testType ?? 'PCR'
 
   //console.log(data)
-  await database.collection(collectionName).add(data)
+  if (dataOverwrite.id) {
+    await database.collection(collectionName).doc(dataOverwrite.id).set(data)
+  } else {
+    await database.collection(collectionName).add(data)
+  }
   //console.log(`savedData.id: ${savedData.id}`)
 }
 
