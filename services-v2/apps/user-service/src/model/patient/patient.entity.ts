@@ -1,13 +1,13 @@
 import {
+  BeforeInsert,
   Column,
   Entity,
   Generated,
-  PrimaryColumn,
   JoinColumn,
-  Unique,
-  BeforeInsert,
-  OneToOne,
   OneToMany,
+  OneToOne,
+  PrimaryColumn,
+  Unique,
 } from 'typeorm'
 import {Auditable} from '../../../../../libs/common/src/model'
 import {ApiProperty} from '@nestjs/swagger'
