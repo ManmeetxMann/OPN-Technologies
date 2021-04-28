@@ -1,4 +1,4 @@
-import {Column, Entity, Generated, PrimaryColumn, JoinColumn, OneToOne} from 'typeorm'
+import {Column, Entity, Generated, JoinColumn, OneToOne, PrimaryColumn} from 'typeorm'
 import {Auditable} from '../../../../../libs/common/src/model'
 import {ApiProperty} from '@nestjs/swagger'
 import {IsBoolean, IsString} from 'class-validator'

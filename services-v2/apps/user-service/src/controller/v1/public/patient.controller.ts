@@ -1,13 +1,13 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
+  NotFoundException,
   Param,
   Post,
   Put,
-  NotFoundException,
   UseGuards,
-  ForbiddenException,
 } from '@nestjs/common'
 import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 
@@ -17,7 +17,7 @@ import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {AuthUserDecorator, Roles} from '@opn-services/common/decorator'
 
 import {Patient} from '../../../model/patient/patient.entity'
-import {DependantCreateDto, patientProfileDto, PatientUpdateDto} from '../../../dto/patient'
+import {DependantCreateDto, PatientUpdateDto, patientProfileDto} from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 
 @ApiTags('Patients')
