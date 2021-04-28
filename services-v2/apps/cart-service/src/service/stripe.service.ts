@@ -45,6 +45,7 @@ export class StripeService {
     paymentMethodId: string,
   ): Promise<Stripe.PaymentIntent> {
     let intentResult = null
+    console.log(customerId, amount, paymentMethodId)
     try {
       // off_session and confirm equal true means payment method needs validation
       intentResult = await this.stripe.paymentIntents.create(
@@ -86,7 +87,21 @@ export class StripeService {
     return intentResult
   }
 
+  async capturePaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
+    let intentResult = null
+    try {
+      intentResult = this.stripe.paymentIntents.capture(paymentIntentId)
+    } catch (err) {
+      console.log('cancelPaymentIntent error')
+    }
+    return intentResult
+  }
+
   isPaymentIntentSuccess(paymentIntent: Stripe.PaymentIntent): boolean {
     return paymentIntent?.status === 'requires_capture'
+  }
+
+  isPaymentIntentCaptureSuccess(paymentIntent: Stripe.PaymentIntent): boolean {
+    return paymentIntent?.status === 'succeeded'
   }
 }

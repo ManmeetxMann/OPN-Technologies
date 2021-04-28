@@ -1,6 +1,6 @@
 // NestJs
 import {ConfigModule} from '@nestjs/config'
-import {Module, Global} from '@nestjs/common'
+import {Global, Module} from '@nestjs/common'
 
 // Libs
 // import * as Joi from 'joi'

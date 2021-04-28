@@ -67,6 +67,7 @@ export default Joi.object({
       'EmergencyRapidAntigen',
       'Antibody_All',
       'Antibody_IgM',
+      'ExpressPCR',
     ),
   labId: Joi.string().allow(null),
   scheduledPushesToSend: Joi.array().items(Joi.number()),

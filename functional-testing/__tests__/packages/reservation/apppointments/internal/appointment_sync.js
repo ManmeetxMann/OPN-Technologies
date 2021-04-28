@@ -23,9 +23,9 @@ describe('POST: /reservation/internal/api/v1/appointments/sync-from-acuity', () 
         .post(
             url,
             {
-              'calendarID': '4577880',
-              'appointmentTypeID': '572702678',
-              'acuityID': '572702678', // 515676296
+              'calendarID': '4571103',
+              'appointmentTypeID': '22492585',
+              'acuityID': '582128684', // 515676296
               'action': 'scheduled',
             },
         )

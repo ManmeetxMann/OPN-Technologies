@@ -1,18 +1,18 @@
-import {Body, Controller, Get, Param, Post, Delete, UseGuards} from '@nestjs/common'
-import {ApiTags, ApiBearerAuth, ApiHeader, ApiResponse, ApiOperation} from '@nestjs/swagger'
+import {Body, Controller, Delete, Get, Param, Post, UseGuards} from '@nestjs/common'
+import {ApiBearerAuth, ApiHeader, ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard, AuthUserDecorator} from '@opn-services/common'
 
 import {
-  CartResponseDto,
   CartAddRequestDto,
-  PaymentAuthorizationResponseDto,
-  PaymentAuthorizationRequestDto,
+  CartResponseDto,
   CheckoutResponseDto,
+  PaymentAuthorizationRequestDto,
+  PaymentAuthorizationResponseDto,
 } from '@opn-services/cart/dto'
 import {UserCardService} from '@opn-services/cart/service/user-cart.service'
 import {StripeService} from '@opn-services/cart/service/stripe.service'
-import {CartItemStatus, CardItemDBModel} from '@opn-services/cart/model/cart'
+import {CardItemDBModel, CartItemStatus} from '@opn-services/cart/model/cart'
 
 import {AppoinmentService} from '@opn-reservation-v1/services/appoinment.service'
 
@@ -79,17 +79,33 @@ export class CartController {
   }
 
   @Post('/ephemeral-keys')
+  @ApiOperation({
+    summary: `Return a ephemeral key for stripe customer, create stripe customer if doesn't exist`,
+  })
   @ApiHeader({
     name: 'organizationid',
   })
-  async creteEphemeralKeys(): Promise<unknown> {
-    const ephemeralKeys = await this.stripeService.customerEphemeralKeys('cus_JJ0T3QA6kYrv9M')
+  async creteEphemeralKeys(@AuthUserDecorator() authUser): Promise<unknown> {
+    let stripeCustomerId = authUser.stripeCustomerId
+
+    // Create stripe customer and safe in user document
+    if (!stripeCustomerId) {
+      console.log('Create')
+      stripeCustomerId = (await this.stripeService.createUser()).id
+      await this.userCardService.updateUserStripeCustomerId(authUser.id, stripeCustomerId)
+    }
+
+    // Create wallet ephemeral keys
+    const ephemeralKeys = await this.stripeService.customerEphemeralKeys(stripeCustomerId)
+
     return ephemeralKeys
   }
 
   @Post('/payment-authorization')
   @ApiResponse({type: PaymentAuthorizationResponseDto})
-  @ApiOperation({summary: 'Create payment intent, book all appointment in the cart'})
+  @ApiOperation({
+    summary: 'Create payment intent, book all appointment in the cart, process payment',
+  })
   @ApiHeader({
     name: 'organizationid',
   })
@@ -100,6 +116,7 @@ export class CartController {
     const userId = authUser.authUserId
     const organizationId = authUser.requestOrganizationId
     const userEmail = authUser.email
+    const stripeCustomerId = authUser.stripeCustomerId
 
     const result: PaymentAuthorizationResponseDto = {
       payment: {
@@ -127,11 +144,12 @@ export class CartController {
       result.cart = cart.cardValidation
       return ResponseWrapper.actionSucceed(result)
     }
+    result.cart.isValid = true
 
     // Create a payment intent, return error if can't be created
     const total = this.userCardService.stripePriceFromCart(cart.cartDdItems)
     const paymentIntent = await this.stripeService.createPaymentIntent(
-      'cus_JJ0T3QA6kYrv9M',
+      stripeCustomerId,
       total,
       paymentAuthorization.paymentMethodId,
     )
@@ -173,7 +191,17 @@ export class CartController {
       return ResponseWrapper.actionSucceed(result)
     }
 
-    await this.userCardService.saveOrderInformation(appointmentCreateStatuses, paymentIntent)
+    // Capture payment intent
+    const paymentIntentCapture = await this.stripeService.capturePaymentIntent(paymentIntent.id)
+    result.payment = {
+      isValid: this.stripeService.isPaymentIntentCaptureSuccess(paymentIntentCapture),
+      id: paymentIntentCapture.id,
+      status: paymentIntentCapture.status,
+      client_secret: paymentIntentCapture.client_secret,
+    }
+
+    // Save order information and delete all cart items
+    await this.userCardService.saveOrderInformation(appointmentCreateStatuses, paymentIntentCapture)
     await this.userCardService.deleteAllCartItems(userId, organizationId)
 
     result.cart.isValid = true
@@ -242,7 +270,7 @@ export class CartController {
   async createBulkAppointment(
     cartDdItems: CardItemDBModel[],
     userId: string,
-    userEmail: string,
+    userEmailAuthToken: string,
   ): Promise<CartItemStatus[]> {
     const appointmentCreateStatuses = await Promise.all(
       cartDdItems.map(async cartDdItem => {
@@ -250,7 +278,7 @@ export class CartController {
           const newAppointment = await this.appoinmentService.createAcuityAppointmentFromCartItem(
             cartDdItem,
             userId,
-            userEmail,
+            cartDdItem.patient.email || userEmailAuthToken,
           )
           return {
             cartItemId: cartDdItem.cartItemId,
