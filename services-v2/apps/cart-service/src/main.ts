@@ -25,7 +25,6 @@ class App {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(AuthMiddleware)
-      .exclude({path: '/internal/api/v1/cart/remove-expired-items', method: RequestMethod.POST})
       .forRoutes({
         path: '*',
         method: RequestMethod.ALL,

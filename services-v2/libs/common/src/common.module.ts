@@ -11,6 +11,7 @@ import {FirebaseAuthService} from './services/auth/firebase-auth.service'
 
 // Guards
 import {AuthGuard} from './guard/auth.guard'
+import {InternalGuard} from './guard/internal.guard'
 
 /**
  * TODO:
@@ -19,7 +20,7 @@ import {AuthGuard} from './guard/auth.guard'
  */
 @Global()
 @Module({
-  imports: [ConfigModule.forRoot(), AuthGuard],
+  imports: [ConfigModule.forRoot(), AuthGuard, InternalGuard],
   providers: [CommonService, FirebaseAuthService],
   exports: [
     CommonService,
@@ -31,6 +32,7 @@ import {AuthGuard} from './guard/auth.guard'
     }),
     FirebaseAuthService,
     AuthGuard,
+    InternalGuard,
   ],
 })
 export class CommonModule {}
