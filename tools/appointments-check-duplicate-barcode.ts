@@ -27,7 +27,6 @@ export enum ResultStatus {
   Rejected = 'rejected',
 }
 
-
 type Result = {
   status: ResultStatus
   value: unknown
@@ -54,7 +53,7 @@ async function fetchAcuity(): Promise<Result[]> {
   let hasMore = true
 
   const results: Result[] = []
-  //TRUNCATE 
+  //TRUNCATE
   const sql = 'TRUNCATE appointments_barcodes'
   conn.query(sql)
 
@@ -62,7 +61,7 @@ async function fetchAcuity(): Promise<Result[]> {
     const usersSnapshot = await database.collection('appointments').offset(offset).limit(500).get()
     offset += usersSnapshot.docs.length
     hasMore = !usersSnapshot.empty
-    
+
     console.log(`Processed ${offset}`)
 
     for (const user of usersSnapshot.docs) {
@@ -76,27 +75,25 @@ async function fetchAcuity(): Promise<Result[]> {
 }
 
 async function checkDuplicateBarCode(appointment) {
-  const appointmentData =appointment.data()
-  if(!appointmentData.barCode){
+  const appointmentData = appointment.data()
+  if (!appointmentData.barCode) {
     return Promise.reject(`Barcode Missing for ${appointment.id}`)
   }
 
   try {
     const sql = 'INSERT INTO appointments_barcodes (barCode) VALUES ?'
     const data = []
-    data.push([
-      appointmentData.barCode
-    ])
-    return new Promise((resolve, reject)=> {
-      conn.query(sql, [data])
-      .on('error', (err) => {
-        reject(err.sqlMessage)
-      })
-      .on('end', () => {
-        resolve('Created')
-      });
+    data.push([appointmentData.barCode])
+    return new Promise((resolve, reject) => {
+      conn
+        .query(sql, [data])
+        .on('error', (err) => {
+          reject(err.sqlMessage)
+        })
+        .on('end', () => {
+          resolve('Created')
+        })
     })
-
   } catch (error) {
     return Promise.reject('Failed')
   }
@@ -108,7 +105,7 @@ async function main() {
     results.forEach((result) => {
       totalCount += 1
       if (result.status === ResultStatus.Fulfilled) {
-        if (result.value=='Created') {
+        if (result.value == 'Created') {
           successCount += 1
         }
       } else {
