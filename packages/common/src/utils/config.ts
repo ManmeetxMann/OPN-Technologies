@@ -1,7 +1,7 @@
 // Load up environment vars
 import * as dotenv from 'dotenv'
 import * as path from 'path'
-import {globalConfig} from '../config/env/global.configuration'
+import {commonConfig} from '../config/env/common.configuration'
 import {envConfig} from '../config/env'
 
 const envSpecificConfig = envConfig()
@@ -19,7 +19,7 @@ export class Config {
       Config.load()
     }
 
-    const config = {...globalConfig, ...envSpecificConfig, ...process.env}
+    const config = {...commonConfig, ...envSpecificConfig, ...process.env}
 
     const variable = config[parameter] as string
     if (!variable && !parameter.startsWith('FEATURE_') && !parameter.startsWith('DEBUG_')) {
@@ -38,6 +38,6 @@ export class Config {
       Config.load()
     }
 
-    return {...globalConfig, ...envSpecificConfig, ...process.env}
+    return {...commonConfig, ...envSpecificConfig, ...process.env}
   }
 }
