@@ -3,9 +3,10 @@ import {Injectable} from '@nestjs/common'
 // Services
 import {FirebaseManager} from '@opn-services/common/services/firebase/firebase.service'
 
-interface AuthUser {
+export interface AuthUser {
   uid: string
   email?: string
+  phoneNumber?: string
   emailVerified: boolean
   customClaims?: Record<string, unknown>
 }
