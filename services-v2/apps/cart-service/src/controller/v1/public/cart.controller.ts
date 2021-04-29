@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Param, Post, UseGuards} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, Post, Put, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiHeader, ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard, AuthUserDecorator} from '@opn-services/common'
@@ -9,6 +9,7 @@ import {
   CheckoutResponseDto,
   PaymentAuthorizationRequestDto,
   PaymentAuthorizationResponseDto,
+  CartUpdateRequestDto,
 } from '@opn-services/cart/dto'
 import {UserCardService} from '@opn-services/cart/service/user-cart.service'
 import {StripeService} from '@opn-services/cart/service/stripe.service'
@@ -59,6 +60,17 @@ export class CartController {
     }
 
     await this.userCardService.addItems(userId, organizationId, cartItems.items)
+    return ResponseWrapper.actionSucceed(null)
+  }
+
+  @Put('')
+  async updateCart(
+    @AuthUserDecorator() authUser,
+    @Body() cartItems: CartUpdateRequestDto,
+  ): Promise<ResponseWrapper<void>> {
+    const userOrgId = `${authUser.authUserId}_${authUser.requestOrganizationId}`
+
+    await this.userCardService.updateItem(userOrgId, cartItems)
     return ResponseWrapper.actionSucceed(null)
   }
 

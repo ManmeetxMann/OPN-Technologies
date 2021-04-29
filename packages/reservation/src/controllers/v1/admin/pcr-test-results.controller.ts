@@ -203,7 +203,7 @@ class AdminPCRTestResultController implements IControllerBase {
 
       const pcrResultRecorded = await this.pcrTestResultsService.handlePCRResultSaveAndSend({
         metaData,
-        resultAnalysis: resultAnalysis,
+        resultAnalysis,
         barCode,
         isSingleResult: true,
         sendUpdatedResults,

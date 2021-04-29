@@ -79,6 +79,7 @@ export type AppointmentDBModel = {
   testType: TestTypes
   labId?: string
   scheduledPushesToSend?: Array<ReservationPushTypes>
+  checkedInOn?: firestore.Timestamp
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
@@ -168,6 +169,7 @@ export enum TestTypes {
   Antibody_All = 'Antibody_All',
   Antibody_IgM = 'Antibody_IgM',
   PulseOxygenCheck = 'PulseOxygenCheck',
+  ExpressPCR = 'ExpressPCR',
   allExceptAntigen = 'allExceptAntigen', // @TODO Remove this after correcting flag
 }
 
