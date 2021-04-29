@@ -1,10 +1,10 @@
 // NestJs
 import {NestFactory} from '@nestjs/core'
-import {Module, ValidationPipe, MiddlewareConsumer, RequestMethod} from '@nestjs/common'
+import {MiddlewareConsumer, Module, RequestMethod, ValidationPipe} from '@nestjs/common'
 import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 
 // Common
-import {CommonModule, AuthMiddleware, createSwagger} from '@opn-services/common'
+import {AuthMiddleware, CommonModule, createSwagger} from '@opn-services/common'
 
 // Services
 import {corsOptions} from '@opn-services/common/configuration/cors.configuration'
@@ -14,11 +14,11 @@ import {UserCardService} from '@opn-services/cart/service/user-cart.service'
 import {StripeService} from '@opn-services/cart/service/stripe.service'
 
 // Controllers
-import {CartController} from './controller/public/v1/cart.controller'
-
+import {CartController} from './controller/v1/public/cart.controller'
+import {CartInternalController} from './controller/v1/internal/cart.controller'
 @Module({
   imports: [CommonModule, StripeService, AppoinmentService, UserService],
-  controllers: [CartController],
+  controllers: [CartController, CartInternalController],
   providers: [UserCardService, StripeService, AppoinmentService, UserService],
 })
 class App {

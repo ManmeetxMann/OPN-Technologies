@@ -11,7 +11,8 @@
 				"tool:appointments-finance": "ts-node ./appointments-finance",
 				"tool:non-org-packages-details": "ts-node ./non-org-packages-details",
 				"tool:create-firebase-token": "ts-node ./create-firebase-token",
-				"tool:get-stripe-payment": "ts-node ./get-stripe-payment-id"
+				"tool:get-stripe-payment": "ts-node ./get-stripe-payment-id",
+				"tool:appointments-check-duplicate-barcode": "ts-node ./appointments-check-duplicate-barcode"
 		},
 		"author": "",
 		"license": "Appropriate",

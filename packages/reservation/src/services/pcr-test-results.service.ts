@@ -89,6 +89,7 @@ import {PulseOxygenService} from './pulse-oxygen.service'
 import {BulkTestResultRequest, TestResultsMetaData} from '../models/test-results'
 import {AntibodyAllPDFContent} from '../templates/antibody-all'
 import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
+import {normalizeAnalysis} from '../utils/analysis.helper'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -310,6 +311,7 @@ export class PCRTestResultsService {
       date,
       searchQuery,
       labId,
+      userId,
     }: PcrTestResultsListRequest,
     isLabUser: boolean,
     isClinicUser: boolean,
@@ -380,6 +382,15 @@ export class PCRTestResultsService {
         key: 'result',
         operator: DataModelFieldMapOperatorType.Equals,
         value: result,
+      })
+    }
+
+    if (userId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'userId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: userId,
       })
     }
 
@@ -799,7 +810,8 @@ export class PCRTestResultsService {
     //Add Test Results to Waiting Result
     const pcrResultDataForDbUpdate = {
       resultMetaData: metaData,
-      resultAnalysis,
+      resultAnalysis:
+        testResult.testType === TestTypes.PCR ? normalizeAnalysis(resultAnalysis) : resultAnalysis,
       barCode,
       deadline: appointment.deadline, //TODO: Remove
       result: finalResult,

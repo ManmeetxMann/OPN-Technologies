@@ -203,7 +203,7 @@ class AdminPCRTestResultController implements IControllerBase {
 
       const pcrResultRecorded = await this.pcrTestResultsService.handlePCRResultSaveAndSend({
         metaData,
-        resultAnalysis: resultAnalysis,
+        resultAnalysis,
         barCode,
         isSingleResult: true,
         sendUpdatedResults,
@@ -271,6 +271,7 @@ class AdminPCRTestResultController implements IControllerBase {
         date,
         testType,
         searchQuery,
+        userId,
       } = req.query as PcrTestResultsListRequest
       if (!barCode && !date) {
         throw new BadRequestException('One of the "barCode" or "date" should exist')
@@ -288,6 +289,7 @@ class AdminPCRTestResultController implements IControllerBase {
           testType,
           searchQuery,
           labId,
+          userId,
         },
         isLabUser,
         isClinicUser,

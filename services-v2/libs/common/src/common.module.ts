@@ -1,6 +1,6 @@
 // NestJs
 import {ConfigModule} from '@nestjs/config'
-import {Module, Global} from '@nestjs/common'
+import {Global, Module} from '@nestjs/common'
 
 // Libs
 // import * as Joi from 'joi'
@@ -12,6 +12,8 @@ import {FirebaseAuthService} from './services/auth/firebase-auth.service'
 // Guards
 import {AuthGuard} from './guard/auth.guard'
 
+import {Config} from '@opn-common-v1/utils/config'
+
 /**
  * TODO:
  * 1. Joi model for env variables
@@ -19,7 +21,12 @@ import {AuthGuard} from './guard/auth.guard'
  */
 @Global()
 @Module({
-  imports: [ConfigModule.forRoot(), AuthGuard],
+  imports: [
+    ConfigModule.forRoot({
+      load: [Config.getAll],
+    }),
+    AuthGuard,
+  ],
   providers: [CommonService, FirebaseAuthService],
   exports: [
     CommonService,

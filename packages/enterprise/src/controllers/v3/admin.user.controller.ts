@@ -15,6 +15,9 @@ import {OrganizationGroup} from '../../models/organization'
 import {flatten} from 'lodash'
 import {AuthUser} from '../../../../common/src/data/user'
 import {UserSyncService} from '../../services/user-sync-service'
+import {LogInfo} from '../../../../common/src/utils/logging-setup'
+import {getUserId} from '../../../../common/src/utils/auth'
+import {UserLogsEvents as events} from '../../types/new-user'
 
 const userService = new UserService()
 const organizationService = new OrganizationService()
@@ -119,6 +122,11 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
       delegates: [],
     })
 
+    LogInfo(events.createUser, events.createUser, {
+      newUser: user,
+      createdBy: getUserId(res.locals.authenticatedUser),
+    })
+
     await organizationService.addUserToGroup(organizationId, groupId, user.id)
 
     if (memberId) {
@@ -138,9 +146,15 @@ const updateUser: Handler = async (req, res, next): Promise<void> => {
   try {
     const {organizationId, groupId, ...source} = req.body as UpdateUserByAdminRequest
     const {userId} = req.params
+    const oldUser = await userService.getById(userId)
     const updatedUser = await userService.updateByAdmin(userId, source)
 
     await userSyncService.updateByAdmin(updatedUser.id, source)
+    LogInfo(events.updateUser, events.updateUser, {
+      oldUser,
+      updatedUser,
+      updatedBy: getUserId(res.locals.authenticatedUser),
+    })
 
     // Assert that the group exists
     await organizationService.getGroup(organizationId, groupId)

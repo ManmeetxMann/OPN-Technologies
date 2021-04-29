@@ -5,6 +5,8 @@ import {
   createPCRTestResult,
   deletePCRTestResultByTestDataCreator,
 } from '../../../__seeds__/pcr-test-results'
+import {createComment, deleteCommentByTestDataCreator} from '../../../__seeds__/comments'
+import {createUser} from '../../../__seeds__/user'
 
 //jest.spyOn(global.console, 'error').mockImplementation()
 //jest.spyOn(global.console, 'info').mockImplementation()
@@ -19,9 +21,13 @@ const deadlineSameDay = `${dateForAppointments}T23:59:00`
 const organizationId = 'TEST1'
 const labID1 = 'Lab1'
 const barCode = 'BAR1'
+const pcrTestId = `commentPcrTestId1`
+const commentTestId = 'commentTestId1'
+const userId = 'USER1'
 
 describe('PCRTestResultController', () => {
   beforeAll(async () => {
+    await createUser({id: userId, organizationIds: [organizationId]}, testDataCreator)
     await deletePCRTestResultByTestDataCreator(testDataCreator)
     await createPCRTestResult(
       {
@@ -49,6 +55,16 @@ describe('PCRTestResultController', () => {
       },
       testDataCreator,
     )
+    await createPCRTestResult(
+      {
+        dateTime: dateTimeForAppointment7AM,
+        deadline: deadlineSameDay,
+        labId: labID1,
+        id: pcrTestId,
+      },
+      testDataCreator,
+    )
+    await createComment({testResultId: pcrTestId, id: commentTestId}, testDataCreator)
     await createPCRTestResult(
       {
         dateTime: dateTimeForAppointment7AM,
@@ -81,7 +97,7 @@ describe('PCRTestResultController', () => {
       const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}`
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
-      expect(result.body.data.length).toBe(4)
+      expect(result.body.data.length).toBe(5)
       done()
     })
 
@@ -102,7 +118,7 @@ describe('PCRTestResultController', () => {
         .set('labid', labID1)
         .set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
-      expect(result.body.data.length).toBe(1)
+      expect(result.body.data.length).toBe(2)
       done()
     })
 
@@ -122,7 +138,7 @@ describe('PCRTestResultController', () => {
         .get(url)
         .set('authorization', 'Bearer CorporateUserForTEST1')
       expect(result.status).toBe(200)
-      expect(result.body.data.length).toBe(3)
+      expect(result.body.data.length).toBe(4)
       done()
     })
 
@@ -177,9 +193,47 @@ describe('PCRTestResultController', () => {
       expect(result.status).toBe(200)
       done()
     })
+
+    test('comment to pcr results successfully', async (done) => {
+      const url = `/reservation/admin/api/v1/test-results/${pcrTestId}/comment`
+      const result = await request(server.app)
+        .post(url)
+        .set('authorization', 'Bearer LabUser')
+        .send({
+          comment: 'Hi, my testing comment',
+          attachmentUrls: ['https://via.placeholder.com/200'],
+          internal: false,
+        })
+      expect(result.status).toBe(200)
+      expect(typeof result.body.data.id).toBe('string')
+      done()
+    })
+    test('reply to a comment successfully', async (done) => {
+      const url = `/reservation/admin/api/v1/test-results/${pcrTestId}/comment/${commentTestId}/reply`
+      const result = await request(server.app)
+        .post(url)
+        .set('authorization', 'Bearer LabUser')
+        .send({
+          reply: 'My testing reply comment',
+          attachmentUrls: ['https://via.placeholder.com/210'],
+        })
+      expect(result.status).toBe(200)
+      done()
+    })
+    test('list comments successfully', async (done) => {
+      const url = `/reservation/admin/api/v1/test-results/${pcrTestId}/comment`
+      const result = await request(server.app)
+        .get(url)
+        .set('authorization', 'Bearer LabUser')
+        .send()
+      console.log(result)
+      expect(result.status).toBe(200)
+      done()
+    })
   })
 
   afterAll(async () => {
     await deletePCRTestResultByTestDataCreator(testDataCreator)
+    await deleteCommentByTestDataCreator(pcrTestId)
   })
 })

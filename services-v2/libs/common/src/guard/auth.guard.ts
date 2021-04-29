@@ -1,6 +1,6 @@
 import {CanActivate, ExecutionContext, ForbiddenException, Injectable} from '@nestjs/common'
 import {Reflector} from '@nestjs/core'
-import {RolesData, RequiredUserPermission} from '../types/authorization'
+import {RequiredUserPermission, RolesData} from '../types/authorization'
 import {AdminProfile} from '@opn-common-v1/data/admin'
 import {User} from '@opn-common-v1/data/user'
 
@@ -17,7 +17,7 @@ export class AuthGuard implements CanActivate {
 
     const req = context.switchToHttp().getRequest()
 
-    await this.validateRoles(req.locals.authUser, rolesData)
+    await this.validateRoles(req.raw.locals.authUser, rolesData)
 
     return true
   }

@@ -3,10 +3,10 @@ import {
   Body,
   Controller,
   Get,
+  NotFoundException,
   Param,
   Post,
   Put,
-  NotFoundException,
   Query,
   UseGuards,
 } from '@nestjs/common'
@@ -15,19 +15,22 @@ import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard} from '@opn-services/common/guard'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
+import {UserLogsEvents as events} from '@opn-services/common/types/activity-logs'
 import {Roles} from '@opn-services/common/decorator'
-import {assignWithoutUndefined, ResponseStatusCodes} from '@opn-services/common/dto'
-import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-auth.service'
 
+import {assignWithoutUndefined, ResponseStatusCodes} from '@opn-services/common/dto'
+import {AuthUserDecorator} from '@opn-services/common/decorator'
 import {Patient} from '../../../model/patient/patient.entity'
 import {
   DependantCreateDto,
   PatientCreateDto,
   PatientFilter,
-  patientProfileDto,
   PatientUpdateDto,
+  patientProfileDto,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
+import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-auth.service'
+import {LogInfo} from '@opn-services/common/utils/logging'
 
 @ApiTags('Patients - Admin')
 @ApiBearerAuth()
@@ -78,6 +81,7 @@ export class AdminPatientController {
   @Put('/:patientId')
   @Roles([RequiredUserPermission.OPNAdmin])
   async update(
+    @AuthUserDecorator() authUser,
     @Param('patientId') id: string,
     @Body() patientUpdateDto: PatientUpdateDto,
   ): Promise<ResponseWrapper> {
@@ -86,8 +90,13 @@ export class AdminPatientController {
     if (!patientExists) {
       throw new NotFoundException('User with given id not found')
     }
+    const newUser = await this.patientService.updateProfile(id, patientUpdateDto)
 
-    await this.patientService.updateProfile(id, patientUpdateDto)
+    LogInfo(events.update, events.updateProfile, {
+      oldUser: patientExists,
+      newUser: newUser,
+      updatedBy: authUser.id,
+    })
 
     return ResponseWrapper.actionSucceed()
   }

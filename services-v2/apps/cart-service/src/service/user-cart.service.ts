@@ -1,29 +1,33 @@
-import {Injectable} from '@nestjs/common'
+import {Injectable, NotFoundException} from '@nestjs/common'
 import {Stripe} from 'stripe'
 
 // V1 Common
 import DataStore from '@opn-common-v1/data/datastore'
 import {AcuityRepository} from '@opn-reservation-v1/respository/acuity.repository'
 import {decodeAvailableTimeId} from '@opn-reservation-v1/utils/base64-converter'
+import {BadRequestException} from '@opn-services/common/exception'
+import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 
 // Libs
 import * as _ from 'lodash'
 import {v4 as uuidv4} from 'uuid'
 
-// Provider
-import {UserCartRepository, UserCartItemRepository} from '../repository/user-cart.repository'
+// Repositories
+import {UserCartItemRepository, UserCartRepository} from '../repository/user-cart.repository'
 import {UserOrderRepository} from '../repository/user-order.repository'
+import {AcuityTypesRepository} from '../repository/acuity-types.repository'
 
 // Models
-import {CardItemDBModel, CartItemStatus, OrderStatusDBModel} from '../model/cart'
+import {CardItemDBModel, CartItemStatus} from '../model/cart'
 import {CartValidationItemDto} from '../dto'
 
 import {
   CartAddDto,
+  CartItemDto,
   CartResponseDto,
   CartSummaryDto,
-  CartItemDto,
   PaymentAuthorizationCartDto,
+  CartUpdateRequestDto,
 } from '../dto'
 
 /**
@@ -33,8 +37,10 @@ import {
 export class UserCardService {
   private dataStore = new DataStore()
   private acuityRepository = new AcuityRepository()
+  private userRepository = new UserRepository(this.dataStore)
   private userCartRepository = new UserCartRepository(this.dataStore)
   private userOrderRepository = new UserOrderRepository(this.dataStore)
+  private acuityTypesRepository = new AcuityTypesRepository(this.dataStore)
 
   private hstTax = 0.13
   public timeSlotNotAvailMsg = 'Time Slot Unavailable: Book Another Slot'
@@ -178,8 +184,8 @@ export class UserCardService {
       cartItemId: cartDB.cartItemId,
       label: cartDB.appointmentType.name,
       subLabel: cartDB.appointment.calendarName,
-      patientName: `${cartDB.patient.lastName} ${cartDB.patient.lastName}`,
-      date: cartDB.appointment.date,
+      patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
+      date: new Date(cartDB.appointment.time).toISOString(),
       price: parseFloat(cartDB.appointmentType.price),
     }))
 
@@ -189,14 +195,54 @@ export class UserCardService {
     }
   }
 
+  async updateUserStripeCustomerId(id: string, stripeCustomerId: string) {
+    this.userRepository.updateProperty(id, 'stripeCustomerId', stripeCustomerId)
+  }
+
+  async syncAppointmentTypes(): Promise<boolean> {
+    const isNumeric = (text: string) => !isNaN(parseFloat(text))
+    const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
+
+    if (!appointmentTypes) {
+      throw new BadRequestException('No appointments types fetched')
+    }
+
+    // Create update each appointment type id
+    const result = []
+    for (const appointmentType of appointmentTypes) {
+      const id = appointmentType.id.toString()
+      const price = appointmentType.price
+      const name = appointmentType.name
+
+      // Don't create update if no valid price
+      if (!isNumeric(price)) {
+        break
+      }
+      let createUpdateResult = null
+      const acuityType = await this.acuityTypesRepository.get(id)
+      if (!acuityType) {
+        createUpdateResult = await this.acuityTypesRepository.add({id, price, name})
+      } else {
+        createUpdateResult = await this.acuityTypesRepository.update({id, price, name})
+      }
+
+      result.push(createUpdateResult)
+    }
+
+    // Success if all are created
+    const isSuccess = appointmentTypes.length === result.length
+
+    return isSuccess
+  }
+
   async addItems(userId: string, organizationId: string, items: CartAddDto[]): Promise<void> {
     const userOrgId = `${userId}_${organizationId}`
-    const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
+    const appointmentTypes = await this.acuityTypesRepository.fetchAll()
 
     const cardItemDdModel = items.map(item => {
       const appointment = decodeAvailableTimeId(item.slotId)
       const appointmentType = appointmentTypes.find(
-        appointmentType => appointmentType.id === appointment.appointmentTypeId,
+        appointmentType => appointmentType.id === appointment.appointmentTypeId.toString(),
       )
       return {
         cartItemId: uuidv4(),
@@ -212,12 +258,37 @@ export class UserCardService {
     await this.userCartRepository.addBatch(userOrgId, cardItemDdModel)
   }
 
+  async updateItem(userOrgId: string, cartItems: CartUpdateRequestDto): Promise<void> {
+    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
+    const cartItemsData = await userCartItemRepository.findWhereEqual(
+      'cartItemId',
+      cartItems.cartItemId,
+    )
+
+    const cartItemExist = cartItemsData[0]
+    if (!cartItemExist) {
+      throw new NotFoundException('userCart-item with given id not found')
+    }
+
+    const appointment = decodeAvailableTimeId(cartItems.slotId)
+
+    await userCartItemRepository.update({
+      id: cartItemExist.id,
+      cartItemId: cartItems.cartItemId,
+      patient: _.omit(cartItems, ['slotId']),
+      appointment,
+      appointmentType: {
+        price: cartItemExist.appointmentType.price,
+        name: cartItemExist.appointmentType.name,
+      },
+    })
+  }
+
   async saveOrderInformation(
     appointmentCreateStatuses: CartItemStatus[],
     paymentIntent: Stripe.PaymentIntent,
   ) {
     await this.userOrderRepository.add({
-      status: OrderStatusDBModel.InProgress,
       cartItems: appointmentCreateStatuses,
       payment: {
         ..._.pick(paymentIntent, [
@@ -267,7 +338,6 @@ export class UserCardService {
   }> {
     const cartDdItems = await this.fetchUserAllCartItem(userId, organizationId)
     const cardValidation = await this.validateCart(cartDdItems)
-    console.log(cardValidation)
     return {cartDdItems, cardValidation}
   }
 

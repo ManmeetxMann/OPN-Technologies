@@ -236,6 +236,12 @@ export class UserService implements UserServiceInterface {
     return this.userRepository.findWhereEqual('email', email).then((results) => results[0])
   }
 
+  getByPhoneNumber(phoneNumber: string): Promise<AuthUser> {
+    return this.userRepository
+      .findWhereEqual('phoneNumber', phoneNumber)
+      .then((results) => results[0])
+  }
+
   getAllByIds(userIds: string[]): Promise<AuthUser[]> {
     return Promise.all(
       _.chunk(userIds, 10).map((chunk) => this.userRepository.findWhereIdIn(chunk)),

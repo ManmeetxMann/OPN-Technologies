@@ -1,13 +1,13 @@
 import {
-  IsNotEmpty,
-  IsString,
-  IsNumber,
-  IsBoolean,
-  IsOptional,
-  IsDefined,
   IsArray,
-  ValidateNested,
+  IsBoolean,
+  IsDefined,
+  IsNotEmpty,
+  IsNumber,
   IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
 } from 'class-validator'
 import {Type} from 'class-transformer'
 
@@ -83,6 +83,11 @@ export class CartAddDto {
 
   @ApiProperty()
   @IsString()
+  @IsOptional()
+  email: string
+
+  @ApiProperty()
+  @IsString()
   @IsNotEmpty()
   gender: string
 
@@ -139,6 +144,13 @@ export class CartAddDto {
   @ApiProperty()
   @IsString()
   userId: string
+}
+
+export class CartUpdateRequestDto extends CartAddDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  cartItemId: string
 }
 
 export class CartAddRequestDto {
