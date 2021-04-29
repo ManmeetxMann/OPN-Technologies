@@ -3,6 +3,7 @@ import {now} from './times'
 import {firestore} from 'firebase-admin'
 
 // Must be required, otherwise brake when imported to v2
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const moment = require('moment-timezone')
 
 // some timestamps are invalid and the "day" part is actually
