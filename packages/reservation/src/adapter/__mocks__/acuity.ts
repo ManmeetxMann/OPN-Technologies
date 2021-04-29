@@ -307,10 +307,10 @@ abstract class AcuityAdapter {
   }
   */
   protected async getAvailableSlotsList(
-    appointmentTypeID: number,
-    date: string,
-    calendarID: number,
-    timezone: string,
+    _: number,
+    __: string,
+    ___: number,
+    ____: string,
   ): Promise<AcuityAvailableSlots[]> {
     return [
       {time: '2021-05-02T08:05:00-0400', slotsAvailable: 2},
