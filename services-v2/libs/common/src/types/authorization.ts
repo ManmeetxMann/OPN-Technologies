@@ -27,3 +27,7 @@ export type RolesData = {
   requiredRoles?: RequiredUserPermission[]
   requireOrg: boolean
 }
+
+export enum InternalAuthTypes {
+  OpnSchedulerKey = 'OpnSchedulerKey',
+}

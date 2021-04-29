@@ -11,6 +11,7 @@ import {FirebaseAuthService} from './services/auth/firebase-auth.service'
 
 // Guards
 import {AuthGuard} from './guard/auth.guard'
+import {InternalGuard} from './guard/internal.guard'
 
 import {Config} from '@opn-common-v1/utils/config'
 
@@ -26,6 +27,7 @@ import {Config} from '@opn-common-v1/utils/config'
       load: [Config.getAll],
     }),
     AuthGuard,
+    InternalGuard
   ],
   providers: [CommonService, FirebaseAuthService],
   exports: [
@@ -38,6 +40,7 @@ import {Config} from '@opn-common-v1/utils/config'
     }),
     FirebaseAuthService,
     AuthGuard,
+    InternalGuard,
   ],
 })
 export class CommonModule {}

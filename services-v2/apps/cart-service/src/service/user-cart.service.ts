@@ -29,6 +29,9 @@ import {
   PaymentAuthorizationCartDto,
   CartUpdateRequestDto,
 } from '../dto'
+import {firestoreTimeStampToUTC} from '@opn-reservation-v1/utils/datetime.helper'
+import * as moment from 'moment'
+import {ConfigService} from '@nestjs/config'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -44,6 +47,9 @@ export class UserCardService {
 
   private hstTax = 0.13
   public timeSlotNotAvailMsg = 'Time Slot Unavailable: Book Another Slot'
+  private cartChunkSize = 20
+
+  constructor(private configService: ConfigService) {}
 
   private buildPaymentSummary(cartItems: CartItemDto[]): CartSummaryDto[] {
     const round = num => Math.round(num * 100) / 100
@@ -170,6 +176,27 @@ export class UserCardService {
     }
 
     return {items: invalidItems, isValid}
+  }
+
+  async cleanupUserCart(): Promise<void> {
+    const expirationHours = this.configService.get('CART_EXPIRATION_HOURS')
+    let iteration = 1
+    let done = false
+    while (!done) {
+      const userCarts = await this.userCartRepository.fetchAllWithPagination(iteration, this.cartChunkSize)
+      for (const userCart of userCarts) {
+        const updatedDateMoment = firestoreTimeStampToUTC(userCart.updateOn).add(
+          expirationHours,
+          'hours',
+        )
+        const expirationDateMoment = moment().utc()
+        if (expirationDateMoment.isBefore(updatedDateMoment)) {
+          await this.userCartRepository.delete(userCart.id)
+        }
+      }
+      done = userCarts.length === 0
+      iteration++
+    }
   }
 
   async cartItemsCount(userId: string, organizationId: string): Promise<number> {
