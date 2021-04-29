@@ -1,4 +1,4 @@
-import {Injectable} from '@nestjs/common'
+import {Injectable, NotFoundException} from '@nestjs/common'
 import {Stripe} from 'stripe'
 
 // V1 Common
@@ -27,6 +27,7 @@ import {
   CartResponseDto,
   CartSummaryDto,
   PaymentAuthorizationCartDto,
+  CartUpdateRequestDto,
 } from '../dto'
 
 /**
@@ -183,7 +184,7 @@ export class UserCardService {
       cartItemId: cartDB.cartItemId,
       label: cartDB.appointmentType.name,
       subLabel: cartDB.appointment.calendarName,
-      patientName: `${cartDB.patient.lastName} ${cartDB.patient.lastName}`,
+      patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
       date: new Date(cartDB.appointment.time).toISOString(),
       price: parseFloat(cartDB.appointmentType.price),
     }))
@@ -255,6 +256,32 @@ export class UserCardService {
     })
 
     await this.userCartRepository.addBatch(userOrgId, cardItemDdModel)
+  }
+
+  async updateItem(userOrgId: string, cartItems: CartUpdateRequestDto): Promise<void> {
+    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
+    const cartItemsData = await userCartItemRepository.findWhereEqual(
+      'cartItemId',
+      cartItems.cartItemId,
+    )
+
+    const cartItemExist = cartItemsData[0]
+    if (!cartItemExist) {
+      throw new NotFoundException('userCart-item with given id not found')
+    }
+
+    const appointment = decodeAvailableTimeId(cartItems.slotId)
+
+    await userCartItemRepository.update({
+      id: cartItemExist.id,
+      cartItemId: cartItems.cartItemId,
+      patient: _.omit(cartItems, ['slotId']),
+      appointment,
+      appointmentType: {
+        price: cartItemExist.appointmentType.price,
+        name: cartItemExist.appointmentType.name,
+      },
+    })
   }
 
   async saveOrderInformation(
