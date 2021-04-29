@@ -93,23 +93,23 @@ export class PatientCreateDto {
   @IsString()
   travelCountry: string
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsBoolean()
   agreeToConductFHHealthAssessment: boolean
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsBoolean()
   shareTestResultWithEmployer: boolean
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsBoolean()
   readTermsAndConditions: boolean
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsBoolean()
   receiveResultsViaEmail: boolean
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsBoolean()
   receiveNotificationsFromGov: boolean
 
