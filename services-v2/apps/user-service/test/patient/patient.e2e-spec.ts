@@ -1,8 +1,9 @@
 import {Test, TestingModule} from '@nestjs/testing'
-import {FirebaseAuthService as FirebaseAuthServiceReal} from '@opn-services/common/services/auth/firebase-auth.service'
-import {FirebaseAuthServiceMock} from '../__mocks__/firebase-auth.service.mock'
 import * as request from 'supertest'
 import {App} from '../../src/main'
+
+jest.mock('@opn-services/common/services/auth/firebase-auth.service')
+
 //TODO: fix post & put scenarios
 describe('PatientController (e2e)', () => {
   let app
@@ -34,14 +35,8 @@ describe('PatientController (e2e)', () => {
   }
 
   beforeAll(async () => {
-    const FirebaseAuthService = {
-      provide: FirebaseAuthServiceReal,
-      useClass: FirebaseAuthServiceMock,
-    }
-
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [App],
-      providers: [FirebaseAuthService],
     }).compile()
 
     app = moduleFixture.createNestApplication()

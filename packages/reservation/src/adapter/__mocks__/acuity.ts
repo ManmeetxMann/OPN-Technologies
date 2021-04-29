@@ -5,6 +5,7 @@ import {Config} from '../../../../common/src/utils/config'
 import {AppointmentAcuityResponse} from '../../models/appointment'
 import {AppointmentTypes} from '../../models/appointment-types'
 import {Calendar} from '../../models/calendar'
+import {AcuityAvailableSlots} from '../../models/acuity'
 //import {AcuityCouponCodeResponse} from '../../models/coupons'
 import {Certificate} from '../../models/packages'
 
@@ -304,16 +305,21 @@ abstract class AcuityAdapter {
   ): Promise<{date: string}[]> {
     return
   }
-
+  */
   protected async getAvailableSlotsList(
     appointmentTypeID: number,
     date: string,
     calendarID: number,
     timezone: string,
   ): Promise<AcuityAvailableSlots[]> {
-    return
+    return [
+      {time: '2021-05-02T08:05:00-0400', slotsAvailable: 2},
+      {time: '2021-05-02T08:10:00-0400', slotsAvailable: 2},
+      {time: '2021-05-02T08:15:00-0400', slotsAvailable: 2},
+      {time: '2021-05-02T08:20:00-0400', slotsAvailable: 2},
+    ]
   }
-  */
+
   private customFieldsToAppoinment(
     rawAcuityAppointment: RawAcuityResponse,
   ): AppointmentAcuityResponse {
