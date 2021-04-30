@@ -58,12 +58,12 @@ export class PatientAddresses {
   @ApiProperty({required: true})
   patientId: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty({required: true})
   @IsString()
   homeAddress: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty({required: true})
   @IsString()
   homeAddressUnit: string
@@ -73,17 +73,17 @@ export class PatientAddresses {
   @IsString()
   postalCode: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty()
   @IsString()
   city: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty()
   @IsString()
   province: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty()
   @IsString()
   country: string
@@ -237,12 +237,12 @@ export class Patient extends Auditable {
   @IsString()
   phoneNumber?: string
 
-  @Column({nullable: false})
+  @Column({nullable: true, default: null})
   @ApiProperty()
   @IsString()
   registrationId?: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty()
   @IsString()
   photoUrl?: string

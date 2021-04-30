@@ -11,7 +11,7 @@ import {PublicDecorator} from '@opn-services/common/decorator/public.decorator'
 @ApiTags('Patients')
 @ApiBearerAuth()
 @Controller('/api/v1')
-export class PatientController {
+export class RapidHomeController {
   constructor(private patientService: PatientService) {}
 
   @Post('/home-test-patients')
@@ -19,9 +19,10 @@ export class PatientController {
     @Body() homeTestPatientBody: HomeTestPatientDto,
     @PublicDecorator() firebaseAuthUser,
   ): Promise<ResponseWrapper<string>> {
-    const patient = await this.patientService.createProfile(<PatientCreateDto>{
+    const patient = await this.patientService.createHomePatientProfile({
       ...homeTestPatientBody,
       phoneNumber: firebaseAuthUser.phoneNumber,
+      authUserId: firebaseAuthUser.uid,
     })
 
     return ResponseWrapper.actionSucceed(patient.idPatient)

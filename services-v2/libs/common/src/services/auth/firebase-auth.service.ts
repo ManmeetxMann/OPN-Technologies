@@ -91,6 +91,7 @@ export class FirebaseAuthService {
         return {
           uid: decodedToken.uid,
           email: decodedToken.email,
+          phoneNumber: decodedToken.phone_number,
           emailVerified: decodedToken.email_verified ?? false,
         }
       }

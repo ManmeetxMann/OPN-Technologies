@@ -17,15 +17,18 @@ import {GroupService} from './service/organization/group.service'
 import {PatientService} from './service/patient/patient.service'
 
 import {AuthMiddleware, CommonModule, createSwagger} from '@opn-services/common'
+import {RapidHomeController} from './controller/v1/public/rapid-home.controller'
 
 @Module({
   imports: [CommonModule, DatabaseConfiguration, RepositoryConfiguration],
-  controllers: [AdminPatientController, PatientController],
+  controllers: [AdminPatientController, PatientController, RapidHomeController],
   providers: [OrganizationService, LocationService, GroupService, PatientService],
 })
 class App {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(AuthMiddleware).forRoutes(AdminPatientController, PatientController)
+    consumer
+      .apply(AuthMiddleware)
+      .forRoutes(AdminPatientController, PatientController, RapidHomeController)
   }
 }
 
