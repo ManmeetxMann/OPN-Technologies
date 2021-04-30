@@ -1,11 +1,14 @@
-import {Controller, Get, Param} from '@nestjs/common'
-import {ApiTags} from '@nestjs/swagger'
+import {Controller, Get, Param, UseGuards} from '@nestjs/common'
+import {ApiHeader, ApiTags} from '@nestjs/swagger'
+
+import {CaptchaGuard} from '@opn-services/common/guard'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {ResourceNotFoundException} from '@opn-services/common/exception/resource-not-found-exception'
+
 import {EncryptionService} from '@opn-common-v1/service/encryption/encryption-service'
+
 import {RapidHomeKitCodeService} from '../../../service/patient/rapid-home-kit-code.service'
 
-//TODO: captcha token check
 @ApiTags('Rapid Home Kit Codes')
 @Controller('/api/v1/rapid-home-kit-codes')
 export class RapidHomeKitCodeController {
@@ -14,6 +17,8 @@ export class RapidHomeKitCodeController {
   constructor(private homeKitCodeService: RapidHomeKitCodeService) {}
 
   @Get('/:code')
+  @ApiHeader({name: 'captcha-token', required: true})
+  @UseGuards(CaptchaGuard)
   async checkCode(@Param('code') code: string): Promise<ResponseWrapper> {
     const [homeKitCode] = await this.homeKitCodeService.get(code)
     if (!homeKitCode) {
