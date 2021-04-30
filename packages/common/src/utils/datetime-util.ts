@@ -1,7 +1,10 @@
 import {now} from './times'
 
-import moment from 'moment-timezone'
 import {firestore} from 'firebase-admin'
+
+// Must be required, otherwise brake when imported to v2
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const moment = require('moment-timezone')
 
 // some timestamps are invalid and the "day" part is actually
 // the day of the year. This function accepts a (valid or invalid)
@@ -26,7 +29,7 @@ export type GenericTimestamp = string | moment.Moment | Date | firestore.FieldVa
 // handles strings with the "day of year" bug correctly
 export const safeTimestamp = (timestamp: GenericTimestamp): Date => {
   if (moment.isMoment(timestamp)) {
-    return timestamp.toDate()
+    return moment(timestamp).toDate()
   }
   if (typeof timestamp === 'number') {
     return new Date(timestamp)

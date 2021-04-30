@@ -5,6 +5,7 @@ import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-a
 
 import {User} from '@opn-common-v1/data/user'
 import {UserService as UserServiceV1} from '@opn-common-v1/service/user/user-service'
+import {internalUrls} from '@opn-services/cart/configuration/middleware.configuration'
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
@@ -20,6 +21,13 @@ export class AuthMiddleware implements NestMiddleware {
   /* eslint-disable complexity */
   private async validateAuth(req, res, next) {
     const bearerHeader = req.headers['authorization']
+    if (internalUrls.includes(req.url)) {
+      req.locals = {}
+      req.locals = {
+        opnSchedulerKey: req.headers['opn-scheduler-key'],
+      }
+      return next()
+    }
     if (!bearerHeader) {
       throw new UnauthorizedException('Authorization token required')
     }

@@ -13,6 +13,7 @@ import {CaptchaService} from './services/auth/captcha.service'
 // Guards
 import {AuthGuard} from './guard/auth.guard'
 import {CaptchaGuard} from './guard/captcha.guard'
+import {InternalGuard} from './guard/internal.guard'
 
 import {Config} from '@opn-common-v1/utils/config'
 
@@ -29,6 +30,7 @@ import {Config} from '@opn-common-v1/utils/config'
     }),
     AuthGuard,
     CaptchaGuard,
+    InternalGuard,
   ],
   providers: [CommonService, FirebaseAuthService, CaptchaService],
   exports: [
@@ -43,6 +45,7 @@ import {Config} from '@opn-common-v1/utils/config'
     CaptchaService,
     AuthGuard,
     CaptchaGuard,
+    InternalGuard,
   ],
 })
 export class CommonModule {}
