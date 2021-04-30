@@ -28,7 +28,7 @@ export class PatientController {
   constructor(private patientService: PatientService) {}
 
   @Get('/:patientId')
-  @Roles([RequiredUserPermission.RegUser])
+  @Roles([RequiredUserPermission.RegUser], true)
   async getById(@Param('patientId') id: string): Promise<ResponseWrapper<PatientUpdateDto>> {
     const patient = await this.patientService.getProfilebyId(id)
 
@@ -40,7 +40,7 @@ export class PatientController {
   }
 
   @Post()
-  @Roles([RequiredUserPermission.RegUser])
+  @Roles([RequiredUserPermission.RegUser], true)
   async add(
     @AuthUserDecorator() authUser,
     @Body() patientDto: PatientCreateDto,
@@ -59,7 +59,7 @@ export class PatientController {
   }
 
   @Put('/:patientId')
-  @Roles([RequiredUserPermission.RegUser])
+  @Roles([RequiredUserPermission.RegUser], true)
   async update(
     @Param('patientId') id: string,
     @Body() patientUpdateDto: PatientUpdateDto,
@@ -81,7 +81,7 @@ export class PatientController {
   }
 
   @Post('/:patientId/dependant')
-  @Roles([RequiredUserPermission.RegUser])
+  @Roles([RequiredUserPermission.RegUser], true)
   async addDependents(
     @Param('patientId') delegateId: string,
     @Body() dependantBody: DependantCreateDto,

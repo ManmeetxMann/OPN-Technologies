@@ -1,7 +1,8 @@
 import {Body, Controller, Delete, Get, Param, Post, Put, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiHeader, ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
-import {AuthGuard, AuthUserDecorator} from '@opn-services/common'
+import {RequiredUserPermission} from '@opn-services/common/types/authorization'
+import {AuthGuard, AuthUserDecorator, Roles} from '@opn-services/common'
 
 import {
   CartAddRequestDto,
@@ -34,6 +35,7 @@ export class CartController {
   @ApiHeader({
     name: 'organizationid',
   })
+  @Roles([RequiredUserPermission.RegUser], true)
   async getAll(@AuthUserDecorator() authUser): Promise<ResponseWrapper<CartResponseDto>> {
     const userId = authUser.authUserId
     const organizationId = authUser.requestOrganizationId
@@ -46,6 +48,7 @@ export class CartController {
   @ApiHeader({
     name: 'organizationid',
   })
+  @Roles([RequiredUserPermission.RegUser], true)
   async add(
     @AuthUserDecorator() authUser,
     @Body() cartItems: CartAddRequestDto,
@@ -64,6 +67,7 @@ export class CartController {
   }
 
   @Put('')
+  @Roles([RequiredUserPermission.RegUser], true)
   async updateCart(
     @AuthUserDecorator() authUser,
     @Body() cartItems: CartUpdateRequestDto,
@@ -78,6 +82,7 @@ export class CartController {
   @ApiHeader({
     name: 'organizationid',
   })
+  @Roles([RequiredUserPermission.RegUser], true)
   async getById(
     @AuthUserDecorator() authUser,
     @Param('cartItemId') cartItemId: string,
@@ -97,6 +102,7 @@ export class CartController {
   @ApiHeader({
     name: 'organizationid',
   })
+  @Roles([RequiredUserPermission.RegUser], true)
   async creteEphemeralKeys(@AuthUserDecorator() authUser): Promise<unknown> {
     let stripeCustomerId = authUser.stripeCustomerId
 
@@ -121,6 +127,7 @@ export class CartController {
   @ApiHeader({
     name: 'organizationid',
   })
+  @Roles([RequiredUserPermission.RegUser], true)
   async paymentAuthorization(
     @AuthUserDecorator() authUser,
     @Body() paymentAuthorization: PaymentAuthorizationRequestDto,
@@ -226,6 +233,7 @@ export class CartController {
   @ApiHeader({
     name: 'organizationid',
   })
+  @Roles([RequiredUserPermission.RegUser], true)
   async checkout(@AuthUserDecorator() authUser) {
     const userId = authUser.authUserId
     const organizationId = authUser.requestOrganizationId
