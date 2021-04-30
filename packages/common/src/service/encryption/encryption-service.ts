@@ -1,9 +1,9 @@
-import crypto from 'crypto'
+import * as crypto from 'crypto'
 import {Config} from '../../utils/config'
 
 export class EncryptionService {
   private encryptionKey: Buffer
-  private encryptionIV = Config.get('ENCRYPTION_IV')
+  private encryptionIV = crypto.randomBytes(16)
   private algorithm = 'aes-256-cbc'
 
   constructor() {
