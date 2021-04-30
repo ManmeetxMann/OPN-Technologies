@@ -4,16 +4,19 @@ import {ConfigService} from '@nestjs/config'
 
 @Injectable()
 export class CaptchaService {
-  constructor(private configService: ConfigService) {}
+  private verifyUrl: string
+
+  constructor(private configService: ConfigService) {
+    this.verifyUrl = this.configService.get('CAPTCHA_VERIFY')
+  }
 
   async verify(token: string): Promise<boolean> {
-    const serviceUrl = this.configService.get('CAPTCHA_VERIFY')
     const params = new URLSearchParams({
       secret: this.configService.get('CAPTCHA_KEY'),
       response: token,
     })
 
-    const url = `${serviceUrl}?${params}`
+    const url = `${this.verifyUrl}?${params}`
     const response = await fetch(url, {method: 'POST'})
     const result = await response.json()
 
