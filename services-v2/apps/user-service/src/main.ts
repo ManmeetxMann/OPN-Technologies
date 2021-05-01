@@ -18,6 +18,7 @@ import {PatientService} from './service/patient/patient.service'
 
 import {AuthMiddleware, CommonModule, createSwagger} from '@opn-services/common'
 import {RapidHomeController} from './controller/v1/public/rapid-home.controller'
+import {corsOptions} from '@opn-services/common/configuration/cors.configuration'
 
 @Module({
   imports: [CommonModule, DatabaseConfiguration, RepositoryConfiguration],
@@ -34,6 +35,8 @@ class App {
 
 async function bootstrap() {
   const app = await NestFactory.create(App, new FastifyAdapter())
+
+  app.enableCors(corsOptions)
 
   app.useGlobalPipes(new ValidationPipe())
 

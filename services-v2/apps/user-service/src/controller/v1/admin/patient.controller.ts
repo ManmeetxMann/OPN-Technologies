@@ -15,7 +15,7 @@ import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard} from '@opn-services/common/guard'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
-import {UserLogsEvents as events} from '@opn-services/common/types/activity-logs'
+import {UserFunctions, UserEvent} from '@opn-services/common/types/activity-logs'
 import {Roles} from '@opn-services/common/decorator'
 
 import {assignWithoutUndefined, ResponseStatusCodes} from '@opn-services/common/dto'
@@ -92,7 +92,7 @@ export class AdminPatientController {
     }
     const newUser = await this.patientService.updateProfile(id, patientUpdateDto)
 
-    LogInfo(events.update, events.updateProfile, {
+    LogInfo(UserFunctions.update, UserEvent.updateProfile, {
       oldUser: patientExists,
       newUser: newUser,
       updatedBy: authUser.id,

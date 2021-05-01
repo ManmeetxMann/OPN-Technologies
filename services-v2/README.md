@@ -107,6 +107,11 @@ npm run start:prod [SERVICE_NAME]
 
 npm run start:dev user-service
 npm run start:dev cart-service
+
+# testing
+npm run test
+npm run test user-service
+npm run test cart-service
 ```
 Open http://localhost:8080/api/doc/, enter login:password from .env SWAGGER_BASIC_AUTH_CREDENTIALS
 
