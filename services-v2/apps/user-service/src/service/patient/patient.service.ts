@@ -111,8 +111,7 @@ export class PatientService {
     const patient = await this.createPatient(data)
     data.idPatient = patient.idPatient
 
-    // @TODO discuss a way and implement - this.saveAuth(data)
-    await Promise.all([this.saveAddress(data)])
+    await Promise.all([this.saveAuth(data), this.saveAddress(data)])
 
     return patient
   }
@@ -245,6 +244,7 @@ export class PatientService {
     auth.idPatientAuth = idPatientAuth
     auth.patientId = data.idPatient
     auth.email = data.email
+    auth.phoneNumber = data.phoneNumber
     auth.authUserId = data.authUserId
     return this.patientAuthRepository.save(auth)
   }

@@ -36,10 +36,15 @@ export class PatientAuth {
   @ApiProperty({required: true})
   authUserId: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty()
   @IsEmail()
   email: string
+
+  @Column({nullable: true, default: null})
+  @ApiProperty()
+  @IsString()
+  phoneNumber: string
 }
 
 @Entity('patientAddresses')
