@@ -103,7 +103,8 @@
       "@opn-services/common/(.*)": "<rootDir>/libs/common/src/$1",
       "@opn-services/common": "<rootDir>/libs/common/src",
       "@opn-common-v1/(.*)": "<rootDir>/../packages/common/src/$1",
-      "@opn-common-v1": "<rootDir>/../packages/common/src"
+      "@opn-common-v1": "<rootDir>/../packages/common/src",
+      "^@opn-enterprise-v1/(.*)$": "<rootDir>../packages/enterprise/src/$1"
     }
   }
 }
