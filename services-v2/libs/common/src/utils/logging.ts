@@ -21,12 +21,16 @@ const Logger = bunyan.createLogger({
 })
 
 if (NodeEnv() === 'production') {
-  traceClient.start({
-    samplingRate: 5, // sample 5 traces per second, or at most 1 every 200 milliseconds.
-    ignoreUrls: [/^\/ignore-me/],
-    ignoreMethods: ['options'], // ignore requests with OPTIONS method (case-insensitive).
-  })
+  const traceClientExist = traceClient.get()
+  if (!traceClientExist) {
+    traceClient.start({
+      samplingRate: 5, // sample 5 traces per second, or at most 1 every 200 milliseconds.
+      ignoreUrls: [/^\/ignore-me/],
+      ignoreMethods: ['options'], // ignore requests with OPTIONS method (case-insensitive).
+    })
+  }
 }
+
 export type LogMetaData = {
   appointmentID?: string
   appointmentDateTime?: string
