@@ -1,25 +1,17 @@
+import * as request from 'supertest'
 import {Test, TestingModule} from '@nestjs/testing'
 import {HttpService} from '@nestjs/common'
-import * as request from 'supertest'
 import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 
 import {App} from '../src/main'
 
-// const userID = 'CART_USER_TEST'
-const organizationId = 'CART_ORG_TEST'
-
+import {createUser, deleteUserByIdTestDataCreator} from '@opn-services/test/utils'
 import {cartItem} from './cart-basic.e2e-spec'
-
-const headers = {
-  accept: 'application/json',
-  organizationId: organizationId,
-  Authorization: 'Bearer RegUser',
-}
 
 /**
  * Mock remote dependencies
  */
-jest.mock('@opn-services/common/services/auth/firebase-auth.service')
+jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
 jest.mock('@opn-reservation-v1/adapter/acuity')
 jest.mock('@opn-services/cart/service/stripe.service')
 
@@ -28,12 +20,29 @@ jest.mock('@opn-services/cart/service/stripe.service')
  * 1. User check
  * 2. Tests cross users and organizations
  */
-describe('CartController', () => {
+describe('Cart checkout', () => {
   const url = '/api/v1/cart'
   let app: NestFastifyApplication
   let server: HttpService
 
+  const userId = 'CART_USER_CHECKOUT'
+  const organizationId = 'CART_ORG_TEST_CHECKOUT'
+  const testDataCreator = __filename.split('/services-v2/')[1]
+  let headers = {
+    accept: 'application/json',
+    organizationid: organizationId,
+    authorization: `Bearer userId:${userId}`,
+  }
+
   beforeAll(async () => {
+    await createUser(
+      {
+        id: userId,
+        organizationIds: [organizationId],
+      },
+      testDataCreator,
+    )
+
     const testAppModule: TestingModule = await Test.createTestingModule({
       imports: [App],
     }).compile()
@@ -42,10 +51,6 @@ describe('CartController', () => {
 
     server = app.getHttpServer()
     await new Promise(resolve => app.listen(80, resolve))
-  })
-
-  afterAll(async () => {
-    await app.close()
   })
 
   test('get stripe ephemeral keys', async done => {
@@ -76,6 +81,11 @@ describe('CartController', () => {
         .set(headers)
     }
 
+    console.log({
+      ...headers,
+      'Content-Type': 'application/json',
+    })
+
     await request(server)
       .post(url)
       .set({
@@ -98,5 +108,9 @@ describe('CartController', () => {
     expect(paymentResult.body.data.cart.items.length).toBeGreaterThanOrEqual(1)
 
     done()
+  })
+
+  afterAll(async () => {
+    await Promise.all([await app.close(), deleteUserByIdTestDataCreator(userId, testDataCreator)])
   })
 })

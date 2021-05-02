@@ -1,4 +1,4 @@
-name: 'Deploy to Google App Engine'
+name: 'Run integration tests'
 inputs:
   node_version:
     description: 'Node version'
@@ -27,6 +27,10 @@ runs:
       npm install
       npm run install-all
       npm run lint-all
+
+      cd services-v2
+      npm install
+      npm run lint
       echo "::endgroup::"
     shell: bash
 
@@ -42,10 +46,15 @@ runs:
       echo "::group::Add Application Environment Variables"
       echo "Writing Environment Variables to: .env"
       gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./packages/common/.env
+      gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./services-v2/.env
       gcloud secrets versions access latest --secret=SERVICE_ACCOUNT > ./packages/common/service_account.json
       export GOOGLE_APPLICATION_CREDENTIALS=../../packages/common/service_account.json
       echo "::endgroup::"
       echo "::group::Test"
       npm run test-all
+      cd service-v2
+
+      # TODO change to all, after user tests update
+      npm run test cart-service
       echo "::endgroup::"
     shell: bash

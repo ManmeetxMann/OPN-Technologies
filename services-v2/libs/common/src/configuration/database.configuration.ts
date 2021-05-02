@@ -1,13 +1,14 @@
 import {TypeOrmModule} from '@nestjs/typeorm'
 import {DynamicModule} from '@nestjs/common'
-import {ConfigModule, ConfigService} from '@nestjs/config'
+import {ConfigModule} from '@nestjs/config'
+import {OpnConfigService} from '@opn-services/common/services'
 import {isRunningOnGCP} from '@opn-services/common/utils'
 
 export const DefaultDatabaseConfiguration = (): DynamicModule => {
   return TypeOrmModule.forRootAsync({
     imports: [ConfigModule],
-    inject: [ConfigService],
-    useFactory: (configService: ConfigService) => {
+    inject: [OpnConfigService],
+    useFactory: (configService: OpnConfigService) => {
       let connection = {}
       if (isRunningOnGCP()) {
         // Connect via socket when deployed to GCP

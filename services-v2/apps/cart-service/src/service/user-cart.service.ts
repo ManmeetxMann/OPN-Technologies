@@ -31,7 +31,7 @@ import {
 } from '../dto'
 import {firestoreTimeStampToUTC} from '@opn-reservation-v1/utils/datetime.helper'
 import * as moment from 'moment'
-import {ConfigService} from '@nestjs/config'
+import {OpnConfigService} from '@opn-services/common/services'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -49,7 +49,7 @@ export class UserCardService {
   public timeSlotNotAvailMsg = 'Time Slot Unavailable: Book Another Slot'
   private cartChunkSize = 20
 
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: OpnConfigService) {}
 
   private buildPaymentSummary(cartItems: CartItemDto[]): CartSummaryDto[] {
     const round = num => Math.round(num * 100) / 100

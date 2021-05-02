@@ -1,15 +1,16 @@
 {
   "preset": "ts-jest",
+  "rootDir": ".",
   "testEnvironment": "node",
   "testMatch": ["**/*.e2e-spec.ts", "!**/node_modules/**", "!**/migrations/**"],
   "moduleDirectories": ["node_modules"],
   "collectCoverageFrom": ["**/*.ts"],
-  "globalSetup": "./test/jest-global-setup.ts",
+  "globalSetup": "./libs/test/jest-global-setup.ts",
   "transform": {
     "^.+\\.ts?$": "ts-jest"
   },
   "moduleNameMapper": {
-    "^@opn-services/test/(.*)$": "<rootDir>/test/$1",
+    "^@opn-services/test/(.*)$": "<rootDir>/libs/test/$1",
     "^@opn-services/common$": "<rootDir>/libs/common/src",
     "^@opn-services/common/(.*)$": "<rootDir>/libs/common/src/$1",
     "^@opn-services/cart/(.*)$": "<rootDir>/apps/cart-service/src/$1",

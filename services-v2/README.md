@@ -113,7 +113,7 @@ npm run test
 npm run test user-service
 npm run test cart-service
 ```
-Open http://localhost:8080/api/doc/, enter login:password from .env SWAGGER_BASIC_AUTH_CREDENTIALS
+Open http://localhost:8080/api/doc/, enter login:password from .env APIDOCS_PASSWORD_V2
 
 #### SERVICE_NAME:
 1. user-service

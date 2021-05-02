@@ -29,7 +29,7 @@ import {
   patientProfileDto,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
-import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-auth.service'
+import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
 
 @ApiTags('Patients - Admin')

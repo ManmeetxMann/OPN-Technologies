@@ -5,8 +5,7 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 
 import {App} from '../src/main'
 
-// const userID = 'CART_USER_TEST'
-const organizationId = 'CART_ORG_TEST'
+import {createUser, deleteUserByIdTestDataCreator} from '@opn-services/test/utils'
 
 export const cartItem = {
   slotId:
@@ -30,16 +29,10 @@ export const cartItem = {
   receiveNotificationsFromGov: true,
 }
 
-const headers = {
-  accept: 'application/json',
-  organizationId: organizationId,
-  Authorization: 'Bearer RegUser',
-}
-
 /**
  * Mock remote dependencies
  */
-jest.mock('@opn-services/common/services/auth/firebase-auth.service')
+jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
 jest.mock('@opn-reservation-v1/adapter/acuity')
 jest.mock('@opn-services/cart/service/stripe.service')
 
@@ -48,11 +41,29 @@ jest.mock('@opn-services/cart/service/stripe.service')
  * 1. User check
  * 2. Tests cross users and organizations
  */
-describe('CartController', () => {
+describe('Cart basic', () => {
+  const url = `/api/v1/cart`
   let app: NestFastifyApplication
   let server: HttpService
 
+  const userId = 'CART_USER_BASIC'
+  const organizationId = 'CART_ORG_BASIC'
+  const testDataCreator = __filename.split('/services-v2/')[1]
+  let headers = {
+    accept: 'application/json',
+    organizationid: organizationId,
+    authorization: `Bearer userId:${userId}`,
+  }
+
   beforeAll(async () => {
+    await createUser(
+      {
+        id: userId,
+        organizationIds: [organizationId],
+      },
+      testDataCreator,
+    )
+
     const testAppModule: TestingModule = await Test.createTestingModule({
       imports: [App],
     }).compile()
@@ -63,12 +74,7 @@ describe('CartController', () => {
     await new Promise(resolve => app.listen(81, resolve))
   })
 
-  afterAll(async () => {
-    await app.close()
-  })
-
   test('get cart success status code', async done => {
-    const url = `/api/v1/cart`
     const result = await request(server)
       .get(url)
       .set(headers)
@@ -80,8 +86,6 @@ describe('CartController', () => {
   })
 
   test('add and read the cart', async done => {
-    const url = `/api/v1/cart`
-
     const getBefore = await request(server)
       .get(url)
       .set(headers)
@@ -105,7 +109,7 @@ describe('CartController', () => {
     expect(result.status).toBe(201)
     expect(getAfter.status).toBe(200)
     // Card save operation
-    expect(afterAddCount - beforeAddCount).toBe(1)
+    expect(afterAddCount - beforeAddCount).toBeGreaterThan(1)
     // Data sanity
     expect(getAfter.body.data.paymentSummary.length).toBeGreaterThan(2)
     getAfter.body.data.paymentSummary.forEach(summary => {
@@ -127,8 +131,6 @@ describe('CartController', () => {
   })
 
   test('add few card items and remove all', async done => {
-    const url = `/api/v1/cart`
-
     // should have added item
     await request(server)
       .post(url)
@@ -156,5 +158,9 @@ describe('CartController', () => {
     expect(cartAfter.body.data.paymentSummary.length).toBe(0)
     expect(cartAfter.body.data.cartItems.length).toBe(0)
     done()
+  })
+
+  afterAll(async () => {
+    await Promise.all([await app.close(), deleteUserByIdTestDataCreator(userId, testDataCreator)])
   })
 })

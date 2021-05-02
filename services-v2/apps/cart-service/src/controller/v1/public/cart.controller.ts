@@ -85,7 +85,7 @@ export class CartController {
   @ApiHeader({
     name: 'organizationid',
   })
-  async getById(
+  async deleteById(
     @AuthUserDecorator() authUser,
     @Param('cartItemId') cartItemId: string,
   ): Promise<ResponseWrapper<void>> {

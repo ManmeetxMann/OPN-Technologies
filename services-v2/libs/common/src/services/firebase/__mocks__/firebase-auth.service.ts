@@ -10,7 +10,7 @@ export class FirebaseAuthService {
     console.log('userdata has been updated', userId, properties)
   }
 
-  async getUserByEmail(email: string, exists = false): Promise<string> {
+  async getUserByEmail(_: string, exists = false): Promise<string> {
     if (exists) {
       return 'TestUserAuthToken'
     } else {
@@ -18,9 +18,14 @@ export class FirebaseAuthService {
     }
   }
 
-  async verifyAuthToken(_: string): Promise<unknown> {
+  async verifyAuthToken(idToken: string): Promise<unknown> { 
+    let uid = '123'
+    if (idToken.includes(':')) {
+      uid = idToken.split(':')[1]
+    }
+
     return {
-      uid: '123',
+      uid,
       email: '',
       emailVerified: true,
     }

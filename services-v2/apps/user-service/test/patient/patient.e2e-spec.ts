@@ -2,7 +2,7 @@ import {Test, TestingModule} from '@nestjs/testing'
 import * as request from 'supertest'
 import {App} from '../../src/main'
 
-jest.mock('@opn-services/common/services/auth/firebase-auth.service')
+jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
 
 //TODO: fix post & put scenarios
 describe('PatientController (e2e)', () => {
