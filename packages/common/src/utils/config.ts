@@ -1,7 +1,6 @@
 // Load up environment vars
 import * as dotenv from 'dotenv'
 import * as path from 'path'
-import {SimpleConsoleLogger} from 'typeorm'
 import {envConfig} from '../env-config'
 
 const envSpecificConfig = envConfig()

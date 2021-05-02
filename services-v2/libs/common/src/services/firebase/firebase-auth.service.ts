@@ -16,7 +16,6 @@ interface AuthUser {
  */
 @Injectable()
 export class FirebaseAuthService {
-
   private readonly firebaseAuth = FirebaseManager.getInstance()
     .getAdmin()
     .auth()
@@ -64,5 +63,4 @@ export class FirebaseAuthService {
     }
     return null
   }
-
 }

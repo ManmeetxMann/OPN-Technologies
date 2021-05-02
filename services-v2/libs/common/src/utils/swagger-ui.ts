@@ -1,5 +1,5 @@
 import {SwaggerModule} from '@nestjs/swagger'
-import {INestApplication, Injectable} from '@nestjs/common'
+import {INestApplication} from '@nestjs/common'
 import {OpnConfigService} from '@opn-services/common/services'
 
 import {SwaggerConfiguration} from '@opn-services/common/configuration/swagger.configuration'

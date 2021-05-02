@@ -183,7 +183,10 @@ export class UserCardService {
     let iteration = 1
     let done = false
     while (!done) {
-      const userCarts = await this.userCartRepository.fetchAllWithPagination(iteration, this.cartChunkSize)
+      const userCarts = await this.userCartRepository.fetchAllWithPagination(
+        iteration,
+        this.cartChunkSize,
+      )
       for (const userCart of userCarts) {
         const updatedDateMoment = firestoreTimeStampToUTC(userCart.updateOn).add(
           expirationHours,

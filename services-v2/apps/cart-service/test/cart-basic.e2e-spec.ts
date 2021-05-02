@@ -49,7 +49,7 @@ describe('Cart basic', () => {
   const userId = 'CART_USER_BASIC'
   const organizationId = 'CART_ORG_BASIC'
   const testDataCreator = __filename.split('/services-v2/')[1]
-  let headers = {
+  const headers = {
     accept: 'application/json',
     organizationid: organizationId,
     authorization: `Bearer userId:${userId}`,

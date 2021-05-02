@@ -28,7 +28,7 @@ describe('Cart checkout', () => {
   const userId = 'CART_USER_CHECKOUT'
   const organizationId = 'CART_ORG_TEST_CHECKOUT'
   const testDataCreator = __filename.split('/services-v2/')[1]
-  let headers = {
+  const headers = {
     accept: 'application/json',
     organizationid: organizationId,
     authorization: `Bearer userId:${userId}`,

@@ -1,5 +1,3 @@
-import {ApiPreconditionFailedResponse} from '@nestjs/swagger'
-
 /**
  * Common configuration for All Environments
  */

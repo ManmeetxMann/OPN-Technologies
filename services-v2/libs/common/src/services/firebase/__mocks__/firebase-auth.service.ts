@@ -18,7 +18,7 @@ export class FirebaseAuthService {
     }
   }
 
-  async verifyAuthToken(idToken: string): Promise<unknown> { 
+  async verifyAuthToken(idToken: string): Promise<unknown> {
     let uid = '123'
     if (idToken.includes(':')) {
       uid = idToken.split(':')[1]
