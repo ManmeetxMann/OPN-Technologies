@@ -160,7 +160,7 @@ export class PatientService {
    * @param id
    * @param data
    */
-  async updateProfile(patientId: string, data: PatientUpdateDto): Promise<void> {
+  async updateProfile(patientId: string, data: PatientUpdateDto): Promise<Patient> {
     const patient = await this.getProfilebyId(patientId)
     data.idPatient = patientId
     patient.firstName = data.firstName
@@ -190,13 +190,14 @@ export class PatientService {
       },
     })
 
-    await Promise.all([
+    const promises = await Promise.all([
       this.patientRepository.save(patient),
       this.saveTravel(data, travel?.idPatientTravel),
       this.saveHealth(data, health?.idPatientTravel),
       this.saveAddress(data, addresses?.idPatientAddresses),
       this.saveConsent(data, digitalConsent?.idPatientDigitalConsent),
     ])
+    return promises[0]
   }
 
   async createPatient(

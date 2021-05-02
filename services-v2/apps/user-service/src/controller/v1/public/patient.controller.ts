@@ -19,6 +19,8 @@ import {AuthUserDecorator, Roles} from '@opn-services/common/decorator'
 import {Patient} from '../../../model/patient/patient.entity'
 import {DependantCreateDto, PatientUpdateDto, patientProfileDto} from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
+import {LogInfo} from '@opn-services/common/utils/logging'
+import {UserEvent, UserFunctions} from '@opn-services/common/types/activity-logs'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -56,7 +58,12 @@ export class PatientController {
       throw new NotFoundException('User with given id not found')
     }
 
-    await this.patientService.updateProfile(id, patientUpdateDto)
+    const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
+    LogInfo(UserFunctions.update, UserEvent.updateProfile, {
+      oldUser: patientExists,
+      updatedUser,
+      updatedBy: id,
+    })
 
     return ResponseWrapper.actionSucceed()
   }
@@ -83,6 +90,10 @@ export class PatientController {
     }
 
     const dependant = await this.patientService.createDependant(delegateId, dependantBody)
+    LogInfo(UserFunctions.addDependents, UserEvent.createPatient, {
+      newUser: dependant,
+      createdBy: authUser.id,
+    })
 
     return ResponseWrapper.actionSucceed(dependant)
   }

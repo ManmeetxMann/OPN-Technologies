@@ -1,11 +1,25 @@
 import {Phone} from '../../../common/src/types/phone'
 
 export enum UserLogsEvents {
+  updateDependent = 'updateDependent',
+  updateDependentError = 'updateDependentError',
+  createUser = 'createUser',
+  createUserError = 'createUserError',
+  connectUserError = 'connectUserError',
+  updateUser = 'updateUser',
+  updateUserError = 'updateUserError',
+}
+
+export enum UserLogsFunctions {
   findOrCreateUser = 'findOrCreateUser',
+  updateDependent = 'updateDependent',
   createUser = 'createUser',
   updateUser = 'updateUser',
   create = 'create',
   update = 'update',
+  connect = 'connect',
+  userEdit = 'userEdit',
+  userLink = 'userLink',
 }
 
 export type NewUser = {
