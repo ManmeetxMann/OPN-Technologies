@@ -27,6 +27,7 @@ import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-a
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import DataStore from '@opn-common-v1/data/datastore'
 import {AuthUser} from '@opn-common-v1/data/user'
+import {HomeTestPatientDto} from '../../dto/home-patient'
 
 @Injectable()
 export class PatientService {
@@ -88,6 +89,31 @@ export class PatientService {
       .offset(page * perPage)
       .getManyAndCount()
       .then(([data, totalItems]) => Page.of(data, page, perPage, totalItems))
+  }
+
+  async createHomePatientProfile(
+    data: HomeTestPatientDto & {phoneNumber: string},
+  ): Promise<Patient> {
+    const firebaseUser = await this.userRepository.add({
+      firstName: data.firstName,
+      lastName: data.lastName,
+      phone: {
+        diallingCode: 0,
+        number: Number(data.phoneNumber),
+      },
+      authUserId: data.authUserId,
+      active: false,
+      organizationIds: [],
+    } as AuthUser)
+
+    data.firebaseKey = firebaseUser.id
+
+    const patient = await this.createPatient(data)
+    data.idPatient = patient.idPatient
+
+    await Promise.all([this.saveAuth(data), this.saveAddress(data)])
+
+    return patient
   }
 
   /**
@@ -173,16 +199,20 @@ export class PatientService {
     ])
   }
 
-  async createPatient(data: PatientCreateDto | DependantCreateDto): Promise<Patient> {
+  async createPatient(
+    data: PatientCreateDto | DependantCreateDto | HomeTestPatientDto,
+  ): Promise<Patient> {
     const entity = new Patient()
     entity.firebaseKey = data.firebaseKey
     entity.firstName = data.firstName
     entity.lastName = data.lastName
-    entity.dateOfBirth = data.dateOfBirth
     entity.phoneNumber = data.phoneNumber
-    entity.photoUrl = data.photoUrl
-    entity.registrationId = data.registrationId
-    entity.consentFileUrl = data.consentFileUrl
+    if (data instanceof PatientCreateDto || data instanceof DependantCreateDto) {
+      entity.dateOfBirth = data.dateOfBirth
+      entity.photoUrl = data.photoUrl
+      entity.registrationId = data.registrationId
+      entity.consentFileUrl = data.consentFileUrl
+    }
     return this.patientRepository.save(entity)
   }
 
@@ -214,6 +244,7 @@ export class PatientService {
     auth.idPatientAuth = idPatientAuth
     auth.patientId = data.idPatient
     auth.email = data.email
+    auth.phoneNumber = data.phoneNumber
     auth.authUserId = data.authUserId
     return this.patientAuthRepository.save(auth)
   }
