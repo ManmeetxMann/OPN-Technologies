@@ -28,6 +28,8 @@ export const commonConfig: Record<string, string | number | boolean> = {
   ACUITY_FIELD_POSTAL_CODE: 9507871,
   ACUITY_SCHEDULER_API_URL: 'https://acuityscheduling.com',
 
+  CAPTCHA_VERIFY_URL: 'https://www.google.com/recaptcha/api/siteverify',
+
   DEFAULT_TIME_ZONE: 'America/Toronto',
   // DEFAULT_ORG_ID: 'defaulttest001',
   // DEFAULT_GROUP_ID: 'defaulttestgroup001',

@@ -15,6 +15,7 @@
     "connect-sql-proxy": "cloud_sql_proxy -instances=opn-platform-local:northamerica-northeast1:opn-platform-db-server-local:sql-inst=tcp:3306",
     "lint": "eslint --config ./.eslintrc.js \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest --config jest.json --verbose --forceExit",
+    "test:local": "FIRESTORE_EMULATOR_HOST=localhost:8080 FIREBASE_FIRESTORE_EMULATOR_ADDRESS=localhost:8080 jest",
     "test:watch": "jest --config jest.json --watch",
     "test:cov": "jest --config jest.json --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",

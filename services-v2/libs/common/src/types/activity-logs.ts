@@ -27,6 +27,14 @@ export enum CartEvent {
   appointmentTypeNotFound = 'appointmentTypeNotFound',
 }
 
+export enum CaptchaFunctions {
+  verify = 'verify',
+}
+
+export enum CaptchaEvents {
+  captchaServiceFailed = 'captchaServiceFailed',
+}
+
 export enum StripeFunctions {
   createUser = 'createUser',
   customerEphemeralKeys = 'customerEphemeralKeys',

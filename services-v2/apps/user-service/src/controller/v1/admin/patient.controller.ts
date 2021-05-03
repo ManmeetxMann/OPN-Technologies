@@ -1,15 +1,4 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  NotFoundException,
-  Param,
-  Post,
-  Put,
-  Query,
-  UseGuards,
-} from '@nestjs/common'
+import {Body, Controller, Get, Param, Post, Put, Query, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
@@ -29,18 +18,15 @@ import {
   patientProfileDto,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
-import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
+import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
 
 @ApiTags('Patients - Admin')
 @ApiBearerAuth()
 @Controller('/api/v1/admin/patients')
 @UseGuards(AuthGuard)
 export class AdminPatientController {
-  constructor(
-    private patientService: PatientService,
-    private firebaseAuthService: FirebaseAuthService,
-  ) {}
+  constructor(private patientService: PatientService) {}
 
   @Get()
   @Roles([RequiredUserPermission.OPNAdmin])
@@ -58,7 +44,7 @@ export class AdminPatientController {
     const patient = await this.patientService.getProfilebyId(id)
 
     if (!patient) {
-      throw new NotFoundException('User with given id not found')
+      throw new ResourceNotFoundException('User with given id not found')
     }
 
     return ResponseWrapper.actionSucceed(patientProfileDto(patient))
@@ -70,7 +56,7 @@ export class AdminPatientController {
     @Body() patientDto: PatientCreateDto,
     @AuthUserDecorator() authUser,
   ): Promise<ResponseWrapper<Patient>> {
-    const patientExists = await this.firebaseAuthService.getUserByEmail(patientDto.email)
+    const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
 
     if (patientExists) {
       throw new BadRequestException('User with given email already exists')
@@ -96,7 +82,7 @@ export class AdminPatientController {
     const patientExists = await this.patientService.getbyId(id)
 
     if (!patientExists) {
-      throw new NotFoundException('User with given id not found')
+      throw new ResourceNotFoundException('User with given id not found')
     }
 
     const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
@@ -119,7 +105,7 @@ export class AdminPatientController {
     const delegateExists = await this.patientService.getbyId(delegateId)
 
     if (!delegateExists) {
-      throw new NotFoundException('Delegate with given id not found')
+      throw new ResourceNotFoundException('Delegate with given id not found')
     }
 
     const dependant = await this.patientService.createDependant(delegateId, dependantBody)
