@@ -1,5 +1,5 @@
 import {ExecutionContext, createParamDecorator} from '@nestjs/common'
-import {AuthUser} from '@opn-services/common/services/auth/firebase-auth.service'
+import {AuthUser} from '@opn-services/common/services/firebase/firebase-auth.service'
 
 /**
  * Passes firebaseAuthUser object to the controller

@@ -23,6 +23,7 @@ import {Config} from '@opn-common-v1/utils/config'
     }),
     OpnConfigService,
     AuthGuard,
+    CaptchaGuard,
     InternalGuard,
   ],
   providers: [CommonService, OpnConfigService, FirebaseAuthService, CaptchaService],
