@@ -1,3 +1,4 @@
+import {commonConfig} from './common.configuration'
 import {devConfig} from './dev.configuration'
 import {preprodConfig} from './preprod.configuration'
 import {prodConfig} from './prod.configuration'
@@ -10,12 +11,12 @@ export const envConfig = (): Record<string, string | number | boolean> => {
 
   switch (env) {
     case 'opn-platform-ca-prod':
-      return prodConfig
+      return {...commonConfig, ...prodConfig}
     case 'opn-platform-preprod':
-      return preprodConfig
+      return {...commonConfig, ...preprodConfig}
     case 'opn-platform-local':
-      return devConfig
+      return {...commonConfig, ...devConfig}
     default:
-      return devConfig
+      return {...commonConfig, ...devConfig}
   }
 }

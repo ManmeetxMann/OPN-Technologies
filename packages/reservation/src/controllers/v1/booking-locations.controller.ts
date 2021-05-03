@@ -33,7 +33,8 @@ class BookingLocationController implements IControllerBase {
     try {
       const {organizationId} = req.query as {organizationId: string}
 
-      const {enablePaymentForBooking} = await this.organizationService.findOneById(organizationId)
+      const organization = await this.organizationService.findOneById(organizationId)
+      const enablePaymentForBooking = organization?.enablePaymentForBooking
 
       const results = await this.bookingLocationService.getBookingLocations(
         organizationId,

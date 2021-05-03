@@ -101,7 +101,7 @@ runs:
       echo "::endgroup::"
 
       echo "::group::Add Application Environment Variables"
-      gcloud secrets versions access latest --secret=OPN_SERVICES_V2_SECRETS > ./services-v2/.env
+      gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./services-v2/.env
       echo "::endgroup::"
 
       echo "::group::Build"

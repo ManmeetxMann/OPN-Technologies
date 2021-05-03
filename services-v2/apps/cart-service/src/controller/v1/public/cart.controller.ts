@@ -90,7 +90,7 @@ export class CartController {
     name: 'organizationid',
   })
   @Roles([RequiredUserPermission.RegUser], true)
-  async getById(
+  async deleteById(
     @AuthUserDecorator() authUser,
     @Param('cartItemId') cartItemId: string,
   ): Promise<ResponseWrapper<void>> {

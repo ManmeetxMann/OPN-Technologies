@@ -1,7 +1,7 @@
 import {ForbiddenException, Injectable, NestMiddleware, UnauthorizedException} from '@nestjs/common'
-import {ConfigService} from '@nestjs/config'
+import {OpnConfigService} from '@opn-services/common/services'
 
-import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-auth.service'
+import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
 
 import {User} from '@opn-common-v1/data/user'
 import {UserService as UserServiceV1} from '@opn-common-v1/service/user/user-service'
@@ -16,7 +16,7 @@ export class AuthMiddleware implements NestMiddleware {
 
   constructor(
     private firebaseAuthService: FirebaseAuthService,
-    private configService: ConfigService,
+    private configService: OpnConfigService,
   ) {
     this.userService = new UserServiceV1()
   }
@@ -61,6 +61,7 @@ export class AuthMiddleware implements NestMiddleware {
       this.userService.findOneByAuthUserId(validatedAuthUser.uid),
       this.userService.findOneByAdminAuthUserId(validatedAuthUser.uid),
     ])
+
     let user: User | null = null
     if (regUser) {
       user = regUser
@@ -115,7 +116,7 @@ export class AuthMiddleware implements NestMiddleware {
         'base64',
       ).toString()
 
-      const configUserPass = this.configService.get('SWAGGER_BASIC_AUTH_CREDENTIALS')
+      const configUserPass = this.configService.get('APIDOCS_PASSWORD_V2')
       if (userPass != configUserPass) {
         res.writeHead(401, {'WWW-Authenticate': 'Basic realm="nope"'})
         res.end('HTTP Error 401 Unauthorized: Access is denied')

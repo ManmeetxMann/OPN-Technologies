@@ -5,6 +5,7 @@ import {
   RapidHomeKitCodeRepository,
 } from '../../repository/rapid-home-kit-code.repository'
 import {RapidHomeKitCodeToUserAssocRepository} from '../../repository/rapid-home-kit-code-to-user-assoc.repository'
+import {RapidHomeKitToUserAssoc} from '../../dto/home-patient'
 
 @Injectable()
 export class RapidHomeKitCodeService {
@@ -14,6 +15,10 @@ export class RapidHomeKitCodeService {
 
   async get(code: string): Promise<RapidHomeKitCode[]> {
     return this.homeKitCodeRepository.findWhereEqual('code', code)
+  }
+
+  async getCodesByUserId(userId: string): Promise<RapidHomeKitToUserAssoc[]> {
+    return this.homeKitCodeToUserRepository.getByUserId(userId)
   }
 
   async assocHomeKitToUser(code: string, userId: string): Promise<RapidHomeKitCode> {

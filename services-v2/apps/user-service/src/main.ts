@@ -48,14 +48,11 @@ class App {
 
 async function bootstrap() {
   const app = await NestFactory.create(App, new FastifyAdapter())
-
   app.enableCors(corsOptions)
-
   app.useGlobalPipes(new ValidationPipe())
 
-  createSwagger(app)
-
   await app.listen(process.env.PORT || 8080)
+  createSwagger(app)
 }
 bootstrap()
 

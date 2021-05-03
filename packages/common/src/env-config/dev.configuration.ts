@@ -1,4 +1,4 @@
-export const devConfig = {
+export const devConfig: Record<string, string | number | boolean> = {
   DASHBOARD_URL: 'https://opn-admin-dashboard-dev.nn.r.appspot.com',
   DOMAIN_ACCESS: 'https://access-dot-opn-platform-infra-dev.nn.r.appspot.com/',
   DOMAIN_ENTERPRISE: 'https://enterprise-dot-opn-platform-infra-dev.nn.r.appspot.com/',
@@ -9,8 +9,6 @@ export const devConfig = {
   DOMAIN_CART: 'https://cart-service-dot-opn-platform-dev.nn.r.appspot.com/',
 
   AUTH_EMAIL_TEMPLATE_ID: 3,
-  EMAIL_FROM_ADDRESS: 'no-reply@email.stayopn.net',
-  CONFIRM_BEFORE_SEND: 1,
 
   APPOINTMENTS_PUSH_NOTIFY: 'enabled',
   APPOINTMENTS_PUB_SUB_NOTIFY: 'enabled',
@@ -23,5 +21,5 @@ export const devConfig = {
 
   LOG_VALIDATION_ERRORS: 'enabled',
 
-  PDF_GENERATION_EMAIL_THRESHOLD: 100,
+  IS_SERVICE_V2_SWAGGER_ENABLED: 'enabled',
 }

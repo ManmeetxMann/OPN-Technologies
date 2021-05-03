@@ -1,6 +1,6 @@
 import {SwaggerModule} from '@nestjs/swagger'
 import {INestApplication} from '@nestjs/common'
-import {ConfigService} from '@nestjs/config'
+import {OpnConfigService} from '@opn-services/common/services'
 
 import {SwaggerConfiguration} from '@opn-services/common/configuration/swagger.configuration'
 
@@ -8,27 +8,33 @@ const MIN_LOGIN_PASS_SIZE = 5
 
 /**
  * TODO:
- * 1. Add ability to disable on prod and/or stage
+ * 1. Logging
  */
 export const createSwagger = (app: INestApplication): void => {
-  const configService = new ConfigService()
-  const authCredentials = configService.get('SWAGGER_BASIC_AUTH_CREDENTIALS')
+  const configService = app.get('OpnConfigService') as OpnConfigService
+  const isSwaggerEnabled = configService.get<string>('IS_SERVICE_V2_SWAGGER_ENABLED')
+  const authCredentials = configService.get<string>('APIDOCS_PASSWORD_V2')
+
+  if (isSwaggerEnabled !== 'enabled') {
+    console.warn('Attempt to open doc page on environment with swagger disabled')
+    return
+  }
 
   if (!authCredentials) {
-    console.log('No swagger basic auth login and password: SWAGGER_BASIC_AUTH_CREDENTIALS')
+    console.log('No swagger basic auth login and password: APIDOCS_PASSWORD_V2')
     return
   }
 
   const authParts = authCredentials.split(':')
   if (authParts.length != 2) {
-    console.log('Not valid SWAGGER_BASIC_AUTH_CREDENTIALS format, should be login:password')
+    console.log('Not valid APIDOCS_PASSWORD_V2 format, should be login:password')
     return
   }
   const login = authParts[0]
   const password = authParts[1]
 
   if (login.length < MIN_LOGIN_PASS_SIZE || password.length < MIN_LOGIN_PASS_SIZE) {
-    console.log('Too short login or password in SWAGGER_BASIC_AUTH_CREDENTIALS')
+    console.log('Too short login or password in APIDOCS_PASSWORD_V2')
     return
   }
 
