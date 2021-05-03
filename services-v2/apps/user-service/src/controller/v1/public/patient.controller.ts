@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Param, Post, Put, UseGuards} from '@nestjs/common'
+import {Body, Controller, Get, NotFoundException, Post, Put, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
@@ -29,11 +29,10 @@ import {UserEvent, UserFunctions} from '@opn-services/common/types/activity-logs
 export class PatientController {
   constructor(private patientService: PatientService) {}
 
-  @Get('/:patientId')
+  @Get('')
   @Roles([RequiredUserPermission.RegUser], true)
-  async getById(@Param('patientId') id: string): Promise<ResponseWrapper<PatientUpdateDto>> {
-    const patient = await this.patientService.getProfilebyId(id)
-
+  async getById(@AuthUserDecorator() authUser): Promise<ResponseWrapper<PatientUpdateDto>> {
+    const patient = await this.patientService.getProfileByFirebaseKey(authUser.id)
     if (!patient) {
       throw new ResourceNotFoundException('User with given id not found')
     }
@@ -60,21 +59,32 @@ export class PatientController {
     return ResponseWrapper.actionSucceed(patient)
   }
 
-  @Put('/:patientId')
-  @Roles([RequiredUserPermission.RegUser], true)
+  @Get('/dependants')
+  @Roles([RequiredUserPermission.RegUser])
+  async getDependents(@AuthUserDecorator() authUser): Promise<ResponseWrapper> {
+    const patient = await this.patientService.getProfileByFirebaseKey(authUser.id)
+    if (!patient) {
+      throw new NotFoundException('User with given id not found')
+    }
+
+    const dependents = await this.patientService.getDirectDependents(patient.idPatient)
+    return ResponseWrapper.actionSucceed(dependents)
+  }
+
+  @Put('')
+  @Roles([RequiredUserPermission.RegUser])
   async update(
-    @Param('patientId') id: string,
     @Body() patientUpdateDto: PatientUpdateDto,
     @AuthUserDecorator() authUser,
   ): Promise<ResponseWrapper> {
+    const patientExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
+    if (!patientExists) {
+      throw new ResourceNotFoundException('User with given id not found')
+    }
+    const id = patientExists.idPatient
     const isResourceOwner = await this.patientService.isResourceOwner(id, authUser.authUserId)
     if (!isResourceOwner) {
       throw new ForbiddenException('Permission not found for this resource')
-    }
-
-    const patientExists = await this.patientService.getbyId(id)
-    if (!patientExists) {
-      throw new ResourceNotFoundException('User with given id not found')
     }
 
     const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
@@ -87,13 +97,17 @@ export class PatientController {
     return ResponseWrapper.actionSucceed()
   }
 
-  @Post('/:patientId/dependant')
+  @Post('/dependant')
   @Roles([RequiredUserPermission.RegUser], true)
   async addDependents(
-    @Param('patientId') delegateId: string,
     @Body() dependantBody: DependantCreateDto,
     @AuthUserDecorator() authUser,
   ): Promise<ResponseWrapper<Patient>> {
+    const delegateExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
+    if (!delegateExists) {
+      throw new ResourceNotFoundException('Delegate with given id not found')
+    }
+    const delegateId = delegateExists.idPatient
     const isResourceOwner = await this.patientService.isResourceOwner(
       delegateId,
       authUser.authUserId,
@@ -101,11 +115,6 @@ export class PatientController {
 
     if (!isResourceOwner) {
       throw new ForbiddenException('Permission not found for this resource')
-    }
-
-    const delegateExists = await this.patientService.getbyId(delegateId)
-    if (!delegateExists) {
-      throw new ResourceNotFoundException('Delegate with given id not found')
     }
 
     const dependant = await this.patientService.createDependant(delegateId, dependantBody)

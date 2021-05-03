@@ -50,6 +50,18 @@ export class AdminPatientController {
     return ResponseWrapper.actionSucceed(patientProfileDto(patient))
   }
 
+  @Get('/:patientId/dependants')
+  @Roles([RequiredUserPermission.OPNAdmin])
+  async getDependents(@Param('patientId') id: string) {
+    const patient = await this.patientService.getProfilebyId(id)
+    if (!patient) {
+      throw new NotFoundException('User with given id not found')
+    }
+
+    const dependents = await this.patientService.getDirectDependents(id)
+    return ResponseWrapper.actionSucceed(dependents)
+  }
+
   @Post()
   @Roles([RequiredUserPermission.OPNAdmin])
   async add(
@@ -96,7 +108,7 @@ export class AdminPatientController {
     return ResponseWrapper.actionSucceed()
   }
 
-  @Post('/:patientId/dependant')
+  @Post('/:patientId/dependants')
   @Roles([RequiredUserPermission.OPNAdmin])
   async addDependents(
     @Param('patientId') delegateId: string,

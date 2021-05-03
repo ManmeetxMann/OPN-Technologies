@@ -67,6 +67,14 @@ export class PatientService {
     return this.patientAuthRepository.findOne({where: {email}})
   }
 
+  async getProfileByFirebaseKey(firebaseKey: string): Promise<Patient> {
+    return this.patientRepository.findOne(
+      {firebaseKey},
+      {
+        relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth'],
+      },
+    )
+  }
   /**
    * Fetch all patients with pagination
    */
@@ -302,6 +310,12 @@ export class PatientService {
     consent.receiveResultsViaEmail = data.receiveResultsViaEmail
     consent.shareTestResultWithEmployer = data.shareTestResultWithEmployer
     return this.patientDigitalConsentRepository.save(consent)
+  }
+
+  async getDirectDependents(patientId: string): Promise<Patient> {
+    return await this.patientRepository.findOne(patientId, {
+      relations: ['dependants'],
+    })
   }
 
   private async saveDependantOrDelegate(
