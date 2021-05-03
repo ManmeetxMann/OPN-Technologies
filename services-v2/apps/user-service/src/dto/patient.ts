@@ -120,6 +120,12 @@ export class PatientUpdateDto extends PartialType(PatientCreateDto) {
   patientId?: string
 }
 
+export class LinkToAccountDto {
+  @ApiProperty()
+  @IsString()
+  encryptedToken: string
+}
+
 export class DependantCreateDto extends OmitType(PatientCreateDto, ['email'] as const) {}
 
 export class PatientFilter extends PageableRequestFilter {

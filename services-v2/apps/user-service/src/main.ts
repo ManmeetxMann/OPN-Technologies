@@ -24,7 +24,12 @@ import {corsOptions} from '@opn-services/common/configuration/cors.configuration
 
 @Module({
   imports: [CommonModule, DatabaseConfiguration, RepositoryConfiguration],
-  controllers: [AdminPatientController, PatientController, RapidHomeKitCodeController],
+  controllers: [
+    AdminPatientController,
+    PatientController,
+    RapidHomeController,
+    RapidHomeKitCodeController,
+  ],
   providers: [
     OrganizationService,
     LocationService,
