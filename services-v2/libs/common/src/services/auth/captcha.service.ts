@@ -2,12 +2,15 @@ import fetch from 'node-fetch'
 import {Injectable} from '@nestjs/common'
 import {ConfigService} from '@nestjs/config'
 
+import {LogError} from '@opn-services/common/utils/logging'
+import {CaptchaEvents, CaptchaFunctions} from '@opn-services/common/types/activity-logs'
+
 @Injectable()
 export class CaptchaService {
   private verifyUrl: string
 
   constructor(private configService: ConfigService) {
-    this.verifyUrl = this.configService.get('CAPTCHA_VERIFY')
+    this.verifyUrl = this.configService.get('CAPTCHA_VERIFY_URL')
   }
 
   async verify(token: string): Promise<boolean> {
@@ -16,10 +19,15 @@ export class CaptchaService {
       response: token,
     })
 
-    const url = `${this.verifyUrl}?${params}`
-    const response = await fetch(url, {method: 'POST'})
-    const result = await response.json()
+    try {
+      const url = `${this.verifyUrl}?${params}`
+      const response = await fetch(url, {method: 'POST'})
+      const result = await response.json()
 
-    return result.success
+      return result.success
+    } catch (error) {
+      LogError(CaptchaFunctions.verify, CaptchaEvents.captchaServiceFailed, error)
+      return false
+    }
   }
 }

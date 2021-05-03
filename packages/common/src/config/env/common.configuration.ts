@@ -28,7 +28,7 @@ export const commonConfig: Record<string, string | number> = {
   ACUITY_FIELD_POSTAL_CODE: 9507871,
   ACUITY_SCHEDULER_API_URL: 'https://acuityscheduling.com',
 
-  CAPTCHA_VERIFY: 'https://www.google.com/recaptcha/api/siteverify',
+  CAPTCHA_VERIFY_URL: 'https://www.google.com/recaptcha/api/siteverify',
 
   DEFAULT_TIME_ZONE: 'America/Toronto',
   DEFAULT_ORG_ID: 'defaulttest001',
