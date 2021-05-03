@@ -120,7 +120,7 @@ export class PatientUpdateDto extends PartialType(PatientCreateDto) {
   patientId?: string
   @ApiModelPropertyOptional()
   @IsBoolean()
-  trainingCompletedOn?: boolean
+  trainingCompletedOn?: boolean | Date
 }
 
 export class LinkCodeToAccountDto {
@@ -166,4 +166,5 @@ export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   readTermsAndConditions: patient?.digitalConsent.readTermsAndConditions,
   receiveResultsViaEmail: patient?.digitalConsent.receiveResultsViaEmail,
   receiveNotificationsFromGov: patient?.digitalConsent.receiveNotificationsFromGov,
+  trainingCompletedOn: patient?.trainingCompletedOn,
 })
