@@ -1,8 +1,11 @@
 export enum UserFunctions {
+  add = 'add',
   update = 'update',
+  addDependents = 'addDependents',
 }
 
 export enum UserEvent {
+  createPatient = 'createPatient',
   updateProfile = 'updateProfile',
 }
 

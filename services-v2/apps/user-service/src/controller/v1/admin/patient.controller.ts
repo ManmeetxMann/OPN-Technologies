@@ -66,7 +66,10 @@ export class AdminPatientController {
 
   @Post()
   @Roles([RequiredUserPermission.OPNAdmin])
-  async add(@Body() patientDto: PatientCreateDto): Promise<ResponseWrapper<Patient>> {
+  async add(
+    @Body() patientDto: PatientCreateDto,
+    @AuthUserDecorator() authUser,
+  ): Promise<ResponseWrapper<Patient>> {
     const patientExists = await this.firebaseAuthService.getUserByEmail(patientDto.email)
 
     if (patientExists) {
@@ -74,6 +77,11 @@ export class AdminPatientController {
     }
 
     const patient = await this.patientService.createProfile(patientDto)
+
+    LogInfo(UserFunctions.add, UserEvent.createPatient, {
+      newUser: patient,
+      createdBy: authUser.id,
+    })
 
     return ResponseWrapper.actionSucceed(patient)
   }
@@ -90,11 +98,12 @@ export class AdminPatientController {
     if (!patientExists) {
       throw new NotFoundException('User with given id not found')
     }
-    const newUser = await this.patientService.updateProfile(id, patientUpdateDto)
+
+    const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
 
     LogInfo(UserFunctions.update, UserEvent.updateProfile, {
       oldUser: patientExists,
-      newUser: newUser,
+      updatedUser,
       updatedBy: authUser.id,
     })
 

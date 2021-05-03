@@ -3,9 +3,10 @@ import {Injectable} from '@nestjs/common'
 // Services
 import {FirebaseManager} from './firebase.service'
 
-interface AuthUser {
+export interface AuthUser {
   uid: string
   email?: string
+  phoneNumber?: string
   emailVerified: boolean
   customClaims?: Record<string, unknown>
 }
@@ -55,6 +56,7 @@ export class FirebaseAuthService {
         return {
           uid: decodedToken.uid,
           email: decodedToken.email,
+          phoneNumber: decodedToken.phone_number,
           emailVerified: decodedToken.email_verified ?? false,
         }
       }
