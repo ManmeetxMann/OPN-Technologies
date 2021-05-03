@@ -1,11 +1,11 @@
 export const devConfig: Record<string, string | number | boolean> = {
   DASHBOARD_URL: 'https://opn-admin-dashboard-dev.nn.r.appspot.com',
-  DOMAIN_ACCESS: 'https://access-dot-opn-platform-infra-dev.nn.r.appspot.com/',
-  DOMAIN_ENTERPRISE: 'https://enterprise-dot-opn-platform-infra-dev.nn.r.appspot.com/',
-  DOMAIN_LOOKUP: 'https://lookup-dot-opn-platform-infra-dev.nn.r.appspot.com/',
-  DOMAIN_PASSPORT: 'https://passport-dot-opn-platform-infra-dev.nn.r.appspot.com/',
-  DOMAIN_REGISTRY: 'https://registry-dot-opn-platform-infra-dev.nn.r.appspot.com/',
-  DOMAIN_RESERVATION: 'https://reservation-dot-opn-platform-infra-dev.nn.r.appspot.com/',
+  DOMAIN_ACCESS: 'https://access-dot-opn-platform-dev.nn.r.appspot.com/',
+  DOMAIN_ENTERPRISE: 'https://enterprise-dot-opn-platform-dev.nn.r.appspot.com/',
+  DOMAIN_LOOKUP: 'https://lookup-dot-opn-platform-dev.nn.r.appspot.com/',
+  DOMAIN_PASSPORT: 'https://passport-dot-opn-platform-dev.nn.r.appspot.com/',
+  DOMAIN_REGISTRY: 'https://registry-dot-opn-platform-dev.nn.r.appspot.com/',
+  DOMAIN_RESERVATION: 'https://reservation-dot-opn-platform-dev.nn.r.appspot.com/',
   DOMAIN_CART: 'https://cart-service-dot-opn-platform-dev.nn.r.appspot.com/',
 
   AUTH_EMAIL_TEMPLATE_ID: 3,
