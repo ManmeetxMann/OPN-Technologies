@@ -1,9 +1,9 @@
 import * as crypto from 'crypto'
 import {Config} from '../../utils/config'
+const encryptionIV = crypto.randomBytes(16)
 
 export class EncryptionService {
   private encryptionKey: Buffer
-  private encryptionIV = crypto.randomBytes(16)
   private algorithm = 'aes-256-cbc'
 
   constructor() {
@@ -11,7 +11,7 @@ export class EncryptionService {
   }
 
   encrypt(text: string): string {
-    const cipher = crypto.createCipheriv(this.algorithm, this.encryptionKey, this.encryptionIV)
+    const cipher = crypto.createCipheriv(this.algorithm, this.encryptionKey, encryptionIV)
     const encrypted = cipher.update(text)
     const encryptedExt = Buffer.concat([encrypted, cipher.final()])
 
@@ -20,7 +20,7 @@ export class EncryptionService {
 
   decrypt(text: string): string {
     const encryptedText = Buffer.from(text, 'hex')
-    const decipher = crypto.createDecipheriv(this.algorithm, this.encryptionKey, this.encryptionIV)
+    const decipher = crypto.createDecipheriv(this.algorithm, this.encryptionKey, encryptionIV)
     const decrypted = decipher.update(encryptedText)
     const decryptedExt = Buffer.concat([decrypted, decipher.final()])
 

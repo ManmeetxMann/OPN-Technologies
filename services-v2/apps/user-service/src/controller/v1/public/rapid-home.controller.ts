@@ -1,18 +1,27 @@
-import {Body, Controller, Post} from '@nestjs/common'
+import {Body, Controller, Post, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 
-import {PatientCreateDto} from '../../../dto/patient'
+import {LinkToAccountDto} from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {HomeTestPatientDto} from '../../../dto/home-patient'
 import {PublicDecorator} from '@opn-services/common/decorator/public.decorator'
+import {AuthGuard, AuthUserDecorator, Roles} from '@opn-services/common'
+import {RequiredUserPermission} from '@opn-services/common/types/authorization'
+import {User} from '@opn-common-v1/data/user'
+import {EncryptionService} from '@opn-common-v1/service/encryption/encryption-service'
+import {RapidHomeKitCodeService} from '../../../service/patient/rapid-home-kit-code.service'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
 @Controller('/api/v1')
 export class RapidHomeController {
-  constructor(private patientService: PatientService) {}
+  private encryptionService: EncryptionService = new EncryptionService()
+  constructor(
+    private patientService: PatientService,
+    private homeKitCodeService: RapidHomeKitCodeService,
+  ) {}
 
   @Post('/home-test-patients')
   async createHomeTestPatients(
@@ -26,5 +35,19 @@ export class RapidHomeController {
     })
 
     return ResponseWrapper.actionSucceed(patient.idPatient)
+  }
+
+  @Post('rapid-home-kit-user-codes/link-to-account')
+  @Roles([RequiredUserPermission.RegUser])
+  @UseGuards(AuthGuard)
+  async linkToAccount(
+    @Body() linkToAccountBody: LinkToAccountDto,
+    @AuthUserDecorator() authUser: User,
+  ): Promise<ResponseWrapper> {
+    const {encryptedToken} = linkToAccountBody
+
+    const decryptedCode = this.encryptionService.decrypt(encryptedToken)
+    await this.homeKitCodeService.assocHomeKitToUser(decryptedCode, authUser.id)
+    return ResponseWrapper.actionSucceed({})
   }
 }
