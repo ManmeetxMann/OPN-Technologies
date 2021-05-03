@@ -109,7 +109,7 @@ describe('Cart basic', () => {
     expect(result.status).toBe(201)
     expect(getAfter.status).toBe(200)
     // Card save operation
-    expect(afterAddCount - beforeAddCount).toBeGreaterThan(1)
+    expect(afterAddCount - beforeAddCount).toBeGreaterThanOrEqual(1)
     // Data sanity
     expect(getAfter.body.data.paymentSummary.length).toBeGreaterThan(2)
     getAfter.body.data.paymentSummary.forEach(summary => {
