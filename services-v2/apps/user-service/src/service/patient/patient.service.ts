@@ -63,6 +63,10 @@ export class PatientService {
     })
   }
 
+  async getAuthByEmail(email: string): Promise<PatientAuth> {
+    return this.patientAuthRepository.findOne({where: {email}})
+  }
+
   /**
    * Fetch all patients with pagination
    */
@@ -121,7 +125,6 @@ export class PatientService {
    * @param data
    */
   async createProfile(data: PatientCreateDto): Promise<Patient> {
-    //TODO: For Sync: get firestore id then save firebaseKey
     data.authUserId = await this.firebaseAuthService.createUser(data.email)
 
     const firebaseUser = await this.userRepository.add({
@@ -223,7 +226,6 @@ export class PatientService {
    * @param data child user data
    */
   async createDependant(delegateId: string, data: DependantCreateDto): Promise<Patient> {
-    //TODO: For Sync: get firestore id then save firebaseKey
     data.firebaseKey = 'TempKey' + Math.random().toString(36)
 
     const dependant = await this.createPatient(data)
