@@ -38,6 +38,7 @@
     "scripts": {
         "start": "node apidocs/src/server.js",
         "test": "jest",
+        "test:local": "FIRESTORE_EMULATOR_HOST=localhost:8080 FIREBASE_FIRESTORE_EMULATOR_ADDRESS=localhost:8080 jest",
         "test:coverage": "jest --coverage",
         "predev": "npm run copy_yamls",
         "dev": "ts-node src/server.ts",
