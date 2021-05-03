@@ -1,5 +1,6 @@
 import {Controller, Get, Param, UseGuards} from '@nestjs/common'
 import {ApiHeader, ApiTags} from '@nestjs/swagger'
+import {ConfigService} from '@nestjs/config'
 
 import {CaptchaGuard} from '@opn-services/common/guard'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
@@ -12,9 +13,16 @@ import {RapidHomeKitCodeService} from '../../../service/patient/rapid-home-kit-c
 @ApiTags('Rapid Home Kit Codes')
 @Controller('/api/v1/rapid-home-kit-codes')
 export class RapidHomeKitCodeController {
-  private encryptionService: EncryptionService = new EncryptionService()
+  private encryptionService: EncryptionService
 
-  constructor(private homeKitCodeService: RapidHomeKitCodeService) {}
+  constructor(
+    private homeKitCodeService: RapidHomeKitCodeService,
+    private configService: ConfigService,
+  ) {
+    this.encryptionService = new EncryptionService(
+      this.configService.get('RAPID_HOME_KIT_CODE_ENCRYPTION_KEY'),
+    )
+  }
 
   @Get('/:code')
   @ApiHeader({name: 'captcha-token', required: true})
