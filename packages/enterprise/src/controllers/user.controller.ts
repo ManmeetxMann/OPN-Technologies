@@ -17,6 +17,9 @@ import {AuthService, SignInProvides} from '../../../common/src/service/auth/auth
 import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
+import {LogError, LogInfo} from '../../../common/src/utils/logging-setup'
+import {UserLogsEvents as events, UserLogsFunctions as functions} from '../types/new-user'
+import {getUserId} from '../../../common/src/utils/auth'
 
 class UserController implements IControllerBase {
   public path = '/user'
@@ -92,6 +95,11 @@ class UserController implements IControllerBase {
         delegates: [],
       })
 
+      LogInfo(functions.connect, events.createUser, {
+        newUser: user,
+        createdBy: getUserId(res.locals.authenticatedUser),
+      })
+
       // Add user to group
       await this.organizationService.addUserToGroup(organization.id, group.id, user.id)
 
@@ -107,6 +115,7 @@ class UserController implements IControllerBase {
 
       res.json(actionSucceed({user, organization, group}))
     } catch (error) {
+      LogError(functions.connect, events.connectUserError, {...error})
       next(error)
     }
   }
@@ -201,6 +210,7 @@ class UserController implements IControllerBase {
     try {
       const {userId} = req.params
       const {registrationId} = req.body
+      const user = this.userService.findOne(userId)
 
       // Add to user
       await this.userService.updateProperties(userId, {registrationId})
@@ -208,8 +218,15 @@ class UserController implements IControllerBase {
       // Add to registry
       await this.registrationService.linkUser(registrationId, userId)
 
+      const updatedUser = this.userService.findOne(userId)
+      LogInfo(functions.userEdit, events.updateUser, {
+        user,
+        updatedUser,
+        updatedBy: getUserId(res.locals.authenticatedUser),
+      })
       res.json(actionSucceed())
     } catch (error) {
+      LogError(functions.userLink, events.updateUser, {...error})
       next(error)
     }
   }
@@ -217,6 +234,7 @@ class UserController implements IControllerBase {
   userEdit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {userId} = req.params
+      const user = this.userService.findOne(userId)
       const userEditDetails = req.body as UserEdit
 
       let propertiesToUpdate = {
@@ -239,8 +257,16 @@ class UserController implements IControllerBase {
         await this.userService.updateProperties(userId, propertiesToUpdate)
       }
 
+      const updatedUser = this.userService.findOne(userId)
+      LogInfo(functions.userEdit, events.updateUser, {
+        user,
+        updatedUser,
+        updatedBy: getUserId(res.locals.authenticatedUser),
+      })
+
       res.json(actionSucceed())
     } catch (error) {
+      LogError(functions.userEdit, events.updateUser, {...error})
       next(error)
     }
   }

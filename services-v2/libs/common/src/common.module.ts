@@ -8,9 +8,11 @@ import {Global, Module} from '@nestjs/common'
 // Service
 import {CommonService} from './common.service'
 import {FirebaseAuthService} from './services/auth/firebase-auth.service'
+import {CaptchaService} from './services/auth/captcha.service'
 
 // Guards
 import {AuthGuard} from './guard/auth.guard'
+import {CaptchaGuard} from './guard/captcha.guard'
 import {InternalGuard} from './guard/internal.guard'
 
 import {Config} from '@opn-common-v1/utils/config'
@@ -27,9 +29,10 @@ import {Config} from '@opn-common-v1/utils/config'
       load: [Config.getAll],
     }),
     AuthGuard,
-    InternalGuard
+    CaptchaGuard,
+    InternalGuard,
   ],
-  providers: [CommonService, FirebaseAuthService],
+  providers: [CommonService, FirebaseAuthService, CaptchaService],
   exports: [
     CommonService,
     ConfigModule.forRoot({
@@ -39,7 +42,9 @@ import {Config} from '@opn-common-v1/utils/config'
       },
     }),
     FirebaseAuthService,
+    CaptchaService,
     AuthGuard,
+    CaptchaGuard,
     InternalGuard,
   ],
 })

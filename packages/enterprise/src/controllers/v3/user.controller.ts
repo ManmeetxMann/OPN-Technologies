@@ -29,9 +29,9 @@ import {uniq, flatten} from 'lodash'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {AuthShortCodeService} from '../../services/auth-short-code-service'
 import moment from 'moment'
-import {LogInfo} from '../../../../common/src/utils/logging-setup'
+import {LogInfo, LogError} from '../../../../common/src/utils/logging-setup'
 import {getUserId} from '../../../../common/src/utils/auth'
-import {UserLogsEvents as events} from '../../types/new-user'
+import {UserLogsEvents as events, UserLogsFunctions as functions} from '../../types/new-user'
 
 const authService = new AuthService()
 const adminApprovalService = new AdminApprovalService()
@@ -138,13 +138,14 @@ const create: Handler = async (req, res, next): Promise<void> => {
       },
     )
 
-    LogInfo(events.create, events.createUser, {
+    LogInfo(functions.create, events.createUser, {
       newUser: user,
       createdBy: 'API',
     })
 
     res.json(actionSucceed(userDTOResponse(user)))
   } catch (error) {
+    LogError(functions.create, events.createUserError, {...error})
     next(error)
   }
 }
@@ -240,7 +241,7 @@ const update: Handler = async (req, res, next): Promise<void> => {
 
     await userSyncService.update(updatedUser.id, source)
 
-    LogInfo(events.update, events.updateUser, {
+    LogInfo(functions.update, events.updateUser, {
       oldUser,
       updatedUser,
       updatedBy: getUserId(res.locals.authenticatedUser),
@@ -248,6 +249,7 @@ const update: Handler = async (req, res, next): Promise<void> => {
 
     res.json(actionSucceed(userDTOResponse(updatedUser)))
   } catch (error) {
+    LogError(functions.update, events.updateUserError, {...error})
     next(error)
   }
 }
@@ -567,12 +569,20 @@ const updateDependent: Handler = async (req, res, next): Promise<void> => {
   try {
     const {dependentId} = req.params
     const updateRequest = req.body as UpdateUserRequest
-    const user = await userService.update(dependentId, updateRequest)
+    const user = await userService.getById(dependentId)
+    const updatedUser = await userService.update(dependentId, updateRequest)
+    await userSyncService.update(updatedUser.id, updateRequest)
 
-    await userSyncService.update(user.id, updateRequest)
+    LogInfo(functions.updateDependent, events.updateDependent, {
+      user,
+      updatedUser,
+      updatedBy: getUserId(res.locals.authenticatedUser),
+    })
 
+    // TODO check with Postman request
     res.json(actionSucceed())
   } catch (error) {
+    LogError(functions.updateDependent, events.updateDependentError, {...error})
     next(error)
   }
 }

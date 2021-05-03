@@ -93,6 +93,17 @@ Create local mysql datasource .
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
 flush privileges;
 ```
+
+## Firebase emulator setup
+- Install java on your local machine.
+- Ensure that you have access for download DB_DATA
+- Obtain DATA for local emulator with this command.
+    ```sh
+    gsutil -m cp -r gs://opn-platform-dev.appspot.com/backups/<latest-buckup-folder-name> ./
+    ```
+- Paste files in ./firebase-emulation/rawState directory.
+- Then run emulator from root package.json with command "emulate-firebase". 
+
 ## Running the app
 
 ```sh
@@ -107,6 +118,11 @@ npm run start:prod [SERVICE_NAME]
 
 npm run start:dev user-service
 npm run start:dev cart-service
+
+# testing
+npm run test
+npm run test user-service
+npm run test cart-service
 ```
 Open http://localhost:8080/api/doc/, enter login:password from .env SWAGGER_BASIC_AUTH_CREDENTIALS
 

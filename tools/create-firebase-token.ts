@@ -11,21 +11,41 @@ initializeApp({
   credential: credential.cert(serviceAccount),
 })
 
+enum FirebaseTypes {
+  email = 'email',
+  phone = 'phone',
+}
+
+const type: FirebaseTypes = FirebaseTypes.phone
 const firstName = 'developers'
 const lastName = 'fhblab1'
-const email = `developers@stayopn.com`
+// const email = `developers@stayopn.com`
+// const phoneNumber = ''
+const email = `newacctsovak@stayopn.com`
+const phoneNumber = '+12223334444'
 const password = '1plastic2!'
 
 async function main() {
   const displayName = `${firstName} ${lastName}`
   let authUID
   try {
-    const authUser = await admin.auth().getUserByEmail(email)
+    const authUser =
+      type === FirebaseTypes.email
+        ? await admin.auth().getUserByEmail(email)
+        : await admin.auth().getUserByPhoneNumber(phoneNumber)
     authUID = authUser.uid
   } catch {
+    const variableData =
+      type === FirebaseTypes.email
+        ? {
+            email,
+          }
+        : {
+            phoneNumber,
+          }
     const authUser = await admin
       .auth()
-      .createUser({email: email, displayName: displayName, password: password})
+      .createUser({...variableData, displayName: displayName, password: password})
     authUID = authUser.uid
     console.log('Created Firebase New User')
 
@@ -35,6 +55,7 @@ async function main() {
       base64Photo: '',
       firstName,
       lastName,
+      phone: phoneNumber,
       email,
       organizationIds: ['TEST1'],
       admin: {

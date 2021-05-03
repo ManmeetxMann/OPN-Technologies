@@ -7,6 +7,7 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 import {AuthMiddleware, CommonModule, createSwagger} from '@opn-services/common'
 
 // Services
+import {corsOptions} from '@opn-services/common/configuration/cors.configuration'
 import {AppoinmentService} from '@opn-reservation-v1/services/appoinment.service'
 import {UserService} from '@opn-common-v1/service/user/user-service'
 import {UserCardService} from '@opn-services/cart/service/user-cart.service'
@@ -31,6 +32,8 @@ class App {
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(App, new FastifyAdapter())
+
+  app.enableCors(corsOptions)
 
   app.useGlobalPipes(
     new ValidationPipe({
