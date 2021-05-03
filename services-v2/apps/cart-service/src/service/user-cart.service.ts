@@ -1,14 +1,15 @@
-import {Injectable, NotFoundException} from '@nestjs/common'
-import {Stripe} from 'stripe'
+import {Injectable} from '@nestjs/common'
 
-// V1 Common
+// Common
 import DataStore from '@opn-common-v1/data/datastore'
 import {AcuityRepository} from '@opn-reservation-v1/respository/acuity.repository'
 import {decodeAvailableTimeId} from '@opn-reservation-v1/utils/base64-converter'
-import {BadRequestException} from '@opn-services/common/exception'
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
+import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
 
 // Libs
+import * as moment from 'moment'
+import {Stripe} from 'stripe'
 import * as _ from 'lodash'
 import {v4 as uuidv4} from 'uuid'
 
@@ -30,9 +31,10 @@ import {
   CartUpdateRequestDto,
 } from '../dto'
 import {firestoreTimeStampToUTC} from '@opn-reservation-v1/utils/datetime.helper'
-import * as moment from 'moment'
 import {OpnConfigService} from '@opn-services/common/services'
 
+import {CartFunctions, CartEvent} from '@opn-services/common/types/activity-logs'
+import {LogError} from '@opn-services/common/utils/logging'
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
  */
@@ -272,8 +274,12 @@ export class UserCardService {
     const cardItemDdModel = items.map(item => {
       const appointment = decodeAvailableTimeId(item.slotId)
       const appointmentType = appointmentTypes.find(
-        appointmentType => appointmentType.id === appointment.appointmentTypeId.toString(),
+        appointmentType => Number(appointmentType.id) === appointment.appointmentTypeId,
       )
+      if (!appointmentType) {
+        LogError(CartFunctions.addItems, CartEvent.appointmentTypeNotFound, null)
+        throw new ResourceNotFoundException('Appointment type not found')
+      }
       return {
         cartItemId: uuidv4(),
         patient: _.omit(item, ['slotId']),
@@ -297,7 +303,7 @@ export class UserCardService {
 
     const cartItemExist = cartItemsData[0]
     if (!cartItemExist) {
-      throw new NotFoundException('userCart-item with given id not found')
+      throw new ResourceNotFoundException('userCart-item with given id not found')
     }
 
     const appointment = decodeAvailableTimeId(cartItems.slotId)

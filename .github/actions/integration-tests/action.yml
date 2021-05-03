@@ -50,11 +50,25 @@ runs:
       gcloud secrets versions access latest --secret=SERVICE_ACCOUNT > ./packages/common/service_account.json
       export GOOGLE_APPLICATION_CREDENTIALS=../../packages/common/service_account.json
       echo "::endgroup::"
-      echo "::group::Test"
-      npm run test-all
-      cd service-v2
 
-      # TODO change to all, after user tests update
-      npm run test cart-service
+      echo "::group::Test V1"
+      npm run test-all
       echo "::endgroup::"
+
+      echo "::group::Test V2"
+      cd services-v2
+      # Copy .env to dist folder
+      npm run build:all
+      # Activate service account with cloud SQL client role
+      gcloud secrets versions access latest --secret=SERVICE_ACCOUNT > ./service_account.json
+      export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/service_account.json
+      # Install SQL proxy
+      wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+      chmod +x cloud_sql_proxy
+      # TODO change to test all, after user tests update
+      npm run test cart-service
+      ./cloud_sql_proxy -instances=opn-platform-infra-dev:northamerica-northeast1:opn-platform-db-server-infra-dev:sql-inst=tcp:3306 \
+       & npm run test cors
+      echo "::endgroup::"
+
     shell: bash

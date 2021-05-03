@@ -12,8 +12,8 @@ const MIN_LOGIN_PASS_SIZE = 5
  */
 export const createSwagger = (app: INestApplication): void => {
   const configService = app.get('OpnConfigService') as OpnConfigService
-  const isSwaggerEnabled = configService.get('IS_SERVICE_V2_SWAGGER_ENABLED')
-  const authCredentials = configService.get('APIDOCS_PASSWORD_V2')
+  const isSwaggerEnabled = configService.get<string>('IS_SERVICE_V2_SWAGGER_ENABLED')
+  const authCredentials = configService.get<string>('APIDOCS_PASSWORD_V2')
 
   if (isSwaggerEnabled !== 'enabled') {
     console.warn('Attempt to open doc page on environment with swagger disabled')

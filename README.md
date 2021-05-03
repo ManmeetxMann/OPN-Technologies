@@ -93,8 +93,15 @@ npm install: On ROOT
 npm run install-all: On ROOT
 npm run dev:debug-all
 
-Make sure .env file is located in packages/common/.env
+Make sure .env file is located in **packages/common/.env** and **services-v2/.env**
 
+Use provided .json service account with access to Firebase, MySQL and local secrets 
+```sh
+gcloud auth activate-service-account --key-file=opn-platform-local-2397063b295f.json
+gcloud config set project opn-platform-local
+gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./packages/common/.env
+gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./services-v2/.env
+```
 
 
 #### Run in Debug Mode Locally

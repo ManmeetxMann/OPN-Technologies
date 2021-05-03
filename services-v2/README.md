@@ -49,11 +49,6 @@ The shared library is importable from `@opn-services/common`
 # Get started
 ###Prerequisites
 1. Install GCP CLI [Quick Start](https://cloud.google.com/sdk/docs/quickstart) 
-1. Get service account for local project, authorize via google CLI and select dev project
-    ```sh
-    gcloud auth activate-service-account --key-file=opn-platform-local-2397063b295f.json
-    gcloud config set project opn-platform-local
-    ```
 1. Install NodeJS >=12.13.0 and NPM ^7.8.0
 
 ### Installation
@@ -61,15 +56,14 @@ The shared library is importable from `@opn-services/common`
     ```sh
     npm install
     ```
-1. Make sure are using a dev project
+1. Make sure are using a local dev project
     ```sh
     gcloud config get-value project
     ```
     Should return `opn-platform-local`
-1. Obtain secrets in .env file for dev project
-    ```sh
-    gcloud secrets versions access latest --secret=OPN_SERVICES_V2_SECRETS > ./.env
-    ```
+
+1. Make sure .env file is located in packages/common/.env and services-v2/.env. The root readme file has instructions.
+
 
 ## Configure environment
 
@@ -105,8 +99,11 @@ npm run start:dev [SERVICE_NAME]
 # production mode
 npm run start:prod [SERVICE_NAME]
 
-npm run start:dev user-service
 npm run start:dev cart-service
+npm run start:dev user-service
+
+# start cloud SQL proxy for service which uses SQL DB in the separate terminal:
+npm run connect-sql-proxy
 
 # testing
 npm run test

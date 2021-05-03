@@ -5,7 +5,11 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 
 import {App} from '../src/main'
 
-import {createUser, deleteUserByIdTestDataCreator} from '@opn-services/test/utils'
+import {
+  createUser,
+  deleteUserByIdTestDataCreator,
+  createUpdateAcuityTypes,
+} from '@opn-services/test/utils'
 import {cartItem} from './cart-basic.e2e-spec'
 
 /**
@@ -35,6 +39,7 @@ describe('Cart checkout', () => {
   }
 
   beforeAll(async () => {
+    await createUpdateAcuityTypes(testDataCreator)
     await createUser(
       {
         id: userId,
