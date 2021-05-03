@@ -3,7 +3,6 @@ import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 
-import {PatientCreateDto} from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {HomeTestPatientDto} from '../../../dto/home-patient'
 import {PublicDecorator} from '@opn-services/common/decorator/public.decorator'
