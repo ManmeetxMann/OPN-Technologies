@@ -12,7 +12,8 @@
 				"tool:non-org-packages-details": "ts-node ./non-org-packages-details",
 				"tool:create-firebase-token": "ts-node ./create-firebase-token",
 				"tool:get-stripe-payment": "ts-node ./get-stripe-payment-id",
-				"tool:appointments-check-duplicate-barcode": "ts-node ./appointments-check-duplicate-barcode"
+				"tool:appointments-check-duplicate-barcode": "ts-node ./appointments-check-duplicate-barcode",
+				"tool:create-home-kit-pdfs": "ts-node ./create-pdf-with-qr-for-home-test-kit"
 		},
 		"author": "",
 		"license": "Appropriate",
