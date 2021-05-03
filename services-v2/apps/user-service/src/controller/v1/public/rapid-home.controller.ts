@@ -3,7 +3,7 @@ import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 
-import {LinkToAccountDto} from '../../../dto/patient'
+import {LinkCodeToAccountDto, LinkToAccountDto} from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {HomeTestPatientDto} from '../../../dto/home-patient'
 import {PublicDecorator} from '@opn-services/common/decorator/public.decorator'
@@ -50,6 +50,19 @@ export class RapidHomeController {
   async getLinkedCodes(@AuthUserDecorator() authUser: User): Promise<ResponseWrapper> {
     const codes = await this.homeKitCodeService.getCodesByUserId(authUser.id)
     return ResponseWrapper.actionSucceed({codes: codes.map(({rapidHomeKitId}) => rapidHomeKitId)})
+  }
+
+  @Post('rapid-home-kit-codes')
+  @Roles([RequiredUserPermission.RegUser])
+  @UseGuards(AuthGuard)
+  async linkCodeToAccount(
+    @Body() linkToAccountBody: LinkCodeToAccountDto,
+    @AuthUserDecorator() authUser: User,
+  ): Promise<ResponseWrapper> {
+    const {code} = linkToAccountBody
+
+    await this.homeKitCodeService.assocHomeKitToUser(code, authUser.id)
+    return ResponseWrapper.actionSucceed({})
   }
 
   @Post('rapid-home-kit-user-codes/link-to-account')

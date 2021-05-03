@@ -120,6 +120,12 @@ export class PatientUpdateDto extends PartialType(PatientCreateDto) {
   patientId?: string
 }
 
+export class LinkCodeToAccountDto {
+  @ApiProperty()
+  @IsString()
+  code: string
+}
+
 export class LinkToAccountDto {
   @ApiProperty()
   @IsString()
