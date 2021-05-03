@@ -1,6 +1,54 @@
 import {Stripe} from 'stripe'
 
 export class StripeService {
+  async createUser() {
+    return {
+      id: 'cus_AJ6bvXbVofMpsW',
+      object: 'customer',
+      address: null,
+      balance: 0,
+      created: 1489792893,
+      currency: 'usd',
+      default_source: 'card_19yUO12eZvKYlo2CQF18JytV',
+      delinquent: true,
+      description: 'My First Test Customer (created for API docs)',
+      discount: null,
+      email: 'consuelo@stayopn.com',
+      invoice_prefix: 'B568657',
+      invoice_settings: {
+        custom_fields: null,
+        default_payment_method: null,
+        footer: null,
+      },
+      livemode: false,
+      metadata: {},
+      name: null,
+      next_invoice_sequence: 42780,
+      phone: null,
+      preferred_locales: [],
+      shipping: null,
+      tax_exempt: 'none',
+    }
+  }
+
+  customerEphemeralKeys() {
+    return {
+      id: 'ephkey_2IlIq9DSeop22AOrZzSgsY2Z',
+      object: 'ephemeral_key',
+      associated_objects: [
+        {
+          type: 'customer',
+          id: 'cus_JO50mgLC6GLyk1',
+        },
+      ],
+      created: 1619637269,
+      expires: 1619640869,
+      livemode: false,
+      secret:
+        'ek_test_YWNjdF8xSWN6TERT2VvcDIyQU9yLG1jNWdaa1NpTFZBcFhBY1k1RTZLR1Z2ZVRxNGltbk0_00aISCap12',
+    }
+  }
+
   async createPaymentIntent(_: string, __: number, ___: string): Promise<unknown> {
     return {
       id: 'pi_1DoRpz2eZvKYlo2CdQQ82XqG',
@@ -43,24 +91,6 @@ export class StripeService {
       status: 'requires_capture',
       transfer_data: null,
       transfer_group: null,
-    }
-  }
-
-  customerEphemeralKeys() {
-    return {
-      id: 'ephkey_2IlIq9DSeop22AOrZzSgsY2Z',
-      object: 'ephemeral_key',
-      associated_objects: [
-        {
-          type: 'customer',
-          id: 'cus_JO50mgLC6GLyk1',
-        },
-      ],
-      created: 1619637269,
-      expires: 1619640869,
-      livemode: false,
-      secret:
-        'ek_test_YWNjdF8xSWN6TERT2VvcDIyQU9yLG1jNWdaa1NpTFZBcFhBY1k1RTZLR1Z2ZVRxNGltbk0_00aISCap12',
     }
   }
 

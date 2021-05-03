@@ -1,6 +1,6 @@
 import {Stripe} from 'stripe'
 
-import {ConfigService} from '@nestjs/config'
+import {OpnConfigService} from '@opn-services/common/services'
 import {Injectable} from '@nestjs/common'
 
 import {StripeFunctions, StripeEvent} from '@opn-services/common/types/activity-logs'
@@ -8,7 +8,7 @@ import {LogError} from '@opn-services/common/utils/logging'
 
 @Injectable()
 export class StripeService {
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: OpnConfigService) {}
 
   private stripe = new Stripe(this.configService.get('STRIPE_SECRET_KEY'), null)
   private commonOptions = {

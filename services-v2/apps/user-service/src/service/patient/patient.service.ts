@@ -23,7 +23,7 @@ import {
   PatientToDelegatesRepository,
   PatientTravelRepository,
 } from '../../repository/patient.repository'
-import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-auth.service'
+import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import DataStore from '@opn-common-v1/data/datastore'
 import {AuthUser} from '@opn-common-v1/data/user'

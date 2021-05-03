@@ -1,4 +1,4 @@
-name: Deploy User Service V2
+name: Deploy Cart Service V2
 on:
   push:
     paths:

@@ -1,4 +1,4 @@
-export const preprodConfig = {
+export const preprodConfig: Record<string, string | number | boolean> = {
   DASHBOARD_URL: 'https://opn-admin-dashboard-preprod.nn.r.appspot.com',
   DOMAIN_ACCESS: 'https://access-dot-opn-platform-preprod.nn.r.appspot.com/',
   DOMAIN_ENTERPRISE: 'https://enterprise-dot-opn-platform-preprod.nn.r.appspot.com/',
@@ -8,20 +8,17 @@ export const preprodConfig = {
   DOMAIN_RESERVATION: 'https://reservation-dot-opn-platform-preprod.nn.r.appspot.com/',
   DOMAIN_CART: 'https://cart-service-dot-opn-platform-preprod.nn.r.appspot.com/',
 
-  AUTH_EMAIL_TEMPLATE_ID: 3,
-  EMAIL_FROM_ADDRESS: 'no-reply@email.stayopn.net',
-  CONFIRM_BEFORE_SEND: 1,
+  AUTH_EMAIL_TEMPLATE_ID: 1,
 
-  APPOINTMENTS_PUSH_NOTIFY: 'enabled',
-  APPOINTMENTS_PUB_SUB_NOTIFY: 'enabled',
-  TEST_RESULT_PUB_SUB_NOTIFY: 'enabled',
+  // APPOINTMENTS_PUSH_NOTIFY: 'enabled',
+  // APPOINTMENTS_PUB_SUB_NOTIFY: 'enabled',
+  // TEST_RESULT_PUB_SUB_NOTIFY: 'enabled',
 
   FEATURE_CREATE_TOKEN_PERMISSIVE_MODE: 'enabled',
   FEATURE_PARENT_LOCATION_ID_MAY_BE_MISSING: 'enabled',
-  FEATURE_ONLY_EMAIL_SUPPORT: 'enabled',
-  FEATURE_CREATE_USER_ON_ENTERPRISE: 1,
-
+  // FEATURE_ONLY_EMAIL_SUPPORT: 'enabled',
+  // FEATURE_CREATE_USER_ON_ENTERPRISE: 1,
   LOG_VALIDATION_ERRORS: 'enabled',
 
-  PDF_GENERATION_EMAIL_THRESHOLD: 100,
+  REPORT_BUCKET_NAME: '1',
 }
