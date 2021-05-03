@@ -22,8 +22,7 @@ export class RapidHomeKitCodeService {
   }
 
   async assocHomeKitToUser(code: string, userId: string): Promise<RapidHomeKitCode> {
-    const a = await this.homeKitCodeToUserRepository.save(code, userId)
-    console.log(a)
+    await this.homeKitCodeToUserRepository.save(code, userId)
     const [homeKitCode] = await this.get(code)
     const userIds = homeKitCode.userIds ? [...homeKitCode.userIds, userId] : [userId]
     return this.homeKitCodeRepository.updateProperties(homeKitCode.id, {

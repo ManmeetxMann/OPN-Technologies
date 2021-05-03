@@ -12,16 +12,23 @@ import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {User} from '@opn-common-v1/data/user'
 import {EncryptionService} from '@opn-common-v1/service/encryption/encryption-service'
 import {RapidHomeKitCodeService} from '../../../service/patient/rapid-home-kit-code.service'
+import {ConfigService} from '@nestjs/config'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
 @Controller('/api/v1')
 export class RapidHomeController {
-  private encryptionService: EncryptionService = new EncryptionService()
+  private encryptionService: EncryptionService
+
   constructor(
     private patientService: PatientService,
     private homeKitCodeService: RapidHomeKitCodeService,
-  ) {}
+    private configService: ConfigService,
+  ) {
+    this.encryptionService = new EncryptionService(
+      this.configService.get('RAPID_HOME_KIT_CODE_ENCRYPTION_KEY'),
+    )
+  }
 
   @Post('/home-test-patients')
   async createHomeTestPatients(

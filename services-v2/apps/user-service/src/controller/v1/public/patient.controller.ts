@@ -1,23 +1,23 @@
-import {
-  Body,
-  Controller,
-  ForbiddenException,
-  Get,
-  NotFoundException,
-  Param,
-  Post,
-  Put,
-  UseGuards,
-} from '@nestjs/common'
+import {Body, Controller, Get, Param, Post, Put, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard} from '@opn-services/common/guard'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {AuthUserDecorator, Roles} from '@opn-services/common/decorator'
+import {
+  BadRequestException,
+  ForbiddenException,
+  ResourceNotFoundException,
+} from '@opn-services/common/exception'
 
 import {Patient} from '../../../model/patient/patient.entity'
-import {DependantCreateDto, PatientUpdateDto, patientProfileDto} from '../../../dto/patient'
+import {
+  DependantCreateDto,
+  PatientUpdateDto,
+  patientProfileDto,
+  PatientCreateDto,
+} from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
 import {UserEvent, UserFunctions} from '@opn-services/common/types/activity-logs'
@@ -30,19 +30,38 @@ export class PatientController {
   constructor(private patientService: PatientService) {}
 
   @Get('/:patientId')
-  @Roles([RequiredUserPermission.RegUser])
+  @Roles([RequiredUserPermission.RegUser], true)
   async getById(@Param('patientId') id: string): Promise<ResponseWrapper<PatientUpdateDto>> {
     const patient = await this.patientService.getProfilebyId(id)
 
     if (!patient) {
-      throw new NotFoundException('User with given id not found')
+      throw new ResourceNotFoundException('User with given id not found')
     }
 
     return ResponseWrapper.actionSucceed(patientProfileDto(patient))
   }
 
+  @Post()
+  @Roles([RequiredUserPermission.RegUser], true)
+  async add(
+    @AuthUserDecorator() authUser,
+    @Body() patientDto: PatientCreateDto,
+  ): Promise<ResponseWrapper<Patient>> {
+    const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
+
+    if (patientExists) {
+      throw new BadRequestException('User with given email already exists')
+    }
+
+    patientDto.email = authUser.email
+
+    const patient = await this.patientService.createProfile(patientDto)
+
+    return ResponseWrapper.actionSucceed(patient)
+  }
+
   @Put('/:patientId')
-  @Roles([RequiredUserPermission.RegUser])
+  @Roles([RequiredUserPermission.RegUser], true)
   async update(
     @Param('patientId') id: string,
     @Body() patientUpdateDto: PatientUpdateDto,
@@ -55,7 +74,7 @@ export class PatientController {
 
     const patientExists = await this.patientService.getbyId(id)
     if (!patientExists) {
-      throw new NotFoundException('User with given id not found')
+      throw new ResourceNotFoundException('User with given id not found')
     }
 
     const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
@@ -69,7 +88,7 @@ export class PatientController {
   }
 
   @Post('/:patientId/dependant')
-  @Roles([RequiredUserPermission.RegUser])
+  @Roles([RequiredUserPermission.RegUser], true)
   async addDependents(
     @Param('patientId') delegateId: string,
     @Body() dependantBody: DependantCreateDto,
@@ -86,7 +105,7 @@ export class PatientController {
 
     const delegateExists = await this.patientService.getbyId(delegateId)
     if (!delegateExists) {
-      throw new NotFoundException('Delegate with given id not found')
+      throw new ResourceNotFoundException('Delegate with given id not found')
     }
 
     const dependant = await this.patientService.createDependant(delegateId, dependantBody)
