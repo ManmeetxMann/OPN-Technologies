@@ -53,13 +53,13 @@ export class AdminPatientController {
   @Get('/:patientId/dependants')
   @Roles([RequiredUserPermission.OPNAdmin])
   async getDependents(@Param('patientId') id: string) {
-    const patient = await this.patientService.getProfilebyId(id)
-    if (!patient) {
-      throw new NotFoundException('User with given id not found')
+    const patientExists = await this.patientService.getProfilebyId(id)
+    if (!patientExists) {
+      throw new ResourceNotFoundException('User with given id not found')
     }
 
-    const dependents = await this.patientService.getDirectDependents(id)
-    return ResponseWrapper.actionSucceed(dependents)
+    const patient = await this.patientService.getDirectDependents(id)
+    return ResponseWrapper.actionSucceed(patient.dependants)
   }
 
   @Post()

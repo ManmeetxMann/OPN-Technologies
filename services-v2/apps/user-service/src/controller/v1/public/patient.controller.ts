@@ -62,13 +62,13 @@ export class PatientController {
   @Get('/dependants')
   @Roles([RequiredUserPermission.RegUser])
   async getDependents(@AuthUserDecorator() authUser): Promise<ResponseWrapper> {
-    const patient = await this.patientService.getProfileByFirebaseKey(authUser.id)
-    if (!patient) {
+    const patientExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
+    if (!patientExists) {
       throw new NotFoundException('User with given id not found')
     }
 
-    const dependents = await this.patientService.getDirectDependents(patient.idPatient)
-    return ResponseWrapper.actionSucceed(dependents)
+    const patient = await this.patientService.getDirectDependents(patientExists.idPatient)
+    return ResponseWrapper.actionSucceed(patient.dependants)
   }
 
   @Put('')
