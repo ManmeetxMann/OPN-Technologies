@@ -19,6 +19,8 @@ import {PatientService} from './service/patient/patient.service'
 import {RapidHomeKitCodeService} from './service/patient/rapid-home-kit-code.service'
 
 import {AuthMiddleware, CommonModule, createSwagger} from '@opn-services/common'
+import {RapidHomeController} from './controller/v1/public/rapid-home.controller'
+import {corsOptions} from '@opn-services/common/configuration/cors.configuration'
 
 @Module({
   imports: [CommonModule, DatabaseConfiguration, RepositoryConfiguration],
@@ -33,12 +35,16 @@ import {AuthMiddleware, CommonModule, createSwagger} from '@opn-services/common'
 })
 class App {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(AuthMiddleware).forRoutes(AdminPatientController, PatientController)
+    consumer
+      .apply(AuthMiddleware)
+      .forRoutes(AdminPatientController, PatientController, RapidHomeController)
   }
 }
 
 async function bootstrap() {
   const app = await NestFactory.create(App, new FastifyAdapter())
+
+  app.enableCors(corsOptions)
 
   app.useGlobalPipes(new ValidationPipe())
 

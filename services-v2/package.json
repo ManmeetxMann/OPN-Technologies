@@ -1,6 +1,6 @@
 {
-  "name": "opn-services",
-  "version": "0.0.1",
+  "name": "opn-services-v2",
+  "version": "0.0.2",
   "description": "NestJS with SQL database micro-services API for OPN mobile and web",
   "author": "OPN Technologies Inc",
   "private": true,
@@ -12,12 +12,11 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/opn-services/main",
-    "lint": "eslint --config ./.eslintrc.js --resolve-plugins-relative-to . \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
+    "lint": "eslint --config ./.eslintrc.js \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest --config jest.json --verbose --forceExit",
+    "test:watch": "jest --config jest.json --watch",
+    "test:cov": "jest --config jest.json --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./apps/opn-services/test/jest-e2e.json",
     "build:all": "npm run build:user-service && npm run build:cart-service",
     "build:user-service": "SERVICE=user-service npm run build:service",
     "build:cart-service": "SERVICE=cart-service npm run build:service",
@@ -103,7 +102,8 @@
       "@opn-services/common/(.*)": "<rootDir>/libs/common/src/$1",
       "@opn-services/common": "<rootDir>/libs/common/src",
       "@opn-common-v1/(.*)": "<rootDir>/../packages/common/src/$1",
-      "@opn-common-v1": "<rootDir>/../packages/common/src"
+      "@opn-common-v1": "<rootDir>/../packages/common/src",
+      "^@opn-enterprise-v1/(.*)$": "<rootDir>../packages/enterprise/src/$1"
     }
   }
 }
