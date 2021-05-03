@@ -8,6 +8,11 @@ export class RapidHomeKitCodeToUserAssocRepository extends DataModel<RapidHomeKi
   constructor(dataStore: DataStore) {
     super(dataStore)
   }
+
+  public getByUserId(userId: string): Promise<RapidHomeKitToUserAssoc[]> {
+    return this.findWhereEqual('userId', userId)
+  }
+
   public save(code: string, userId: string): Promise<RapidHomeKitToUserAssoc> {
     return this.add({
       rapidHomeKitId: code,
