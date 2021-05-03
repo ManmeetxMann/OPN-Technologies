@@ -5,6 +5,7 @@
     "scripts": {
         "start": "node config/src/server.js",
         "test": "jest",
+        "test:local": "FIRESTORE_EMULATOR_HOST=localhost:8080 FIREBASE_FIRESTORE_EMULATOR_ADDRESS=localhost:8080 jest",
         "test:coverage": "jest --coverage",
         "dev": "ts-node src/server.ts",
         "dev:debug": "nodemon --inspect=3001 src/server.ts",
