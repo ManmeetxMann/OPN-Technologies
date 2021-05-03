@@ -1,4 +1,4 @@
-import {Body, Controller, Post, UseGuards} from '@nestjs/common'
+import {Body, Controller, Get, Post, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
@@ -42,6 +42,14 @@ export class RapidHomeController {
     })
 
     return ResponseWrapper.actionSucceed(patient.idPatient)
+  }
+
+  @Get('rapid-home-kit-user-codes')
+  @Roles([RequiredUserPermission.RegUser])
+  @UseGuards(AuthGuard)
+  async getLinkedCodes(@AuthUserDecorator() authUser: User): Promise<ResponseWrapper> {
+    const codes = await this.homeKitCodeService.getCodesByUserId(authUser.id)
+    return ResponseWrapper.actionSucceed({codes: codes.map(({rapidHomeKitId}) => rapidHomeKitId)})
   }
 
   @Post('rapid-home-kit-user-codes/link-to-account')
