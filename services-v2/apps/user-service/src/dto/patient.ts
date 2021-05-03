@@ -118,6 +118,9 @@ export class PatientCreateDto {
 
 export class PatientUpdateDto extends PartialType(PatientCreateDto) {
   patientId?: string
+  @ApiModelPropertyOptional()
+  @IsBoolean()
+  trainingCompletedOn?: boolean
 }
 
 export class LinkCodeToAccountDto {

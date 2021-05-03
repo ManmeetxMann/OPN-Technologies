@@ -1,6 +1,7 @@
 import {Injectable} from '@nestjs/common'
 import {Page} from '@opn-services/common/dto'
 import {Brackets, SelectQueryBuilder} from 'typeorm'
+import * as moment from 'moment'
 import {
   DependantCreateDto,
   PatientCreateDto,
@@ -180,6 +181,9 @@ export class PatientService {
     patient.phoneNumber = data.phoneNumber
     patient.photoUrl = data.photoUrl
     patient.consentFileUrl = data.consentFileUrl
+    if (data.trainingCompletedOn) {
+      patient.trainingCompletedOn = new Date()
+    }
 
     const {travel, health, addresses, digitalConsent, auth} = patient
 

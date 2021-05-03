@@ -14,6 +14,7 @@ import {ApiProperty} from '@nestjs/swagger'
 import {IsBoolean, IsEmail, IsString} from 'class-validator'
 import {PatientDigitalConsent, PatientHealth, PatientTravel} from './patient-profile.entity'
 import {PatientToDelegates} from './patient-relations.entity'
+import { ApiModelPropertyOptional } from "@nestjs/swagger/dist/decorators/api-model-property.decorator";
 
 @Entity('patientAuth')
 @Unique(['authUserId', 'email'])
@@ -260,6 +261,9 @@ export class Patient extends Auditable {
   @Column({type: 'timestamp', nullable: true, default: null})
   @ApiProperty()
   lastAppointment?: Date
+
+  @Column({type: 'timestamp', nullable: true, default: null})
+  trainingCompletedOn?: Date
 
   /** Relations */
   @OneToOne(
