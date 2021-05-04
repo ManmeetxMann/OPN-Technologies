@@ -27,6 +27,7 @@ jobs:
 
           echo "::group::Validate v2"
           cd services-v2
+          touch .env
           npm install
           npm run lint
           npm run build:all
