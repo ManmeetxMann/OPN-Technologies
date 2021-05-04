@@ -56,6 +56,9 @@ class UserController implements IControllerBase {
             stop: 'Stop',
             proceed: 'Proceed',
           },
+          publicOrg: Config.get('PUBLIC_ORG'),
+          publicGroup: Config.get('PUBLIC_GROUP'),
+          publicLocation: Config.get('PUBLIC_LOCATION'),
         },
         status: 'complete',
       }
@@ -94,6 +97,9 @@ class UserController implements IControllerBase {
             stop: 'Stop',
             proceed: 'Proceed',
           },
+          publicOrg: Config.get('PUBLIC_ORG'),
+          publicGroup: Config.get('PUBLIC_GROUP'),
+          publicLocation: Config.get('PUBLIC_LOCATION'),
         },
         status: 'complete',
       }
