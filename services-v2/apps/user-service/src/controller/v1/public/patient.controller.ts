@@ -22,12 +22,22 @@ import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
 import {UserEvent, UserFunctions} from '@opn-services/common/types/activity-logs'
 
+import {MessagingFactory} from '@opn-common-v1/service/messaging/messaging-service'
+import {FirebaseMessagingService} from '@opn-common-v1/service/messaging/firebase-messaging-service'
+import {RegistrationService} from '@opn-common-v1/service/registry/registration-service'
+
 @ApiTags('Patients')
 @ApiBearerAuth()
 @Controller('/api/v1/patients')
 @UseGuards(AuthGuard)
 export class PatientController {
-  constructor(private patientService: PatientService) {}
+  private messaging: FirebaseMessagingService
+  private registrationService: RegistrationService
+
+  constructor(private patientService: PatientService) {
+    this.messaging = MessagingFactory.getPushableMessagingService()
+    this.registrationService = new RegistrationService()
+  }
 
   @Get('')
   @Roles([RequiredUserPermission.RegUser], true)
@@ -86,6 +96,12 @@ export class PatientController {
     if (!isResourceOwner) {
       throw new ForbiddenException('Permission not found for this resource')
     }
+
+    const {registrationId, pushToken} = patientUpdateDto
+
+    await this.messaging.validatePushToken(pushToken)
+
+    await this.registrationService.updateProperty(registrationId, 'pushToken', pushToken)
 
     const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
     LogInfo(UserFunctions.update, UserEvent.updateProfile, {

@@ -121,6 +121,18 @@ export class PatientUpdateDto extends PartialType(PatientCreateDto) {
   @ApiModelPropertyOptional()
   @IsBoolean()
   trainingCompletedOn?: boolean | Date
+
+  @ApiPropertyOptional()
+  @IsString()
+  platform?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  osVersion?: string
+
+  @ApiPropertyOptional()
+  @IsString()
+  pushToken?: string
 }
 
 export class LinkCodeToAccountDto {
