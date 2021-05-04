@@ -1,5 +1,5 @@
 /**
- * This script copy appointments from Acuity to OPN DB. It will not overwrite if same Acuity ID is aleady synced.
+ * Get Details for All Packages that are used in appointments
  */
 import mysql from 'mysql'
 import {Config} from '../packages/common/src/utils/config'
@@ -16,7 +16,7 @@ const conn = mysql.createConnection({
   host: 'localhost',
   user: 'root',
   password: 'root',
-  database: 'opn_platform',
+  database: 'finance',
   port: 8889,
 })
 
@@ -37,7 +37,7 @@ type productModel = {
 }
 
 type packageModel = {
-  certificate: string
+  packageCode: string
   productID: string
   orderID: number
   name: string
@@ -131,19 +131,19 @@ async function fetchAcuity(): Promise<Result[]> {
 
   const results: Result[] = []
   conn.query(
-    'SELECT certificate FROM `appointments_finance` WHERE certificate is not null GROUP By certificate',
+    'SELECT packageCode FROM `appointments_finance` WHERE packageCode!="" AND amountPaid=0 AND costForOrg=0 GROUP BY packageCode',
     async function (error, records) {
       if (error) throw error
       await Promise.all(
         records.map(async (record) => {
           const promises = []
-          const packageData = packages.get(record.certificate)
+          const packageData = packages.get(record.packageCode)
           if (packageData) {
             promises.push(processNonOrgPackage(packageData, products.get(packageData.productID)))
             const result = await promiseAllSettled(promises)
             results.push(...result)
           } else {
-            console.log(`No Package Data for: ${record.certificate}`)
+            console.log(`No Package Data for: ${record.packageCode}`)
           }
         }),
       )
@@ -156,7 +156,7 @@ async function processNonOrgPackage(packageData: packageModel, productData) {
   try {
     const orderData = await getOrderDetail(packageData.orderID)
     const packageName = packageData.name
-    const packageCode = packageData.certificate
+    const packageCode = packageData.packageCode
     const productName = productData.name
     const productDesc = productData.description
     const productPrice = productData.price
@@ -179,12 +179,15 @@ async function processNonOrgPackage(packageData: packageModel, productData) {
       notes,
       totalAppointments,
     ])
-    conn.query(sql, [data], function (queryError) {
-      if (queryError) {
-        return Promise.reject(queryError.message)
-      } else {
-        return Promise.resolve('Created')
-      }
+    return new Promise((resolve, reject) => {
+      conn
+        .query(sql, [data])
+        .on('error', (err) => {
+          reject(err.sqlMessage)
+        })
+        .on('end', () => {
+          resolve('Created')
+        })
     })
   } catch (error) {
     return Promise.reject(error.message)
@@ -223,7 +226,3 @@ let failureCount = 0
 let totalCount = 0
 
 main().then(() => console.log('Script Complete \n'))
-
-//SELECT certificate FROM `appointments_finance` WHERE organizationId is null and certificate is not null GROUP By certificate
-
-//SELECT SUM(amountPaid), date FROM `appointments_finance` GROUP BY date
