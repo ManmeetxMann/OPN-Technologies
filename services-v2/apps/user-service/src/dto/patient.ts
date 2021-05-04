@@ -124,14 +124,6 @@ export class PatientUpdateDto extends PartialType(PatientCreateDto) {
 
   @ApiPropertyOptional()
   @IsString()
-  platform?: string
-
-  @ApiPropertyOptional()
-  @IsString()
-  osVersion?: string
-
-  @ApiPropertyOptional()
-  @IsString()
   pushToken?: string
 }
 
