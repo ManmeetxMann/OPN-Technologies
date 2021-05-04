@@ -13,7 +13,7 @@ import {AuthUserDecorator} from '@opn-services/common/decorator'
 import {Patient} from '../../../model/patient/patient.entity'
 import {
   DependantCreateDto,
-  PatientCreateDto,
+  PatientCreateAdminDto,
   PatientFilter,
   PatientUpdateDto,
   patientProfileDto,
@@ -21,6 +21,7 @@ import {
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
 import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
+import {PatientToDelegates} from '../../../model/patient/patient-relations.entity'
 
 @ApiTags('Patients - Admin')
 @ApiBearerAuth()
@@ -51,12 +52,11 @@ export class AdminPatientController {
     return ResponseWrapper.actionSucceed(patientProfileDto(patient))
   }
 
-  /**
-   * TODO: define a type for the response
-   */
   @Get('/:patientId/dependants')
   @Roles([RequiredUserPermission.OPNAdmin])
-  async getDependents(@Param('patientId') id: string): Promise<ResponseWrapper<unknown>> {
+  async getDependents(
+    @Param('patientId') id: string,
+  ): Promise<ResponseWrapper<PatientToDelegates[]>> {
     const patientExists = await this.patientService.getProfilebyId(id)
     if (!patientExists) {
       throw new ResourceNotFoundException('User with given id not found')
@@ -69,7 +69,7 @@ export class AdminPatientController {
   @Post()
   @Roles([RequiredUserPermission.OPNAdmin])
   async add(
-    @Body() patientDto: PatientCreateDto,
+    @Body() patientDto: PatientCreateAdminDto,
     @AuthUserDecorator() authUser: AuthUser,
   ): Promise<ResponseWrapper<Patient>> {
     const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
