@@ -73,8 +73,8 @@ export class PatientAddresses {
   @IsString()
   homeAddressUnit: string
 
-  @Column()
-  @ApiProperty({required: true})
+  @Column({nullable: true, default: null})
+  @ApiProperty()
   @IsString()
   postalCode: string
 
