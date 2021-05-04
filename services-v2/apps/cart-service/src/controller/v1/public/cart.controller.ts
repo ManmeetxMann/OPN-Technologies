@@ -3,6 +3,7 @@ import {ApiBearerAuth, ApiHeader, ApiOperation, ApiResponse, ApiTags} from '@nes
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {AuthGuard, AuthUserDecorator, Roles} from '@opn-services/common'
+import {AuthUser} from '@opn-services/common/model'
 
 import {
   CartAddRequestDto,
@@ -39,7 +40,7 @@ export class CartController {
     name: 'organizationid',
   })
   @Roles([RequiredUserPermission.RegUser], true)
-  async getAll(@AuthUserDecorator() authUser): Promise<ResponseWrapper<CartResponseDto>> {
+  async getAll(@AuthUserDecorator() authUser: AuthUser): Promise<ResponseWrapper<CartResponseDto>> {
     const userId = authUser.authUserId
     const organizationId = authUser.requestOrganizationId
 
@@ -53,7 +54,7 @@ export class CartController {
   })
   @Roles([RequiredUserPermission.RegUser], true)
   async addCartItem(
-    @AuthUserDecorator() authUser,
+    @AuthUserDecorator() authUser: AuthUser,
     @Body() cartItems: CartAddRequestDto,
   ): Promise<ResponseWrapper<void>> {
     const userId = authUser.authUserId
@@ -76,7 +77,7 @@ export class CartController {
   @Put('')
   @Roles([RequiredUserPermission.RegUser], true)
   async updateCart(
-    @AuthUserDecorator() authUser,
+    @AuthUserDecorator() authUser: AuthUser,
     @Body() cartItems: CartUpdateRequestDto,
   ): Promise<ResponseWrapper<void>> {
     const userOrgId = `${authUser.authUserId}_${authUser.requestOrganizationId}`
@@ -91,7 +92,7 @@ export class CartController {
   })
   @Roles([RequiredUserPermission.RegUser], true)
   async deleteById(
-    @AuthUserDecorator() authUser,
+    @AuthUserDecorator() authUser: AuthUser,
     @Param('cartItemId') cartItemId: string,
   ): Promise<ResponseWrapper<void>> {
     const userId = authUser.authUserId
@@ -110,7 +111,7 @@ export class CartController {
     name: 'organizationid',
   })
   @Roles([RequiredUserPermission.RegUser], true)
-  async creteEphemeralKeys(@AuthUserDecorator() authUser): Promise<unknown> {
+  async creteEphemeralKeys(@AuthUserDecorator() authUser: AuthUser): Promise<unknown> {
     let stripeCustomerId = authUser.stripeCustomerId
 
     // Create stripe customer and safe in user document
@@ -141,7 +142,7 @@ export class CartController {
   })
   @Roles([RequiredUserPermission.RegUser], true)
   async paymentAuthorization(
-    @AuthUserDecorator() authUser,
+    @AuthUserDecorator() authUser: AuthUser,
     @Body() paymentAuthorization: PaymentAuthorizationRequestDto,
   ): Promise<ResponseWrapper<PaymentAuthorizationResponseDto>> {
     const userId = authUser.authUserId
@@ -248,7 +249,9 @@ export class CartController {
     name: 'organizationid',
   })
   @Roles([RequiredUserPermission.RegUser], true)
-  async checkout(@AuthUserDecorator() authUser) {
+  async checkout(
+    @AuthUserDecorator() authUser: AuthUser,
+  ): Promise<ResponseWrapper<CheckoutResponseDto>> {
     const userId = authUser.authUserId
     const organizationId = authUser.requestOrganizationId
     const userEmail = authUser.email
@@ -331,7 +334,10 @@ export class CartController {
     return appointmentCreateStatuses
   }
 
-  async cancelBulkAppointment(userId: string, appointmentCreateStatuses: CartItemStatus[]) {
+  async cancelBulkAppointment(
+    userId: string,
+    appointmentCreateStatuses: CartItemStatus[],
+  ): Promise<void> {
     await Promise.all(
       appointmentCreateStatuses
         .filter(status => status.isSuccess === true)

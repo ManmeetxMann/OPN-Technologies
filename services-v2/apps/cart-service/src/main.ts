@@ -22,7 +22,7 @@ import {CartInternalController} from './controller/v1/internal/cart.controller'
   providers: [UserCardService, StripeService, AppoinmentService, UserService],
 })
 class App {
-  configure(consumer: MiddlewareConsumer) {
+  configure(consumer: MiddlewareConsumer): void {
     consumer.apply(AuthMiddleware).forRoutes({
       path: '*',
       method: RequestMethod.ALL,

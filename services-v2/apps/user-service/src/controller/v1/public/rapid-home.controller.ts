@@ -2,6 +2,7 @@ import {Body, Controller, Get, Post, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
+import {AuthUser} from '@opn-services/common/model'
 
 import {LinkCodeToAccountDto, LinkToAccountDto} from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
@@ -33,12 +34,12 @@ export class RapidHomeController {
   @Post('/home-test-patients')
   async createHomeTestPatients(
     @Body() homeTestPatientBody: HomeTestPatientDto,
-    @PublicDecorator() firebaseAuthUser,
+    @PublicDecorator() firebaseAuthUser: AuthUser,
   ): Promise<ResponseWrapper<string>> {
     const patient = await this.patientService.createHomePatientProfile({
       ...homeTestPatientBody,
       phoneNumber: firebaseAuthUser.phoneNumber,
-      authUserId: firebaseAuthUser.uid,
+      authUserId: firebaseAuthUser.authUserId,
     })
 
     return ResponseWrapper.actionSucceed(patient.idPatient)

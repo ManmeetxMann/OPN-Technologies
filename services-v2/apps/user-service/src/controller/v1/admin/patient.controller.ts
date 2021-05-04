@@ -6,6 +6,7 @@ import {AuthGuard} from '@opn-services/common/guard'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {UserFunctions, UserEvent} from '@opn-services/common/types/activity-logs'
 import {Roles} from '@opn-services/common/decorator'
+import {AuthUser} from '@opn-services/common/model'
 
 import {assignWithoutUndefined, ResponseStatusCodes} from '@opn-services/common/dto'
 import {AuthUserDecorator} from '@opn-services/common/decorator'
@@ -50,9 +51,12 @@ export class AdminPatientController {
     return ResponseWrapper.actionSucceed(patientProfileDto(patient))
   }
 
+  /**
+   * TODO: define a type for the response
+   */
   @Get('/:patientId/dependants')
   @Roles([RequiredUserPermission.OPNAdmin])
-  async getDependents(@Param('patientId') id: string) {
+  async getDependents(@Param('patientId') id: string): Promise<ResponseWrapper<unknown>> {
     const patientExists = await this.patientService.getProfilebyId(id)
     if (!patientExists) {
       throw new ResourceNotFoundException('User with given id not found')
@@ -66,7 +70,7 @@ export class AdminPatientController {
   @Roles([RequiredUserPermission.OPNAdmin])
   async add(
     @Body() patientDto: PatientCreateDto,
-    @AuthUserDecorator() authUser,
+    @AuthUserDecorator() authUser: AuthUser,
   ): Promise<ResponseWrapper<Patient>> {
     const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
 
@@ -87,7 +91,7 @@ export class AdminPatientController {
   @Put('/:patientId')
   @Roles([RequiredUserPermission.OPNAdmin])
   async update(
-    @AuthUserDecorator() authUser,
+    @AuthUserDecorator() authUser: AuthUser,
     @Param('patientId') id: string,
     @Body() patientUpdateDto: PatientUpdateDto,
   ): Promise<ResponseWrapper> {

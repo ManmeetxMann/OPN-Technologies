@@ -51,7 +51,7 @@ export class UserCartItemRepository extends DataModel<CardItemDBModel> {
     this.rootPath = `user-cart/${userOrgId}/items`
   }
 
-  async deleteCollection() {
+  async deleteCollection(): Promise<void> {
     const cartCollection = this.datastore.firestoreORM.collection({path: this.rootPath})
     const batch = this.datastore.firestoreAdmin.firestore().batch()
 

@@ -1,9 +1,9 @@
 import * as dotenv from 'dotenv'
 
 /**
- * Loads secrets for the .env file, initiates firestore connection for utils access
+ * Loads secrets for the .env file
  */
-export default async () => {
+export default async (): Promise<void> => {
   const path = __dirname + '/../../.env'
   const result = dotenv.config({path})
 

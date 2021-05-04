@@ -14,7 +14,6 @@ import {ApiProperty} from '@nestjs/swagger'
 import {IsBoolean, IsEmail, IsString} from 'class-validator'
 import {PatientDigitalConsent, PatientHealth, PatientTravel} from './patient-profile.entity'
 import {PatientToDelegates} from './patient-relations.entity'
-import { ApiModelPropertyOptional } from "@nestjs/swagger/dist/decorators/api-model-property.decorator";
 
 @Entity('patientAuth')
 @Unique(['authUserId', 'email'])

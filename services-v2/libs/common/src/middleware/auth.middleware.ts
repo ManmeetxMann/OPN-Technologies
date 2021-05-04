@@ -3,7 +3,7 @@ import {OpnConfigService} from '@opn-services/common/services'
 
 import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
 
-import {User} from '@opn-common-v1/data/user'
+import {AuthUser} from '../model'
 import {UserService as UserServiceV1} from '@opn-common-v1/service/user/user-service'
 import {
   internalUrls,
@@ -21,6 +21,7 @@ export class AuthMiddleware implements NestMiddleware {
     this.userService = new UserServiceV1()
   }
 
+  /* eslint-disable  @typescript-eslint/explicit-module-boundary-types */
   /* eslint-disable complexity */
   private async validateAuth(req, res, next) {
     const bearerHeader = req.headers['authorization']
@@ -62,22 +63,22 @@ export class AuthMiddleware implements NestMiddleware {
       this.userService.findOneByAdminAuthUserId(validatedAuthUser.uid),
     ])
 
-    let user: User | null = null
+    let user: AuthUser | null = null
     if (regUser) {
-      user = regUser
+      user = {...regUser, authUserId: regUser.authUserId.toString()}
       if (legacyAdminUser && legacyAdminUser.id !== user.id) {
         console.warn(`Two users found for authUserId ${validatedAuthUser.uid}, using ${regUser.id}`)
       }
     } else if (legacyAdminUser) {
       console.warn(`Using legacy admin.authUserId for authUserId ${validatedAuthUser.uid}`)
-      user = legacyAdminUser
+      user = {...legacyAdminUser, authUserId: legacyAdminUser.authUserId.toString()}
     }
 
     if (!user) {
       throw new ForbiddenException(`Cannot find user with authUserId [${validatedAuthUser.uid}]`)
     }
 
-    const connectedUser: User = user
+    const connectedUser: AuthUser = user
 
     const organizationId =
       (req.query?.organizationId as string) ??
@@ -102,7 +103,7 @@ export class AuthMiddleware implements NestMiddleware {
       ...connectedUser,
       requestOrganizationId: organizationId,
       requestLabId: labId,
-    }
+    } as AuthUser
 
     // Done
     next()
