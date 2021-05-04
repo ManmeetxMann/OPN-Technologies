@@ -1,5 +1,4 @@
-import {User} from '@opn-common-v1/data/user'
-
+import {User} from '../../../../../packages/common/src/data/user'
 export interface AuthUser extends User {
   authUserId?: string
 

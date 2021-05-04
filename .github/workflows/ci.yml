@@ -18,11 +18,16 @@ jobs:
         with:
           node-version: 12.x
       - run: |
+          echo "::group::Validate v1"
           npm install
           npm run install-all
           npm run lint-all
           npm run build-all
+          echo "::endgroup::"
+
+          echo "::group::Validate v2"
           cd services-v2
           npm install
           npm run lint
           npm run build:all
+          echo "::endgroup::"
