@@ -227,7 +227,7 @@ export class UserCardService {
     }
   }
 
-  async updateUserStripeCustomerId(id: string, stripeCustomerId: string) {
+  async updateUserStripeCustomerId(id: string, stripeCustomerId: string): Promise<void> {
     this.userRepository.updateProperty(id, 'stripeCustomerId', stripeCustomerId)
   }
 
@@ -323,7 +323,7 @@ export class UserCardService {
   async saveOrderInformation(
     appointmentCreateStatuses: CartItemStatus[],
     paymentIntent: Stripe.PaymentIntent,
-  ) {
+  ): Promise<void> {
     await this.userOrderRepository.add({
       cartItems: appointmentCreateStatuses,
       payment: {
@@ -354,7 +354,7 @@ export class UserCardService {
     await userCartItemRepository.delete(cartId)
   }
 
-  async deleteAllCartItems(userId: string, organizationId: string) {
+  async deleteAllCartItems(userId: string, organizationId: string): Promise<void> {
     const userOrgId = `${userId}_${organizationId}`
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
 

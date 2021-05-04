@@ -14,7 +14,7 @@ export class CartInternalController {
   constructor(private userCardService: UserCardService) {}
 
   @Post('sync-acuity-appointment-types')
-  async syncAcuityPrices() {
+  async syncAcuityPrices(): Promise<ResponseWrapper<void>> {
     const result = await this.userCardService.syncAppointmentTypes()
 
     if (!result) {

@@ -17,9 +17,12 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: 12.x
-    - run: npm install
-    - run: npm run install-all
-    - run: npm run lint-all
-    - run: npm run build-all
-    # - run: npm run test-all
-    # - run: lerna run --scope @opn/registry
+    - run: | 
+      npm install
+      npm run install-all
+      npm run lint-all
+      npm run build-all
+      cd services-v2
+      npm install
+      npm run lint
+      npm run build:all
