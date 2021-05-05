@@ -31,10 +31,11 @@ export const commonConfig: Record<string, string | number | boolean> = {
   CAPTCHA_VERIFY_URL: 'https://www.google.com/recaptcha/api/siteverify',
 
   DEFAULT_TIME_ZONE: 'America/Toronto',
-  // DEFAULT_ORG_ID: 'defaulttest001',
-  // DEFAULT_GROUP_ID: 'defaulttestgroup001',
   DEFAULT_USER_PHOTO:
     'https://storage.googleapis.com/opn-platform-ca-prod.appspot.com/user_avatars/user_light.jpeg',
+  PUBLIC_ORG_ID: 'OPNFBlLDBzr4RlqxFf4r',
+  PUBLIC_GROUP_ID: '7GQVe1PuBplhyoJZDKqS',
+  PUBLIC_LOCATION_ID: 'PUBLIC_LOCATION',
 
   EMAIL_FROM_NAME: 'StayOPN Team',
 
