@@ -29,6 +29,9 @@ abstract class AcuityAdapter {
     organizationId: Config.get('ACUITY_FIELD_ORGANIZATION_ID'),
     address: Config.get('ACUITY_FIELD_ADDRESS'),
     addressUnit: Config.get('ACUITY_FIELD_ADDRESS_UNIT'),
+    city: Config.get('ACUITY_FIELD_CITY'),
+    province: Config.get('ACUITY_FIELD_PROVINCE'),
+    country: Config.get('ACUITY_FIELD_COUNTRY'),
     gender: Config.get('ACUITY_FIELD_GENDER'),
     postalCode: Config.get('ACUITY_FIELD_POSTAL_CODE'),
     shareTestResultWithEmployer: Config.get('ACUITY_FIELD_SHARE_TEST_RESULT_WITH_EMPLOYER'),
@@ -38,6 +41,11 @@ abstract class AcuityAdapter {
       'ACUITY_FIELD_AGREE_TO_CONDUCT_FH_HEALTH_ACCESSMENT',
     ),
     receiveNotificationsFromGov: Config.get('ACUITY_FIELD_RECEIVE_NOTIFICATIONS_FROM_GOV'),
+    agreeCancellationRefund: Config.get('ACUITY_FIELD_AGREE_CANCELLATION_REFUND'),
+    hadCovidConfirmedOrSymptoms: Config.get('ACUITY_FIELD_HAD_COVID_CONFIRMED'),
+    hadCovidConfirmedOrSymptomsDate: Config.get('ACUITY_FIELD_HAD_COVID_CONFIRMED_DATE'),
+    hadCovidExposer: Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE_DATE'),
+    hadCovidExposerData: Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE'),
   }
 
   private labelsIdMapping = {

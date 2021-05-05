@@ -3,7 +3,6 @@ import {
   IsBoolean,
   IsDefined,
   IsNotEmpty,
-  IsNumber,
   IsObject,
   IsOptional,
   IsString,
@@ -12,7 +11,7 @@ import {
 import {Type} from 'class-transformer'
 
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
-
+import {CartAddDto} from './cart-item'
 export class CartItemDto {
   @ApiProperty()
   cartItemId: string
@@ -31,8 +30,12 @@ export class CartItemDto {
 
   @ApiProperty()
   price: number
-}
 
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @ApiProperty()
+  userId: string
+}
 export class CartSummaryDto {
   @ApiProperty()
   uid: string
@@ -53,97 +56,6 @@ export class CartResponseDto {
 
   @ApiProperty({type: [CartSummaryDto]})
   paymentSummary: CartSummaryDto[]
-}
-
-class CartAddPhoneDto {
-  @IsNumber()
-  @IsNotEmpty()
-  code: number
-
-  @IsNumber()
-  @IsNotEmpty()
-  number: number
-}
-
-export class CartAddDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  slotId: string
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  firstName: string
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  lastName: string
-
-  @ApiProperty()
-  @IsString()
-  @IsOptional()
-  email: string
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  gender: string
-
-  @ApiProperty()
-  phone: CartAddPhoneDto
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  dateOfBirth: string
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  address: string
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  addressUnit: string
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  postalCode: string
-
-  @ApiProperty()
-  @IsBoolean()
-  @IsNotEmpty()
-  shareTestResultWithEmployer: boolean
-
-  @ApiProperty()
-  @IsBoolean()
-  @IsNotEmpty()
-  readTermsAndConditions: boolean
-
-  @ApiProperty()
-  @IsBoolean()
-  @IsNotEmpty()
-  agreeToConductFHHealthAssessment: boolean
-
-  @ApiProperty()
-  @IsBoolean()
-  @IsNotEmpty()
-  receiveResultsViaEmail: boolean
-
-  @ApiProperty()
-  @IsBoolean()
-  @IsNotEmpty()
-  receiveNotificationsFromGov: boolean
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @ApiProperty()
-  @IsString()
-  userId: string
 }
 
 export class CartUpdateRequestDto extends CartAddDto {

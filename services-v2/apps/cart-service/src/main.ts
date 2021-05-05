@@ -33,8 +33,11 @@ class App {
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(App, new FastifyAdapter())
   app.enableCors(corsOptions)
+
   app.useGlobalPipes(
     new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
       forbidUnknownValues: true,
     }),
   )

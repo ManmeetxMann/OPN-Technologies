@@ -1,21 +1,11 @@
 import {Stripe} from 'stripe'
-import {AvailableTimeIdParams} from '@opn-reservation-v1/types/base64-coverter.type'
-import {CreateAppointmentRequest} from '@opn-reservation-v1/models/appointment'
-import {AppointmentTypes} from '@opn-reservation-v1/models/appointment-types'
+
 import {firestore} from 'firebase-admin'
 
-export type CartRequestItem = Omit<CreateAppointmentRequest, 'userId'> & {email: string}
+import {CardItemDBModel} from '@opn-reservation-v1/models/cart'
 
 export type PaymentAuthorizationRequest = {
   paymentMethodId: string
-}
-
-export type CardItemDBModel = {
-  id: string
-  cartItemId: string
-  patient: Omit<CartRequestItem, 'slotId'>
-  appointment: AvailableTimeIdParams
-  appointmentType: Pick<AppointmentTypes, 'name' | 'price'>
 }
 
 export type UserCartDBModel = {
@@ -46,3 +36,5 @@ export type AcuityDBModel = {
   price: string
   name: string
 }
+
+export {CardItemDBModel}

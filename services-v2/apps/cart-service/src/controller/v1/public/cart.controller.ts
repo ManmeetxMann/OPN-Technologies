@@ -132,7 +132,7 @@ export class CartController {
     return ephemeralKeys
   }
 
-  @Post('/payment-authorization')
+  @Post('/checkout-payment')
   @ApiResponse({type: PaymentAuthorizationResponseDto})
   @ApiOperation({
     summary: 'Create payment intent, book all appointment in the cart, process payment',
@@ -324,6 +324,9 @@ export class CartController {
             isSuccess: true,
           }
         } catch (e) {
+          LogError(CartFunctions.cancelBulkAppointment, CartEvent.errorBookingAppointment, {
+            errorMessage: (<Error>e).message,
+          })
           return {
             cartItemId: cartDdItem.cartItemId,
             isSuccess: false,
