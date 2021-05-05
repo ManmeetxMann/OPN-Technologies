@@ -4,13 +4,13 @@ import {HttpService} from '@nestjs/common'
 import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 
 import {App} from '../src/main'
+import {cartItem} from './cart-seed'
 
 import {
   createUser,
   deleteUserByIdTestDataCreator,
   createUpdateAcuityTypes,
 } from '@opn-services/test/utils'
-import {cartItem} from './cart-basic.e2e-spec'
 
 /**
  * Mock remote dependencies

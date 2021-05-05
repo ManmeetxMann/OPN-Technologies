@@ -23,6 +23,8 @@ module.exports = {
       {argsIgnorePattern: '^_', ignoreRestSiblings: true},
     ],
     '@typescript-eslint/explicit-module-boundary-types': 'error',
+    // Use OpnConfigService from '@opn-services/common/services'
+    'no-restricted-imports': ['error', '@nestjs/config'],
   },
   root: true,
 }

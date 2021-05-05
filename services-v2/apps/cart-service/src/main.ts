@@ -5,6 +5,7 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 
 // Common
 import {AuthMiddleware, CommonModule, createSwagger} from '@opn-services/common'
+import {getDefaultPort, isJestTest} from '@opn-services/common/utils'
 
 // Services
 import {corsOptions} from '@opn-services/common/configuration/cors.configuration'
@@ -16,6 +17,7 @@ import {StripeService} from '@opn-services/cart/service/stripe.service'
 // Controllers
 import {CartController} from './controller/v1/public/cart.controller'
 import {CartInternalController} from './controller/v1/internal/cart.controller'
+
 @Module({
   imports: [CommonModule, StripeService, AppoinmentService, UserService],
   controllers: [CartController, CartInternalController],
@@ -39,17 +41,13 @@ async function bootstrap() {
     }),
   )
 
-  // Each worker process is assigned a unique id (index-based that starts with 1)
-  const nodeEnv = process.env.NODE_ENV
-  const jestWorkerId = process.env.JEST_WORKER_ID
-  if (nodeEnv === 'test') {
-    await app.listen(8080 + parseInt(jestWorkerId))
-    return
-  }
-
-  await app.listen(process.env.PORT || 8080)
+  const defaultPort = getDefaultPort()
+  await app.listen(defaultPort)
   createSwagger(app)
 }
-bootstrap()
+
+if (!isJestTest) {
+  bootstrap()
+}
 
 export {App}

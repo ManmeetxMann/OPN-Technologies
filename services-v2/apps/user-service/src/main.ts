@@ -21,7 +21,7 @@ import {RapidHomeKitCodeService} from './service/patient/rapid-home-kit-code.ser
 import {AuthMiddleware, CommonModule, createSwagger} from '@opn-services/common'
 import {RapidHomeController} from './controller/v1/public/rapid-home.controller'
 import {corsOptions} from '@opn-services/common/configuration/cors.configuration'
-
+import {getDefaultPort, isJestTest} from '@opn-services/common/utils'
 @Module({
   imports: [CommonModule, DatabaseConfiguration, RepositoryConfiguration],
   controllers: [
@@ -51,9 +51,12 @@ async function bootstrap() {
   app.enableCors(corsOptions)
   app.useGlobalPipes(new ValidationPipe())
 
-  await app.listen(process.env.PORT || 8080)
+  const defaultPort = getDefaultPort()
+  await app.listen(process.env.PORT || defaultPort)
   createSwagger(app)
 }
-bootstrap()
+if (!isJestTest) {
+  bootstrap()
+}
 
 export {App}
