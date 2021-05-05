@@ -50,7 +50,7 @@ export class Config {
   /**
    * Should be called first before importing dependant modules from v2
    */
-  static useRootEnvFile() {
+  static useRootEnvFile(): void {
     this.dotEnvPath = './.env'
   }
 }
