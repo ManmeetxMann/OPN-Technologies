@@ -1738,6 +1738,8 @@ export class PCRTestResultsService {
         id: pcr.id,
         type: pcr.testType ?? TestTypes.PCR,
         name: pcr.testType ?? TestTypes.PCR,
+        firstName: pcr?.firstName,
+        lastName: pcr?.lastName,
         testDateTime: formatDateRFC822Local(pcr.dateTime),
         style: resultToStyle(result),
         result: result,
