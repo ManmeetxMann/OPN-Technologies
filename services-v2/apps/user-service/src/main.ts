@@ -49,7 +49,21 @@ class App {
 async function bootstrap() {
   const app = await NestFactory.create(App, new FastifyAdapter())
   app.enableCors(corsOptions)
-  app.useGlobalPipes(new ValidationPipe())
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      forbidUnknownValues: true,
+    }),
+  )
+
+  // Each worker process is assigned a unique id (index-based that starts with 1)
+  const nodeEnv = process.env.NODE_ENV
+  const jestWorkerId = process.env.JEST_WORKER_ID
+  if (nodeEnv === 'test') {
+    await app.listen(8080 + parseInt(jestWorkerId))
+    return
+  }
 
   await app.listen(process.env.PORT || 8080)
   createSwagger(app)
