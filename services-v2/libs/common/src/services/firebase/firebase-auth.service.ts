@@ -1,11 +1,12 @@
 import {Injectable} from '@nestjs/common'
 
 // Services
-import {FirebaseManager} from '@opn-services/common/services/firebase/firebase.service'
+import {FirebaseManager} from './firebase.service'
 
-interface AuthUser {
+export interface AuthUser {
   uid: string
   email?: string
+  phoneNumber?: string
   emailVerified: boolean
   customClaims?: Record<string, unknown>
 }
@@ -16,8 +17,6 @@ interface AuthUser {
  */
 @Injectable()
 export class FirebaseAuthService {
-  // constructor(configService: ConfigService) {}
-
   private readonly firebaseAuth = FirebaseManager.getInstance()
     .getAdmin()
     .auth()
@@ -50,39 +49,6 @@ export class FirebaseAuthService {
     return userRecord.email
   }
 
-  // async sendEmailSignInLink(info: {email: string; name?: string}): Promise<void> {
-  //   // Setup action
-  //   const actionCodeSettings = {
-  //     url: this.configService.get('AUTH_EMAIL_SIGNIN_LINK'),
-  //     handleCodeInApp: true,
-  //     iOS: {
-  //       bundleId: this.configService.get('AUTH_EMAIL_SIGNIN_IOS'),
-  //     },
-  //     android: {
-  //       packageName: this.configService.get('AUTH_EMAIL_SIGNIN_ANDROID'),
-  //       installApp: true,
-  //     },
-  //     // FDL custom domain.
-  //     dynamicLinkDomain: this.configService.get('AUTH_EMAIL_SIGNIN_DOMAIN'),
-  //   }
-
-  //   const signInLink = await this.firebaseAuth.generateSignInWithEmailLink(
-  //     info.email,
-  //     actionCodeSettings,
-  //   )
-
-  //   console.log(`Sending url: ${signInLink}`)
-
-  //   const magiclinkMail = new MagicLinkMail({
-  //     email: info.email,
-  //     name: info.name,
-  //     parameters: {
-  //       link: signInLink,
-  //     },
-  //   })
-  //   magiclinkMail.send()
-  // }
-
   async verifyAuthToken(authToken: string): Promise<AuthUser> {
     try {
       const decodedToken = await this.firebaseAuth.verifyIdToken(authToken, true)
@@ -90,6 +56,7 @@ export class FirebaseAuthService {
         return {
           uid: decodedToken.uid,
           email: decodedToken.email,
+          phoneNumber: decodedToken.phone_number,
           emailVerified: decodedToken.email_verified ?? false,
         }
       }
@@ -98,8 +65,4 @@ export class FirebaseAuthService {
     }
     return null
   }
-
-  // async setClaims(authUserId: string, claims: Record<string, unknown>): Promise<void> {
-  //   // await this.firebaseAuth.setCustomUserClaims(authUserId, claims)
-  // }
 }

@@ -1,7 +1,9 @@
-import {Body, Controller, Delete, Get, Param, Post, UseGuards} from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, Post, Put, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiHeader, ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
-import {AuthGuard, AuthUserDecorator} from '@opn-services/common'
+import {RequiredUserPermission} from '@opn-services/common/types/authorization'
+import {AuthGuard, AuthUserDecorator, Roles} from '@opn-services/common'
+import {AuthUser} from '@opn-services/common/model'
 
 import {
   CartAddRequestDto,
@@ -9,12 +11,16 @@ import {
   CheckoutResponseDto,
   PaymentAuthorizationRequestDto,
   PaymentAuthorizationResponseDto,
+  CartUpdateRequestDto,
 } from '@opn-services/cart/dto'
 import {UserCardService} from '@opn-services/cart/service/user-cart.service'
 import {StripeService} from '@opn-services/cart/service/stripe.service'
 import {CardItemDBModel, CartItemStatus} from '@opn-services/cart/model/cart'
 
 import {AppoinmentService} from '@opn-reservation-v1/services/appoinment.service'
+
+import {CartFunctions, CartEvent} from '@opn-services/common/types/activity-logs'
+import {LogInfo, LogWarning, LogError} from '@opn-services/common/utils/logging'
 
 @ApiTags('Cart')
 @Controller('/api/v1/cart')
@@ -33,7 +39,8 @@ export class CartController {
   @ApiHeader({
     name: 'organizationid',
   })
-  async getAll(@AuthUserDecorator() authUser): Promise<ResponseWrapper<CartResponseDto>> {
+  @Roles([RequiredUserPermission.RegUser], true)
+  async getAll(@AuthUserDecorator() authUser: AuthUser): Promise<ResponseWrapper<CartResponseDto>> {
     const userId = authUser.authUserId
     const organizationId = authUser.requestOrganizationId
 
@@ -45,16 +52,21 @@ export class CartController {
   @ApiHeader({
     name: 'organizationid',
   })
-  async add(
-    @AuthUserDecorator() authUser,
+  @Roles([RequiredUserPermission.RegUser], true)
+  async addCartItem(
+    @AuthUserDecorator() authUser: AuthUser,
     @Body() cartItems: CartAddRequestDto,
   ): Promise<ResponseWrapper<void>> {
     const userId = authUser.authUserId
     const organizationId = authUser.requestOrganizationId
 
     const cartItemsCount = await this.userCardService.cartItemsCount(userId, organizationId)
-    if (cartItemsCount >= this.maxCartItemsCount) {
-      console.log('Attempt to add more that allowed items to the cart')
+    const maxCartItemsCount = this.maxCartItemsCount
+    if (cartItemsCount >= maxCartItemsCount) {
+      LogWarning(CartFunctions.addCartItem, CartEvent.maxCartItems, {
+        cartItemsCount,
+        maxCartItemsCount,
+      })
       return ResponseWrapper.actionFailed(`Maximum cart items limit reached`)
     }
 
@@ -62,12 +74,25 @@ export class CartController {
     return ResponseWrapper.actionSucceed(null)
   }
 
+  @Put('')
+  @Roles([RequiredUserPermission.RegUser], true)
+  async updateCart(
+    @AuthUserDecorator() authUser: AuthUser,
+    @Body() cartItems: CartUpdateRequestDto,
+  ): Promise<ResponseWrapper<void>> {
+    const userOrgId = `${authUser.authUserId}_${authUser.requestOrganizationId}`
+
+    await this.userCardService.updateItem(userOrgId, cartItems)
+    return ResponseWrapper.actionSucceed(null)
+  }
+
   @Delete('/:cartItemId')
   @ApiHeader({
     name: 'organizationid',
   })
-  async getById(
-    @AuthUserDecorator() authUser,
+  @Roles([RequiredUserPermission.RegUser], true)
+  async deleteById(
+    @AuthUserDecorator() authUser: AuthUser,
     @Param('cartItemId') cartItemId: string,
   ): Promise<ResponseWrapper<void>> {
     const userId = authUser.authUserId
@@ -85,14 +110,20 @@ export class CartController {
   @ApiHeader({
     name: 'organizationid',
   })
-  async creteEphemeralKeys(@AuthUserDecorator() authUser): Promise<unknown> {
+  @Roles([RequiredUserPermission.RegUser], true)
+  async creteEphemeralKeys(@AuthUserDecorator() authUser: AuthUser): Promise<unknown> {
     let stripeCustomerId = authUser.stripeCustomerId
 
     // Create stripe customer and safe in user document
     if (!stripeCustomerId) {
-      console.log('Create')
       stripeCustomerId = (await this.stripeService.createUser()).id
-      await this.userCardService.updateUserStripeCustomerId(authUser.id, stripeCustomerId)
+
+      const authUserId = authUser.id
+      LogInfo(CartFunctions.creteEphemeralKeys, CartEvent.stripeCreateCustomer, {
+        authUserId,
+        stripeCustomerId,
+      })
+      await this.userCardService.updateUserStripeCustomerId(authUserId, stripeCustomerId)
     }
 
     // Create wallet ephemeral keys
@@ -109,8 +140,9 @@ export class CartController {
   @ApiHeader({
     name: 'organizationid',
   })
+  @Roles([RequiredUserPermission.RegUser], true)
   async paymentAuthorization(
-    @AuthUserDecorator() authUser,
+    @AuthUserDecorator() authUser: AuthUser,
     @Body() paymentAuthorization: PaymentAuthorizationRequestDto,
   ): Promise<ResponseWrapper<PaymentAuthorizationResponseDto>> {
     const userId = authUser.authUserId
@@ -136,12 +168,13 @@ export class CartController {
     try {
       cart = await this.userCardService.validateUserCart(userId, organizationId)
     } catch (e) {
-      console.error('Error validating cart')
+      LogError(CartFunctions.paymentAuthorization, CartEvent.cartValidationError, {...e})
       return ResponseWrapper.actionSucceed(result)
     }
     if (!cart.cardValidation.isValid) {
-      console.log('Cart not valid')
-      result.cart = cart.cardValidation
+      const cartValidation = cart.cardValidation
+      LogWarning(CartFunctions.paymentAuthorization, CartEvent.cartNotValid, {...cartValidation})
+      result.cart = cartValidation
       return ResponseWrapper.actionSucceed(result)
     }
     result.cart.isValid = true
@@ -178,11 +211,12 @@ export class CartController {
 
     // Cancel payment intent and all successfully created acuity appointment
     if (appointmentCreateStatuses.some(status => status.isSuccess === false)) {
+      LogError(CartFunctions.paymentAuthorization, CartEvent.appointmentsBookingError, null)
+
       result.cart.isValid = false
       result.payment.isValid = false
 
       if (result.payment.id) {
-        console.log('Canceling payment intent')
         await this.stripeService.cancelPaymentIntent(result.payment.id)
         result.payment.status = 'canceled_intent'
       }
@@ -214,7 +248,10 @@ export class CartController {
   @ApiHeader({
     name: 'organizationid',
   })
-  async checkout(@AuthUserDecorator() authUser) {
+  @Roles([RequiredUserPermission.RegUser], true)
+  async checkout(
+    @AuthUserDecorator() authUser: AuthUser,
+  ): Promise<ResponseWrapper<CheckoutResponseDto>> {
     const userId = authUser.authUserId
     const organizationId = authUser.requestOrganizationId
     const userEmail = authUser.email
@@ -231,11 +268,12 @@ export class CartController {
     try {
       cart = await this.userCardService.validateUserCart(userId, organizationId)
     } catch (e) {
-      console.error('Error validating cart')
+      LogError(CartFunctions.checkout, CartEvent.cartValidationError, {...e})
       return ResponseWrapper.actionSucceed(result)
     }
-    if (!cart.cardValidation.isValid) {
-      console.log('Cart not valid')
+    const cartValidation = cart.cardValidation
+    if (!cartValidation.isValid) {
+      LogWarning(CartFunctions.checkout, CartEvent.cartNotValid, {...cartValidation})
       result.cart = cart.cardValidation
       return ResponseWrapper.actionSucceed(result)
     }
@@ -286,7 +324,6 @@ export class CartController {
             isSuccess: true,
           }
         } catch (e) {
-          console.log('Error creating cart appointment')
           return {
             cartItemId: cartDdItem.cartItemId,
             isSuccess: false,
@@ -297,7 +334,10 @@ export class CartController {
     return appointmentCreateStatuses
   }
 
-  async cancelBulkAppointment(userId: string, appointmentCreateStatuses: CartItemStatus[]) {
+  async cancelBulkAppointment(
+    userId: string,
+    appointmentCreateStatuses: CartItemStatus[],
+  ): Promise<void> {
     await Promise.all(
       appointmentCreateStatuses
         .filter(status => status.isSuccess === true)
@@ -310,7 +350,7 @@ export class CartController {
               isOpnSuperAdmin,
             )
           } catch (e) {
-            console.error('Error canceling cart appointment')
+            LogError(CartFunctions.cancelBulkAppointment, CartEvent.appointmentsBookingError, null)
           }
         }),
     )

@@ -1,7 +1,4 @@
-import {Injectable} from '@nestjs/common'
-
-@Injectable()
-export class FirebaseAuthServiceMock {
+export class FirebaseAuthService {
   async createUser(email: string): Promise<string> {
     console.log('Create account with: ', email)
     return `TestUserAuthToken${Math.random()
@@ -13,11 +10,24 @@ export class FirebaseAuthServiceMock {
     console.log('userdata has been updated', userId, properties)
   }
 
-  async getUserByEmail(email: string, exists = false): Promise<string> {
+  async getUserByEmail(_: string, exists = false): Promise<string> {
     if (exists) {
       return 'TestUserAuthToken'
     } else {
       return null
+    }
+  }
+
+  async verifyAuthToken(idToken: string): Promise<unknown> {
+    let uid = '123'
+    if (idToken.includes(':')) {
+      uid = idToken.split(':')[1]
+    }
+
+    return {
+      uid,
+      email: '',
+      emailVerified: true,
     }
   }
 }

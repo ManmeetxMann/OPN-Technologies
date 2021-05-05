@@ -36,10 +36,15 @@ export class PatientAuth {
   @ApiProperty({required: true})
   authUserId: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty()
   @IsEmail()
-  email: string
+  email?: string
+
+  @Column({nullable: true, default: null})
+  @ApiProperty()
+  @IsString()
+  phoneNumber?: string
 }
 
 @Entity('patientAddresses')
@@ -58,32 +63,32 @@ export class PatientAddresses {
   @ApiProperty({required: true})
   patientId: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty({required: true})
   @IsString()
   homeAddress: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty({required: true})
   @IsString()
   homeAddressUnit: string
 
-  @Column()
-  @ApiProperty({required: true})
+  @Column({nullable: true, default: null})
+  @ApiProperty()
   @IsString()
   postalCode: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty()
   @IsString()
   city: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty()
   @IsString()
   province: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty()
   @IsString()
   country: string
@@ -237,12 +242,12 @@ export class Patient extends Auditable {
   @IsString()
   phoneNumber?: string
 
-  @Column({nullable: false})
+  @Column({nullable: true, default: null})
   @ApiProperty()
   @IsString()
   registrationId?: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty()
   @IsString()
   photoUrl?: string
@@ -255,6 +260,9 @@ export class Patient extends Auditable {
   @Column({type: 'timestamp', nullable: true, default: null})
   @ApiProperty()
   lastAppointment?: Date
+
+  @Column({type: 'timestamp', nullable: true, default: null})
+  trainingCompletedOn?: Date
 
   /** Relations */
   @OneToOne(

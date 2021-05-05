@@ -12,6 +12,7 @@
     "baseUrl": "./",
     "incremental": true,
     "paths": {
+      "@opn-services/test/*": ["libs/test/*"],
       "@opn-services/common": ["libs/common/src"],
       "@opn-services/common/*": ["libs/common/src/*"],
       "@opn-services/cart/*": ["apps/cart-service/src/*"],

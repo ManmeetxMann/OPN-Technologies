@@ -1,46 +1,34 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  NotFoundException,
-  Param,
-  Post,
-  Put,
-  Query,
-  UseGuards,
-} from '@nestjs/common'
+import {Body, Controller, Get, Param, Post, Put, Query, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard} from '@opn-services/common/guard'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
-import {UserLogsEvents as events} from '@opn-services/common/types/activity-logs'
+import {UserFunctions, UserEvent} from '@opn-services/common/types/activity-logs'
 import {Roles} from '@opn-services/common/decorator'
+import {AuthUser} from '@opn-services/common/model'
 
 import {assignWithoutUndefined, ResponseStatusCodes} from '@opn-services/common/dto'
 import {AuthUserDecorator} from '@opn-services/common/decorator'
 import {Patient} from '../../../model/patient/patient.entity'
 import {
   DependantCreateDto,
-  PatientCreateDto,
+  PatientCreateAdminDto,
   PatientFilter,
   PatientUpdateDto,
   patientProfileDto,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
-import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-auth.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
+import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
+import {PatientToDelegates} from '../../../model/patient/patient-relations.entity'
 
 @ApiTags('Patients - Admin')
 @ApiBearerAuth()
 @Controller('/api/v1/admin/patients')
 @UseGuards(AuthGuard)
 export class AdminPatientController {
-  constructor(
-    private patientService: PatientService,
-    private firebaseAuthService: FirebaseAuthService,
-  ) {}
+  constructor(private patientService: PatientService) {}
 
   @Get()
   @Roles([RequiredUserPermission.OPNAdmin])
@@ -58,16 +46,33 @@ export class AdminPatientController {
     const patient = await this.patientService.getProfilebyId(id)
 
     if (!patient) {
-      throw new NotFoundException('User with given id not found')
+      throw new ResourceNotFoundException('User with given id not found')
     }
 
     return ResponseWrapper.actionSucceed(patientProfileDto(patient))
   }
 
+  @Get('/:patientId/dependants')
+  @Roles([RequiredUserPermission.OPNAdmin])
+  async getDependents(
+    @Param('patientId') id: string,
+  ): Promise<ResponseWrapper<PatientToDelegates[]>> {
+    const patientExists = await this.patientService.getProfilebyId(id)
+    if (!patientExists) {
+      throw new ResourceNotFoundException('User with given id not found')
+    }
+
+    const patient = await this.patientService.getDirectDependents(id)
+    return ResponseWrapper.actionSucceed(patient.dependants)
+  }
+
   @Post()
   @Roles([RequiredUserPermission.OPNAdmin])
-  async add(@Body() patientDto: PatientCreateDto): Promise<ResponseWrapper<Patient>> {
-    const patientExists = await this.firebaseAuthService.getUserByEmail(patientDto.email)
+  async add(
+    @Body() patientDto: PatientCreateAdminDto,
+    @AuthUserDecorator() authUser: AuthUser,
+  ): Promise<ResponseWrapper<Patient>> {
+    const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
 
     if (patientExists) {
       throw new BadRequestException('User with given email already exists')
@@ -75,33 +80,39 @@ export class AdminPatientController {
 
     const patient = await this.patientService.createProfile(patientDto)
 
+    LogInfo(UserFunctions.add, UserEvent.createPatient, {
+      newUser: patient,
+      createdBy: authUser.id,
+    })
+
     return ResponseWrapper.actionSucceed(patient)
   }
 
   @Put('/:patientId')
   @Roles([RequiredUserPermission.OPNAdmin])
   async update(
-    @AuthUserDecorator() authUser,
+    @AuthUserDecorator() authUser: AuthUser,
     @Param('patientId') id: string,
     @Body() patientUpdateDto: PatientUpdateDto,
   ): Promise<ResponseWrapper> {
     const patientExists = await this.patientService.getbyId(id)
 
     if (!patientExists) {
-      throw new NotFoundException('User with given id not found')
+      throw new ResourceNotFoundException('User with given id not found')
     }
-    const newUser = await this.patientService.updateProfile(id, patientUpdateDto)
 
-    LogInfo(events.update, events.updateProfile, {
+    const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
+
+    LogInfo(UserFunctions.update, UserEvent.updateProfile, {
       oldUser: patientExists,
-      newUser: newUser,
+      updatedUser,
       updatedBy: authUser.id,
     })
 
     return ResponseWrapper.actionSucceed()
   }
 
-  @Post('/:patientId/dependant')
+  @Post('/:patientId/dependants')
   @Roles([RequiredUserPermission.OPNAdmin])
   async addDependents(
     @Param('patientId') delegateId: string,
@@ -110,7 +121,7 @@ export class AdminPatientController {
     const delegateExists = await this.patientService.getbyId(delegateId)
 
     if (!delegateExists) {
-      throw new NotFoundException('Delegate with given id not found')
+      throw new ResourceNotFoundException('Delegate with given id not found')
     }
 
     const dependant = await this.patientService.createDependant(delegateId, dependantBody)

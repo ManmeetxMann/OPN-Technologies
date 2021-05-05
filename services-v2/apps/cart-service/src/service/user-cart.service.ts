@@ -1,14 +1,15 @@
 import {Injectable} from '@nestjs/common'
-import {Stripe} from 'stripe'
 
-// V1 Common
+// Common
 import DataStore from '@opn-common-v1/data/datastore'
 import {AcuityRepository} from '@opn-reservation-v1/respository/acuity.repository'
 import {decodeAvailableTimeId} from '@opn-reservation-v1/utils/base64-converter'
-import {BadRequestException} from '@opn-services/common/exception'
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
+import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
 
 // Libs
+import * as moment from 'moment'
+import {Stripe} from 'stripe'
 import * as _ from 'lodash'
 import {v4 as uuidv4} from 'uuid'
 
@@ -27,8 +28,13 @@ import {
   CartResponseDto,
   CartSummaryDto,
   PaymentAuthorizationCartDto,
+  CartUpdateRequestDto,
 } from '../dto'
+import {firestoreTimeStampToUTC} from '@opn-reservation-v1/utils/datetime.helper'
+import {OpnConfigService} from '@opn-services/common/services'
 
+import {CartFunctions, CartEvent} from '@opn-services/common/types/activity-logs'
+import {LogError} from '@opn-services/common/utils/logging'
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
  */
@@ -43,6 +49,9 @@ export class UserCardService {
 
   private hstTax = 0.13
   public timeSlotNotAvailMsg = 'Time Slot Unavailable: Book Another Slot'
+  private cartChunkSize = 20
+
+  constructor(private configService: OpnConfigService) {}
 
   private buildPaymentSummary(cartItems: CartItemDto[]): CartSummaryDto[] {
     const round = num => Math.round(num * 100) / 100
@@ -171,6 +180,30 @@ export class UserCardService {
     return {items: invalidItems, isValid}
   }
 
+  async cleanupUserCart(): Promise<void> {
+    const expirationHours = this.configService.get('CART_EXPIRATION_HOURS')
+    let iteration = 1
+    let done = false
+    while (!done) {
+      const userCarts = await this.userCartRepository.fetchAllWithPagination(
+        iteration,
+        this.cartChunkSize,
+      )
+      for (const userCart of userCarts) {
+        const updatedDateMoment = firestoreTimeStampToUTC(userCart.updateOn).add(
+          expirationHours,
+          'hours',
+        )
+        const expirationDateMoment = moment().utc()
+        if (expirationDateMoment.isBefore(updatedDateMoment)) {
+          await this.userCartRepository.delete(userCart.id)
+        }
+      }
+      done = userCarts.length === 0
+      iteration++
+    }
+  }
+
   async cartItemsCount(userId: string, organizationId: string): Promise<number> {
     const userOrgId = `${userId}_${organizationId}`
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
@@ -183,7 +216,7 @@ export class UserCardService {
       cartItemId: cartDB.cartItemId,
       label: cartDB.appointmentType.name,
       subLabel: cartDB.appointment.calendarName,
-      patientName: `${cartDB.patient.lastName} ${cartDB.patient.lastName}`,
+      patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
       date: new Date(cartDB.appointment.time).toISOString(),
       price: parseFloat(cartDB.appointmentType.price),
     }))
@@ -194,7 +227,7 @@ export class UserCardService {
     }
   }
 
-  async updateUserStripeCustomerId(id: string, stripeCustomerId: string) {
+  async updateUserStripeCustomerId(id: string, stripeCustomerId: string): Promise<void> {
     this.userRepository.updateProperty(id, 'stripeCustomerId', stripeCustomerId)
   }
 
@@ -241,8 +274,12 @@ export class UserCardService {
     const cardItemDdModel = items.map(item => {
       const appointment = decodeAvailableTimeId(item.slotId)
       const appointmentType = appointmentTypes.find(
-        appointmentType => appointmentType.id === appointment.appointmentTypeId.toString(),
+        appointmentType => Number(appointmentType.id) === appointment.appointmentTypeId,
       )
+      if (!appointmentType) {
+        LogError(CartFunctions.addItems, CartEvent.appointmentTypeNotFound, null)
+        throw new ResourceNotFoundException('Appointment type not found')
+      }
       return {
         cartItemId: uuidv4(),
         patient: _.omit(item, ['slotId']),
@@ -257,10 +294,36 @@ export class UserCardService {
     await this.userCartRepository.addBatch(userOrgId, cardItemDdModel)
   }
 
+  async updateItem(userOrgId: string, cartItems: CartUpdateRequestDto): Promise<void> {
+    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
+    const cartItemsData = await userCartItemRepository.findWhereEqual(
+      'cartItemId',
+      cartItems.cartItemId,
+    )
+
+    const cartItemExist = cartItemsData[0]
+    if (!cartItemExist) {
+      throw new ResourceNotFoundException('userCart-item with given id not found')
+    }
+
+    const appointment = decodeAvailableTimeId(cartItems.slotId)
+
+    await userCartItemRepository.update({
+      id: cartItemExist.id,
+      cartItemId: cartItems.cartItemId,
+      patient: _.omit(cartItems, ['slotId']),
+      appointment,
+      appointmentType: {
+        price: cartItemExist.appointmentType.price,
+        name: cartItemExist.appointmentType.name,
+      },
+    })
+  }
+
   async saveOrderInformation(
     appointmentCreateStatuses: CartItemStatus[],
     paymentIntent: Stripe.PaymentIntent,
-  ) {
+  ): Promise<void> {
     await this.userOrderRepository.add({
       cartItems: appointmentCreateStatuses,
       payment: {
@@ -291,7 +354,7 @@ export class UserCardService {
     await userCartItemRepository.delete(cartId)
   }
 
-  async deleteAllCartItems(userId: string, organizationId: string) {
+  async deleteAllCartItems(userId: string, organizationId: string): Promise<void> {
     const userOrgId = `${userId}_${organizationId}`
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
 

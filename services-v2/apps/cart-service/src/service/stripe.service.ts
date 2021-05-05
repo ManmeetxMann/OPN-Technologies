@@ -1,17 +1,14 @@
 import {Stripe} from 'stripe'
 
-import {ConfigService} from '@nestjs/config'
+import {OpnConfigService} from '@opn-services/common/services'
 import {Injectable} from '@nestjs/common'
 
-// import {Config} from '@opn-common-v1/utils/config'
+import {StripeFunctions, StripeEvent} from '@opn-services/common/types/activity-logs'
+import {LogError} from '@opn-services/common/utils/logging'
 
-/**
- * TODO:
- * 1. Logging
- */
 @Injectable()
 export class StripeService {
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: OpnConfigService) {}
 
   private stripe = new Stripe(this.configService.get('STRIPE_SECRET_KEY'), null)
   private commonOptions = {
@@ -23,7 +20,9 @@ export class StripeService {
     let customer = null
     try {
       customer = this.stripe.customers.create(this.commonOptions)
-    } catch (err) {}
+    } catch (err) {
+      LogError(StripeFunctions.createUser, StripeEvent.ephemeralKeysError, {...err})
+    }
     return customer
   }
 
@@ -31,7 +30,9 @@ export class StripeService {
     let ephemeralKeys = null
     try {
       ephemeralKeys = this.stripe.ephemeralKeys.create({customer}, this.commonOptions)
-    } catch (err) {}
+    } catch (err) {
+      LogError(StripeFunctions.customerEphemeralKeys, StripeEvent.ephemeralKeysError, {...err})
+    }
 
     return ephemeralKeys
   }
@@ -45,7 +46,7 @@ export class StripeService {
     paymentMethodId: string,
   ): Promise<Stripe.PaymentIntent> {
     let intentResult = null
-    console.log(customerId, amount, paymentMethodId)
+
     try {
       // off_session and confirm equal true means payment method needs validation
       intentResult = await this.stripe.paymentIntents.create(
@@ -61,10 +62,9 @@ export class StripeService {
         this.commonOptions,
       )
     } catch (err) {
+      LogError(StripeFunctions.createPaymentIntent, StripeEvent.paymentIntentsError, {...err})
       // Error code will be authentication_required if authentication is needed
-      console.log('Error code is: ', err.code)
       if (err.raw.payment_intent) {
-        console.log('PI retrieved: ', intentResult.id)
         intentResult = await this.stripe.paymentIntents.retrieve(
           err.raw.payment_intent.id,
           null,
@@ -75,14 +75,14 @@ export class StripeService {
     return intentResult
   }
 
-  async cancelPaymentIntent(paymentIntentId: string) {
+  async cancelPaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
     let intentResult = null
     try {
       intentResult = this.stripe.paymentIntents.cancel(paymentIntentId, {
         cancellation_reason: 'abandoned',
       })
     } catch (err) {
-      console.log('cancelPaymentIntent error')
+      LogError(StripeFunctions.cancelPaymentIntent, StripeEvent.paymentIntentsError, {...err})
     }
     return intentResult
   }
@@ -92,7 +92,7 @@ export class StripeService {
     try {
       intentResult = this.stripe.paymentIntents.capture(paymentIntentId)
     } catch (err) {
-      console.log('cancelPaymentIntent error')
+      LogError(StripeFunctions.capturePaymentIntent, StripeEvent.paymentIntentsError, {...err})
     }
     return intentResult
   }

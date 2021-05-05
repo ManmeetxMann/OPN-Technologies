@@ -2,35 +2,40 @@
 import {ConfigModule} from '@nestjs/config'
 import {Global, Module} from '@nestjs/common'
 
-// Libs
-// import * as Joi from 'joi'
-
 // Service
 import {CommonService} from './common.service'
-import {FirebaseAuthService} from './services/auth/firebase-auth.service'
+import {FirebaseAuthService} from './services/firebase/firebase-auth.service'
+import {OpnConfigService} from '@opn-services/common/services'
+import {CaptchaService} from './services/google/captcha.service'
 
 // Guards
 import {AuthGuard} from './guard/auth.guard'
+import {CaptchaGuard} from './guard/captcha.guard'
+import {InternalGuard} from './guard/internal.guard'
 
-/**
- * TODO:
- * 1. Joi model for env variables
- * 2. ENV as separate lib
- */
+import {Config} from '@opn-common-v1/utils/config'
+
 @Global()
 @Module({
-  imports: [ConfigModule.forRoot(), AuthGuard],
-  providers: [CommonService, FirebaseAuthService],
+  imports: [
+    ConfigModule.forRoot({
+      load: [Config.getAll],
+    }),
+    OpnConfigService,
+    AuthGuard,
+    CaptchaGuard,
+    InternalGuard,
+  ],
+  providers: [CommonService, OpnConfigService, FirebaseAuthService, CaptchaService],
   exports: [
     CommonService,
-    ConfigModule.forRoot({
-      validationOptions: {
-        allowUnknown: false,
-        abortEarly: true,
-      },
-    }),
+    ConfigModule.forRoot(),
+    OpnConfigService,
     FirebaseAuthService,
+    CaptchaService,
     AuthGuard,
+    CaptchaGuard,
+    InternalGuard,
   ],
 })
 export class CommonModule {}

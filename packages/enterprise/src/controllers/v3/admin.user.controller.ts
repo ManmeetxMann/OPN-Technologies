@@ -15,9 +15,9 @@ import {OrganizationGroup} from '../../models/organization'
 import {flatten} from 'lodash'
 import {AuthUser} from '../../../../common/src/data/user'
 import {UserSyncService} from '../../services/user-sync-service'
-import {LogInfo} from '../../../../common/src/utils/logging-setup'
+import {LogInfo, LogError} from '../../../../common/src/utils/logging-setup'
 import {getUserId} from '../../../../common/src/utils/auth'
-import {UserLogsEvents as events} from '../../types/new-user'
+import {UserLogsEvents as events, UserLogsFunctions as functions} from '../../types/new-user'
 
 const userService = new UserService()
 const organizationService = new OrganizationService()
@@ -122,7 +122,7 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
       delegates: [],
     })
 
-    LogInfo(events.createUser, events.createUser, {
+    LogInfo(functions.createUser, events.createUser, {
       newUser: user,
       createdBy: getUserId(res.locals.authenticatedUser),
     })
@@ -135,6 +135,7 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
 
     res.json(actionSucceed(userDTOResponse(user)))
   } catch (error) {
+    LogError(functions.createUser, events.createUserError, {...error})
     next(error)
   }
 }
@@ -150,7 +151,7 @@ const updateUser: Handler = async (req, res, next): Promise<void> => {
     const updatedUser = await userService.updateByAdmin(userId, source)
 
     await userSyncService.updateByAdmin(updatedUser.id, source)
-    LogInfo(events.updateUser, events.updateUser, {
+    LogInfo(functions.updateUser, events.updateUser, {
       oldUser,
       updatedUser,
       updatedBy: getUserId(res.locals.authenticatedUser),
@@ -166,6 +167,7 @@ const updateUser: Handler = async (req, res, next): Promise<void> => {
 
     res.json(actionSucceed(userDTOResponse(updatedUser)))
   } catch (error) {
+    LogError(functions.updateUser, events.updateUserError, {...error})
     next(error)
   }
 }
