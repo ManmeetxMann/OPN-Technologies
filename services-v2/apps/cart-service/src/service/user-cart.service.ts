@@ -1,40 +1,40 @@
-import {Injectable} from '@nestjs/common'
+import { Injectable } from "@nestjs/common";
 
 // Common
-import DataStore from '@opn-common-v1/data/datastore'
-import {AcuityRepository} from '@opn-reservation-v1/respository/acuity.repository'
-import {decodeAvailableTimeId} from '@opn-reservation-v1/utils/base64-converter'
-import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
-import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
+import DataStore from "@opn-common-v1/data/datastore";
+import { AcuityRepository } from "@opn-reservation-v1/respository/acuity.repository";
+import { decodeAvailableTimeId } from "@opn-reservation-v1/utils/base64-converter";
+import { UserRepository } from "@opn-enterprise-v1/repository/user.repository";
+import { BadRequestException, ResourceNotFoundException } from "@opn-services/common/exception";
 
 // Libs
-import * as moment from 'moment'
-import {Stripe} from 'stripe'
-import * as _ from 'lodash'
-import {v4 as uuidv4} from 'uuid'
+import * as moment from "moment";
+import { Stripe } from "stripe";
+import * as _ from "lodash";
+import { v4 as uuidv4 } from "uuid";
 
 // Repositories
-import {UserCartItemRepository, UserCartRepository} from '../repository/user-cart.repository'
-import {UserOrderRepository} from '../repository/user-order.repository'
-import {AcuityTypesRepository} from '../repository/acuity-types.repository'
+import { UserCartItemRepository, UserCartRepository } from "../repository/user-cart.repository";
+import { UserOrderRepository } from "../repository/user-order.repository";
+import { AcuityTypesRepository } from "../repository/acuity-types.repository";
 
 // Models
-import {CardItemDBModel, CartItemStatus} from '../model/cart'
-import {CartValidationItemDto} from '../dto'
-
+import { CardItemDBModel, CartItemStatus } from "../model/cart";
 import {
   CartAddDto,
   CartItemDto,
   CartResponseDto,
   CartSummaryDto,
-  PaymentAuthorizationCartDto,
   CartUpdateRequestDto,
-} from '../dto'
-import {firestoreTimeStampToUTC} from '@opn-reservation-v1/utils/datetime.helper'
-import {OpnConfigService} from '@opn-services/common/services'
+  CartValidationItemDto,
+  PaymentAuthorizationCartDto
+} from "../dto";
+import { firestoreTimeStampToUTC } from "@opn-reservation-v1/utils/datetime.helper";
+import { OpnConfigService } from "@opn-services/common/services";
 
-import {CartFunctions, CartEvent} from '@opn-services/common/types/activity-logs'
-import {LogError} from '@opn-services/common/utils/logging'
+import { CartEvent, CartFunctions } from "@opn-services/common/types/activity-logs";
+import { LogError } from "@opn-services/common/utils/logging";
+
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
  */
@@ -55,9 +55,12 @@ export class UserCardService {
 
   private buildPaymentSummary(cartItems: CartItemDto[]): CartSummaryDto[] {
     const round = num => Math.round(num * 100) / 100
-    const sum = cartItems.reduce((sum, item) => sum + (item.price || 0), 0)
-    const tax = round(sum * this.hstTax)
-    const total = sum + tax
+    const discountedSum = cartItems.reduce(
+      (sum, item) => sum + (item.discountedPrice || item.price || 0),
+      0,
+    )
+    const tax = round(discountedSum * this.hstTax)
+    const total = round(discountedSum + tax)
 
     if (total == 0) {
       return []
@@ -67,7 +70,7 @@ export class UserCardService {
       {
         uid: 'subTotal',
         label: 'SUBTOTAL',
-        amount: sum,
+        amount: discountedSum,
         currency: 'CAD',
       },
       {
@@ -377,6 +380,54 @@ export class UserCardService {
     return {cartDdItems, cardValidation}
   }
 
+  async discount(coupon: string, userId: string, organizationId: string): Promise<CartResponseDto> {
+    const userOrgId = `${userId}_${organizationId}`
+
+    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
+
+    const cardItems = await this.fetchUserAllCartItem(userId, organizationId)
+    const discountedCartItems = await Promise.all(
+      cardItems.map(async cartItem => {
+        const discount = await this.acuityRepository.checkCoupon(
+          coupon,
+          cartItem.appointment.appointmentTypeId,
+        )
+        if (discount.discountAmount > 0) {
+          const price = Number(cartItem.appointmentType.price)
+          const [cartItemDataDb] = await userCartItemRepository.findWhereEqual(
+            'cartItemId',
+            cartItem.cartItemId,
+          )
+          return userCartItemRepository.updateProperties(cartItemDataDb.id, {
+            appointmentType: {
+              ...cartItem.appointmentType,
+              discountedPrice: price - (price * discount.discountAmount) / 100,
+            },
+            discountData: {
+              discountType: discount.discountType,
+              discountAmount: discount.discountAmount,
+              name: discount.name,
+              couponId: discount.couponID,
+              expiration: discount.expiration,
+            },
+          })
+        }
+      }),
+    )
+    const cartItems = discountedCartItems.map(cartDB => ({
+      cartItemId: cartDB.cartItemId,
+      label: cartDB.appointmentType.name,
+      subLabel: cartDB.appointment.calendarName,
+      patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
+      date: new Date(cartDB.appointment.time).toISOString(),
+      price: parseFloat(cartDB.appointmentType.price),
+      discountedPrice: cartDB.appointmentType?.discountedPrice,
+    }))
+    return {
+      cartItems: cartItems,
+      paymentSummary: this.buildPaymentSummary(cartItems),
+    }
+  }
   /**
    * converts acuity price format to Stripe amount in cent
    */

@@ -3,6 +3,7 @@ import {AvailableTimeIdParams} from '@opn-reservation-v1/types/base64-coverter.t
 import {CreateAppointmentRequest} from '@opn-reservation-v1/models/appointment'
 import {AppointmentTypes} from '@opn-reservation-v1/models/appointment-types'
 import {firestore} from 'firebase-admin'
+import {CouponCheckResponse} from '@opn-reservation-v1/models/coupons'
 
 export type CartRequestItem = Omit<CreateAppointmentRequest, 'userId'> & {email: string}
 
@@ -15,7 +16,11 @@ export type CardItemDBModel = {
   cartItemId: string
   patient: Omit<CartRequestItem, 'slotId'>
   appointment: AvailableTimeIdParams
-  appointmentType: Pick<AppointmentTypes, 'name' | 'price'>
+  appointmentType: Pick<AppointmentTypes, 'name' | 'price'> & {discountedPrice?: number}
+  discountData?: Pick<
+    CouponCheckResponse,
+    'discountType' | 'discountAmount' | 'name' | 'expiration'
+  > & {couponId: string}
 }
 
 export type UserCartDBModel = {

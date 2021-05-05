@@ -6,7 +6,7 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 
 import {AppointmentAcuityResponse, DeadlineLabel, Gender} from '../models/appointment'
 import {Certificate} from '../models/packages'
-import {AcuityCouponCodeResponse} from '../models/coupons'
+import {AcuityCouponCodeResponse, CouponCheckResponse} from '../models/coupons'
 import {AppointmentTypes} from '../models/appointment-types'
 import {Calendar} from '../models/calendar'
 import {AcuityAvailableSlots} from '../models/acuity'
@@ -209,6 +209,32 @@ abstract class AcuityAdapter {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = encodeURI(APIURL + `/api/v1/calendars`)
+    LogInfo(`AcuityAdapterGetCalendar`, 'Request', {})
+    const res = await fetch(apiUrl, {
+      method: 'get',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    return result
+  }
+
+  protected async checkCouponCode(
+    certificate: string,
+    appointmentTypeID: number,
+  ): Promise<CouponCheckResponse> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = encodeURI(
+      APIURL +
+        `/api/v1/certificates/check?certificate=${certificate}&appointmentTypeID=${appointmentTypeID}`,
+    )
     LogInfo(`AcuityAdapterGetCalendar`, 'Request', {})
     const res = await fetch(apiUrl, {
       method: 'get',

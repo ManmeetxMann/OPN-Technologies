@@ -31,6 +31,8 @@ export class CartItemDto {
 
   @ApiProperty()
   price: number
+
+  discountedPrice?: number
 }
 
 export class CartSummaryDto {
@@ -160,6 +162,13 @@ export class CartAddRequestDto {
   @ValidateNested()
   @Type(() => CartAddDto)
   items!: CartAddDto[]
+}
+
+export class CouponRequestDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  coupon!: string
 }
 
 export class PaymentAuthorizationRequestDto {
