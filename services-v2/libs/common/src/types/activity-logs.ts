@@ -49,3 +49,11 @@ export enum StripeEvent {
   ephemeralKeysError = 'ephemeralKeysError',
   paymentIntentsError = 'paymentIntentsError',
 }
+
+export enum ValidatorFunctions {
+  validate = 'validate',
+}
+
+export enum ValidatorEvents {
+  validationFailed = 'validationFailed',
+}
