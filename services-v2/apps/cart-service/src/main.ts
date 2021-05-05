@@ -3,6 +3,10 @@ import {NestFactory} from '@nestjs/core'
 import {MiddlewareConsumer, Module, RequestMethod, ValidationPipe} from '@nestjs/common'
 import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 
+// Should be called before any v1 module import from v2
+import {Config} from '@opn-common-v1/utils/config'
+Config.useRootEnvFile()
+
 // Common
 import {AuthMiddleware, CommonModule, createSwagger} from '@opn-services/common'
 
