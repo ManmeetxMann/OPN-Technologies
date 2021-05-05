@@ -9,14 +9,13 @@ const envSpecificConfig = envConfig()
 export class Config {
   private static dotEnvPath = '../../.env'
   private static loaded = false
-  private static loadedConfig = {}
 
   static load(): void {
     const result = dotenv.config({path: path.resolve(__dirname, this.dotEnvPath)})
     if (result.error) {
       console.error(`Error loading dot env file path: ${this.dotEnvPath}`)
+      console.error(result.error)
     }
-    this.loadedConfig = result.parsed
 
     Config.loaded = true
   }
@@ -46,5 +45,12 @@ export class Config {
     }
 
     return {...envSpecificConfig, ...process.env}
+  }
+
+  /**
+   * Should be called first before importing dependant modules from v2
+   */
+  static useRootEnvFile() {
+    this.dotEnvPath = './.env'
   }
 }

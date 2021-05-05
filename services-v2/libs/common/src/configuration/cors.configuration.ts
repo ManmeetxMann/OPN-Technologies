@@ -6,8 +6,8 @@ import {isRunningOnGCP} from '../utils'
 const baseConfigService = new ConfigService()
 const configService = new OpnConfigService(baseConfigService)
 
-const allowedOrigins = [configService.get<string>('DASHBOARD_URL')]
+const allowedOrigins = () => [configService.get<string>('DASHBOARD_URL')]
 
 export const corsOptions: CorsOptions = {
-  origin: isRunningOnGCP() ? allowedOrigins : '*',
+  origin: isRunningOnGCP() ? allowedOrigins() : '*',
 }

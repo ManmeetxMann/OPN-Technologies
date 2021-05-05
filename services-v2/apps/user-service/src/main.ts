@@ -3,6 +3,10 @@ import {NestFactory} from '@nestjs/core'
 import {FastifyAdapter} from '@nestjs/platform-fastify'
 import {MiddlewareConsumer, Module, ValidationPipe} from '@nestjs/common'
 
+// Should be called before any v1 module import from v2
+import {Config} from '@opn-common-v1/utils/config'
+Config.useRootEnvFile()
+
 import {
   DatabaseConfiguration,
   RepositoryConfiguration,
