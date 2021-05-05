@@ -289,9 +289,6 @@ abstract class AcuityAdapter {
       fields: this.handleBooleans(this.renameKeysToId(fields)), // [{id: 1, value: 'Party time!'}]
     }
 
-    console.log(fields)
-    console.log(data)
-
     LogInfo(`AcuityAdapterCreateAppointment`, 'Request', data)
     const res = await fetch(apiUrl, {
       method: 'post',
