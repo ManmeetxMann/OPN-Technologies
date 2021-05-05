@@ -99,9 +99,10 @@ export class PatientController {
 
     const {registrationId, pushToken} = patientUpdateDto
 
-    await this.messaging.validatePushToken(pushToken)
-
-    await this.registrationService.updateProperty(registrationId, 'pushToken', pushToken)
+    if (registrationId && pushToken) {
+      await this.messaging.validatePushToken(pushToken)
+      await this.registrationService.updateProperty(registrationId, 'pushToken', pushToken)
+    }
 
     const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
     LogInfo(UserFunctions.update, UserEvent.updateProfile, {
