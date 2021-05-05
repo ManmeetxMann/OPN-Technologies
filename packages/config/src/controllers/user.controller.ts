@@ -58,7 +58,7 @@ class UserController implements IControllerBase {
           },
           publicOrg: Config.get('PUBLIC_ORG_ID'),
           publicGroup: Config.get('PUBLIC_GROUP_ID'),
-          publicLocation: Config.get('PUBLIC_LOCATION'),
+          publicLocation: Config.get('PUBLIC_LOCATION_ID'),
         },
         status: 'complete',
       }
@@ -99,7 +99,7 @@ class UserController implements IControllerBase {
           },
           publicOrg: Config.get('PUBLIC_ORG_ID'),
           publicGroup: Config.get('PUBLIC_GROUP_ID'),
-          publicLocation: Config.get('PUBLIC_LOCATION'),
+          publicLocation: Config.get('PUBLIC_LOCATION_ID'),
         },
         status: 'complete',
       }
