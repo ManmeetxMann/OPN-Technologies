@@ -66,6 +66,7 @@ import {ReservationPushTypes} from '../types/appointment-push'
 import {DbBatchAppointments} from '../../../common/src/types/push-notification'
 import {PcrResultTestActivityAction} from '../models/pcr-test-results'
 import {AdminScanHistory} from '../models/admin-scan-history'
+import {CardItemDBModel} from '../models/cart'
 
 //Repository
 import {AcuityRepository} from '../respository/acuity.repository'
@@ -1214,8 +1215,7 @@ export class AppoinmentService {
    * 1. Cart coupon
    */
   async createAcuityAppointmentFromCartItem(
-    // eslint-disable-next-line
-    cartDdItem,
+    cartDdItem: CardItemDBModel,
     userId: string,
     email: string,
   ): Promise<AppointmentDBModel> {
@@ -1231,7 +1231,7 @@ export class AppoinmentService {
       firstName: patient.firstName,
       lastName: patient.lastName,
       email,
-      phone: `${patient.phone.code}${patient.phone.number}`,
+      phone: patient.phone,
       packageCode: appointment.packageCode,
       calendarID: appointment.calendarId,
       fields: {
@@ -1240,11 +1240,19 @@ export class AppoinmentService {
         address: patient.address,
         addressUnit: patient.addressUnit,
         postalCode: patient.postalCode,
-        shareTestResultWithEmployer: patient.shareTestResultWithEmployer,
+        shareTestResultWithEmployer: patient.shareTestResultWithEmployer ?? null,
         readTermsAndConditions: patient.readTermsAndConditions,
         agreeToConductFHHealthAssessment: patient.agreeToConductFHHealthAssessment,
         receiveResultsViaEmail: patient.receiveResultsViaEmail,
         receiveNotificationsFromGov: patient.receiveNotificationsFromGov,
+        // agreeCancellationRefund: patient.agreeCancellationRefund,
+        hadCovidConfirmedOrSymptoms: patient.hadCovidConfirmedOrSymptoms,
+        hadCovidConfirmedOrSymptomsDate: patient.hadCovidConfirmedOrSymptomsDate,
+        hadCovidExposerData: patient.hadCovidExposerData,
+        hadCovidExposer: patient.hadCovidExposer,
+        city: patient.city,
+        province: patient.province,
+        country: patient.country,
         barCodeNumber,
       },
     })

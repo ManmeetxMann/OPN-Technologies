@@ -212,14 +212,19 @@ export class UserCardService {
 
   async getUserCart(userId: string, organizationId: string): Promise<CartResponseDto> {
     const cartDBItems = await this.fetchUserAllCartItem(userId, organizationId)
-    const cartItems = cartDBItems.map(cartDB => ({
-      cartItemId: cartDB.cartItemId,
-      label: cartDB.appointmentType.name,
-      subLabel: cartDB.appointment.calendarName,
-      patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
-      date: new Date(cartDB.appointment.time).toISOString(),
-      price: parseFloat(cartDB.appointmentType.price),
-    }))
+    const cartItems = cartDBItems.map(cartDB => {
+      let cartItem = new CartItemDto()
+      cartItem = {
+        cartItemId: cartDB.cartItemId,
+        label: cartDB.appointmentType.name,
+        subLabel: cartDB.appointment.calendarName,
+        patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
+        date: new Date(cartDB.appointment.time).toISOString(),
+        price: parseFloat(cartDB.appointmentType.price),
+        userId: cartDB.patient.userId,
+      }
+      return cartItem
+    })
 
     return {
       cartItems,
@@ -272,7 +277,13 @@ export class UserCardService {
     const appointmentTypes = await this.acuityTypesRepository.fetchAll()
 
     const cardItemDdModel = items.map(item => {
-      const appointment = decodeAvailableTimeId(item.slotId)
+      let appointment = null
+      try {
+        appointment = decodeAvailableTimeId(item.slotId)
+      } catch (_) {
+        throw new BadRequestException('Invalid slotId')
+      }
+
       const appointmentType = appointmentTypes.find(
         appointmentType => Number(appointmentType.id) === appointment.appointmentTypeId,
       )

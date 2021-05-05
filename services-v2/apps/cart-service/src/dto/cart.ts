@@ -3,15 +3,20 @@ import {
   IsBoolean,
   IsDefined,
   IsNotEmpty,
-  IsNumber,
   IsObject,
   IsOptional,
   IsString,
   ValidateNested,
+  Length,
+  IsEnum,
+  IsDateString,
+  IsNumber,
+  IsEmail,
 } from 'class-validator'
 import {Type} from 'class-transformer'
 
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
+import {Gender} from '@opn-reservation-v1/models/appointment'
 
 export class CartItemDto {
   @ApiProperty()
@@ -31,6 +36,11 @@ export class CartItemDto {
 
   @ApiProperty()
   price: number
+
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @ApiProperty()
+  userId: string
 }
 
 export class CartSummaryDto {
@@ -55,16 +65,6 @@ export class CartResponseDto {
   paymentSummary: CartSummaryDto[]
 }
 
-class CartAddPhoneDto {
-  @IsNumber()
-  @IsNotEmpty()
-  code: number
-
-  @IsNumber()
-  @IsNotEmpty()
-  number: number
-}
-
 export class CartAddDto {
   @ApiProperty()
   @IsString()
@@ -72,52 +72,103 @@ export class CartAddDto {
   slotId: string
 
   @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  userId: string
+
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @Length(1, 50)
   firstName: string
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @Length(1, 50)
   lastName: string
 
   @ApiProperty()
-  @IsString()
-  @IsOptional()
+  @IsNumber()
+  @IsNotEmpty()
+  phone: string
+
+  @ApiProperty()
+  @IsEmail()
+  @IsNotEmpty()
+  @Length(1, 50)
   email: string
 
   @ApiProperty()
+  @IsNotEmpty()
+  @IsDateString()
+  dateOfBirth: string
+
+  @ApiProperty({enum: Gender})
   @IsString()
   @IsNotEmpty()
+  @IsEnum(Gender)
   gender: string
 
   @ApiProperty()
-  phone: CartAddPhoneDto
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  @Length(1, 50)
+  ohipCard: string
+
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  @Length(1, 20)
+  travelID: string
+
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  @Length(1, 20)
+  travelIDIssuingCountry: string
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  dateOfBirth: string
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
+  @Length(1, 250)
   address: string
 
   @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
   @IsNotEmpty()
+  @IsOptional()
+  @Length(1, 250)
   addressUnit: string
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  postalCode: string
+  @Length(1, 100)
+  city: string
 
   @ApiProperty()
-  @IsBoolean()
+  @IsString()
   @IsNotEmpty()
-  shareTestResultWithEmployer: boolean
+  @Length(1, 100)
+  province: string
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 100)
+  country: string
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 10)
+  postalCode: string
 
   @ApiProperty()
   @IsBoolean()
@@ -127,23 +178,52 @@ export class CartAddDto {
   @ApiProperty()
   @IsBoolean()
   @IsNotEmpty()
-  agreeToConductFHHealthAssessment: boolean
+  receiveResultsViaEmail: boolean
 
   @ApiProperty()
   @IsBoolean()
   @IsNotEmpty()
-  receiveResultsViaEmail: boolean
+  agreeToConductFHHealthAssessment: boolean
 
   @ApiProperty()
   @IsBoolean()
   @IsNotEmpty()
   receiveNotificationsFromGov: boolean
 
-  @ApiPropertyOptional()
-  @IsOptional()
   @ApiProperty()
+  @IsBoolean()
+  @IsNotEmpty()
+  agreeCancellationRefund: boolean
+
+  @ApiProperty()
+  @IsBoolean()
+  @IsNotEmpty()
+  hadCovidConfirmedOrSymptoms: boolean
+
+  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  userId: string
+  @IsOptional()
+  @IsDateString()
+  hadCovidConfirmedOrSymptomsDate: string
+
+  @ApiProperty()
+  @IsBoolean()
+  @IsNotEmpty()
+  hadCovidExposer: boolean
+
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  @IsDateString()
+  hadCovidExposerData: string
+
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  shareTestResultWithEmployer: boolean
 }
 
 export class CartUpdateRequestDto extends CartAddDto {
