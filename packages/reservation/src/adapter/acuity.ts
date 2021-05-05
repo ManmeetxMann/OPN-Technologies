@@ -41,10 +41,11 @@ abstract class AcuityAdapter {
       'ACUITY_FIELD_AGREE_TO_CONDUCT_FH_HEALTH_ACCESSMENT',
     ),
     receiveNotificationsFromGov: Config.get('ACUITY_FIELD_RECEIVE_NOTIFICATIONS_FROM_GOV'),
+    agreeCancellationRefund: Config.get('ACUITY_FIELD_AGREE_CANCELLATION_REFUND'),
     hadCovidConfirmedOrSymptoms: Config.get('ACUITY_FIELD_HAD_COVID_CONFIRMED'),
     hadCovidConfirmedOrSymptomsDate: Config.get('ACUITY_FIELD_HAD_COVID_CONFIRMED_DATE'),
-    hadCovidExposerData: Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE'),
     hadCovidExposer: Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE_DATE'),
+    hadCovidExposerData: Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE'),
   }
 
   private labelsIdMapping = {

@@ -1245,7 +1245,7 @@ export class AppoinmentService {
         agreeToConductFHHealthAssessment: patient.agreeToConductFHHealthAssessment,
         receiveResultsViaEmail: patient.receiveResultsViaEmail,
         receiveNotificationsFromGov: patient.receiveNotificationsFromGov,
-        // agreeCancellationRefund: patient.agreeCancellationRefund,
+        agreeCancellationRefund: patient.agreeCancellationRefund,
         hadCovidConfirmedOrSymptoms: patient.hadCovidConfirmedOrSymptoms,
         hadCovidConfirmedOrSymptomsDate: patient.hadCovidConfirmedOrSymptomsDate,
         hadCovidExposerData: patient.hadCovidExposerData,
