@@ -10,6 +10,7 @@
 				"tool:update-user-emails": "node ./update-user-emails",
 				"tool:appointments-finance": "ts-node ./appointments-finance",
 				"tool:non-org-packages-details": "ts-node ./non-org-packages-details",
+				"tool:update-final-cost": "ts-node ./update-final-cost",
 				"tool:create-firebase-token": "ts-node ./create-firebase-token",
 				"tool:get-stripe-payment": "ts-node ./get-stripe-payment-id",
 				"tool:appointments-check-duplicate-barcode": "ts-node ./appointments-check-duplicate-barcode"

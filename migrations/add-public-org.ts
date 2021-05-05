@@ -15,10 +15,12 @@ const database = firestore()
 async function main() {
   database
     .collection('organizations')
-    .add({
+    .doc('PUBLIC_ORG')
+    .set({
       key: 88190,
       name: 'OPN Public ORG',
       type: 'default',
+      enablePaymentForBooking: true,
       allowDependants: false,
       enablePushNotifications: false,
       dayShift: 0,
@@ -26,12 +28,37 @@ async function main() {
       legacyMode: false,
       enableTesting: false,
     })
+    .then(() => {
+      database
+        .collection('organizations')
+        .doc('PUBLIC_ORG')
+        .collection('organization_groups')
+        .doc('PUBLIC_GROUP')
+        .set({
+          name: 'Public',
+          isPrivate: false,
+          priority: 0,
+        })
+    })
     .then((response) => {
-      database.collection('organizations').doc(response.id).collection('organization_groups').add({
-        name: 'Default Group',
-        isPrivate: false,
-        priority: 0,
-      })
+      console.log(response)
+      database
+        .collection('organizations')
+        .doc('PUBLIC_ORG')
+        .collection('locations')
+        .doc('PUBLIC_LOCATION')
+        .set({
+          title: 'Public',
+          address: 'Public',
+          city: 'Public',
+          state: 'Public',
+          zip: 'Public',
+          country: 'Public',
+          allowAccess: true,
+          allowsSelfCheckInOut: true,
+          attestationRequired: true,
+          parentLocationId: null,
+        })
     })
 
   return

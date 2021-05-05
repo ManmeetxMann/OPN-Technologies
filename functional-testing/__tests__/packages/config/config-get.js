@@ -21,7 +21,7 @@ describe('Get content-result-get', () => {
           .setup({
             request: {
               headers: {
-                Authorization: `Bearer ${token}`
+                Authorization: `Bearer ${token}`,
               },
             },
           })

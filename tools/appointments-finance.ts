@@ -8,8 +8,8 @@ import fetch from 'node-fetch'
 import moment from 'moment-timezone'
 
 const ACUITY_ENV_NON_PROD = false
-const START_DATE = '2021-02-27' //Starting from OCT 1st
-const END_DATE = '2021-05-01' //new Date()
+const START_DATE = '2020-10-01' //Starting from OCT 1st
+const END_DATE = '2021-05-02' //new Date()
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
@@ -20,7 +20,7 @@ const conn = mysql.createConnection({
   host: 'localhost',
   user: 'root',
   password: 'root',
-  database: 'opn_platform',
+  database: 'finance',
   port: 8889,
 })
 const acuityFormFieldIdsNonProd = {
@@ -158,7 +158,7 @@ async function createAppointment(acuityAppointment) {
       findByIdForms(acuityAppointment.forms, acuityBarCodeFormId).values,
       acuityFormFieldIds.organizationId,
     )
-    if (organizationIdField) {
+    if (!!organizationIdField) {
       //ORG ID Field is missing for some appointments
       organizationId = organizationIdField.value
       if (organizationId) {
@@ -178,14 +178,21 @@ async function createAppointment(acuityAppointment) {
       `AppointmentID: ${acuityAppointment.id} InvalidORGfor ${acuityAppointment.id}: ${e.message}`,
     )
   }
+  if (acuityAppointment.canceled) {
+    console.log(`===========AppointmentID: ${acuityAppointment.id} is cancelled`)
+  }
 
   try {
     const sql =
-      'INSERT INTO appointments_finance (acuityId, price, priceSold, paid, amountPaid, certificate, organizationId, date,costForOrg) VALUES ?'
+      'INSERT INTO appointments_finance (acuityId, appointmentTypeID, calendarID, appointmentType, calendar,  price, priceSold, paid, amountPaid, packageCode, organizationId, date, costForOrg, firstName, lastName, email) VALUES ?'
     const data = []
     const date = moment(acuityAppointment.datetime).format('YYYY-MM-DD')
     data.push([
       acuityAppointment.id,
+      acuityAppointment.appointmentTypeID,
+      acuityAppointment.calendarID,
+      acuityAppointment.type,
+      acuityAppointment.calendar,
       acuityAppointment.price,
       acuityAppointment.priceSold,
       acuityAppointment.paid,
@@ -194,13 +201,21 @@ async function createAppointment(acuityAppointment) {
       organizationId,
       date,
       costForOrg,
+      acuityAppointment.firstName,
+      acuityAppointment.lastName,
+      acuityAppointment.email,
     ])
-    conn.query(sql, [data], function (err) {
-      if (err) {
-        return Promise.reject(err.message)
-      }
+    return new Promise((resolve, reject) => {
+      conn
+        .query(sql, [data])
+        .on('error', (err) => {
+          console.log(`${acuityAppointment.id} has error ${err.sqlMessage}`)
+          reject(`${acuityAppointment.id} has error ${err.sqlMessage}`)
+        })
+        .on('end', () => {
+          resolve('Created')
+        })
     })
-    return Promise.resolve('Created')
   } catch (error) {
     return Promise.reject(error.message)
   }
@@ -241,3 +256,31 @@ main().then(() => console.log('Script Complete \n'))
 //SELECT certificate FROM `appointments_finance` WHERE organizationId is null and certificate is not null GROUP By certificate
 
 //SELECT SUM(amountPaid), date FROM `appointments_finance` GROUP BY date
+
+//Get All Packages with no payment and org cost is also 0
+//SELECT certificate FROM `appointments_finance` WHERE (organizationId is null or organizationId="") AND certificate!="" AND amountPaid=0 AND costForOrg=0 GROUP BY certificate
+
+//Update finalPrice
+//UPDATE appointments_finance SET finalPrice=amountPaid WHERE finalPrice=0
+//UPDATE appointments_finance SET finalPrice=costForOrg WHERE finalPrice=0
+
+//SELECT certificate FROM `appointments_finance` WHERE organizationId is null and certificate is not null GROUP By certificate
+
+//SELECT SUM(amountPaid), date FROM `appointments_finance` GROUP BY date
+
+//SELECT certificate FROM `appointments_finance` WHERE organizationId is null and certificate is not null GROUP By certificate
+
+//SELECT SUM(amountPaid), date FROM `appointments_finance` GROUP BY date
+
+//Get All Packages with no payment and org cost is also 0
+//SELECT certificate FROM `appointments_finance` WHERE (organizationId is null or organizationId="") AND certificate!="" AND amountPaid=0 AND costForOrg=0 GROUP BY certificate
+
+/*
+//STEPS
+1. Get all appointments using appointments-finance. This add Price for ORGs
+2. Add finalPrice using update-final-cost
+3. Add ORG cost to finalPrice UPDATE appointments_finance SET finalPrice=amountPaid, source='paidByUser' WHERE amountPaid>0
+4. Add Regular cost to final Price UPDATE appointments_finance SET finalPrice=costForOrg, source='paidByOrg' WHERE costForOrg>0
+
+SELECT * FROM `appointments_finance` WHERE DATE(date) < '2021-05-01' AND finalPrice=0
+*/

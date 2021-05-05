@@ -1,8 +1,6 @@
 const frisby = require('frisby');
 const helpersCommon = require('helpers_common');
-// const testProfile = require('test_profile');
-
-const {getLocations} = require('./booking_locations_get');
+const testProfile = require('test_profile');
 
 // Do setup first
 frisby.globalSetup({
@@ -12,7 +10,7 @@ frisby.globalSetup({
 });
 
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
-const encodedId = 'eyJhcHBvaW50bWVudFR5cGVJZCI6MTk0MjIwMTgsImNhbGVuZGFyVGltZXpvbmUiOiJBbWVyaWNhL1Rvcm9udG8iLCJjYWxlbmRhcklkIjo0NTcxMTAzfQ==';
+const organizationId = testProfile.get().organizationId;
 /**
  * @group reservation-service
  * @group /reservation/api/v1/booking-locations
@@ -21,11 +19,24 @@ const encodedId = 'eyJhcHBvaW50bWVudFR5cGVJZCI6MTk0MjIwMTgsImNhbGVuZGFyVGltZXpvb
 describe('get:availability dates', () => {
   it('should get availability dates successfully?', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      getLocations(token)
+      const url = `${reservationServiceUrl}/reservation/api/v1/booking-locations?organizationId=${organizationId}`;
+      return frisby
+          .setup({
+            request: {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+            },
+          })
+          .get(
+              url,
+          )
           .then((response)=>{
+            console.log(response);
             expect(response.json.data.length).toBeGreaterThan(0);
             if (response.json.data.length>0) {
-              const url = `${reservationServiceUrl}/reservation/api/v1/availability/dates?year=2021&month=02&id=${response.json.data[0].id}`;
+              const url = `${reservationServiceUrl}/reservation/api/v1/availability/dates?year=2021&month=04&id=${response.json.data[0].id}`;
+              console.log(url);
               return frisby
                   .setup({
                     request: {
@@ -43,6 +54,7 @@ describe('get:availability dates', () => {
           });
     });
   });
+
 
   it('should fail to get availability dates: Missing Month', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
