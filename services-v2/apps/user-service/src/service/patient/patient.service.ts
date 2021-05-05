@@ -139,8 +139,8 @@ export class PatientService {
       email: data.email,
       firstName: data.firstName,
       lastName: data.lastName,
-      registrationId: data.registrationId,
-      photo: data.photoUrl,
+      registrationId: data.registrationId ?? null,
+      photo: data.photoUrl ?? null,
       phone: {
         diallingCode: 0,
         number: Number(data.phoneNumber),
