@@ -1,7 +1,7 @@
 import {AvailableTimeIdParams} from '../types/base64-coverter.type'
 import {AppointmentTypes} from './appointment-types'
 
-import {CartAddDto} from '../../../../services-v2/apps/cart-service/src/dto/cart'
+import {CartAddDto} from '../../../../services-v2/apps/cart-service/src/dto/cart-item'
 
 export type CardItemDBModel = {
   id: string
