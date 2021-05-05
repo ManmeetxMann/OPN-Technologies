@@ -30,8 +30,8 @@ import {UserEvent, UserFunctions} from '@opn-services/common/types/activity-logs
 export class PatientController {
   constructor(private patientService: PatientService) {}
 
-  @Get('')
-  @Roles([RequiredUserPermission.RegUser], true)
+  @Get()
+  @Roles([RequiredUserPermission.RegUser])
   async getById(
     @AuthUserDecorator() authUser: AuthUser,
   ): Promise<ResponseWrapper<PatientUpdateDto>> {
@@ -44,7 +44,7 @@ export class PatientController {
   }
 
   @Post()
-  @Roles([RequiredUserPermission.RegUser], true)
+  @Roles([RequiredUserPermission.RegUser])
   async add(
     @AuthUserDecorator() authUser: AuthUser,
     @Body() patientDto: PatientCreateDto,
@@ -74,7 +74,7 @@ export class PatientController {
     return ResponseWrapper.actionSucceed(patient.dependants)
   }
 
-  @Put('')
+  @Put()
   @Roles([RequiredUserPermission.RegUser])
   async update(
     @Body() patientUpdateDto: PatientUpdateDto,
@@ -101,7 +101,7 @@ export class PatientController {
   }
 
   @Post('/dependant')
-  @Roles([RequiredUserPermission.RegUser], true)
+  @Roles([RequiredUserPermission.RegUser])
   async addDependents(
     @Body() dependantBody: DependantCreateDto,
     @AuthUserDecorator() authUser: AuthUser,
