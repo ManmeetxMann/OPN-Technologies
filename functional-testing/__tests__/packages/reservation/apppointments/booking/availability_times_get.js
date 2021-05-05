@@ -17,12 +17,11 @@ const organizationId = testProfile.get().organizationId;
  * @group /reservation/api/v1/availability/slots
  * @group get-availability-times
  */
-const encodedId = 'XXXX';
 describe('get:availability times', () => {
   test('should get availability times successfully?', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
       const url = `${reservationServiceUrl}/reservation/api/v1/booking-locations?organizationId=${organizationId}`;
-      let encodeId = null
+      let encodeId = null;
       return frisby
           .setup({
             request: {
@@ -38,9 +37,9 @@ describe('get:availability times', () => {
             console.log(response);
             expect(response.json.data.length).toBeGreaterThan(0);
             if (response.json.data.length>0) {
-              encodeId = response.json.data[0].id
+              encodeId = response.json.data[0].id;
               const url = `${reservationServiceUrl}/reservation/api/v1/availability/dates?year=2021&month=04&id=${encodeId}`;
-              console.log(url)
+              console.log(url);
               return frisby
                   .setup({
                     request: {
@@ -71,8 +70,7 @@ describe('get:availability times', () => {
                 )
                 .expect('status', 200)
                 .inspectBody();
-          })
-      
+          });
     });
   });
 /*

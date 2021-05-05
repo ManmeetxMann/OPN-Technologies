@@ -2,8 +2,6 @@ const frisby = require('frisby');
 const helpersCommon = require('helpers_common');
 const testProfile = require('test_profile');
 
-const {getLocations} = require('./booking_locations_get');
-
 // Do setup first
 frisby.globalSetup({
   request: {
@@ -13,7 +11,6 @@ frisby.globalSetup({
 
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 const organizationId = testProfile.get().organizationId;
-const encodedId = 'eyJhcHBvaW50bWVudFR5cGVJZCI6MTk0MjIwMTgsImNhbGVuZGFyVGltZXpvbmUiOiJBbWVyaWNhL1Rvcm9udG8iLCJjYWxlbmRhck5hbWUiOiJCcmFtcHRvbjogTW91bnQgUGxlYXNhbnQgVmlsbGFnZSIsImNhbGVuZGFySWQiOjQ1NzExMDMsIm9yZ2FuaXphdGlvbklkIjoiNURWNEtZWEoybU5Ed3BuYm5wNFYiLCJwYWNrYWdlQ29kZSI6IiJ9';
 /**
  * @group reservation-service
  * @group /reservation/api/v1/booking-locations
@@ -39,7 +36,7 @@ describe('get:availability dates', () => {
             expect(response.json.data.length).toBeGreaterThan(0);
             if (response.json.data.length>0) {
               const url = `${reservationServiceUrl}/reservation/api/v1/availability/dates?year=2021&month=04&id=${response.json.data[0].id}`;
-              console.log(url)
+              console.log(url);
               return frisby
                   .setup({
                     request: {
@@ -58,7 +55,7 @@ describe('get:availability dates', () => {
     });
   });
 
-  /*
+
   it('should fail to get availability dates: Missing Month', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
       const url = `${reservationServiceUrl}/reservation/api/v1/availability/dates?year=2020&id=${encodedId}`;
@@ -166,5 +163,4 @@ describe('get:availability dates', () => {
           .expect('status', 400);
     });
   });
-  */
 });
