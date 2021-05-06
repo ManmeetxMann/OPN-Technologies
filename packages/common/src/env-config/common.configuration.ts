@@ -33,8 +33,8 @@ export const commonConfig: Record<string, string | number | boolean> = {
   DEFAULT_TIME_ZONE: 'America/Toronto',
   DEFAULT_USER_PHOTO:
     'https://storage.googleapis.com/opn-platform-ca-prod.appspot.com/user_avatars/user_light.jpeg',
-  PUBLIC_ORG_ID: 'OPNFBlLDBzr4RlqxFf4r',
-  PUBLIC_GROUP_ID: '7GQVe1PuBplhyoJZDKqS',
+  PUBLIC_ORG_ID: 'PUBLIC_ORG',
+  PUBLIC_GROUP_ID: 'PUBLIC_GROUP',
   PUBLIC_LOCATION_ID: 'PUBLIC_LOCATION',
 
   EMAIL_FROM_NAME: 'StayOPN Team',
