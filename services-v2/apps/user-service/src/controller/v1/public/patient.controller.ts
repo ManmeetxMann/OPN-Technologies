@@ -23,6 +23,8 @@ import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
 import {UserEvent, UserFunctions} from '@opn-services/common/types/activity-logs'
 
+import {Platform} from '@opn-common-v1/types/platform'
+
 @ApiTags('Patients')
 @ApiBearerAuth()
 @Controller('/api/v1/patients')
@@ -89,6 +91,13 @@ export class PatientController {
     if (!isResourceOwner) {
       throw new ForbiddenException('Permission not found for this resource')
     }
+
+    const {registrationId, pushToken, osVersion, platform} = patientUpdateDto
+    await this.patientService.upsertPushToken(registrationId, {
+      osVersion,
+      platform: platform as Platform,
+      pushToken,
+    })
 
     const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
     LogInfo(UserFunctions.update, UserEvent.updateProfile, {
