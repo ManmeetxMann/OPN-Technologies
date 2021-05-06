@@ -20,7 +20,7 @@ export type CardItemDBModel = {
   discountData?: Pick<
     CouponCheckResponse,
     'discountType' | 'discountAmount' | 'name' | 'expiration'
-  > & {couponId: string}
+  > & {couponId: string; error?: string}
 }
 
 export type UserCartDBModel = {
@@ -44,10 +44,16 @@ export type CartItemStatus = {
   cartItemId: string
   appointmentId?: string
   isSuccess: boolean
+  errorMessage?: string
 }
 
 export type AcuityDBModel = {
   id: string
   price: string
   name: string
+}
+
+export enum CouponErrorsEnum {
+  invalid_certificate_type = 'This appointment type not included with this coupon',
+  exceed_count = 'The coupon count exceed',
 }

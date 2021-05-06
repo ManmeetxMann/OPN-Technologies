@@ -307,7 +307,7 @@ export class CartController {
       .map(status => {
         return {
           cartItemId: status.cartItemId,
-          message: this.userCardService.timeSlotNotAvailMsg,
+          message: status.errorMessage || this.userCardService.timeSlotNotAvailMsg,
         }
       })
 
@@ -344,6 +344,7 @@ export class CartController {
         } catch (e) {
           return {
             cartItemId: cartDdItem.cartItemId,
+            errorMessage: e.message,
             isSuccess: false,
           }
         }

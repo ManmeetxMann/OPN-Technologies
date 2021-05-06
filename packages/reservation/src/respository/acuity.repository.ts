@@ -53,7 +53,6 @@ export class AcuityRepository extends AcuityAdapter {
 
   async checkCoupon(certificate: string, appointmentTypeID: number): Promise<CouponCheckResponse> {
     const couponCode = await this.checkCouponCode(certificate, appointmentTypeID)
-    console.log(couponCode)
     return couponCode
   }
 

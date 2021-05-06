@@ -1219,7 +1219,7 @@ export class AppoinmentService {
     userId: string,
     email: string,
   ): Promise<AppointmentDBModel> {
-    const {appointment, patient} = cartDdItem
+    const {appointment, patient, discountData} = cartDdItem
 
     const utcDateTime = moment(appointment.time).utc()
     const dateTime = utcDateTime.tz(timeZone).format()
@@ -1232,7 +1232,7 @@ export class AppoinmentService {
       lastName: patient.lastName,
       email,
       phone: `${patient.phone.code}${patient.phone.number}`,
-      packageCode: appointment.packageCode,
+      packageCode: discountData?.name ? discountData.name : appointment.packageCode,
       calendarID: appointment.calendarId,
       fields: {
         dateOfBirth: patient.dateOfBirth,

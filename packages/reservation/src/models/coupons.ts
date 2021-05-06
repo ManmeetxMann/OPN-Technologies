@@ -10,6 +10,11 @@ export type AcuityCouponCodeResponse = {
   appointmentTypeIDs: number[]
 }
 
+export enum DiscountTypes {
+  price = 'price',
+  percentage = 'percentage',
+}
+
 export type CouponCheckResponse = {
   id: number
   certificate: string
@@ -19,6 +24,6 @@ export type CouponCheckResponse = {
   name: string
   type: string
   expiration: string
-  discountType: string
+  discountType: DiscountTypes
   discountAmount: number
 }

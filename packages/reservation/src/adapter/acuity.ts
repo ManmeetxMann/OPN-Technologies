@@ -246,6 +246,9 @@ abstract class AcuityAdapter {
     })
     const result = await res.json()
     if (result.status_code) {
+      if (result.error === 'invalid_certificate_type') {
+        throw result
+      }
       throw new BadRequestException(result.message)
     }
     return result
