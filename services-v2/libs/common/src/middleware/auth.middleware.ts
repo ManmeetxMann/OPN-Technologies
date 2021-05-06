@@ -1,4 +1,5 @@
-import {ForbiddenException, Injectable, NestMiddleware, UnauthorizedException} from '@nestjs/common'
+import {ForbiddenException, Injectable, NestMiddleware} from '@nestjs/common'
+import {UnauthorizedException} from '@opn-services/common/exception'
 import {OpnConfigService} from '@opn-services/common/services'
 
 import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'

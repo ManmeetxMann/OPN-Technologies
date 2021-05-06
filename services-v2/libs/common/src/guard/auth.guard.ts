@@ -1,4 +1,5 @@
-import {CanActivate, ExecutionContext, ForbiddenException, Injectable} from '@nestjs/common'
+import {CanActivate, ExecutionContext, Injectable} from '@nestjs/common'
+import {ForbiddenException} from '@opn-services/common/exception'
 import {Reflector} from '@nestjs/core'
 import {RequiredUserPermission, RolesData} from '../types/authorization'
 import {AdminProfile} from '@opn-common-v1/data/admin'
