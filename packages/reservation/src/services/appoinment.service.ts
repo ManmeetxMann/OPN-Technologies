@@ -1248,7 +1248,7 @@ export class AppoinmentService {
         agreeCancellationRefund: patient.agreeCancellationRefund,
         hadCovidConfirmedOrSymptoms: patient.hadCovidConfirmedOrSymptoms,
         hadCovidConfirmedOrSymptomsDate: patient.hadCovidConfirmedOrSymptomsDate,
-        hadCovidExposerData: patient.hadCovidExposerData,
+        hadCovidExposerDate: patient.hadCovidExposerDate,
         hadCovidExposer: patient.hadCovidExposer,
         city: patient.city,
         province: patient.province,
