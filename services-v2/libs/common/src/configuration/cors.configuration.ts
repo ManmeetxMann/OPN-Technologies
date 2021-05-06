@@ -19,4 +19,5 @@ if (devDashboardUrl) {
 
 export const corsOptions: CorsOptions = {
   origin: allowedOrigins,
+  methods: 'GET,PUT,POST,DELETE',
 }
