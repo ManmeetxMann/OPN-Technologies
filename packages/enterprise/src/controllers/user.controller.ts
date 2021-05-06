@@ -76,7 +76,12 @@ class UserController implements IControllerBase {
             ? await this.enterpriseUserService.getByEmail(authUser.email)
             : await this.enterpriseUserService.getByPhoneNumber(authUser.phoneNumber)
         if (usersByEmail) {
-          console.log(`DuplicateEmailConnect: ${authUser.email}`)
+          if (authUser.signInProvider === SignInProvides.password) {
+            console.log(`DuplicateEmailConnect: ${authUser.email}`)
+          }
+          if (authUser.signInProvider === SignInProvides.phone) {
+            console.log(`DuplicateSmsConnect: ${authUser.phoneNumber}`)
+          }
           throw new ResourceAlreadyExistsException(authUser.email)
         }
       }
@@ -97,7 +102,7 @@ class UserController implements IControllerBase {
 
       LogInfo(functions.connect, events.createUser, {
         newUser: user,
-        createdBy: getUserId(res.locals.authenticatedUser),
+        createdBy: user.id,
       })
 
       // Add user to group
