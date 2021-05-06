@@ -192,7 +192,7 @@ export class PatientService {
       await this.patientAuthRepository.save(auth)
     }
 
-    await this.userRepository.updateProperties(patient.firebaseKey, {
+    const userSync = {
       email: data.email,
       firstName: data.firstName,
       lastName: data.lastName,
@@ -200,9 +200,16 @@ export class PatientService {
       photo: data.photoUrl,
       phone: {
         diallingCode: 0,
-        number: Number(data.phoneNumber),
       },
-    })
+    }
+
+    if (data.phoneNumber) {
+      userSync.phone['number'] = Number(data.phoneNumber)
+    }
+
+    // clear payload from undefined values before update sync
+    Object.keys(userSync).forEach(key => userSync[key] === undefined && delete userSync[key])
+    await this.userRepository.updateProperties(patient.firebaseKey, userSync)
 
     const promises = await Promise.all([
       this.patientRepository.save(patient),
