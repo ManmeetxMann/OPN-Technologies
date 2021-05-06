@@ -212,14 +212,19 @@ export class UserCardService {
 
   async getUserCart(userId: string, organizationId: string): Promise<CartResponseDto> {
     const cartDBItems = await this.fetchUserAllCartItem(userId, organizationId)
-    const cartItems = cartDBItems.map(cartDB => ({
-      cartItemId: cartDB.cartItemId,
-      label: cartDB.appointmentType.name,
-      subLabel: cartDB.appointment.calendarName,
-      patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
-      date: new Date(cartDB.appointment.time).toISOString(),
-      price: parseFloat(cartDB.appointmentType.price),
-    }))
+    const cartItems = cartDBItems.map(cartDB => {
+      let cartItem = new CartItemDto()
+      cartItem = {
+        cartItemId: cartDB.cartItemId,
+        label: cartDB.appointmentType.name,
+        subLabel: cartDB.appointment.calendarName,
+        patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
+        date: new Date(cartDB.appointment.time).toISOString(),
+        price: parseFloat(cartDB.appointmentType.price),
+        userId: cartDB.patient.userId,
+      }
+      return cartItem
+    })
 
     return {
       cartItems,
@@ -227,7 +232,7 @@ export class UserCardService {
     }
   }
 
-  async updateUserStripeCustomerId(id: string, stripeCustomerId: string) {
+  async updateUserStripeCustomerId(id: string, stripeCustomerId: string): Promise<void> {
     this.userRepository.updateProperty(id, 'stripeCustomerId', stripeCustomerId)
   }
 
@@ -272,7 +277,13 @@ export class UserCardService {
     const appointmentTypes = await this.acuityTypesRepository.fetchAll()
 
     const cardItemDdModel = items.map(item => {
-      const appointment = decodeAvailableTimeId(item.slotId)
+      let appointment = null
+      try {
+        appointment = decodeAvailableTimeId(item.slotId)
+      } catch (_) {
+        throw new BadRequestException('Invalid slotId')
+      }
+
       const appointmentType = appointmentTypes.find(
         appointmentType => Number(appointmentType.id) === appointment.appointmentTypeId,
       )
@@ -323,7 +334,7 @@ export class UserCardService {
   async saveOrderInformation(
     appointmentCreateStatuses: CartItemStatus[],
     paymentIntent: Stripe.PaymentIntent,
-  ) {
+  ): Promise<void> {
     await this.userOrderRepository.add({
       cartItems: appointmentCreateStatuses,
       payment: {
@@ -354,7 +365,7 @@ export class UserCardService {
     await userCartItemRepository.delete(cartId)
   }
 
-  async deleteAllCartItems(userId: string, organizationId: string) {
+  async deleteAllCartItems(userId: string, organizationId: string): Promise<void> {
     const userOrgId = `${userId}_${organizationId}`
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
 

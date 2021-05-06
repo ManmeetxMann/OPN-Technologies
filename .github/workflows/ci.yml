@@ -4,22 +4,24 @@ on:
   pull_request:
     paths-ignore:
       - 'functional-testing/**'
-      - "cloud-functions/sms-notification/**"
-      - ".github/workflows/ci_cloud_function_sms_notification.yml"
-    branches: 
+      - 'cloud-functions/sms-notification/**'
+      - '.github/workflows/ci_cloud_function_sms_notification.yml'
+    branches:
       - master
 jobs:
   build:
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup Node.js
-      uses: actions/setup-node@v1
-      with:
-        node-version: 12.x
-    - run: npm install
-    - run: npm run install-all
-    - run: npm run lint-all
-    - run: npm run build-all
-    # - run: npm run test-all
-    # - run: lerna run --scope @opn/registry
+      - uses: actions/checkout@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+      - run: npm install
+      - run: npm run install-all
+      - run: npm run lint-all
+      - run: npm run build-all
+      - run: cd services-v2 && npm install
+      - run: cd services-v2 && npm run lint
+      - run: cd services-v2 && touch .env
+      - run: cd services-v2 && npm run build:all

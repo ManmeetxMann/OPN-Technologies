@@ -10,6 +10,7 @@ import {
   ForbiddenException,
   ResourceNotFoundException,
 } from '@opn-services/common/exception'
+import {AuthUser} from '@opn-services/common/model'
 
 import {Patient} from '../../../model/patient/patient.entity'
 import {
@@ -39,9 +40,11 @@ export class PatientController {
     this.registrationService = new RegistrationService()
   }
 
-  @Get('')
-  @Roles([RequiredUserPermission.RegUser], true)
-  async getById(@AuthUserDecorator() authUser): Promise<ResponseWrapper<PatientUpdateDto>> {
+  @Get()
+  @Roles([RequiredUserPermission.RegUser])
+  async getById(
+    @AuthUserDecorator() authUser: AuthUser,
+  ): Promise<ResponseWrapper<PatientUpdateDto>> {
     const patient = await this.patientService.getProfileByFirebaseKey(authUser.id)
     if (!patient) {
       throw new ResourceNotFoundException('User with given id not found')
@@ -51,9 +54,9 @@ export class PatientController {
   }
 
   @Post()
-  @Roles([RequiredUserPermission.RegUser], true)
+  @Roles([RequiredUserPermission.RegUser])
   async add(
-    @AuthUserDecorator() authUser,
+    @AuthUserDecorator() authUser: AuthUser,
     @Body() patientDto: PatientCreateDto,
   ): Promise<ResponseWrapper<Patient>> {
     const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
@@ -71,7 +74,7 @@ export class PatientController {
 
   @Get('/dependants')
   @Roles([RequiredUserPermission.RegUser])
-  async getDependents(@AuthUserDecorator() authUser): Promise<ResponseWrapper> {
+  async getDependents(@AuthUserDecorator() authUser: AuthUser): Promise<ResponseWrapper> {
     const patientExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
     if (!patientExists) {
       throw new NotFoundException('User with given id not found')
@@ -81,11 +84,11 @@ export class PatientController {
     return ResponseWrapper.actionSucceed(patient.dependants)
   }
 
-  @Put('')
+  @Put()
   @Roles([RequiredUserPermission.RegUser])
   async update(
     @Body() patientUpdateDto: PatientUpdateDto,
-    @AuthUserDecorator() authUser,
+    @AuthUserDecorator() authUser: AuthUser,
   ): Promise<ResponseWrapper> {
     const patientExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
     if (!patientExists) {
@@ -115,10 +118,10 @@ export class PatientController {
   }
 
   @Post('/dependant')
-  @Roles([RequiredUserPermission.RegUser], true)
+  @Roles([RequiredUserPermission.RegUser])
   async addDependents(
     @Body() dependantBody: DependantCreateDto,
-    @AuthUserDecorator() authUser,
+    @AuthUserDecorator() authUser: AuthUser,
   ): Promise<ResponseWrapper<Patient>> {
     const delegateExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
     if (!delegateExists) {

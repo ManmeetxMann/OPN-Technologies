@@ -3,6 +3,10 @@ import {NestFactory} from '@nestjs/core'
 import {MiddlewareConsumer, Module, RequestMethod, ValidationPipe} from '@nestjs/common'
 import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 
+// Should be called before any v1 module import from v2
+import {Config} from '@opn-common-v1/utils/config'
+Config.useRootEnvFile()
+
 // Common
 import {AuthMiddleware, CommonModule, createSwagger} from '@opn-services/common'
 
@@ -22,7 +26,7 @@ import {CartInternalController} from './controller/v1/internal/cart.controller'
   providers: [UserCardService, StripeService, AppoinmentService, UserService],
 })
 class App {
-  configure(consumer: MiddlewareConsumer) {
+  configure(consumer: MiddlewareConsumer): void {
     consumer.apply(AuthMiddleware).forRoutes({
       path: '*',
       method: RequestMethod.ALL,
@@ -33,8 +37,11 @@ class App {
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(App, new FastifyAdapter())
   app.enableCors(corsOptions)
+
   app.useGlobalPipes(
     new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
       forbidUnknownValues: true,
     }),
   )

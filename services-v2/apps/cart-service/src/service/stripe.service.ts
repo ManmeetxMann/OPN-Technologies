@@ -75,7 +75,7 @@ export class StripeService {
     return intentResult
   }
 
-  async cancelPaymentIntent(paymentIntentId: string) {
+  async cancelPaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
     let intentResult = null
     try {
       intentResult = this.stripe.paymentIntents.cancel(paymentIntentId, {

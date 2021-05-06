@@ -1,7 +1,7 @@
 import {Stripe} from 'stripe'
 
 export class StripeService {
-  async createUser() {
+  async createUser(): Promise<Partial<Stripe.Customer>> {
     return {
       id: 'cus_AJ6bvXbVofMpsW',
       object: 'customer',
@@ -31,7 +31,7 @@ export class StripeService {
     }
   }
 
-  customerEphemeralKeys() {
+  customerEphemeralKeys(): Stripe.EphemeralKey & {associated_objects: unknown[]} {
     return {
       id: 'ephkey_2IlIq9DSeop22AOrZzSgsY2Z',
       object: 'ephemeral_key',
@@ -102,7 +102,7 @@ export class StripeService {
     return paymentIntent?.status === 'succeeded'
   }
 
-  async cancelPaymentIntent(_: string) {
+  async cancelPaymentIntent(_: string): Promise<unknown> {
     return null
   }
 }

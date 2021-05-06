@@ -54,10 +54,10 @@ let profiles = {
         "locationTitle":"TEST1_LOC1",
         "locationId":"70Cd5Qxtma0tVLPlmX0Y"
     },
-    "meselisaac":{
-        "email":"meselisaac@gmail.com",
-        "organizationId":"TEST1",
-        "firstName":"Harpreet",
+    "joseph10105":{
+        "email":"joseph+10105@stayopn.com",
+        "organizationId":"5DV4KYXJ2mNDwpnbnp4V",
+        "firstName":"Joseph",
         "lastName":"Dev 2",
         "groupId":"GRP1",
         "groupName":"TEST1_GRP1",

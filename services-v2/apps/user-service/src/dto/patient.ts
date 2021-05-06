@@ -1,10 +1,122 @@
 import {ApiProperty, ApiPropertyOptional, OmitType, PartialType} from '@nestjs/swagger'
 import {ApiModelPropertyOptional} from '@nestjs/swagger/dist/decorators/api-model-property.decorator'
 import {PageableRequestFilter} from '@opn-services/common/dto'
-import {IsBoolean, IsEmail, IsNotEmpty, IsNumberString, IsString, Length} from 'class-validator'
+import {
+  IsBoolean,
+  IsEmail,
+  IsNotEmpty,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  Length,
+} from 'class-validator'
 import {Patient} from '../model/patient/patient.entity'
 
 export class PatientCreateDto {
+  idPatient: string
+  firebaseKey: string // Firestore ID
+  authUserId: string // Firestore authUserId
+  patientPublicId: string
+
+  @ApiProperty()
+  @IsEmail()
+  email: string
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  firstName: string
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  lastName: string
+
+  @IsOptional()
+  @IsString()
+  registrationId?: string
+
+  @IsOptional()
+  @IsString()
+  photoUrl?: string
+
+  @IsOptional()
+  @IsString()
+  phoneNumber?: string
+
+  @IsOptional()
+  @IsString()
+  consentFileUrl?: string
+
+  @IsOptional()
+  @IsString()
+  dateOfBirth: string
+
+  @IsOptional()
+  @IsString()
+  homeAddress?: string
+
+  @IsOptional()
+  @IsString()
+  homeAddressUnit?: string
+
+  @IsOptional()
+  @IsString()
+  city?: string
+
+  @IsOptional()
+  @IsString()
+  province?: string
+
+  @IsOptional()
+  @IsString()
+  country?: string
+
+  @IsOptional()
+  @IsNumberString()
+  postalCode?: string
+
+  @IsOptional()
+  healthCardType?: string
+
+  @IsOptional()
+  @IsString()
+  @IsNumberString()
+  @Length(9, 9)
+  healthCardNumber?: string
+
+  @IsOptional()
+  @IsString()
+  travelPassport?: string
+
+  @IsOptional()
+  @IsString()
+  travelCountry?: string
+
+  @IsOptional()
+  @IsBoolean()
+  agreeToConductFHHealthAssessment?: boolean
+
+  @IsOptional()
+  @IsBoolean()
+  shareTestResultWithEmployer?: boolean
+
+  @IsOptional()
+  @IsBoolean()
+  readTermsAndConditions?: boolean
+
+  @IsOptional()
+  @IsBoolean()
+  receiveResultsViaEmail?: boolean
+
+  @IsOptional()
+  @IsBoolean()
+  receiveNotificationsFromGov?: boolean
+
+  updatedBy?: string
+}
+
+export class PatientCreateAdminDto {
   idPatient: string
   firebaseKey: string // Firestore ID
   authUserId: string // Firestore authUserId
@@ -76,10 +188,10 @@ export class PatientCreateDto {
   @IsNumberString()
   postalCode: string
 
-  @ApiProperty()
+  @IsOptional()
   healthCardType: string
 
-  @ApiProperty()
+  @IsOptional()
   @IsString()
   @IsNumberString()
   @Length(9, 9)
@@ -165,10 +277,10 @@ export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   travelCountry: patient?.travel?.travelCountry,
   travelPassport: patient?.travel?.travelPassport,
   consentFileUrl: patient?.consentFileUrl,
-  agreeToConductFHHealthAssessment: patient?.digitalConsent.agreeToConductFHHealthAssessment,
-  shareTestResultWithEmployer: patient?.digitalConsent.shareTestResultWithEmployer,
-  readTermsAndConditions: patient?.digitalConsent.readTermsAndConditions,
-  receiveResultsViaEmail: patient?.digitalConsent.receiveResultsViaEmail,
-  receiveNotificationsFromGov: patient?.digitalConsent.receiveNotificationsFromGov,
+  agreeToConductFHHealthAssessment: patient?.digitalConsent?.agreeToConductFHHealthAssessment,
+  shareTestResultWithEmployer: patient?.digitalConsent?.shareTestResultWithEmployer,
+  readTermsAndConditions: patient?.digitalConsent?.readTermsAndConditions,
+  receiveResultsViaEmail: patient?.digitalConsent?.receiveResultsViaEmail,
+  receiveNotificationsFromGov: patient?.digitalConsent?.receiveNotificationsFromGov,
   trainingCompletedOn: patient?.trainingCompletedOn,
 })

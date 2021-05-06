@@ -21,12 +21,12 @@ export class PatientTravel extends Auditable {
   @ApiProperty({required: true})
   patientId: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty()
   @IsString()
   travelCountry: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty()
   @IsString()
   travelPassport: string
@@ -53,7 +53,7 @@ export class PatientHealth extends Auditable {
   @IsString()
   healthType: string
 
-  @Column()
+  @Column({nullable: true, default: null})
   @ApiProperty()
   @IsString()
   healthCard: string
@@ -75,28 +75,28 @@ export class PatientDigitalConsent extends Auditable {
   @ApiProperty({required: true})
   patientId: string
 
-  @Column()
-  @ApiProperty({nullable: false, default: false})
+  @Column({nullable: true, default: null})
+  @ApiProperty()
   @IsBoolean()
   agreeToConductFHHealthAssessment: boolean
 
-  @Column()
-  @ApiProperty({nullable: false, default: false})
+  @Column({nullable: true, default: null})
+  @ApiProperty()
   @IsBoolean()
   shareTestResultWithEmployer: boolean
 
-  @Column()
-  @ApiProperty({nullable: false, default: false})
+  @Column({nullable: true, default: null})
+  @ApiProperty()
   @IsBoolean()
   readTermsAndConditions: boolean
 
-  @Column()
-  @ApiProperty({nullable: false, default: false})
+  @Column({nullable: true, default: null})
+  @ApiProperty()
   @IsBoolean()
   receiveResultsViaEmail: boolean
 
-  @Column()
-  @ApiProperty({nullable: false, default: false})
+  @Column({nullable: true, default: null})
+  @ApiProperty()
   @IsBoolean()
   receiveNotificationsFromGov: boolean
 }

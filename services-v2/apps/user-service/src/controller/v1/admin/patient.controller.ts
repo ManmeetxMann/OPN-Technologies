@@ -6,13 +6,14 @@ import {AuthGuard} from '@opn-services/common/guard'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {UserFunctions, UserEvent} from '@opn-services/common/types/activity-logs'
 import {Roles} from '@opn-services/common/decorator'
+import {AuthUser} from '@opn-services/common/model'
 
 import {assignWithoutUndefined, ResponseStatusCodes} from '@opn-services/common/dto'
 import {AuthUserDecorator} from '@opn-services/common/decorator'
 import {Patient} from '../../../model/patient/patient.entity'
 import {
   DependantCreateDto,
-  PatientCreateDto,
+  PatientCreateAdminDto,
   PatientFilter,
   PatientUpdateDto,
   patientProfileDto,
@@ -20,6 +21,7 @@ import {
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
 import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
+import {PatientToDelegates} from '../../../model/patient/patient-relations.entity'
 
 @ApiTags('Patients - Admin')
 @ApiBearerAuth()
@@ -52,7 +54,9 @@ export class AdminPatientController {
 
   @Get('/:patientId/dependants')
   @Roles([RequiredUserPermission.OPNAdmin])
-  async getDependents(@Param('patientId') id: string) {
+  async getDependents(
+    @Param('patientId') id: string,
+  ): Promise<ResponseWrapper<PatientToDelegates[]>> {
     const patientExists = await this.patientService.getProfilebyId(id)
     if (!patientExists) {
       throw new ResourceNotFoundException('User with given id not found')
@@ -65,8 +69,8 @@ export class AdminPatientController {
   @Post()
   @Roles([RequiredUserPermission.OPNAdmin])
   async add(
-    @Body() patientDto: PatientCreateDto,
-    @AuthUserDecorator() authUser,
+    @Body() patientDto: PatientCreateAdminDto,
+    @AuthUserDecorator() authUser: AuthUser,
   ): Promise<ResponseWrapper<Patient>> {
     const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
 
@@ -87,7 +91,7 @@ export class AdminPatientController {
   @Put('/:patientId')
   @Roles([RequiredUserPermission.OPNAdmin])
   async update(
-    @AuthUserDecorator() authUser,
+    @AuthUserDecorator() authUser: AuthUser,
     @Param('patientId') id: string,
     @Body() patientUpdateDto: PatientUpdateDto,
   ): Promise<ResponseWrapper> {
