@@ -232,6 +232,7 @@ export class PatientUpdateDto extends PartialType(PatientCreateDto) {
   patientId?: string
 
   @ApiPropertyOptional()
+  @IsOptional()
   @IsBoolean()
   trainingCompletedOn?: boolean | Date
 

@@ -203,8 +203,8 @@ export class PatientService {
       email: data.email,
       firstName: data.firstName,
       lastName: data.lastName,
-      registrationId: data.registrationId,
-      photo: data.photoUrl,
+      ...(data.registrationId && {registrationId: data.registrationId}),
+      ...(data.photoUrl && {photo: data.photoUrl}),
       phone: {
         diallingCode: 0,
       },
