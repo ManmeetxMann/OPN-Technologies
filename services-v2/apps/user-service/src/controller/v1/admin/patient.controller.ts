@@ -32,12 +32,19 @@ export class AdminPatientController {
 
   @Get()
   @Roles([RequiredUserPermission.OPNAdmin])
-  async getAll(@Query() filter: PatientFilter): Promise<ResponseWrapper<Patient[]>> {
+  async getAll(@Query() filter: PatientFilter): Promise<ResponseWrapper<PatientUpdateDto[]>> {
     const {data, page, totalItems, totalPages} = await this.patientService.getAll(
       assignWithoutUndefined(filter, new PatientFilter()),
     )
 
-    return ResponseWrapper.of(data, ResponseStatusCodes.Succeed, null, page, totalPages, totalItems)
+    return ResponseWrapper.of(
+      data.map(patient => patientProfileDto(patient)),
+      ResponseStatusCodes.Succeed,
+      null,
+      page,
+      totalPages,
+      totalItems,
+    )
   }
 
   @Get('/:patientId')

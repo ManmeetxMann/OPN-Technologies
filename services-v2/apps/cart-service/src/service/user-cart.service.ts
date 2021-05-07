@@ -36,6 +36,9 @@ import {CartEvent, CartFunctions} from '@opn-services/common/types/activity-logs
 import {LogError} from '@opn-services/common/utils/logging'
 import {DiscountTypes} from '@opn-reservation-v1/models/coupons'
 
+import {JoiValidator} from '@opn-services/common/utils/joi-validator'
+import {acuityTypesSchema, cartItemSchema} from '@opn-services/common/schemas'
+
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
  */
@@ -214,16 +217,21 @@ export class UserCardService {
 
   async getUserCart(userId: string, organizationId: string): Promise<CartResponseDto> {
     const cartDBItems = await this.fetchUserAllCartItem(userId, organizationId)
-    const cartItems = cartDBItems.map(cartDB => ({
-      cartItemId: cartDB.cartItemId,
-      label: cartDB.appointmentType.name,
-      subLabel: cartDB.appointment.calendarName,
-      patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
-      date: new Date(cartDB.appointment.time).toISOString(),
-      price: parseFloat(cartDB.appointmentType.price),
-      discountedPrice: cartDB.appointmentType?.discountedPrice,
-      discountedError: cartDB.discountData.error,
-    }))
+    const cartItems = cartDBItems.map(cartDB => {
+      let cartItem = new CartItemDto()
+      cartItem = {
+        cartItemId: cartDB.cartItemId,
+        label: cartDB.appointmentType.name,
+        subLabel: cartDB.appointment.calendarName,
+        patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
+        date: new Date(cartDB.appointment.time).toISOString(),
+        price: parseFloat(cartDB.appointmentType.price),
+        userId: cartDB.patient.userId,
+        discountedPrice: cartDB.appointmentType?.discountedPrice,
+        discountedError: cartDB.discountData.error,
+      }
+      return cartItem
+    })
 
     return {
       cartItems,
@@ -256,10 +264,13 @@ export class UserCardService {
       }
       let createUpdateResult = null
       const acuityType = await this.acuityTypesRepository.get(id)
+      const acuityTypesValidator = new JoiValidator(acuityTypesSchema)
+      const acuityTypes = await acuityTypesValidator.validate({id, price, name})
+
       if (!acuityType) {
-        createUpdateResult = await this.acuityTypesRepository.add({id, price, name})
+        createUpdateResult = await this.acuityTypesRepository.add(acuityTypes)
       } else {
-        createUpdateResult = await this.acuityTypesRepository.update({id, price, name})
+        createUpdateResult = await this.acuityTypesRepository.update(acuityTypes)
       }
 
       result.push(createUpdateResult)
@@ -276,7 +287,13 @@ export class UserCardService {
     const appointmentTypes = await this.acuityTypesRepository.fetchAll()
 
     const cardItemDdModel = items.map(item => {
-      const appointment = decodeAvailableTimeId(item.slotId)
+      let appointment = null
+      try {
+        appointment = decodeAvailableTimeId(item.slotId)
+      } catch (_) {
+        throw new BadRequestException('Invalid slotId')
+      }
+
       const appointmentType = appointmentTypes.find(
         appointmentType => Number(appointmentType.id) === appointment.appointmentTypeId,
       )
@@ -312,7 +329,7 @@ export class UserCardService {
 
     const appointment = decodeAvailableTimeId(cartItems.slotId)
 
-    await userCartItemRepository.update({
+    const cartItem = {
       id: cartItemExist.id,
       cartItemId: cartItems.cartItemId,
       patient: _.omit(cartItems, ['slotId']),
@@ -321,7 +338,11 @@ export class UserCardService {
         price: cartItemExist.appointmentType.price,
         name: cartItemExist.appointmentType.name,
       },
-    })
+    }
+    const cartItemValidator = new JoiValidator(cartItemSchema)
+    const validCartItem = await cartItemValidator.validate(cartItem)
+
+    await userCartItemRepository.update(validCartItem)
   }
 
   async saveOrderInformation(
@@ -448,6 +469,7 @@ export class UserCardService {
       patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
       date: new Date(cartDB.appointment.time).toISOString(),
       price: parseFloat(cartDB.appointmentType.price),
+      userId: cartDB.patient.userId,
       discountedPrice: cartDB.appointmentType?.discountedPrice,
       discountedError: cartDB.discountData.error,
     }))

@@ -7,6 +7,7 @@ import {
   PatientFilter,
   PatientUpdateDto,
 } from '../../dto/patient'
+import {HomeTestPatientDto} from '../../dto/home-patient'
 import {
   PatientDigitalConsent,
   PatientHealth,
@@ -23,11 +24,15 @@ import {
   PatientToDelegatesRepository,
   PatientTravelRepository,
 } from '../../repository/patient.repository'
+
 import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
+
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import DataStore from '@opn-common-v1/data/datastore'
 import {AuthUser} from '@opn-common-v1/data/user'
-import {HomeTestPatientDto} from '../../dto/home-patient'
+import {Registration} from '@opn-common-v1/data/registration'
+import {RegistrationService} from '@opn-common-v1/service/registry/registration-service'
+import {MessagingFactory} from '@opn-common-v1/service/messaging/messaging-service'
 
 @Injectable()
 export class PatientService {
@@ -45,6 +50,8 @@ export class PatientService {
 
   private dataStore = new DataStore()
   private userRepository = new UserRepository(this.dataStore)
+  private messaging = MessagingFactory.getPushableMessagingService()
+  private registrationService = new RegistrationService()
 
   /**
    * Get patient record by id
@@ -186,23 +193,30 @@ export class PatientService {
 
     const {travel, health, addresses, digitalConsent, auth} = patient
 
-    if (data.email && auth?.email !== data.email) {
+    if (auth && data.email && auth?.email !== data.email) {
       this.firebaseAuthService.updateUser(auth.authUserId, data.email)
       auth.email = data.email
       await this.patientAuthRepository.save(auth)
     }
 
-    await this.userRepository.updateProperties(patient.firebaseKey, {
+    const userSync = {
       email: data.email,
       firstName: data.firstName,
       lastName: data.lastName,
-      registrationId: data.registrationId,
-      photo: data.photoUrl,
+      ...(data.registrationId && {registrationId: data.registrationId}),
+      ...(data.photoUrl && {photo: data.photoUrl}),
       phone: {
         diallingCode: 0,
-        number: Number(data.phoneNumber),
       },
-    })
+    }
+
+    if (data.phoneNumber) {
+      userSync.phone['number'] = Number(data.phoneNumber)
+    }
+
+    // clear payload from undefined values before update sync
+    Object.keys(userSync).forEach(key => userSync[key] === undefined && delete userSync[key])
+    await this.userRepository.updateProperties(patient.firebaseKey, userSync)
 
     const promises = await Promise.all([
       this.patientRepository.save(patient),
@@ -342,5 +356,29 @@ export class PatientService {
     })
 
     return patient.auth.authUserId === authUserId
+  }
+
+  /**
+   * Update or insert push token
+   */
+  async upsertPushToken(
+    registrationId: string,
+    registration: Omit<Registration, 'id'>,
+  ): Promise<void> {
+    const {pushToken, osVersion, platform} = registration
+
+    // validate if we get token
+    if (pushToken) {
+      await this.messaging.validatePushToken(pushToken)
+    }
+
+    // create or update token
+    if (osVersion && platform) {
+      await this.registrationService.upsert(registrationId, {
+        osVersion,
+        platform,
+        pushToken,
+      })
+    }
   }
 }

@@ -1,13 +1,23 @@
 import {CorsOptions} from '@nestjs/common/interfaces/external/cors-options.interface'
-import {ConfigService} from '@nestjs/config'
-import {OpnConfigService} from '@opn-services/common/services'
-import {isRunningOnGCP} from '../utils'
+import {envConfig} from '@opn-common-v1/env-config'
 
-const baseConfigService = new ConfigService()
-const configService = new OpnConfigService(baseConfigService)
+/**
+ * Should use v1 config module since v2 is not initiated before all server launch
+ */
+const config = envConfig()
+const dashboardUrl = config['DASHBOARD_URL'] as string
+const devDashboardUrl = config['DEV_DASHBOARD_URL'] as string
 
-const allowedOrigins = [configService.get<string>('DASHBOARD_URL')]
+if (!dashboardUrl) {
+  console.error('No DASHBOARD_URL defined')
+}
+
+const allowedOrigins = [dashboardUrl]
+if (devDashboardUrl) {
+  allowedOrigins.push(devDashboardUrl)
+}
 
 export const corsOptions: CorsOptions = {
-  origin: isRunningOnGCP() ? allowedOrigins : '*',
+  origin: allowedOrigins,
+  methods: 'GET,PUT,POST,DELETE',
 }
