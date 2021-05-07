@@ -193,7 +193,7 @@ export class PatientService {
 
     const {travel, health, addresses, digitalConsent, auth} = patient
 
-    if (data.email && auth?.email !== data.email) {
+    if (auth && data.email && auth?.email !== data.email) {
       this.firebaseAuthService.updateUser(auth.authUserId, data.email)
       auth.email = data.email
       await this.patientAuthRepository.save(auth)
