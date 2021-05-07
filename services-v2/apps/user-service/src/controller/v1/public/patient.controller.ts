@@ -18,6 +18,8 @@ import {
   PatientUpdateDto,
   patientProfileDto,
   PatientCreateDto,
+  CreatePatientDTOResponse,
+  PatientDTO,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
@@ -50,7 +52,7 @@ export class PatientController {
   async add(
     @AuthUserDecorator() authUser: AuthUser,
     @Body() patientDto: PatientCreateDto,
-  ): Promise<ResponseWrapper<Patient>> {
+  ): Promise<ResponseWrapper<PatientDTO>> {
     const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
 
     if (patientExists) {
@@ -61,7 +63,7 @@ export class PatientController {
 
     const patient = await this.patientService.createProfile(patientDto)
 
-    return ResponseWrapper.actionSucceed(patient)
+    return ResponseWrapper.actionSucceed(CreatePatientDTOResponse(patient))
   }
 
   @Get('/dependants')

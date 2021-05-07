@@ -11,6 +11,11 @@ import {
 } from 'class-validator'
 import {Patient} from '../model/patient/patient.entity'
 
+export type PatientDTO = Partial<PatientCreateDto> & {
+  lastAppointment: Date
+  trainingCompletedOn: Date
+}
+
 export class PatientCreateDto {
   idPatient: string
   firebaseKey: string // Firestore ID
@@ -265,6 +270,18 @@ export class PatientFilter extends PageableRequestFilter {
   @IsOptional()
   nameOrId?: string
 }
+
+export const CreatePatientDTOResponse = (patient: Patient): PatientDTO => ({
+  idPatient: patient.idPatient,
+  firstName: patient.firstName,
+  lastName: patient.lastName,
+  phoneNumber: patient.phoneNumber,
+  patientPublicId: patient.patientPublicId,
+  dateOfBirth: patient.dateOfBirth,
+  photoUrl: patient.photoUrl,
+  lastAppointment: patient.lastAppointment,
+  trainingCompletedOn: patient.trainingCompletedOn,
+})
 
 export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   id: patient.idPatient,
