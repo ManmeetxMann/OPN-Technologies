@@ -4,8 +4,8 @@ import {AuthGuard, AuthUserDecorator, Roles} from '@opn-services/common'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {AuthUser} from '@opn-services/common/model'
 import {ResponseWrapper} from '@opn-services/common/dto'
-import {TestResultCreateDto} from '../../../dto/test-result'
-import {TestResultService} from '../../../service/patient/test-result.service'
+import {TestResultCreateDto} from '@opn-services/user/dto/test-result'
+import {TestResultService} from '@opn-services/user/service/patient/test-result.service'
 
 @ApiTags('PCR Test Results')
 @ApiBearerAuth()
