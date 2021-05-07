@@ -344,8 +344,18 @@ abstract class AcuityAdapter {
         throw new BadRequestException(
           `You organization has no more appointment credits left on account. Please contact your account manager.`,
         )
+      } else if (result.error === 'certificate_uses') {
+        throw new BadRequestException(
+          `You organization has no more appointment credits left on account. Please contact your account manager.`,
+        )
+      } else if (result.error === 'invalid_certificate') {
+        throw new BadRequestException(`The coupon is invalid.`)
+      } else if (result.error === 'expired_certificate') {
+        throw new BadRequestException(`The certificate is expired.`)
+      } else if (result.error === 'invalid_certificate_type') {
+        throw new BadRequestException(`The certificate is invalid for this appointment type.`)
       }
-      throw new BadRequestException(result.message)
+      throw new BadRequestException(result)
     }
     LogInfo(`AcuityAdapterCreateAppointment`, 'Success', {
       email,

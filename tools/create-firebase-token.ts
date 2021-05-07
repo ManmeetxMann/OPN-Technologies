@@ -16,13 +16,13 @@ enum FirebaseTypes {
   phone = 'phone',
 }
 
-const type: FirebaseTypes = FirebaseTypes.phone
+const type: FirebaseTypes = FirebaseTypes.email
 const firstName = 'developers'
 const lastName = 'fhblab1'
-// const email = `developers@stayopn.com`
-// const phoneNumber = ''
-const email = `newacctsovak@stayopn.com`
-const phoneNumber = '+12223334444'
+const email = `developers@stayopn.com`
+// const phoneNumber = null
+// const email = `newacctsovak@stayopn.com`
+// const phoneNumber = '+12223334444'
 const password = '1plastic2!'
 
 async function main() {
@@ -31,8 +31,7 @@ async function main() {
   try {
     const authUser =
       type === FirebaseTypes.email
-        ? await admin.auth().getUserByEmail(email)
-        : await admin.auth().getUserByPhoneNumber(phoneNumber)
+        ? await admin.auth().getUserByEmail(email) : null
     authUID = authUser.uid
   } catch {
     const variableData =
@@ -41,7 +40,7 @@ async function main() {
             email,
           }
         : {
-            phoneNumber,
+            phoneNumber: null,
           }
     const authUser = await admin
       .auth()
@@ -55,7 +54,6 @@ async function main() {
       base64Photo: '',
       firstName,
       lastName,
-      phone: phoneNumber,
       email,
       organizationIds: ['TEST1'],
       admin: {
