@@ -35,6 +35,9 @@ import {OpnConfigService} from '@opn-services/common/services'
 
 import {CartFunctions, CartEvent} from '@opn-services/common/types/activity-logs'
 import {LogError} from '@opn-services/common/utils/logging'
+import {JoiValidator} from '@opn-services/common/utils/joi-validator'
+import {acuityTypesSchema, cartItemSchema} from '@opn-services/common/schemas'
+
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
  */
@@ -257,10 +260,13 @@ export class UserCardService {
       }
       let createUpdateResult = null
       const acuityType = await this.acuityTypesRepository.get(id)
+      const acuityTypesValidator = new JoiValidator(acuityTypesSchema)
+      const acuityTypes = await acuityTypesValidator.validate({id, price, name})
+
       if (!acuityType) {
-        createUpdateResult = await this.acuityTypesRepository.add({id, price, name})
+        createUpdateResult = await this.acuityTypesRepository.add(acuityTypes)
       } else {
-        createUpdateResult = await this.acuityTypesRepository.update({id, price, name})
+        createUpdateResult = await this.acuityTypesRepository.update(acuityTypes)
       }
 
       result.push(createUpdateResult)
@@ -319,7 +325,7 @@ export class UserCardService {
 
     const appointment = decodeAvailableTimeId(cartItems.slotId)
 
-    await userCartItemRepository.update({
+    const cartItem = {
       id: cartItemExist.id,
       cartItemId: cartItems.cartItemId,
       patient: _.omit(cartItems, ['slotId']),
@@ -328,7 +334,11 @@ export class UserCardService {
         price: cartItemExist.appointmentType.price,
         name: cartItemExist.appointmentType.name,
       },
-    })
+    }
+    const cartItemValidator = new JoiValidator(cartItemSchema)
+    const validCartItem = await cartItemValidator.validate(cartItem)
+
+    await userCartItemRepository.update(validCartItem)
   }
 
   async saveOrderInformation(
