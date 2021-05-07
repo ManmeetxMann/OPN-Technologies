@@ -229,7 +229,7 @@ export class PatientCreateAdminDto {
 
 export class PatientUpdateDto extends PartialType(PatientCreateDto) {
   @IsOptional()
-  patientId?: string
+  id?: string
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -267,7 +267,7 @@ export class PatientFilter extends PageableRequestFilter {
 }
 
 export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
-  idPatient: patient.idPatient,
+  id: patient.idPatient,
   patientPublicId: patient.patientPublicId,
   firstName: patient.firstName,
   lastName: patient.lastName,
