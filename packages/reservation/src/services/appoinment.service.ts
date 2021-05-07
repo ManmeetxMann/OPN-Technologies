@@ -608,7 +608,7 @@ export class AppoinmentService {
       shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
       agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
       couponCode,
-      userId: currentUserId,
+      userId: appointmentDb.userId ?? currentUserId,
       locationName: acuityAppointment.calendar,
       locationAddress: acuityAppointment.location,
       testType: await this.appointmentToTestTypeRepository.getTestType(

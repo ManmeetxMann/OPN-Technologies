@@ -46,16 +46,17 @@ export class AuthMiddleware implements NestMiddleware {
     const idToken = bearer[1]
     // Validate
     const validatedAuthUser = await this.firebaseAuthService.verifyAuthToken(idToken)
+
+    if (!validatedAuthUser) {
+      throw new UnauthorizedException('Invalid access-token')
+    }
+
     if (publicApiUrls.includes(req.originalUrl)) {
       req.locals = {}
       req.locals = {
         firebaseAuthUser: validatedAuthUser,
       }
       return next()
-    }
-
-    if (!validatedAuthUser) {
-      throw new UnauthorizedException('Invalid access-token')
     }
 
     // look up admin user for backwards compat
