@@ -45,6 +45,7 @@ import {commentsDTO} from '../../../models/comment'
 import {UserService} from '../../../../../enterprise/src/services/user-service'
 import {validateAnalysis} from '../../../utils/analysis.helper'
 import {LabService} from '../../../services/lab.service'
+import {TestResultsService} from '../../../services/test-results.service'
 
 class AdminPCRTestResultController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
@@ -54,6 +55,7 @@ class AdminPCRTestResultController implements IControllerBase {
   private commentService = new CommentService(new UserService())
   private appoinmentService = new AppoinmentService()
   public labService = new LabService()
+  private testResultsService = new TestResultsService()
 
   constructor() {
     this.initRoutes()
@@ -119,6 +121,12 @@ class AdminPCRTestResultController implements IControllerBase {
       this.path + '/pcr-test-results/due-deadline/list/stats',
       dueTodayAuth,
       this.dueDeadlineStats,
+    )
+
+    innerRouter.get(
+      this.path + '/test-results/:testResultId/download',
+      listTestResultsAuth,
+      this.getTestResultPDF,
     )
 
     innerRouter.post(
@@ -613,6 +621,33 @@ class AdminPCRTestResultController implements IControllerBase {
           addedOn: newComment.time,
         }),
       )
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getTestResultPDF = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = getUserId(res.locals.authenticatedUser)
+      const {testResultId} = req.params as {testResultId: string}
+      const {
+        appointment,
+        pcrTestResult,
+      } = await this.pcrTestResultsService.getTestResultAndAppointment(testResultId, userId)
+
+      if (!this.pcrTestResultsService.isDownloadable(pcrTestResult)) {
+        throw new BadRequestException(
+          `PDF Download is not supported for ${pcrTestResult.result} results`,
+        )
+      }
+
+      const pdfStream = await this.testResultsService.getTestResultPDF(pcrTestResult, appointment)
+
+      res.contentType('application/pdf')
+
+      pdfStream.pipe(res)
+
+      res.status(200)
     } catch (error) {
       next(error)
     }
