@@ -1,5 +1,4 @@
 import {ApiProperty, ApiPropertyOptional, OmitType, PartialType} from '@nestjs/swagger'
-import {ApiModelPropertyOptional} from '@nestjs/swagger/dist/decorators/api-model-property.decorator'
 import {PageableRequestFilter} from '@opn-services/common/dto'
 import {
   IsBoolean,
@@ -229,8 +228,11 @@ export class PatientCreateAdminDto {
 }
 
 export class PatientUpdateDto extends PartialType(PatientCreateDto) {
-  patientId?: string
-  @ApiModelPropertyOptional()
+  @IsOptional()
+  id?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsBoolean()
   trainingCompletedOn?: boolean | Date
 
@@ -259,12 +261,13 @@ export class LinkToAccountDto {
 export class DependantCreateDto extends OmitType(PatientCreateDto, ['email'] as const) {}
 
 export class PatientFilter extends PageableRequestFilter {
-  @ApiModelPropertyOptional()
+  @ApiPropertyOptional()
+  @IsOptional()
   nameOrId?: string
 }
 
 export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
-  idPatient: patient.idPatient,
+  id: patient.idPatient,
   patientPublicId: patient.patientPublicId,
   firstName: patient.firstName,
   lastName: patient.lastName,
