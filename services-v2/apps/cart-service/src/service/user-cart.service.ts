@@ -36,8 +36,8 @@ import {OpnConfigService} from '@opn-services/common/services'
 import {CartFunctions, CartEvent} from '@opn-services/common/types/activity-logs'
 import {LogError} from '@opn-services/common/utils/logging'
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
-import acuityTypesSchema from '@opn-services/common/schemas/acuity-types.schema'
-import cartItemSchema from '@opn-services/common/schemas/cart-item.schema'
+import {acuityTypesSchema, cartItemSchema} from '@opn-services/common/schemas'
+
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
  */
@@ -261,11 +261,11 @@ export class UserCardService {
       let createUpdateResult = null
       const acuityType = await this.acuityTypesRepository.get(id)
       const acuityTypesValidator = new JoiValidator(acuityTypesSchema)
+      const acuityTypes = await acuityTypesValidator.validate({id, price, name})
+
       if (!acuityType) {
-        const acuityTypes = await acuityTypesValidator.validate({id, price, name})
         createUpdateResult = await this.acuityTypesRepository.add(acuityTypes)
       } else {
-        const acuityTypes = await acuityTypesValidator.validate({id, price, name})
         createUpdateResult = await this.acuityTypesRepository.update(acuityTypes)
       }
 

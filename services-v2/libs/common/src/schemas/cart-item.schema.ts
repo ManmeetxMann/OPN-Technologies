@@ -1,6 +1,6 @@
 import * as Joi from 'joi'
 
-export default Joi.object({
+export const cartItemSchema = Joi.object({
   id: Joi.string(),
   cartItemId: Joi.string().required(),
   patient: Joi.any(),
