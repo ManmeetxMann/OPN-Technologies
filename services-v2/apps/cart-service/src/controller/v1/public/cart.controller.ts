@@ -145,7 +145,8 @@ export class CartController {
     @AuthUserDecorator() authUser: AuthUser,
     @Body() paymentAuthorization: PaymentAuthorizationRequestDto,
   ): Promise<ResponseWrapper<PaymentAuthorizationResponseDto>> {
-    const userId = authUser.authUserId
+    const userId = authUser.id
+    const authUserId = authUser.authUserId
     const organizationId = authUser.requestOrganizationId
     const userEmail = authUser.email
     const stripeCustomerId = authUser.stripeCustomerId
@@ -166,7 +167,7 @@ export class CartController {
     // Validate each cart item against acuity Available Slots
     let cart = null
     try {
-      cart = await this.userCardService.validateUserCart(userId, organizationId)
+      cart = await this.userCardService.validateUserCart(authUserId, organizationId)
     } catch (e) {
       LogError(CartFunctions.paymentAuthorization, CartEvent.cartValidationError, {...e})
       return ResponseWrapper.actionSucceed(result)
@@ -236,7 +237,7 @@ export class CartController {
 
     // Save order information and delete all cart items
     await this.userCardService.saveOrderInformation(appointmentCreateStatuses, paymentIntentCapture)
-    await this.userCardService.deleteAllCartItems(userId, organizationId)
+    await this.userCardService.deleteAllCartItems(authUserId, organizationId)
 
     result.cart.isValid = true
     return ResponseWrapper.actionSucceed(result)
