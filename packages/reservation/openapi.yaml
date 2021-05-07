@@ -3213,6 +3213,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/TestResultDetailResponse'
 
+  /reservation/admin/api/v1/test-results/{testResultId}/download:
+    get:
+      description: Download test Results PDF for Admin
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: path
+          name: testResultId
+          schema:
+            type: string
+          required: true
+      responses:
+         '200':
+           description: Successfully Return
+           content:
+             application/pdf:
+               schema:
+                  type: string
+                  format: binary
+
   /reservation/api/v1/test-results/{id}/download:
     get:
       description: Download test Results PDF for Regular User
