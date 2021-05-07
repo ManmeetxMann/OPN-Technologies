@@ -252,7 +252,8 @@ export class CartController {
   async checkout(
     @AuthUserDecorator() authUser: AuthUser,
   ): Promise<ResponseWrapper<CheckoutResponseDto>> {
-    const userId = authUser.authUserId
+    const userId = authUser.id
+    const authUserId = authUser.authUserId
     const organizationId = authUser.requestOrganizationId
     const userEmail = authUser.email
 
@@ -266,7 +267,7 @@ export class CartController {
     // Validate each cart item against acuity Available Slots
     let cart = null
     try {
-      cart = await this.userCardService.validateUserCart(userId, organizationId)
+      cart = await this.userCardService.validateUserCart(authUserId, organizationId)
     } catch (e) {
       LogError(CartFunctions.checkout, CartEvent.cartValidationError, {...e})
       return ResponseWrapper.actionSucceed(result)
@@ -300,7 +301,7 @@ export class CartController {
       return ResponseWrapper.actionSucceed(result)
     }
 
-    await this.userCardService.deleteAllCartItems(userId, organizationId)
+    await this.userCardService.deleteAllCartItems(authUserId, organizationId)
 
     return ResponseWrapper.actionSucceed(result)
   }
