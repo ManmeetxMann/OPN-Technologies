@@ -347,7 +347,6 @@ export class CartController {
           LogError(CartFunctions.cancelBulkAppointment, CartEvent.errorBookingAppointment, {
             errorMessage: (<Error>e).message,
           })
-          console.log("E", e);
           return {
             cartItemId: cartDdItem.cartItemId,
             errorMessage: e.message,

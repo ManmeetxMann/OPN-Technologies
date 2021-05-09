@@ -1230,6 +1230,7 @@ export class AppoinmentService {
       appointmentTypeID: appointment.appointmentTypeId,
       firstName: patient.firstName,
       lastName: patient.lastName,
+
       email,
       phone: patient.phone,
       packageCode: discountData?.name ? discountData.name : appointment.packageCode,

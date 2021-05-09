@@ -168,7 +168,6 @@ export class UserCardService {
           appointment.calendarTimezone === acuitySlot.calendarTimezone,
       )
       const time = acuitySlot.times.find(time => time.time === appointment.time)
-      console.log(acuitySlot.times);
       if (!time) {
         isValid = false
         invalidItems.push({
