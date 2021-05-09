@@ -20,12 +20,14 @@ import {
 import {AdminPatientController} from './controller/v1/admin/patient.controller'
 import {PatientController} from './controller/v1/public/patient.controller'
 import {RapidHomeKitCodeController} from './controller/v1/public/rapid-home-kit-code.controller'
+import {TestResultController} from './controller/v1/public/test-result.controller'
 
 import {OrganizationService} from './service/organization/organization.service'
 import {LocationService} from './service/organization/location.service'
 import {GroupService} from './service/organization/group.service'
 import {PatientService} from './service/patient/patient.service'
 import {RapidHomeKitCodeService} from './service/patient/rapid-home-kit-code.service'
+import {TestResultService} from './service/patient/test-result.service'
 
 import {RapidHomeController} from './controller/v1/public/rapid-home.controller'
 import {corsOptions} from '@opn-services/common/configuration/cors.configuration'
@@ -37,6 +39,7 @@ import {corsOptions} from '@opn-services/common/configuration/cors.configuration
     PatientController,
     RapidHomeController,
     RapidHomeKitCodeController,
+    TestResultController,
   ],
   providers: [
     OrganizationService,
@@ -44,13 +47,19 @@ import {corsOptions} from '@opn-services/common/configuration/cors.configuration
     GroupService,
     PatientService,
     RapidHomeKitCodeService,
+    TestResultService,
   ],
 })
 class App {
   configure(consumer: MiddlewareConsumer): void {
     consumer
       .apply(AuthMiddleware)
-      .forRoutes(AdminPatientController, PatientController, RapidHomeController)
+      .forRoutes(
+        AdminPatientController,
+        PatientController,
+        RapidHomeController,
+        TestResultController,
+      )
   }
 }
 
