@@ -4,7 +4,7 @@ import {Certificate} from '../models/packages'
 import {AppointmentTypes} from '../models/appointment-types'
 import {Calendar} from '../models/calendar'
 import {AcuityAvailableSlots, CreateAppointmentDTO} from '../models/acuity'
-import { CouponCheckResponse } from "../models/coupons";
+import {CouponCheckResponse} from '../models/coupons'
 
 export class AcuityRepository extends AcuityAdapter {
   constructor() {

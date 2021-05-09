@@ -56,7 +56,7 @@ export class CartController {
   })
   @Roles([RequiredUserPermission.RegUser], true)
   async discountCoupon(
-    @AuthUserDecorator() authUser,
+    @AuthUserDecorator() authUser: AuthUser,
     @Body() {coupon}: CouponRequestDto,
   ): Promise<ResponseWrapper<CartResponseDto>> {
     const userId = authUser.authUserId

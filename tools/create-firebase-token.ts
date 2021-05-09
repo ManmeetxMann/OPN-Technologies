@@ -29,9 +29,7 @@ async function main() {
   const displayName = `${firstName} ${lastName}`
   let authUID
   try {
-    const authUser =
-      type === FirebaseTypes.email
-        ? await admin.auth().getUserByEmail(email) : null
+    const authUser = type === FirebaseTypes.email ? await admin.auth().getUserByEmail(email) : null
     authUID = authUser.uid
   } catch {
     const variableData =

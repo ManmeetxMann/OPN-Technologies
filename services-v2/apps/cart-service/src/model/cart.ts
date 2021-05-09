@@ -1,7 +1,6 @@
 import {Stripe} from 'stripe'
 
 import {firestore} from 'firebase-admin'
-import {CouponCheckResponse} from '@opn-reservation-v1/models/coupons'
 
 import {CardItemDBModel} from '@opn-reservation-v1/models/cart'
 
