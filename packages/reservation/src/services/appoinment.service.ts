@@ -1261,7 +1261,7 @@ export class AppoinmentService {
       appointmentStatus: AppointmentStatus.Pending,
       latestResult: ResultTypes.Pending,
       organizationId: appointment.organizationId,
-      couponCode: '',
+      couponCode: discountData?.name ? discountData.name : appointment.packageCode,
       userId,
     })
   }

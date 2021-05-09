@@ -228,7 +228,11 @@ export class UserCardService {
         date: new Date(cartDB.appointment.time).toISOString(),
         price: parseFloat(cartDB.appointmentType.price),
         userId: cartDB.patient.userId,
-        discountedPrice: cartDB.appointmentType?.discountedPrice,
+        discountedPrice: this.countDiscount(
+          parseFloat(cartDB.appointmentType.price),
+          cartDB.discountData.discountType,
+          cartDB.discountData.discountAmount,
+        ),
         discountedError: cartDB.discountData.error,
       }
       return cartItem
@@ -426,19 +430,16 @@ export class UserCardService {
         if (discount?.discountAmount <= 0) {
           err = CouponErrorsEnum.exceed_count
         }
-        const price = Number(cartItem.appointmentType.price)
         const [cartItemDataDb] = await userCartItemRepository.findWhereEqual(
           'cartItemId',
           cartItem.cartItemId,
         )
-        console.log(3)
         return userCartItemRepository.updateProperties(
           cartItemDataDb.id,
           err
             ? {
                 appointmentType: {
                   ...cartItem.appointmentType,
-                  discountedPrice: 0,
                 },
                 discountData: {
                   error: err,
@@ -447,10 +448,6 @@ export class UserCardService {
             : {
                 appointmentType: {
                   ...cartItem.appointmentType,
-                  discountedPrice:
-                    discount.discountType === DiscountTypes.percentage
-                      ? price - (price * discount.discountAmount) / 100
-                      : price - discount.discountAmount,
                 },
                 discountData: {
                   discountType: discount.discountType,
@@ -471,13 +468,26 @@ export class UserCardService {
       date: new Date(cartDB.appointment.time).toISOString(),
       price: parseFloat(cartDB.appointmentType.price),
       userId: cartDB.patient.userId,
-      discountedPrice: cartDB.appointmentType?.discountedPrice,
+      discountedPrice: this.countDiscount(
+        parseFloat(cartDB.appointmentType.price),
+        cartDB.discountData.discountType,
+        cartDB.discountData.discountAmount,
+      ),
       discountedError: cartDB.discountData.error,
     }))
     return {
       cartItems: cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
     }
+  }
+  private countDiscount(
+    initialPrice: number,
+    discountType: DiscountTypes,
+    discountAmount: number,
+  ): number {
+    return discountType === DiscountTypes.percentage
+      ? initialPrice - (initialPrice * discountAmount) / 100
+      : initialPrice - discountAmount
   }
   /**
    * converts acuity price format to Stripe amount in cent
