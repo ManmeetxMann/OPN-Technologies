@@ -38,6 +38,7 @@ import {DiscountTypes} from '@opn-reservation-v1/models/coupons'
 
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
 import {acuityTypesSchema, cartItemSchema} from '@opn-services/common/schemas'
+import {AcuityErrorValues} from '@opn-reservation-v1/models/acuity'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -422,8 +423,10 @@ export class UserCardService {
             cartItem.appointment.appointmentTypeId,
           )
         } catch (e) {
-          if (e.error === 'invalid_certificate_type') {
-            err = CouponErrorsEnum.invalid_certificate_type
+          for (const acuityErrorsKey in AcuityErrorValues) {
+            if (e.message === AcuityErrorValues[acuityErrorsKey]) {
+              err = e.message
+            }
           }
         }
         if (discount?.discountAmount <= 0) {

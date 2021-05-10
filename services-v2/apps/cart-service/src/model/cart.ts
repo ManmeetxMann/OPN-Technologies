@@ -39,7 +39,6 @@ export type AcuityDBModel = {
 }
 
 export enum CouponErrorsEnum {
-  invalid_certificate_type = 'This appointment type not included with this coupon',
   exceed_count = 'The coupon count exceed',
 }
 

@@ -9,7 +9,7 @@ import {Certificate} from '../models/packages'
 import {AcuityCouponCodeResponse, CouponCheckResponse} from '../models/coupons'
 import {AppointmentTypes} from '../models/appointment-types'
 import {Calendar} from '../models/calendar'
-import {AcuityAvailableSlots} from '../models/acuity'
+import {AcuityAvailableSlots, AcuityErrors, AcuityErrorValues} from '../models/acuity'
 import {getDateDefaultHumanReadable} from '../utils/datetime.helper'
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
@@ -243,7 +243,7 @@ abstract class AcuityAdapter {
       APIURL +
         `/api/v1/certificates/check?certificate=${certificate}&appointmentTypeID=${appointmentTypeID}`,
     )
-    LogInfo(`AcuityAdapterGetCalendar`, 'Request', {})
+    LogInfo(`AcuityAdapterCheckCouponCode`, 'Request', {})
     const res = await fetch(apiUrl, {
       method: 'get',
       headers: {
@@ -254,9 +254,7 @@ abstract class AcuityAdapter {
     })
     const result = await res.json()
     if (result.status_code) {
-      if (result.error === 'invalid_certificate_type') {
-        throw result
-      }
+      this.handleErrors(result.error)
       throw new BadRequestException(result.message)
     }
     return result
@@ -336,25 +334,7 @@ abstract class AcuityAdapter {
         acuityStatusCode: result.status_code,
         errorMessage: result.message,
       })
-      if (result.error === 'not_available') {
-        throw new BadRequestException(
-          `${getDateDefaultHumanReadable(datetime)} is not available for appointments`,
-        )
-      } else if (result.error === 'certificate_uses') {
-        throw new BadRequestException(
-          `You organization has no more appointment credits left on account. Please contact your account manager.`,
-        )
-      } else if (result.error === 'certificate_uses') {
-        throw new BadRequestException(
-          `You organization has no more appointment credits left on account. Please contact your account manager.`,
-        )
-      } else if (result.error === 'invalid_certificate') {
-        throw new BadRequestException(`The coupon is invalid.`)
-      } else if (result.error === 'expired_certificate') {
-        throw new BadRequestException(`The certificate is expired.`)
-      } else if (result.error === 'invalid_certificate_type') {
-        throw new BadRequestException(`The certificate is invalid for this appointment type.`)
-      }
+      this.handleErrors(result.error)
       throw new BadRequestException(result)
     }
     LogInfo(`AcuityAdapterCreateAppointment`, 'Success', {
@@ -362,6 +342,25 @@ abstract class AcuityAdapter {
       acuityID: result.id,
     })
     return this.customFieldsToAppoinment(result)
+  }
+
+  handleErrors(error: AcuityErrors, datetime?: Date): void {
+    switch (error) {
+      case 'not_available':
+        throw new BadRequestException(
+          `${datetime ? getDateDefaultHumanReadable(datetime) : 'Current time'} ${
+            AcuityErrorValues.not_available
+          }`,
+        )
+      case 'certificate_uses':
+        throw new BadRequestException(AcuityErrorValues.certificate_uses)
+      case 'invalid_certificate':
+        throw new BadRequestException(AcuityErrorValues.invalid_certificate)
+      case 'expired_certificate':
+        throw new BadRequestException(AcuityErrorValues.expired_certificate)
+      case 'invalid_certificate_type':
+        throw new BadRequestException(AcuityErrorValues.invalid_certificate_type)
+    }
   }
 
   protected async getAvailabilityDatesList(
