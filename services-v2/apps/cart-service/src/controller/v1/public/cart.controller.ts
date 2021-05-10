@@ -48,6 +48,21 @@ export class CartController {
     return ResponseWrapper.actionSucceed(userCard)
   }
 
+  @Get('/:id')
+  @ApiHeader({
+    name: 'organizationid',
+  })
+  @Roles([RequiredUserPermission.RegUser], true)
+  async getCartItem(
+    @AuthUserDecorator() authUser: AuthUser,
+    @Param('id') id: string,
+  ): Promise<ResponseWrapper<CardItemDBModel>> {
+    const userOrgId = `${authUser.authUserId}_${authUser.requestOrganizationId}`
+    const userCard = await this.userCardService.getCartItemById(id, userOrgId)
+
+    return ResponseWrapper.actionSucceed(userCard)
+  }
+
   @Post()
   @ApiHeader({
     name: 'organizationid',
