@@ -281,8 +281,9 @@ export class UserCardService {
   async addItems(userId: string, organizationId: string, items: CartAddDto[]): Promise<void> {
     const userOrgId = `${userId}_${organizationId}`
     const appointmentTypes = await this.acuityTypesRepository.fetchAll()
+    const cartItemValidator = new JoiValidator(cartItemSchema)
 
-    const cardItemDdModel = items.map(item => {
+    const cardItemDdModel = items.map(async item => {
       let appointment = null
       try {
         appointment = decodeAvailableTimeId(item.slotId)
@@ -297,7 +298,8 @@ export class UserCardService {
         LogError(CartFunctions.addItems, CartEvent.appointmentTypeNotFound, null)
         throw new ResourceNotFoundException('Appointment type not found')
       }
-      return {
+
+      const validCartItem = await cartItemValidator.validate({
         cartItemId: uuidv4(),
         patient: _.omit(item, ['slotId']),
         appointment,
@@ -305,10 +307,14 @@ export class UserCardService {
           price: appointmentType.price,
           name: appointmentType.name,
         },
-      }
+      })
+
+      return validCartItem
     })
 
-    await this.userCartRepository.addBatch(userOrgId, cardItemDdModel)
+    const cartItems = await Promise.all(cardItemDdModel)
+
+    await this.userCartRepository.addBatch(userOrgId, cartItems)
   }
 
   async updateItem(userOrgId: string, cartItems: CartUpdateRequestDto): Promise<void> {
