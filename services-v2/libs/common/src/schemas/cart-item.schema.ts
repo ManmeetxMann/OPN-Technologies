@@ -10,8 +10,8 @@ export const cartItemSchema = Joi.object({
     calendarId: Joi.number(),
     date: Joi.string(),
     time: Joi.string(),
-    organizationId: Joi.string(),
-    packageCode: Joi.string(),
+    organizationId: Joi.string().required(),
+    packageCode: Joi.string().allow(''),
     calendarName: Joi.string(),
   },
   appointmentType: {
