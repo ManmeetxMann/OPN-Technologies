@@ -20,7 +20,7 @@ export class TestResultController {
     @Body() testResult: TestResultCreateDto,
     @AuthUserDecorator() authUser: AuthUser,
   ): Promise<ResponseWrapper<TestResultCreateDto>> {
-    const result = await this.testResultService.createPCRResults(testResult)
+    const result = await this.testResultService.createPCRResults(testResult, authUser.id)
     const validatedUserData = this.testResultService.validateUserData(testResult)
     await this.testResultService.syncUser(validatedUserData, authUser.id)
 

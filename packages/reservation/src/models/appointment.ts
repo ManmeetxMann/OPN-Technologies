@@ -163,6 +163,7 @@ export type CheckAppointmentRequest = {
 export enum TestTypes {
   PCR = 'PCR',
   RapidAntigen = 'RapidAntigen',
+  RapidAntigenAtHome = 'RapidAntigenAtHome',
   TemperatureCheck = 'Temperature',
   Attestation = 'Attestation',
   EmergencyRapidAntigen = 'EmergencyRapidAntigen',

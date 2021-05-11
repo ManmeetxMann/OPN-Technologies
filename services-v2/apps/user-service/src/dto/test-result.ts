@@ -15,6 +15,9 @@ enum ReportAs {
 
 export class TestResultCreateDto {
   id: string
+  testType: string
+  userId: string
+  displayInResult: string
 
   @ApiProperty({enum: [TestTypes]})
   @IsString()
