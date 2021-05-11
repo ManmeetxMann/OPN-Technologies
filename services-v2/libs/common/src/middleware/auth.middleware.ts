@@ -32,7 +32,11 @@ export class AuthMiddleware implements NestMiddleware {
     await this.handleHeaders(req)
 
     const bearerHeader = req.headers['authorization']
-    if (internalUrls.includes(req.originalUrl)) {
+    if (
+      internalUrls.find(
+        internalUrl => internalUrl.url === req.originalUrl && internalUrl.method === req.method,
+      )
+    ) {
       req.locals = {}
       req.locals = {
         opnSchedulerKey: req.headers['opn-scheduler-key'],
@@ -57,7 +61,11 @@ export class AuthMiddleware implements NestMiddleware {
       throw new UnauthorizedException('Invalid access-token')
     }
 
-    if (publicApiUrls.includes(req.originalUrl)) {
+    if (
+      publicApiUrls.find(
+        publicApiUrl => publicApiUrl.url === req.originalUrl && publicApiUrl.method === req.method,
+      )
+    ) {
       req.locals = {}
       req.locals = {
         firebaseAuthUser: validatedAuthUser,
