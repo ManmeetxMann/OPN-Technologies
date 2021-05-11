@@ -209,6 +209,17 @@ export class UserCardService {
       iteration++
     }
   }
+  async getCartItemById(cartItemId: string, userOrgId: string): Promise<CardItemDBModel> {
+    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
+    const cartItem = await userCartItemRepository.findWhereEqual('cartItemId', cartItemId)
+    const cartItemExist = cartItem[0]
+
+    if (!cartItemExist) {
+      throw new ResourceNotFoundException('userCart-item with given id not found')
+    }
+
+    return cartItemExist
+  }
 
   async cartItemsCount(userId: string, organizationId: string): Promise<number> {
     const userOrgId = `${userId}_${organizationId}`
