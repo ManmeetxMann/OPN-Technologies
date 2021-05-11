@@ -29,12 +29,17 @@ export type CartItemStatus = {
   cartItemId: string
   appointmentId?: string
   isSuccess: boolean
+  errorMessage?: string
 }
 
 export type AcuityDBModel = {
   id: string
   price: string
   name: string
+}
+
+export enum CouponErrorsEnum {
+  exceed_count = 'The coupon count exceed',
 }
 
 export {CardItemDBModel}

@@ -15,7 +15,7 @@ runs:
   using: 'composite'
   steps:
   
-  - name: Deploy Modules
+  - name: Deploy Modules For Integration test
     run: |
       echo "Service Name: ${{ inputs.service_name }}"
       echo "::group::Install npm modules"
@@ -26,7 +26,9 @@ runs:
       nvm use ${{ inputs.node_version }}
       npm install
       npm run install-all
-      npm run lint-all
+      pwd
+      ls -al
+      npm run lint-fix-all
 
       cd services-v2
       npm install
