@@ -18,10 +18,14 @@ import {
   PatientUpdateDto,
   patientProfileDto,
   PatientCreateDto,
+  CreatePatientDTOResponse,
+  PatientDTO,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
 import {UserEvent, UserFunctions} from '@opn-services/common/types/activity-logs'
+
+import {Platform} from '@opn-common-v1/types/platform'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -30,8 +34,8 @@ import {UserEvent, UserFunctions} from '@opn-services/common/types/activity-logs
 export class PatientController {
   constructor(private patientService: PatientService) {}
 
-  @Get('')
-  @Roles([RequiredUserPermission.RegUser], true)
+  @Get()
+  @Roles([RequiredUserPermission.RegUser])
   async getById(
     @AuthUserDecorator() authUser: AuthUser,
   ): Promise<ResponseWrapper<PatientUpdateDto>> {
@@ -44,11 +48,11 @@ export class PatientController {
   }
 
   @Post()
-  @Roles([RequiredUserPermission.RegUser], true)
+  @Roles([RequiredUserPermission.RegUser])
   async add(
     @AuthUserDecorator() authUser: AuthUser,
     @Body() patientDto: PatientCreateDto,
-  ): Promise<ResponseWrapper<Patient>> {
+  ): Promise<ResponseWrapper<PatientDTO>> {
     const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
 
     if (patientExists) {
@@ -59,7 +63,7 @@ export class PatientController {
 
     const patient = await this.patientService.createProfile(patientDto)
 
-    return ResponseWrapper.actionSucceed(patient)
+    return ResponseWrapper.actionSucceed(CreatePatientDTOResponse(patient))
   }
 
   @Get('/dependants')
@@ -74,7 +78,7 @@ export class PatientController {
     return ResponseWrapper.actionSucceed(patient.dependants)
   }
 
-  @Put('')
+  @Put()
   @Roles([RequiredUserPermission.RegUser])
   async update(
     @Body() patientUpdateDto: PatientUpdateDto,
@@ -90,6 +94,13 @@ export class PatientController {
       throw new ForbiddenException('Permission not found for this resource')
     }
 
+    const {registrationId, pushToken, osVersion, platform} = patientUpdateDto
+    await this.patientService.upsertPushToken(registrationId, {
+      osVersion,
+      platform: platform as Platform,
+      pushToken,
+    })
+
     const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
     LogInfo(UserFunctions.update, UserEvent.updateProfile, {
       oldUser: patientExists,
@@ -101,7 +112,7 @@ export class PatientController {
   }
 
   @Post('/dependant')
-  @Roles([RequiredUserPermission.RegUser], true)
+  @Roles([RequiredUserPermission.RegUser])
   async addDependents(
     @Body() dependantBody: DependantCreateDto,
     @AuthUserDecorator() authUser: AuthUser,

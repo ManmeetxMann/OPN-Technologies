@@ -3,6 +3,7 @@ import admin from 'firebase-admin'
 import {FirebaseError, FirebaseMessagingErrors} from '../../types/firebase'
 import {BadRequestException} from '../../exceptions/bad-request-exception'
 import {HttpException} from '../../exceptions/httpexception'
+import {LogError} from '../../utils/logging-setup'
 
 type FirebaseSendParams = {
   dryRun: boolean
@@ -20,8 +21,15 @@ export class FirebaseMessagingService implements MessagingService<admin.messagin
         error.code === FirebaseMessagingErrors.InvalidArgument ||
         error.code === FirebaseMessagingErrors.Unregistered
       ) {
+        LogError('validatePushToken', 'InvalidArgumentORUnregistered', {
+          errorMessage: error.message,
+        })
         throw new BadRequestException(`Invalid token: ${error.message}`)
       }
+
+      LogError('validatePushToken', 'ValidationFailed', {
+        errorMessage: error.message,
+      })
       throw new HttpException()
     })
   }

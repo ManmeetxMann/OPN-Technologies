@@ -169,7 +169,7 @@ export class CartAddDto {
   @IsString()
   @IsOptional()
   @IsDateString()
-  hadCovidExposerData: string
+  hadCovidExposerDate: string
 
   @ApiProperty()
   @ApiPropertyOptional()

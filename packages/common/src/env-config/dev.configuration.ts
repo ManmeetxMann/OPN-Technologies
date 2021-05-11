@@ -1,5 +1,7 @@
 export const devConfig: Record<string, string | number | boolean> = {
   DASHBOARD_URL: 'https://opn-admin-dashboard-dev.nn.r.appspot.com',
+  DEV_DASHBOARD_URL: 'http://localhost:3000',
+
   DOMAIN_ACCESS: 'https://access-dot-opn-platform-dev.nn.r.appspot.com/',
   DOMAIN_ENTERPRISE: 'https://enterprise-dot-opn-platform-dev.nn.r.appspot.com/',
   DOMAIN_LOOKUP: 'https://lookup-dot-opn-platform-dev.nn.r.appspot.com/',

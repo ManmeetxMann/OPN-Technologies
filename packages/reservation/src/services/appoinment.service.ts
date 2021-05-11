@@ -608,7 +608,7 @@ export class AppoinmentService {
       shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
       agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
       couponCode,
-      userId: currentUserId,
+      userId: appointmentDb?.userId ?? currentUserId,
       locationName: acuityAppointment.calendar,
       locationAddress: acuityAppointment.location,
       testType: await this.appointmentToTestTypeRepository.getTestType(
@@ -1248,7 +1248,7 @@ export class AppoinmentService {
         agreeCancellationRefund: patient.agreeCancellationRefund,
         hadCovidConfirmedOrSymptoms: patient.hadCovidConfirmedOrSymptoms,
         hadCovidConfirmedOrSymptomsDate: patient.hadCovidConfirmedOrSymptomsDate,
-        hadCovidExposerData: patient.hadCovidExposerData,
+        hadCovidExposerDate: patient.hadCovidExposerDate,
         hadCovidExposer: patient.hadCovidExposer,
         city: patient.city,
         province: patient.province,

@@ -1,10 +1,16 @@
 // NestJs
 import {NestFactory} from '@nestjs/core'
-import {MiddlewareConsumer, Module, RequestMethod, ValidationPipe} from '@nestjs/common'
+import {MiddlewareConsumer, Module, RequestMethod} from '@nestjs/common'
 import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
+
+// Should be called before any v1 module import from v2
+import {Config} from '@opn-common-v1/utils/config'
+Config.useRootEnvFile()
 
 // Common
 import {AuthMiddleware, CommonModule, createSwagger} from '@opn-services/common'
+import {AllExceptionsFilter} from '@opn-services/common/exception'
+import {OpnValidationPipe} from '@opn-services/common/pipes'
 
 // Services
 import {corsOptions} from '@opn-services/common/configuration/cors.configuration'
@@ -33,14 +39,14 @@ class App {
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(App, new FastifyAdapter())
   app.enableCors(corsOptions)
-
   app.useGlobalPipes(
-    new ValidationPipe({
+    new OpnValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       forbidUnknownValues: true,
     }),
   )
+  app.useGlobalFilters(new AllExceptionsFilter())
 
   // Each worker process is assigned a unique id (index-based that starts with 1)
   const nodeEnv = process.env.NODE_ENV

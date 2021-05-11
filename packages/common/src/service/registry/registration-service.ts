@@ -34,6 +34,22 @@ export class RegistrationService {
     return this.repository.updateProperty(registrationId, fieldName, fieldValue)
   }
 
+  async upsert(registrationId: string, registration: Omit<Registration, 'id'>): Promise<void> {
+    const {platform, osVersion, pushToken} = registration
+    const tokenExists = pushToken && this.findOneByToken(pushToken)
+
+    if (tokenExists && registrationId) {
+      await this.updateProperty(registrationId, 'pushToken', pushToken)
+    } else {
+      await this.create({
+        platform,
+        osVersion,
+        pushToken: pushToken ?? null,
+        userIds: [],
+      })
+    }
+  }
+
   async linkUser(registrationId: string, userId: string): Promise<void> {
     const registration = await this.findOne(registrationId)
     if (!registration) {

@@ -1,5 +1,4 @@
 import {ApiProperty, ApiPropertyOptional, OmitType, PartialType} from '@nestjs/swagger'
-import {ApiModelPropertyOptional} from '@nestjs/swagger/dist/decorators/api-model-property.decorator'
 import {PageableRequestFilter} from '@opn-services/common/dto'
 import {
   IsBoolean,
@@ -11,6 +10,11 @@ import {
   Length,
 } from 'class-validator'
 import {Patient} from '../model/patient/patient.entity'
+
+export type PatientDTO = Partial<PatientCreateDto> & {
+  lastAppointment: Date
+  trainingCompletedOn: Date
+}
 
 export class PatientCreateDto {
   idPatient: string
@@ -229,10 +233,22 @@ export class PatientCreateAdminDto {
 }
 
 export class PatientUpdateDto extends PartialType(PatientCreateDto) {
-  patientId?: string
-  @ApiModelPropertyOptional()
+  @IsOptional()
+  id?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsBoolean()
   trainingCompletedOn?: boolean | Date
+
+  @ApiPropertyOptional()
+  pushToken?: string
+
+  @ApiPropertyOptional()
+  osVersion?: string
+
+  @ApiPropertyOptional()
+  platform?: string
 }
 
 export class LinkCodeToAccountDto {
@@ -250,12 +266,25 @@ export class LinkToAccountDto {
 export class DependantCreateDto extends OmitType(PatientCreateDto, ['email'] as const) {}
 
 export class PatientFilter extends PageableRequestFilter {
-  @ApiModelPropertyOptional()
+  @ApiPropertyOptional()
+  @IsOptional()
   nameOrId?: string
 }
 
-export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
+export const CreatePatientDTOResponse = (patient: Patient): PatientDTO => ({
   idPatient: patient.idPatient,
+  firstName: patient.firstName,
+  lastName: patient.lastName,
+  phoneNumber: patient.phoneNumber,
+  patientPublicId: patient.patientPublicId,
+  dateOfBirth: patient.dateOfBirth,
+  photoUrl: patient.photoUrl,
+  lastAppointment: patient.lastAppointment,
+  trainingCompletedOn: patient.trainingCompletedOn,
+})
+
+export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
+  id: patient.idPatient,
   patientPublicId: patient.patientPublicId,
   firstName: patient.firstName,
   lastName: patient.lastName,

@@ -1,4 +1,5 @@
-import {ForbiddenException, Injectable, NestMiddleware, UnauthorizedException} from '@nestjs/common'
+import {ForbiddenException, Injectable, NestMiddleware} from '@nestjs/common'
+import {UnauthorizedException} from '@opn-services/common/exception'
 import {OpnConfigService} from '@opn-services/common/services'
 
 import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
@@ -45,16 +46,17 @@ export class AuthMiddleware implements NestMiddleware {
     const idToken = bearer[1]
     // Validate
     const validatedAuthUser = await this.firebaseAuthService.verifyAuthToken(idToken)
+
+    if (!validatedAuthUser) {
+      throw new UnauthorizedException('Invalid access-token')
+    }
+
     if (publicApiUrls.includes(req.originalUrl)) {
       req.locals = {}
       req.locals = {
         firebaseAuthUser: validatedAuthUser,
       }
       return next()
-    }
-
-    if (!validatedAuthUser) {
-      throw new UnauthorizedException('Invalid access-token')
     }
 
     // look up admin user for backwards compat
