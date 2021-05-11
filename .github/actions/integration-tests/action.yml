@@ -15,7 +15,7 @@ runs:
   using: 'composite'
   steps:
   
-  - name: Deploy Modules
+  - name: Deploy Modules For Integration test
     run: |
       echo "Service Name: ${{ inputs.service_name }}"
       echo "::group::Install npm modules"
