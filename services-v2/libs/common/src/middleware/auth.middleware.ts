@@ -1,5 +1,5 @@
-import {ForbiddenException, Injectable, NestMiddleware} from '@nestjs/common'
-import {UnauthorizedException} from '@opn-services/common/exception'
+import {Injectable, NestMiddleware} from '@nestjs/common'
+import {ForbiddenException, UnauthorizedException} from '@opn-services/common/exception'
 import {OpnConfigService} from '@opn-services/common/services'
 
 import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
@@ -10,6 +10,10 @@ import {
   internalUrls,
   publicApiUrls,
 } from '@opn-services/cart/configuration/middleware.configuration'
+import {JoiValidator} from '../utils/joi-validator'
+import {opnHeadersSchema} from '../schemas'
+import {OpnCommonHeaders, OpnLang, OpnSources} from '../types/authorization'
+import {LogInfo} from '../utils/logging'
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
@@ -25,6 +29,8 @@ export class AuthMiddleware implements NestMiddleware {
   /* eslint-disable  @typescript-eslint/explicit-module-boundary-types */
   /* eslint-disable complexity */
   private async validateAuth(req, res, next) {
+    await this.handleHeaders(req)
+
     const bearerHeader = req.headers['authorization']
     if (internalUrls.includes(req.originalUrl)) {
       req.locals = {}
@@ -109,6 +115,27 @@ export class AuthMiddleware implements NestMiddleware {
 
     // Done
     next()
+  }
+
+  async handleHeaders(req): Promise<OpnCommonHeaders> {
+    const headers: OpnCommonHeaders = {
+      opnDeviceIdHeader: req.headers['opn-device-id'],
+      opnSourceHeader: req.headers['opn-source'] as OpnSources,
+      opnRequestIdHeader: req.headers['opn-request-id'],
+      opnLangHeader: req.headers['opn-lang'] as OpnLang,
+      opnAppVersion: req.headers['opn-app-version'],
+    }
+
+    LogInfo('handleHeaders', 'ReadOpnHeaders', {headers})
+
+    const headerValidator = new JoiValidator(opnHeadersSchema)
+    const validHeaders = await headerValidator.validate(headers)
+
+    req.commonHeaders = {
+      ...headers,
+    }
+
+    return validHeaders
   }
 
   async use(req, res, next) {

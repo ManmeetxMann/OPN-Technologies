@@ -22,7 +22,10 @@ export class PatientCreateDto {
   authUserId: string // Firestore authUserId
   patientPublicId: string
 
-  @ApiProperty()
+  @ApiPropertyOptional({
+    description: 'Required for Normal Patient',
+  })
+  @IsOptional()
   @IsEmail()
   email: string
 
@@ -76,6 +79,9 @@ export class PatientCreateDto {
   @IsString()
   country?: string
 
+  @ApiPropertyOptional({
+    description: 'Required for Home Test Patient',
+  })
   @IsOptional()
   @IsNumberString()
   postalCode?: string
