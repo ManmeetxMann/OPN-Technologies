@@ -231,6 +231,13 @@ export class UserCardService {
     const cartDBItems = await this.fetchUserAllCartItem(userId, organizationId)
     const cartItems = cartDBItems.map(cartDB => {
       let cartItem = new CartItemDto()
+
+      const discountedPrice = this.countDiscount(
+        parseFloat(cartDB.appointmentType.price),
+        cartDB.discountData?.discountType,
+        cartDB.discountData?.discountAmount,
+      )
+
       cartItem = {
         cartItemId: cartDB.cartItemId,
         label: cartDB.appointmentType.name,
@@ -238,13 +245,9 @@ export class UserCardService {
         patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
         date: new Date(cartDB.appointment.time).toISOString(),
         price: parseFloat(cartDB.appointmentType.price),
+        discountedPrice,
         userId: cartDB.patient.userId,
-        discountedPrice: this.countDiscount(
-          parseFloat(cartDB.appointmentType.price),
-          cartDB.discountData.discountType,
-          cartDB.discountData.discountAmount,
-        ),
-        discountedError: cartDB.discountData.error,
+        discountedError: cartDB.discountData?.error,
       }
       return cartItem
     })
