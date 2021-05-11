@@ -79,8 +79,8 @@ const orgToCost = {
   '89BrZwateBqK4PvcBIP0': {default: '197.75'},
   Rtu6h3T93nnv2dn6M2pS: {default: '185.32'},
   jRHDPGGyz890Gp9tVZfV: {default: '175.15'},
-  'WpkrTfdrNAo9hGo4j0NL': {default: '175.15'},
-  'atLSTCs1EQyDeEfFUydo': {default: '0'},
+  WpkrTfdrNAo9hGo4j0NL: {default: '175.15'},
+  atLSTCs1EQyDeEfFUydo: {default: '0'},
 }
 
 const acuityFormFieldIds = ACUITY_ENV_NON_PROD ? acuityFormFieldIdsNonProd : acuityFormFieldIdsProd
@@ -254,7 +254,6 @@ let failureCount = 0
 let totalCount = 0
 
 main().then(() => console.log('Script Complete \n'))
-
 
 //Get All Packages with no payment and org cost is also 0
 //SELECT certificate FROM `appointments_finance` WHERE (organizationId is null or organizationId="") AND certificate!="" AND amountPaid=0 AND costForOrg=0 GROUP BY certificate
