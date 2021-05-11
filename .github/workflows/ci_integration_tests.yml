@@ -20,7 +20,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        ref: master
+        ref: testing
 
     - uses: ./.github/actions/integration-tests
       name: Run Integration Tests
