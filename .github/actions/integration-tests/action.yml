@@ -26,6 +26,8 @@ runs:
       nvm use ${{ inputs.node_version }}
       npm install
       npm run install-all
+      pwd
+      ls .prettierrc
       npm run lint-all
 
       cd services-v2
