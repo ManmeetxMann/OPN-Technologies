@@ -1,10 +1,14 @@
 import {Body, Controller, Get, NotFoundException, Post, Put, UseGuards} from '@nestjs/common'
-import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
+import {ApiBearerAuth, ApiOperation, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard} from '@opn-services/common/guard'
-import {RequiredUserPermission} from '@opn-services/common/types/authorization'
-import {AuthUserDecorator, Roles} from '@opn-services/common/decorator'
+import {
+  OpnCommonHeaders,
+  OpnSources,
+  RequiredUserPermission,
+} from '@opn-services/common/types/authorization'
+import {AuthUserDecorator, Roles, OpnHeaders, PublicDecorator} from '@opn-services/common/decorator'
 import {
   BadRequestException,
   ForbiddenException,
@@ -23,6 +27,7 @@ import {
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
+import {HomeTestPatientDto} from '@opn-services/user/dto/home-patient'
 import {UserEvent, UserFunctions} from '@opn-services/common/types/activity-logs'
 
 import {Platform} from '@opn-common-v1/types/platform'
@@ -30,11 +35,11 @@ import {Platform} from '@opn-common-v1/types/platform'
 @ApiTags('Patients')
 @ApiBearerAuth()
 @Controller('/api/v1/patients')
-@UseGuards(AuthGuard)
 export class PatientController {
   constructor(private patientService: PatientService) {}
 
   @Get()
+  @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
   async getById(
     @AuthUserDecorator() authUser: AuthUser,
@@ -48,25 +53,42 @@ export class PatientController {
   }
 
   @Post()
-  @Roles([RequiredUserPermission.RegUser])
+  @ApiOperation({
+    summary:
+      'Notice: email is required for normal patient, postalCode is required for Home Test Patient',
+  })
   async add(
-    @AuthUserDecorator() authUser: AuthUser,
+    @PublicDecorator() firebaseAuthUser: AuthUser,
     @Body() patientDto: PatientCreateDto,
+    @OpnHeaders() opnHeaders: OpnCommonHeaders,
   ): Promise<ResponseWrapper<PatientDTO>> {
-    const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
+    let patient: Patient
 
+    patientDto.authUserId = firebaseAuthUser.authUserId
+
+    const patientExists = await this.patientService.getAuthByAuthUserId(firebaseAuthUser.authUserId)
     if (patientExists) {
-      throw new BadRequestException('User with given email already exists')
+      throw new BadRequestException('User with given uid already exists')
     }
 
-    patientDto.email = authUser.email
+    if (opnHeaders.opnSourceHeader == OpnSources.FH_RapidHome_Web) {
+      patientDto.phoneNumber = firebaseAuthUser.phoneNumber
 
-    const patient = await this.patientService.createProfile(patientDto)
+      patient = await this.patientService.createHomePatientProfile(patientDto as HomeTestPatientDto)
+    } else {
+      const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
+      if (patientExists) {
+        throw new BadRequestException('User with given email already exists')
+      }
+
+      patient = await this.patientService.createProfile(patientDto)
+    }
 
     return ResponseWrapper.actionSucceed(CreatePatientDTOResponse(patient))
   }
 
   @Get('/dependants')
+  @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
   async getDependents(@AuthUserDecorator() authUser: AuthUser): Promise<ResponseWrapper> {
     const patientExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
@@ -79,6 +101,7 @@ export class PatientController {
   }
 
   @Put()
+  @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
   async update(
     @Body() patientUpdateDto: PatientUpdateDto,
@@ -112,6 +135,7 @@ export class PatientController {
   }
 
   @Post('/dependant')
+  @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
   async addDependents(
     @Body() dependantBody: DependantCreateDto,

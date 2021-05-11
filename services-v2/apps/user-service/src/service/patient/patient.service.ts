@@ -75,6 +75,10 @@ export class PatientService {
     return this.patientAuthRepository.findOne({where: {email}})
   }
 
+  async getAuthByAuthUserId(authUserId: string): Promise<PatientAuth> {
+    return this.patientAuthRepository.findOne({where: {authUserId}})
+  }
+
   async getProfileByFirebaseKey(firebaseKey: string): Promise<Patient> {
     return this.patientRepository.findOne(
       {firebaseKey},
@@ -111,9 +115,7 @@ export class PatientService {
       .then(([data, totalItems]) => Page.of(data, page, perPage, totalItems))
   }
 
-  async createHomePatientProfile(
-    data: HomeTestPatientDto & {phoneNumber: string},
-  ): Promise<Patient> {
+  async createHomePatientProfile(data: HomeTestPatientDto): Promise<Patient> {
     const firebaseUser = await this.userRepository.add({
       firstName: data.firstName,
       lastName: data.lastName,
@@ -128,7 +130,8 @@ export class PatientService {
 
     data.firebaseKey = firebaseUser.id
 
-    const patient = await this.createHomeTestPatient(data)
+    const patient = await this.createPatient(data as PatientCreateDto)
+
     data.idPatient = patient.idPatient
 
     await Promise.all([this.saveAuth(data), this.saveAddress(data)])
@@ -141,7 +144,9 @@ export class PatientService {
    * @param data
    */
   async createProfile(data: PatientCreateDto | PatientCreateAdminDto): Promise<Patient> {
-    data.authUserId = await this.firebaseAuthService.createUser(data.email)
+    await this.firebaseAuthService.updateUser(data.authUserId, {
+      email: data.email,
+    })
 
     const firebaseUser = await this.userRepository.add({
       email: data.email,
@@ -246,25 +251,25 @@ export class PatientService {
   }
 
   /**
-   * Create user for Rapid Home Test
-   */
-  async createHomeTestPatient(data: HomeTestPatientDto): Promise<Patient> {
-    const entity = new Patient()
-    entity.firebaseKey = data.firebaseKey
-    entity.firstName = data.firstName
-    entity.lastName = data.lastName
-    entity.phoneNumber = data.phoneNumber
-
-    return this.patientRepository.save(entity)
-  }
-
-  /**
    * Create dependant user (child) for delegate (parent)
    * @param delegateId parentId
    * @param data child user data
    */
   async createDependant(delegateId: string, data: DependantCreateDto): Promise<Patient> {
-    data.firebaseKey = 'TempKey' + Math.random().toString(36)
+    const firebaseUser = await this.userRepository.add({
+      firstName: data.firstName,
+      lastName: data.lastName,
+      registrationId: data.registrationId ?? null,
+      photo: data.photoUrl ?? null,
+      phone: {
+        diallingCode: 0,
+        number: Number(data.phoneNumber ?? 0),
+      },
+      active: false,
+      organizationIds: [],
+    } as AuthUser)
+
+    data.firebaseKey = firebaseUser.id
 
     const dependant = await this.createPatient(data)
     data.idPatient = dependant.idPatient

@@ -2,12 +2,8 @@ import {Body, Controller, Get, Post, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
-import {AuthUser} from '@opn-services/common/model'
 
 import {LinkCodeToAccountDto, LinkToAccountDto} from '../../../dto/patient'
-import {PatientService} from '../../../service/patient/patient.service'
-import {HomeTestPatientDto} from '../../../dto/home-patient'
-import {PublicDecorator} from '@opn-services/common/decorator/public.decorator'
 import {AuthGuard, AuthUserDecorator, Roles} from '@opn-services/common'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {User} from '@opn-common-v1/data/user'
@@ -22,27 +18,12 @@ export class RapidHomeController {
   private encryptionService: EncryptionService
 
   constructor(
-    private patientService: PatientService,
     private homeKitCodeService: RapidHomeKitCodeService,
     private configService: ConfigService,
   ) {
     this.encryptionService = new EncryptionService(
       this.configService.get('RAPID_HOME_KIT_CODE_ENCRYPTION_KEY'),
     )
-  }
-
-  @Post('/home-test-patients')
-  async createHomeTestPatients(
-    @Body() homeTestPatientBody: HomeTestPatientDto,
-    @PublicDecorator() firebaseAuthUser: AuthUser,
-  ): Promise<ResponseWrapper<string>> {
-    const patient = await this.patientService.createHomePatientProfile({
-      ...homeTestPatientBody,
-      phoneNumber: firebaseAuthUser.phoneNumber,
-      authUserId: firebaseAuthUser.authUserId,
-    })
-
-    return ResponseWrapper.actionSucceed(patient.idPatient)
   }
 
   @Get('rapid-home-kit-user-codes')

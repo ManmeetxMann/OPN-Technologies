@@ -3,4 +3,4 @@ export const internalUrls = [
   'cart/api/v1/internal/cart/sync-acuity-appointment-types',
 ]
 
-export const publicApiUrls = ['user/api/v1/home-test-patients']
+export const publicApiUrls = ['user/api/v1/patients']
