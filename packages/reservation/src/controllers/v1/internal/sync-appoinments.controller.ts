@@ -207,6 +207,8 @@ class InternalSyncAppointmentController implements IControllerBase {
 
       const {barCodeNumber, organizationId} = dataForUpdate
       const barCode = appointmentFromDb.barCode || barCodeNumber // Don't take Update Barcode from Acuity
+      const updatedOrganizationId = appointmentFromDb.organizationId || organizationId // Take organizationId from db
+
       const updatedAppointment = await this.appoinmentService.updateAppointmentFromAcuity(
         appointmentFromDb,
         acuityAppointment,
@@ -214,7 +216,7 @@ class InternalSyncAppointmentController implements IControllerBase {
           appointmentStatus,
           barCodeNumber: barCode,
           latestResult: appointmentFromDb.latestResult,
-          organizationId,
+          organizationId: updatedOrganizationId,
         },
       )
       LogInfo('UpdateAppointmentFromWebhook', 'UpdatedAppointmentSuccessfully', {

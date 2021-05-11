@@ -12,6 +12,7 @@ import {
   PaymentAuthorizationRequestDto,
   PaymentAuthorizationResponseDto,
   CartUpdateRequestDto,
+  CouponRequestDto,
 } from '@opn-services/cart/dto'
 import {UserCardService} from '@opn-services/cart/service/user-cart.service'
 import {StripeService} from '@opn-services/cart/service/stripe.service'
@@ -46,6 +47,23 @@ export class CartController {
 
     const userCard = await this.userCardService.getUserCart(userId, organizationId)
     return ResponseWrapper.actionSucceed(userCard)
+  }
+
+  // POST /api/v1/cart/coupons
+  @Post('coupons')
+  @ApiHeader({
+    name: 'organizationid',
+  })
+  @Roles([RequiredUserPermission.RegUser], true)
+  async discountCoupon(
+    @AuthUserDecorator() authUser: AuthUser,
+    @Body() {coupon}: CouponRequestDto,
+  ): Promise<ResponseWrapper<CartResponseDto>> {
+    const userId = authUser.authUserId
+    const organizationId = authUser.requestOrganizationId
+    const discountedItems = await this.userCardService.discount(coupon, userId, organizationId)
+
+    return ResponseWrapper.actionSucceed(discountedItems)
   }
 
   @Post()
@@ -291,7 +309,7 @@ export class CartController {
       .map(status => {
         return {
           cartItemId: status.cartItemId,
-          message: this.userCardService.timeSlotNotAvailMsg,
+          message: status.errorMessage || this.userCardService.timeSlotNotAvailMsg,
         }
       })
 
@@ -331,6 +349,7 @@ export class CartController {
           })
           return {
             cartItemId: cartDdItem.cartItemId,
+            errorMessage: e.message,
             isSuccess: false,
           }
         }

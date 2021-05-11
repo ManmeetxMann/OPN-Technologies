@@ -9,7 +9,7 @@
     "prebuild": "rimraf dist",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
-    "start:dev": "nest start --watch",
+    "start:dev": "nest start --watch cart-service",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/opn-services/main",
     "connect-sql-proxy": "cloud_sql_proxy -instances=opn-platform-local:northamerica-northeast1:opn-platform-db-server-local:sql-inst=tcp:3306",
