@@ -1822,6 +1822,7 @@ export class PCRTestResultsService {
   async getTestResultAndAppointment(
     id: string,
     userId: string,
+    isAdmin = false,
   ): Promise<{appointment: AppointmentDBModel; pcrTestResult: PCRTestResultDBModel}> {
     const pcrTestResult = await this.getPCRResultsById(id)
 
@@ -1832,7 +1833,7 @@ export class PCRTestResultsService {
     const isParent = await this.userService.isParentForChild(userId, pcrTestResult?.userId)
 
     //TODO
-    if (pcrTestResult?.userId !== userId && !isParent) {
+    if (pcrTestResult?.userId !== userId && !isParent && !isAdmin) {
       throw new ResourceNotFoundException(`${id} does not exist`)
     }
 
@@ -1846,7 +1847,7 @@ export class PCRTestResultsService {
       )
     }
 
-    if (appointment?.userId !== userId && !isParent) {
+    if (appointment?.userId !== userId && !isParent && !isAdmin) {
       LogWarning('TestResultsController: testResultDetails', 'Unauthorized', {
         userId,
         resultId: id,

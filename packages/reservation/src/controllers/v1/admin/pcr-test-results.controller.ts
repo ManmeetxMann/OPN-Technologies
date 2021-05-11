@@ -633,7 +633,7 @@ class AdminPCRTestResultController implements IControllerBase {
       const {
         appointment,
         pcrTestResult,
-      } = await this.pcrTestResultsService.getTestResultAndAppointment(testResultId, userId)
+      } = await this.pcrTestResultsService.getTestResultAndAppointment(testResultId, userId, true)
 
       if (!this.pcrTestResultsService.isDownloadable(pcrTestResult)) {
         throw new BadRequestException(
