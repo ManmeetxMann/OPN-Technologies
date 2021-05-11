@@ -1690,7 +1690,7 @@ export class PCRTestResultsService {
     return status
   }
 
-  async getTestResultsByUserId(userId: string, organizationId: string): Promise<TestResutsDTO[]> {
+  async getTestResultsByUserId(userId: string, organizationId?: string): Promise<TestResutsDTO[]> {
     const pcrTestResultsQuery = [
       {
         map: '/',
@@ -1700,17 +1700,22 @@ export class PCRTestResultsService {
       },
       {
         map: '/',
-        key: 'organizationId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: organizationId,
-      },
-      {
-        map: '/',
         key: 'displayInResult',
         operator: DataModelFieldMapOperatorType.Equals,
         value: true,
       },
     ]
+
+    console.log({ userId });
+
+    if (organizationId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'organizationId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: organizationId,
+      })
+    }
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
     const appoinmentIds = pcrResults
@@ -1718,9 +1723,15 @@ export class PCRTestResultsService {
       .map(({appointmentId}) => appointmentId)
     const [appoinments, attestations, temperatures, pulseOxygens] = await Promise.all([
       this.appointmentsRepository.getAppointmentsDBByIds(appoinmentIds),
-      this.attestationService.getAllAttestationByUserId(userId, organizationId),
-      this.temperatureService.getAllByUserAndOrgId(userId, organizationId),
-      this.pulseOxygenService.getAllByUserAndOrgId(userId, organizationId),
+      organizationId
+        ? this.attestationService.getAllAttestationByUserId(userId, organizationId)
+        : this.attestationService.getAllAttestationByOnlyUserId(userId),
+      organizationId
+        ? this.temperatureService.getAllByUserAndOrgId(userId, organizationId)
+        : this.temperatureService.getAllByUserId(userId),
+      organizationId
+        ? this.pulseOxygenService.getAllByUserAndOrgId(userId, organizationId)
+        : this.pulseOxygenService.getAllByUserId(userId),
     ])
 
     const testResult = []
@@ -1861,7 +1872,7 @@ export class PCRTestResultsService {
 
   async getAllResultsByUserAndChildren(
     userId: string,
-    organizationid: string,
+    organizationid?: string,
   ): Promise<TestResutsDTO[]> {
     const {guardian, dependants} = await this.userService.getUserAndDependants(userId)
     const guardianTestResults = await this.getTestResultsByUserId(guardian.id, organizationid)

@@ -39,7 +39,7 @@ class TestResultsController implements IControllerBase {
 
   listTestResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {organizationid} = req.headers as {organizationid: string}
+      const {organizationid} = req.headers as {organizationid?: string}
       const userId = getUserId(res.locals.authenticatedUser)
       const pcrResults = await this.pcrTestResultsService.getAllResultsByUserAndChildren(
         userId,
