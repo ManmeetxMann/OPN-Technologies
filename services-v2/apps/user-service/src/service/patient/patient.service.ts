@@ -3,6 +3,7 @@ import {Page} from '@opn-services/common/dto'
 import {Brackets, SelectQueryBuilder} from 'typeorm'
 import {
   DependantCreateDto,
+  PatientCreateAdminDto,
   PatientCreateDto,
   PatientFilter,
   PatientUpdateDto,
@@ -127,7 +128,7 @@ export class PatientService {
 
     data.firebaseKey = firebaseUser.id
 
-    const patient = await this.createPatient(data)
+    const patient = await this.createHomeTestPatient(data)
     data.idPatient = patient.idPatient
 
     await Promise.all([this.saveAuth(data), this.saveAddress(data)])
@@ -139,7 +140,7 @@ export class PatientService {
    * Creates new patient profile with all relations
    * @param data
    */
-  async createProfile(data: PatientCreateDto): Promise<Patient> {
+  async createProfile(data: PatientCreateDto | PatientCreateAdminDto): Promise<Patient> {
     data.authUserId = await this.firebaseAuthService.createUser(data.email)
 
     const firebaseUser = await this.userRepository.add({
@@ -229,19 +230,31 @@ export class PatientService {
   }
 
   async createPatient(
-    data: PatientCreateDto | DependantCreateDto | HomeTestPatientDto,
+    data: PatientCreateDto | DependantCreateDto | PatientCreateAdminDto,
   ): Promise<Patient> {
     const entity = new Patient()
     entity.firebaseKey = data.firebaseKey
     entity.firstName = data.firstName
     entity.lastName = data.lastName
     entity.phoneNumber = data.phoneNumber
-    if (data instanceof PatientCreateDto || data instanceof DependantCreateDto) {
-      entity.dateOfBirth = data.dateOfBirth
-      entity.photoUrl = data.photoUrl
-      entity.registrationId = data.registrationId
-      entity.consentFileUrl = data.consentFileUrl
-    }
+    entity.dateOfBirth = data.dateOfBirth
+    entity.photoUrl = data.photoUrl
+    entity.registrationId = data.registrationId
+    entity.consentFileUrl = data.consentFileUrl
+
+    return this.patientRepository.save(entity)
+  }
+
+  /**
+   * Create user for Rapid Home Test
+   */
+  async createHomeTestPatient(data: HomeTestPatientDto): Promise<Patient> {
+    const entity = new Patient()
+    entity.firebaseKey = data.firebaseKey
+    entity.firstName = data.firstName
+    entity.lastName = data.lastName
+    entity.phoneNumber = data.phoneNumber
+
     return this.patientRepository.save(entity)
   }
 

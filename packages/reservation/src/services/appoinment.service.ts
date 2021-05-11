@@ -1219,7 +1219,7 @@ export class AppoinmentService {
     userId: string,
     email: string,
   ): Promise<AppointmentDBModel> {
-    const {appointment, patient} = cartDdItem
+    const {appointment, patient, discountData} = cartDdItem
 
     const utcDateTime = moment(appointment.time).utc()
     const dateTime = utcDateTime.tz(timeZone).format()
@@ -1230,9 +1230,10 @@ export class AppoinmentService {
       appointmentTypeID: appointment.appointmentTypeId,
       firstName: patient.firstName,
       lastName: patient.lastName,
+
       email,
       phone: patient.phone,
-      packageCode: appointment.packageCode,
+      packageCode: discountData?.name ? discountData.name : appointment.packageCode,
       calendarID: appointment.calendarId,
       fields: {
         dateOfBirth: patient.dateOfBirth,
@@ -1261,7 +1262,7 @@ export class AppoinmentService {
       appointmentStatus: AppointmentStatus.Pending,
       latestResult: ResultTypes.Pending,
       organizationId: appointment.organizationId,
-      couponCode: '',
+      couponCode: discountData?.name ? discountData.name : appointment.packageCode,
       userId,
     })
   }

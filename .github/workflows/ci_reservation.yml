@@ -8,7 +8,6 @@ on:
       - ".github/actions/**"
     branches: 
       - master
-      - ci_cd
     tags:
       - infra-dev-reservation-*
       - infra-dev-all-*

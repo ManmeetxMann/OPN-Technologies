@@ -140,14 +140,15 @@ export class PatientCreateAdminDto {
   @IsNotEmpty()
   lastName: string
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   registrationId?: string
 
   @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  photoUrl: string
+  photoUrl?: string
 
   @ApiProperty()
   @IsString()
@@ -156,6 +157,7 @@ export class PatientCreateAdminDto {
 
   @ApiPropertyOptional()
   @IsString()
+  @IsOptional()
   consentFileUrl?: string
 
   @ApiProperty()
@@ -168,66 +170,75 @@ export class PatientCreateAdminDto {
   @IsNotEmpty()
   homeAddress: string
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  @IsNotEmpty()
-  homeAddressUnit: string
+  @IsOptional()
+  homeAddressUnit?: string
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  @IsNotEmpty()
-  city: string
+  @IsOptional()
+  city?: string
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  @IsNotEmpty()
-  province: string
+  @IsOptional()
+  province?: string
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  @IsNotEmpty()
-  country: string
+  @IsOptional()
+  country?: string
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsNumberString()
-  postalCode: string
+  @IsOptional()
+  postalCode?: string
 
   @IsOptional()
-  healthCardType: string
+  healthCardType?: string
 
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   @IsNumberString()
   @Length(9, 9)
-  healthCardNumber: string
+  healthCardNumber?: string
 
   @ApiPropertyOptional()
   @IsString()
-  travelPassport: string
+  @IsOptional()
+  travelPassport?: string
 
   @ApiPropertyOptional()
   @IsString()
-  travelCountry: string
+  @IsOptional()
+  travelCountry?: string
 
   @ApiPropertyOptional()
   @IsBoolean()
-  agreeToConductFHHealthAssessment: boolean
+  @IsOptional()
+  agreeToConductFHHealthAssessment?: boolean
 
   @ApiPropertyOptional()
   @IsBoolean()
-  shareTestResultWithEmployer: boolean
+  @IsOptional()
+  shareTestResultWithEmployer?: boolean
 
   @ApiPropertyOptional()
   @IsBoolean()
-  readTermsAndConditions: boolean
+  @IsOptional()
+  readTermsAndConditions?: boolean
 
   @ApiPropertyOptional()
   @IsBoolean()
-  receiveResultsViaEmail: boolean
+  @IsOptional()
+  receiveResultsViaEmail?: boolean
 
   @ApiPropertyOptional()
   @IsBoolean()
-  receiveNotificationsFromGov: boolean
+  @IsOptional()
+  receiveNotificationsFromGov?: boolean
 
   updatedBy?: string
 }

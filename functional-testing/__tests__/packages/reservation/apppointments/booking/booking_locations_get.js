@@ -10,7 +10,7 @@ frisby.globalSetup({
 });
 
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
-const organizationId = testProfile.get().organizationId;
+const organizationId = 'PUBLIC_ORG';
 
 const getLocations = (token) => {
   const url = `${reservationServiceUrl}/reservation/api/v1/booking-locations?organizationId=${organizationId}`;
