@@ -65,9 +65,8 @@ export class PatientController {
     let patient: Patient
 
     patientDto.authUserId = firebaseAuthUser.authUserId
-    console.log({patientDto}, opnHeaders)
-    const patientExists = await this.patientService.getAuthByAuthUserId(firebaseAuthUser.authUserId)
 
+    const patientExists = await this.patientService.getAuthByAuthUserId(firebaseAuthUser.authUserId)
     if (patientExists) {
       throw new BadRequestException('User with given uid already exists')
     }
@@ -78,7 +77,6 @@ export class PatientController {
       patient = await this.patientService.createHomePatientProfile(patientDto as HomeTestPatientDto)
     } else {
       const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
-
       if (patientExists) {
         throw new BadRequestException('User with given email already exists')
       }
