@@ -43,7 +43,7 @@ class UserController implements IControllerBase {
             passport: Config.get('DOMAIN_PASSPORT'),
             registry: Config.get('DOMAIN_REGISTRY'),
             reservation: Config.get('DOMAIN_RESERVATION'),
-            cart: Config.get('DOMAIN_CART'),
+            cart: Config.get('DOMAIN_CHECKOUT'),
             user: Config.get('DOMAIN_USER'),
           },
           links: {
@@ -85,7 +85,7 @@ class UserController implements IControllerBase {
             passport: Config.get('DOMAIN_PASSPORT'),
             registry: Config.get('DOMAIN_REGISTRY'),
             reservation: Config.get('DOMAIN_RESERVATION'),
-            cart: Config.get('DOMAIN_CART'),
+            cart: Config.get('DOMAIN_CHECKOUT'),
             user: Config.get('DOMAIN_USER'),
           },
           links: {

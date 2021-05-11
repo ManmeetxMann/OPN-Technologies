@@ -3,7 +3,7 @@ on:
   push:
     paths:
       - "services-v2/**"
-      - ".github/workflows/ci_cart-service.yml"
+      - ".github/workflows/ci_checkout-service.yml"
       - ".github/actions/**"
     branches: 
       - master
@@ -22,7 +22,7 @@ jobs:
         
     - uses: ./.github/actions/deploy-gae-services-v2
       with:
-        service_name: "cart-service"
+        service_name: "checkout-service"
       name: Build & Deploy to GAE
       env:
           dev_service_account: ${{ secrets.DEV_GCP_CLOUDBUILD_SA_KEY}}

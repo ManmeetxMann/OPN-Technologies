@@ -1,14 +1,14 @@
 import {Controller, Post, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiHeader, ApiTags} from '@nestjs/swagger'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
-import {UserCardService} from '@opn-services/cart/service/user-cart.service'
+import {UserCardService} from 'apps/checkout-service/src/service/user-cart.service'
 import {InternalType} from '@opn-services/common/decorator/internal.decorator'
 import {InternalAuthTypes} from '@opn-services/common/types/authorization'
 import {InternalGuard} from '@opn-services/common/guard/internal.guard'
 
 @ApiTags('Cart Internal')
 @ApiBearerAuth()
-@Controller('/api/v1/internal')
+@Controller('/api/v1/internal/cart')
 @UseGuards(InternalGuard)
 export class CartInternalController {
   constructor(private userCardService: UserCardService) {}

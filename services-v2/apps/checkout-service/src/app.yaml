@@ -1,4 +1,4 @@
 runtime: nodejs12
-service: cart-service
+service: checkout-service
 
 entrypoint: node ./main.js

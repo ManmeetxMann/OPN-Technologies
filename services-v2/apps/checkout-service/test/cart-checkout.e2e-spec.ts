@@ -17,7 +17,7 @@ import {cartItem} from './cart-basic.e2e-spec'
  */
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
 jest.mock('@opn-reservation-v1/adapter/acuity')
-jest.mock('@opn-services/cart/service/stripe.service')
+jest.mock('@opn-services/checkout/service/stripe.service')
 
 /**
  * TODO:
