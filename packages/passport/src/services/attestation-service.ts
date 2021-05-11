@@ -221,6 +221,10 @@ export class AttestationService {
       .fetch()
   }
 
+  getAllAttestationByOnlyUserId(userId: string): Promise<Attestation[]> {
+    return this.attestationRepository.getQueryFindWhereEqual('userId', userId).fetch()
+  }
+
   async getByAttestationId(attestationId: string): Promise<Attestation> {
     const [attestation] = await this.attestationRepository
       .collection()

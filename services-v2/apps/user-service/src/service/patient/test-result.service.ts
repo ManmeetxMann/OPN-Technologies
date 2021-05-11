@@ -7,6 +7,8 @@ import {PatientUpdateDto} from '../../dto/patient'
 import {Injectable} from '@nestjs/common'
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
 import {pcrTestResultSchema} from '@opn-services/common/schemas'
+import {TestTypes} from '@opn-reservation-v1/models/appointment'
+import {firestore} from 'firebase-admin'
 
 @Injectable()
 export class TestResultService {
@@ -15,9 +17,15 @@ export class TestResultService {
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private userRepository = new UserRepository(this.dataStore)
 
-  async createPCRResults(data: TestResultCreateDto): Promise<TestResultCreateDto> {
+  async createPCRResults(data: TestResultCreateDto, userId: string): Promise<TestResultCreateDto> {
     const pcrTestResultTypesValidator = new JoiValidator(pcrTestResultSchema)
-    const pcrTestResultTypes = await pcrTestResultTypesValidator.validate(data)
+    const pcrTestResultTypes = await pcrTestResultTypesValidator.validate({
+      testType: TestTypes.RapidAntigenAtHome,
+      userId,
+      displayInResult: true,
+      dateTime: firestore.Timestamp.fromDate(new Date()),
+      ...data,
+    })
 
     return this.pcrTestResultsRepository.add(pcrTestResultTypes)
   }

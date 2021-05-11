@@ -29,10 +29,13 @@ export class TestResultController {
     if (!homeKit) {
       throw new ResourceNotFoundException('Home kit not found')
     }
-    const result = await this.testResultService.createPCRResults({
-      ...testResult,
-      homeKitId: homeKit.id,
-    })
+    const result = await this.testResultService.createPCRResults(
+      {
+        ...testResult,
+        homeKitId: homeKit.id,
+      },
+      authUser.id,
+    )
     const validatedUserData = this.testResultService.validateUserData(testResult)
     await this.testResultService.syncUser(validatedUserData, authUser.id)
 
