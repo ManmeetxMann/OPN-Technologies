@@ -109,13 +109,17 @@ paths:
       description: Get Config
       parameters:
         - in: header
-          name: application_name
+          name: opn-source
           schema:
             type: string
             enum:
               [
-                  FHHealth,
-                  OPN,
+                  FH_IOS,
+                  FH_Android,
+                  OPN_IOS,
+                  OPN_Android,
+                  Admin_Dashboard,
+                  FH_RapidHome_Web
               ]
       responses:
         "200":
