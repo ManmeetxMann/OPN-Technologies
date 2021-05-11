@@ -6,10 +6,10 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 
 import {AppointmentAcuityResponse, DeadlineLabel, Gender} from '../models/appointment'
 import {Certificate} from '../models/packages'
-import {AcuityCouponCodeResponse} from '../models/coupons'
+import {AcuityCouponCodeResponse, CouponCheckResponse} from '../models/coupons'
 import {AppointmentTypes} from '../models/appointment-types'
 import {Calendar} from '../models/calendar'
-import {AcuityAvailableSlots} from '../models/acuity'
+import {AcuityAvailableSlots, AcuityErrors, AcuityErrorValues} from '../models/acuity'
 import {getDateDefaultHumanReadable} from '../utils/datetime.helper'
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
@@ -233,6 +233,33 @@ abstract class AcuityAdapter {
     return result
   }
 
+  protected async checkCouponCode(
+    certificate: string,
+    appointmentTypeID: number,
+  ): Promise<CouponCheckResponse> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = encodeURI(
+      APIURL +
+        `/api/v1/certificates/check?certificate=${certificate}&appointmentTypeID=${appointmentTypeID}`,
+    )
+    LogInfo(`AcuityAdapterCheckCouponCode`, 'Request', {})
+    const res = await fetch(apiUrl, {
+      method: 'get',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      this.handleErrors(result.error)
+      throw new BadRequestException(result.message)
+    }
+    return result
+  }
+
   protected async createCouponCodeOnAcuityService(
     couponID: number,
     emailToLockCoupon: string,
@@ -307,22 +334,33 @@ abstract class AcuityAdapter {
         acuityStatusCode: result.status_code,
         errorMessage: result.message,
       })
-      if (result.error === 'not_available') {
-        throw new BadRequestException(
-          `${getDateDefaultHumanReadable(datetime)} is not available for appointments`,
-        )
-      } else if (result.error === 'certificate_uses') {
-        throw new BadRequestException(
-          `You organization has no more appointment credits left on account. Please contact your account manager.`,
-        )
-      }
-      throw new BadRequestException(result.message)
+      this.handleErrors(result.error)
+      throw new BadRequestException(result)
     }
     LogInfo(`AcuityAdapterCreateAppointment`, 'Success', {
       email,
       acuityID: result.id,
     })
     return this.customFieldsToAppoinment(result)
+  }
+
+  handleErrors(error: AcuityErrors, datetime?: Date): void {
+    switch (error) {
+      case 'not_available':
+        throw new BadRequestException(
+          `${datetime ? getDateDefaultHumanReadable(datetime) : 'Current time'} ${
+            AcuityErrorValues.not_available
+          }`,
+        )
+      case 'certificate_uses':
+        throw new BadRequestException(AcuityErrorValues.certificate_uses)
+      case 'invalid_certificate':
+        throw new BadRequestException(AcuityErrorValues.invalid_certificate)
+      case 'expired_certificate':
+        throw new BadRequestException(AcuityErrorValues.expired_certificate)
+      case 'invalid_certificate_type':
+        throw new BadRequestException(AcuityErrorValues.invalid_certificate_type)
+    }
   }
 
   protected async getAvailabilityDatesList(

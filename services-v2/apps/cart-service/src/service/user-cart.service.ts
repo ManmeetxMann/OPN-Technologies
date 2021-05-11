@@ -19,24 +19,26 @@ import {UserOrderRepository} from '../repository/user-order.repository'
 import {AcuityTypesRepository} from '../repository/acuity-types.repository'
 
 // Models
-import {CardItemDBModel, CartItemStatus} from '../model/cart'
-import {CartValidationItemDto} from '../dto'
-
+import {CardItemDBModel, CartItemStatus, CouponErrorsEnum} from '../model/cart'
 import {
   CartAddDto,
   CartItemDto,
   CartResponseDto,
   CartSummaryDto,
-  PaymentAuthorizationCartDto,
   CartUpdateRequestDto,
+  CartValidationItemDto,
+  PaymentAuthorizationCartDto,
 } from '../dto'
 import {firestoreTimeStampToUTC} from '@opn-reservation-v1/utils/datetime.helper'
 import {OpnConfigService} from '@opn-services/common/services'
 
-import {CartFunctions, CartEvent} from '@opn-services/common/types/activity-logs'
+import {CartEvent, CartFunctions} from '@opn-services/common/types/activity-logs'
 import {LogError} from '@opn-services/common/utils/logging'
+import {DiscountTypes} from '@opn-reservation-v1/models/coupons'
+
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
 import {acuityTypesSchema, cartItemSchema} from '@opn-services/common/schemas'
+import {AcuityErrorValues} from '@opn-reservation-v1/models/acuity'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -58,9 +60,12 @@ export class UserCardService {
 
   private buildPaymentSummary(cartItems: CartItemDto[]): CartSummaryDto[] {
     const round = num => Math.round(num * 100) / 100
-    const sum = cartItems.reduce((sum, item) => sum + (item.price || 0), 0)
-    const tax = round(sum * this.hstTax)
-    const total = sum + tax
+    const discountedSum = cartItems.reduce(
+      (sum, item) => sum + (item.discountedPrice || item.price || 0),
+      0,
+    )
+    const tax = round(discountedSum * this.hstTax)
+    const total = round(discountedSum + tax)
 
     if (total == 0) {
       return []
@@ -70,7 +75,7 @@ export class UserCardService {
       {
         uid: 'subTotal',
         label: 'SUBTOTAL',
-        amount: sum,
+        amount: discountedSum,
         currency: 'CAD',
       },
       {
@@ -164,7 +169,6 @@ export class UserCardService {
           appointment.calendarTimezone === acuitySlot.calendarTimezone,
       )
       const time = acuitySlot.times.find(time => time.time === appointment.time)
-
       if (!time) {
         isValid = false
         invalidItems.push({
@@ -179,7 +183,6 @@ export class UserCardService {
         })
       }
     }
-
     return {items: invalidItems, isValid}
   }
 
@@ -225,6 +228,12 @@ export class UserCardService {
         date: new Date(cartDB.appointment.time).toISOString(),
         price: parseFloat(cartDB.appointmentType.price),
         userId: cartDB.patient.userId,
+        discountedPrice: this.countDiscount(
+          parseFloat(cartDB.appointmentType.price),
+          cartDB.discountData.discountType,
+          cartDB.discountData.discountAmount,
+        ),
+        discountedError: cartDB.discountData.error,
       }
       return cartItem
     })
@@ -404,6 +413,90 @@ export class UserCardService {
     return {cartDdItems, cardValidation}
   }
 
+  async discount(coupon: string, userId: string, organizationId: string): Promise<CartResponseDto> {
+    const userOrgId = `${userId}_${organizationId}`
+
+    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
+
+    const cardItems = await this.fetchUserAllCartItem(userId, organizationId)
+    const discountedCartItems = await Promise.all(
+      cardItems.map(async cartItem => {
+        let discount
+        let err
+        try {
+          discount = await this.acuityRepository.checkCoupon(
+            coupon,
+            cartItem.appointment.appointmentTypeId,
+          )
+        } catch (e) {
+          for (const acuityErrorsKey in AcuityErrorValues) {
+            if (e.message === AcuityErrorValues[acuityErrorsKey]) {
+              err = e.message
+            }
+          }
+        }
+        if (discount?.discountAmount <= 0) {
+          err = CouponErrorsEnum.exceed_count
+        }
+        const [cartItemDataDb] = await userCartItemRepository.findWhereEqual(
+          'cartItemId',
+          cartItem.cartItemId,
+        )
+        return userCartItemRepository.updateProperties(
+          cartItemDataDb.id,
+          err
+            ? {
+                appointmentType: {
+                  ...cartItem.appointmentType,
+                },
+                discountData: {
+                  error: err,
+                },
+              }
+            : {
+                appointmentType: {
+                  ...cartItem.appointmentType,
+                },
+                discountData: {
+                  discountType: discount.discountType,
+                  discountAmount: discount.discountAmount,
+                  name: discount.name,
+                  couponId: discount.couponID,
+                  expiration: discount.expiration,
+                },
+              },
+        )
+      }),
+    )
+    const cartItems = discountedCartItems.map(cartDB => ({
+      cartItemId: cartDB.cartItemId,
+      label: cartDB.appointmentType.name,
+      subLabel: cartDB.appointment.calendarName,
+      patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
+      date: new Date(cartDB.appointment.time).toISOString(),
+      price: parseFloat(cartDB.appointmentType.price),
+      userId: cartDB.patient.userId,
+      discountedPrice: this.countDiscount(
+        parseFloat(cartDB.appointmentType.price),
+        cartDB.discountData.discountType,
+        cartDB.discountData.discountAmount,
+      ),
+      discountedError: cartDB.discountData.error,
+    }))
+    return {
+      cartItems: cartItems,
+      paymentSummary: this.buildPaymentSummary(cartItems),
+    }
+  }
+  private countDiscount(
+    initialPrice: number,
+    discountType: DiscountTypes,
+    discountAmount: number,
+  ): number {
+    return discountType === DiscountTypes.percentage
+      ? initialPrice - (initialPrice * discountAmount) / 100
+      : initialPrice - discountAmount
+  }
   /**
    * converts acuity price format to Stripe amount in cent
    */
