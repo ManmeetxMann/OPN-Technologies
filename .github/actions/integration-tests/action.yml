@@ -28,7 +28,7 @@ runs:
       npm run install-all
       pwd
       ls -al
-      npm run lint-all
+      npm run lint-fix-all
 
       cd services-v2
       npm install
