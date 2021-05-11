@@ -5,7 +5,7 @@ import admin, {initializeApp, credential} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
 import {customAlphabet} from 'nanoid/async'
 
-const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 6)
+const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 6)
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
@@ -15,7 +15,7 @@ initializeApp({
 const db = admin.firestore()
 const collection = db.collection('rapid-home-kit-codes')
 
-const countOfCodes = 2
+const countOfCodes = 100
 
 async function main() {
   return db.runTransaction(async (transaction) => {

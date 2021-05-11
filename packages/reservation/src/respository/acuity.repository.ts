@@ -4,6 +4,7 @@ import {Certificate} from '../models/packages'
 import {AppointmentTypes} from '../models/appointment-types'
 import {Calendar} from '../models/calendar'
 import {AcuityAvailableSlots, CreateAppointmentDTO} from '../models/acuity'
+import {CouponCheckResponse} from '../models/coupons'
 
 export class AcuityRepository extends AcuityAdapter {
   constructor() {
@@ -48,6 +49,11 @@ export class AcuityRepository extends AcuityAdapter {
       emailToLockCoupon,
     )
     return couponCodeResponse.certificate
+  }
+
+  async checkCoupon(certificate: string, appointmentTypeID: number): Promise<CouponCheckResponse> {
+    const couponCode = await this.checkCouponCode(certificate, appointmentTypeID)
+    return couponCode
   }
 
   async createAppointment(
