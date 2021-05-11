@@ -9,7 +9,6 @@ on:
       - ".github/actions/**"
     branches: 
       - master
-      - testing
     tags:
       - infra-dev-config-*
       - infra-dev-all-*
