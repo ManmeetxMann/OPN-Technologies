@@ -55,7 +55,10 @@ export class CommentService {
   }
 
   getCommentsByTestResultId = (testResultId: string): Promise<Comment[]> => {
-    return this.commentRepository.findWhereEqual('testResultId', testResultId)
+    return this.commentRepository
+      .getQueryFindWhereEqual('testResultId', testResultId)
+      .where('replyTo', '==', null)
+      .fetch()
   }
 
   getRepliesByCommentId = (commentId: string): Promise<Comment[]> => {
