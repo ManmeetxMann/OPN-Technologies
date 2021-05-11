@@ -27,7 +27,7 @@ runs:
       npm install
       npm run install-all
       pwd
-      ls .prettierrc
+      ls -al
       npm run lint-all
 
       cd services-v2
