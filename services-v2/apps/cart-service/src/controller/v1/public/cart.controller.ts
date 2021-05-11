@@ -24,7 +24,7 @@ import {CartFunctions, CartEvent} from '@opn-services/common/types/activity-logs
 import {LogInfo, LogWarning, LogError} from '@opn-services/common/utils/logging'
 
 @ApiTags('Cart')
-@Controller('/api/v1/cart')
+@Controller('/api/v1')
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
 export class CartController {

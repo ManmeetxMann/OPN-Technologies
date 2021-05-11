@@ -30,7 +30,7 @@ import {CartInternalController} from './controller/v1/internal/cart.controller'
 class App {
   configure(consumer: MiddlewareConsumer): void {
     consumer.apply(AuthMiddleware).forRoutes({
-      path: '*',
+      path: '(.*)',
       method: RequestMethod.ALL,
     })
   }
@@ -46,6 +46,7 @@ async function bootstrap() {
       forbidUnknownValues: true,
     }),
   )
+  app.setGlobalPrefix('cart')
   app.useGlobalFilters(new AllExceptionsFilter())
 
   // Each worker process is assigned a unique id (index-based that starts with 1)

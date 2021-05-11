@@ -9,6 +9,7 @@ export const devConfig: Record<string, string | number | boolean> = {
   DOMAIN_REGISTRY: 'https://registry-dot-opn-platform-dev.nn.r.appspot.com/',
   DOMAIN_RESERVATION: 'https://reservation-dot-opn-platform-dev.nn.r.appspot.com/',
   DOMAIN_CART: 'https://cart-service-dot-opn-platform-dev.nn.r.appspot.com/',
+  DOMAIN_USER: 'https://user-service-dot-opn-platform-dev.nn.r.appspot.com/',
 
   AUTH_EMAIL_TEMPLATE_ID: 3,
 

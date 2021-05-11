@@ -7,6 +7,7 @@ export const preprodConfig: Record<string, string | number | boolean> = {
   DOMAIN_REGISTRY: 'https://registry-dot-opn-platform-preprod.nn.r.appspot.com/',
   DOMAIN_RESERVATION: 'https://reservation-dot-opn-platform-preprod.nn.r.appspot.com/',
   DOMAIN_CART: 'https://cart-service-dot-opn-platform-preprod.nn.r.appspot.com/',
+  DOMAIN_USER: 'https://user-service-dot-opn-platform-preprod.nn.r.appspot.com/',
 
   AUTH_EMAIL_TEMPLATE_ID: 1,
 

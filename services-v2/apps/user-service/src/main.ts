@@ -1,7 +1,7 @@
 // NestJs
 import {NestFactory} from '@nestjs/core'
 import {FastifyAdapter} from '@nestjs/platform-fastify'
-import {MiddlewareConsumer, Module} from '@nestjs/common'
+import {MiddlewareConsumer, Module, RequestMethod} from '@nestjs/common'
 
 // Should be called before any v1 module import from v2
 import {Config} from '@opn-common-v1/utils/config'
@@ -52,14 +52,10 @@ import {corsOptions} from '@opn-services/common/configuration/cors.configuration
 })
 class App {
   configure(consumer: MiddlewareConsumer): void {
-    consumer
-      .apply(AuthMiddleware)
-      .forRoutes(
-        AdminPatientController,
-        PatientController,
-        RapidHomeController,
-        TestResultController,
-      )
+    consumer.apply(AuthMiddleware).forRoutes({
+      path: '(.*)',
+      method: RequestMethod.ALL,
+    })
   }
 }
 
@@ -73,6 +69,7 @@ async function bootstrap() {
       forbidUnknownValues: true,
     }),
   )
+  app.setGlobalPrefix('user')
   app.useGlobalFilters(new AllExceptionsFilter())
 
   // Each worker process is assigned a unique id (index-based that starts with 1)

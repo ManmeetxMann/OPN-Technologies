@@ -8,7 +8,7 @@ import {InternalGuard} from '@opn-services/common/guard/internal.guard'
 
 @ApiTags('Cart Internal')
 @ApiBearerAuth()
-@Controller('/api/v1/internal/cart')
+@Controller('/api/v1/internal')
 @UseGuards(InternalGuard)
 export class CartInternalController {
   constructor(private userCardService: UserCardService) {}

@@ -44,6 +44,7 @@ class UserController implements IControllerBase {
             registry: Config.get('DOMAIN_REGISTRY'),
             reservation: Config.get('DOMAIN_RESERVATION'),
             cart: Config.get('DOMAIN_CART'),
+            user: Config.get('DOMAIN_USER'),
           },
           links: {
             privacyPolicy: Config.get('FH_LINK_PRIVACYPOLICY'),
@@ -85,6 +86,7 @@ class UserController implements IControllerBase {
             registry: Config.get('DOMAIN_REGISTRY'),
             reservation: Config.get('DOMAIN_RESERVATION'),
             cart: Config.get('DOMAIN_CART'),
+            user: Config.get('DOMAIN_USER'),
           },
           links: {
             privacyPolicy: Config.get('LINK_PRIVACYPOLICY'),
