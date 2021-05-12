@@ -1,6 +1,13 @@
 export const internalUrls = [
-  'cart/api/v1/internal/cart/remove-expired-items',
-  'cart/api/v1/internal/cart/sync-acuity-appointment-types',
+  {
+    url: '/api/v1/internal/cart/remove-expired-items',
+    method: 'POST',
+  },
 ]
 
-export const publicApiUrls = ['user/api/v1/patients']
+export const publicApiUrls = [
+  {
+    url: '/api/v1/patients',
+    method: 'POST',
+  },
+]

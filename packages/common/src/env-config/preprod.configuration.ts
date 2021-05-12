@@ -1,4 +1,7 @@
-export const preprodConfig: Record<string, string | number | boolean> = {
+export const preprodConfig: Record<string, string | string[] | number | boolean> = {
+  // TODO: add production origin domains
+  CORS_DOMAINS: [],
+
   DASHBOARD_URL: 'https://opn-admin-dashboard-preprod.nn.r.appspot.com',
   DOMAIN_ACCESS: 'https://access-dot-opn-platform-preprod.nn.r.appspot.com/',
   DOMAIN_ENTERPRISE: 'https://enterprise-dot-opn-platform-preprod.nn.r.appspot.com/',
