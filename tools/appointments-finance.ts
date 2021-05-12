@@ -73,11 +73,6 @@ type Result = {
   value: unknown
 }
 
-type calendarModel = {
-  id: number
-  name: string
-}
-
 const orgToCost = {
   Pv2aldejG1OLnd6ggGrz: {default: '180.80'},
   hdm61mpAy9RA0kTCm7nz: {'5173759': '146.90', default: '202.27'},
@@ -108,23 +103,6 @@ async function promiseAllSettled(promises: Promise<unknown>[]): Promise<Result[]
   )
 }
 
-const getCalendars = async (): Promise<calendarModel[]> => {
-  const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
-  const userPassBase64 = userPassBuf.toString('base64')
-  const apiUrl = APIURL + '/api/v1/calendars'
-
-  return fetch(apiUrl, {
-    method: 'get',
-    headers: {
-      Authorization: 'Basic ' + userPassBase64,
-      'Content-Type': 'application/json',
-      accept: 'application/json',
-    },
-  }).then(async (res) => {
-    return res.json()
-  })
-}
-
 const getAppointments = async (filters: unknown): Promise<AppointmentAcuityResponse[]> => {
   const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
   const userPassBase64 = userPassBuf.toString('base64')
@@ -132,8 +110,8 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
     APIURL +
     '/api/v1/appointments?max=2500&' +
     querystring.stringify(filters as ParsedUrlQueryInput)
-  
-    return fetch(apiUrl, {
+
+  return fetch(apiUrl, {
     method: 'get',
     headers: {
       Authorization: 'Basic ' + userPassBase64,
@@ -153,7 +131,7 @@ async function fetchAcuity(): Promise<Result[]> {
     minDate: START_DATE,
     maxDate: START_DATE,
   }
- 
+
   while (moment(END_DATE).diff(moment(filters.maxDate).format('YYYY-MM-DD')) > 0) {
     /*let appointments = []
     await new Promise((resolve, reject) => {
@@ -174,16 +152,14 @@ async function fetchAcuity(): Promise<Result[]> {
     })
     */
     const appointments = await getAppointments(filters)
-    console.info(
-      `Total Number of Appointments for ${filters.minDate} are ${appointments.length}`,
-    )
-    
+    console.info(`Total Number of Appointments for ${filters.minDate} are ${appointments.length}`)
+
     const promises = appointments.map(async (acuityAppointment) => {
       return createAppointment(acuityAppointment)
     })
     const result = await promiseAllSettled(promises)
     results.push(...result)
-    
+
     const nextDay = moment(filters.maxDate).add(1, 'd').format('YYYY-MM-DD')
     filters.minDate = nextDay
     filters.maxDate = nextDay

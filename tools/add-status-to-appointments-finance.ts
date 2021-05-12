@@ -129,4 +129,3 @@ let failureCount = 0
 let totalCount = 0
 
 main().then(() => console.log('Script Complete \n'))
-
