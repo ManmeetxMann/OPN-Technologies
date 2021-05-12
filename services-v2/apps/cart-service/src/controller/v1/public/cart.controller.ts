@@ -2,7 +2,7 @@ import {Body, Controller, Delete, Get, Param, Post, Put, UseGuards} from '@nestj
 import {ApiBearerAuth, ApiHeader, ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
-import {AuthGuard, AuthUserDecorator, Roles} from '@opn-services/common'
+import {ApiCommonHeaders, AuthGuard, AuthUserDecorator, Roles} from '@opn-services/common'
 import {AuthUser} from '@opn-services/common/model'
 
 import {
@@ -24,8 +24,9 @@ import {CartFunctions, CartEvent} from '@opn-services/common/types/activity-logs
 import {LogInfo, LogWarning, LogError} from '@opn-services/common/utils/logging'
 
 @ApiTags('Cart')
-@Controller('/api/v1/cart')
 @ApiBearerAuth()
+@ApiCommonHeaders()
+@Controller('/api/v1/cart')
 @UseGuards(AuthGuard)
 export class CartController {
   private maxCartItemsCount = 50

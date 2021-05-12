@@ -1,6 +1,6 @@
 import {Body, Controller, Post, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
-import {AuthGuard, AuthUserDecorator, Roles} from '@opn-services/common'
+import {ApiCommonHeaders, AuthGuard, AuthUserDecorator, Roles} from '@opn-services/common'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {AuthUser} from '@opn-services/common/model'
 import {ResponseWrapper} from '@opn-services/common/dto'
@@ -11,6 +11,7 @@ import {ResourceNotFoundException} from '@opn-services/common/exception'
 
 @ApiTags('PCR Test Results')
 @ApiBearerAuth()
+@ApiCommonHeaders()
 @Controller('/api/v1/pcr-test-results')
 @UseGuards(AuthGuard)
 export class TestResultController {

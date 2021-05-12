@@ -53,3 +53,11 @@ export type OpnCommonHeaders = {
   opnLangHeader: OpnLang
   opnAppVersion: string
 }
+
+export enum OpnRawHeaders {
+  OpnDeviceId = 'opn-device-id',
+  OpnSource = 'opn-source',
+  OpnRequestId = 'opn-request-id',
+  OpnLang = 'opn-lang',
+  OpnAppVersion = 'opn-app-version',
+}

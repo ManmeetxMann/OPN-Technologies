@@ -12,7 +12,7 @@ import {
 } from '@opn-services/cart/configuration/middleware.configuration'
 import {JoiValidator} from '../utils/joi-validator'
 import {opnHeadersSchema} from '../schemas'
-import {OpnCommonHeaders, OpnLang, OpnSources} from '../types/authorization'
+import {OpnCommonHeaders, OpnLang, OpnRawHeaders, OpnSources} from '../types/authorization'
 import {LogInfo} from '../utils/logging'
 
 @Injectable()
@@ -127,11 +127,11 @@ export class AuthMiddleware implements NestMiddleware {
 
   async handleHeaders(req): Promise<OpnCommonHeaders> {
     const headers: OpnCommonHeaders = {
-      opnDeviceIdHeader: req.headers['opn-device-id'],
-      opnSourceHeader: req.headers['opn-source'] as OpnSources,
-      opnRequestIdHeader: req.headers['opn-request-id'],
-      opnLangHeader: req.headers['opn-lang'] as OpnLang,
-      opnAppVersion: req.headers['opn-app-version'],
+      opnDeviceIdHeader: req.headers[OpnRawHeaders.OpnDeviceId],
+      opnSourceHeader: req.headers[OpnRawHeaders.OpnSource] as OpnSources,
+      opnRequestIdHeader: req.headers[OpnRawHeaders.OpnRequestId],
+      opnLangHeader: req.headers[OpnRawHeaders.OpnLang] as OpnLang,
+      opnAppVersion: req.headers[OpnRawHeaders.OpnAppVersion],
     }
 
     LogInfo('handleHeaders', 'ReadOpnHeaders', {headers})
