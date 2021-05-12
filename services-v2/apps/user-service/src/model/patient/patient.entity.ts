@@ -232,6 +232,11 @@ export class Patient extends Auditable {
   @IsString()
   lastName: string
 
+  @Column()
+  @ApiProperty({nullable: true, default: false})
+  @IsBoolean()
+  isEmailVerified?: boolean
+
   @Column({nullable: true})
   @ApiProperty()
   @IsString()

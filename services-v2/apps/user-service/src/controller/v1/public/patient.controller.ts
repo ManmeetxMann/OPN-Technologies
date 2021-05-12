@@ -8,6 +8,7 @@ import {
   OpnSources,
   RequiredUserPermission,
 } from '@opn-services/common/types/authorization'
+import {OpnSources as OpnPlatforms} from '@opn-common-v1/types/authorization'
 import {
   AuthUserDecorator,
   Roles,
@@ -30,6 +31,7 @@ import {
   PatientCreateDto,
   CreatePatientDTOResponse,
   PatientDTO,
+  AuthenticateDto,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
@@ -37,13 +39,23 @@ import {HomeTestPatientDto} from '@opn-services/user/dto/home-patient'
 import {UserEvent, UserFunctions} from '@opn-services/common/types/activity-logs'
 
 import {Platform} from '@opn-common-v1/types/platform'
+import {MagicLinkService} from '@opn-common-v1/service/messaging/magiclink-service'
+import {AuthShortCodeService} from '@opn-enterprise-v1/services/auth-short-code-service'
+import {OpnConfigService} from '@opn-services/common/services'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
 @ApiCommonHeaders()
 @Controller('/api/v1/patients')
 export class PatientController {
-  constructor(private patientService: PatientService) {}
+  private magicLinkService: MagicLinkService
+  constructor(
+    private patientService: PatientService,
+    private authShortCodeService: AuthShortCodeService,
+    private configService: OpnConfigService,
+  ) {
+    this.magicLinkService = new MagicLinkService()
+  }
 
   @Get()
   @UseGuards(AuthGuard)
@@ -91,7 +103,39 @@ export class PatientController {
       patient = await this.patientService.createProfile(patientDto)
     }
 
+    const authShortCode = await this.authShortCodeService.generateAndSaveShortCode(
+      patientDto.email,
+      this.configService.get<string>('PUBLIC_ORG_ID'),
+      firebaseAuthUser.id,
+      OpnPlatforms.FHHealth,
+    )
+
+    await this.magicLinkService.send({
+      email: patientDto.email,
+      meta: {
+        shortCode: authShortCode.shortCode,
+        signInLink: authShortCode.magicLink,
+      },
+    })
+
     return ResponseWrapper.actionSucceed(CreatePatientDTOResponse(patient))
+  }
+
+  @Put('/auth/confirmation')
+  @Roles([RequiredUserPermission.RegUser])
+  async authenticate(
+    @AuthUserDecorator() authUser: AuthUser,
+    @Body() authenticateDto: AuthenticateDto,
+  ): Promise<ResponseWrapper> {
+    const {patientId, organizationId} = authenticateDto
+    const patientExists = await this.patientService.getbyId(authenticateDto.patientId)
+    if (!patientExists) {
+      throw new NotFoundException('User with given id not found')
+    }
+
+    await this.patientService.connectOrganization(patientId, organizationId)
+    await this.patientService.updateProfile(patientId, {isEmailVerified: true})
+    return ResponseWrapper.actionSucceed()
   }
 
   @Get('/dependants')

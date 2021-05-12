@@ -11,6 +11,7 @@ Config.useRootEnvFile()
 import {AuthMiddleware, CommonModule, createSwagger} from '@opn-services/common'
 import {AllExceptionsFilter} from '@opn-services/common/exception'
 import {OpnValidationPipe} from '@opn-services/common/pipes'
+import {AuthShortCodeService} from '@opn-enterprise-v1/services/auth-short-code-service'
 
 import {
   DatabaseConfiguration,
@@ -33,7 +34,7 @@ import {RapidHomeController} from './controller/v1/public/rapid-home.controller'
 import {corsOptions} from '@opn-services/common/configuration/cors.configuration'
 
 @Module({
-  imports: [CommonModule, DatabaseConfiguration, RepositoryConfiguration],
+  imports: [CommonModule, AuthShortCodeService, DatabaseConfiguration, RepositoryConfiguration],
   controllers: [
     AdminPatientController,
     PatientController,
@@ -48,6 +49,7 @@ import {corsOptions} from '@opn-services/common/configuration/cors.configuration
     PatientService,
     RapidHomeKitCodeService,
     TestResultService,
+    AuthShortCodeService,
   ],
 })
 class App {

@@ -1,7 +1,7 @@
 import * as express from 'express'
 import {Handler, Router} from 'express'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
-import {RequiredUserPermission} from '../../../../common/src/types/authorization'
+import {OpnSources, RequiredUserPermission} from '../../../../common/src/types/authorization'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {assertHasAuthorityOnDependent} from '../../middleware/user-dependent-authority'
 import {AuthService} from '../../../../common/src/service/auth/auth-service'
@@ -117,6 +117,7 @@ const create: Handler = async (req, res, next): Promise<void> => {
       email: authUser.email,
       authUserId: authUser.uid,
       active: true,
+      isEmailVerified: false,
     })
 
     await userSyncService.create(
@@ -125,6 +126,7 @@ const create: Handler = async (req, res, next): Promise<void> => {
         lastName: user.lastName,
         phoneNumber: (user.phone && user.phone.number && `${user.phone.number}`) || '',
         photoUrl: user.photo,
+        isEmailVerified: false,
         firebaseKey: user.id,
         patientPublicId: '', // @TODO Remove this field after merging PR related to this field
         registrationId: user.registrationId || '',
@@ -165,6 +167,7 @@ const authenticate: Handler = async (req, res, next): Promise<void> => {
       email,
       organizationId,
       userId,
+      OpnSources.OPN,
     )
 
     await magicLinkService.send({

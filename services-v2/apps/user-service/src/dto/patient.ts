@@ -16,6 +16,11 @@ export type PatientDTO = Partial<PatientCreateDto> & {
   trainingCompletedOn: Date
 }
 
+export type AuthenticateDto = {
+  patientId: string
+  organizationId: string
+}
+
 export class PatientCreateDto {
   idPatient: string
   firebaseKey: string // Firestore ID
@@ -28,6 +33,10 @@ export class PatientCreateDto {
   @IsOptional()
   @IsEmail()
   email: string
+
+  @IsOptional()
+  @IsBoolean()
+  isEmailVerified?: boolean
 
   @ApiProperty()
   @IsString()
@@ -138,6 +147,10 @@ export class PatientCreateAdminDto {
   @ApiProperty()
   @IsEmail()
   email: string
+
+  @IsOptional()
+  @IsBoolean()
+  isEmailVerified?: boolean
 
   @ApiProperty()
   @IsString()

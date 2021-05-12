@@ -5,6 +5,7 @@ export default Joi.object({
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
   dateOfBirth: Joi.string(),
+  isEmailVerified: Joi.boolean(),
   base64Photo: Joi.string().allow(''),
   organizationIds: Joi.array(),
   email: Joi.string().allow(null),

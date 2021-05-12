@@ -22,3 +22,8 @@ export enum RequiredUserPermission {
   GenerateBarCodeAdmin = 'GenerateBarCodeAdmin',
   LookupAdmin = 'LookupAdmin',
 }
+
+export enum OpnSources {
+  OPN = 'OPN',
+  FHHealth = 'FHHealth',
+}

@@ -1,4 +1,4 @@
-import {Injectable} from '@nestjs/common'
+import {Injectable, NotFoundException} from '@nestjs/common'
 import {Page} from '@opn-services/common/dto'
 import {Brackets, SelectQueryBuilder} from 'typeorm'
 import {
@@ -24,11 +24,13 @@ import {
   PatientRepository,
   PatientToDelegatesRepository,
   PatientTravelRepository,
+  PatientToOrganizationRepository,
 } from '../../repository/patient.repository'
 
 import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
 
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
+import {OrganizationModel} from '@opn-enterprise-v1/repository/organization.repository'
 import DataStore from '@opn-common-v1/data/datastore'
 import {AuthUser} from '@opn-common-v1/data/user'
 import {Registration} from '@opn-common-v1/data/registration'
@@ -47,10 +49,12 @@ export class PatientService {
     private patientTravelRepository: PatientTravelRepository,
     private patientDigitalConsentRepository: PatientDigitalConsentRepository,
     private patientToDelegatesRepository: PatientToDelegatesRepository,
+    private patientToOrganizationRepository: PatientToOrganizationRepository,
   ) {}
 
   private dataStore = new DataStore()
   private userRepository = new UserRepository(this.dataStore)
+  private organizationModel = new OrganizationModel(this.dataStore)
   private messaging = MessagingFactory.getPushableMessagingService()
   private registrationService = new RegistrationService()
 
@@ -119,6 +123,7 @@ export class PatientService {
     const firebaseUser = await this.userRepository.add({
       firstName: data.firstName,
       lastName: data.lastName,
+      isEmailVerified: false,
       phone: {
         diallingCode: 0,
         number: Number(data.phoneNumber),
@@ -129,7 +134,7 @@ export class PatientService {
     } as AuthUser)
 
     data.firebaseKey = firebaseUser.id
-
+    data.isEmailVerified = false
     const patient = await this.createPatient(data as PatientCreateDto)
 
     data.idPatient = patient.idPatient
@@ -150,6 +155,7 @@ export class PatientService {
 
     const firebaseUser = await this.userRepository.add({
       email: data.email,
+      isEmailVerified: false,
       firstName: data.firstName,
       lastName: data.lastName,
       registrationId: data.registrationId ?? null,
@@ -162,8 +168,8 @@ export class PatientService {
       active: false,
       organizationIds: [],
     } as AuthUser)
-
     data.firebaseKey = firebaseUser.id
+    data.isEmailVerified = false
 
     const patient = await this.createPatient(data)
     data.idPatient = patient.idPatient
@@ -191,6 +197,7 @@ export class PatientService {
     patient.lastName = data.lastName
     patient.dateOfBirth = data.dateOfBirth
     patient.phoneNumber = data.phoneNumber
+    patient.isEmailVerified = data.isEmailVerified
     patient.photoUrl = data.photoUrl
     patient.consentFileUrl = data.consentFileUrl
     if (data.trainingCompletedOn) {
@@ -209,6 +216,7 @@ export class PatientService {
       email: data.email,
       firstName: data.firstName,
       lastName: data.lastName,
+      isEmailVerified: data.isEmailVerified,
       ...(data.registrationId && {registrationId: data.registrationId}),
       ...(data.photoUrl && {photo: data.photoUrl}),
       phone: {
@@ -234,6 +242,33 @@ export class PatientService {
     return promises[0]
   }
 
+  async connectOrganization(patientId: string, firebaseOrganizationId: string): Promise<void> {
+    const patient = await this.getProfilebyId(patientId)
+    if (!patient) {
+      throw new NotFoundException('User with given id not found')
+    }
+
+    await this.patientToOrganizationRepository.save({
+      patientId,
+      firebaseOrganizationId,
+    })
+
+    const organization = this.organizationModel.findOneById(firebaseOrganizationId)
+    if (!organization) {
+      throw new NotFoundException('Organization with given id not found')
+    }
+    const firebaseUser = await this.userRepository.findOneById(patient.firebaseKey)
+    if (!firebaseUser) {
+      throw new NotFoundException('User with given id not found')
+    }
+
+    await this.userRepository.updateProperty(
+      firebaseUser.id,
+      'organizationIds',
+      Array.from(new Set([...(firebaseUser.organizationIds ?? []), firebaseOrganizationId])),
+    )
+  }
+
   async createPatient(
     data: PatientCreateDto | DependantCreateDto | PatientCreateAdminDto,
   ): Promise<Patient> {
@@ -241,6 +276,7 @@ export class PatientService {
     entity.firebaseKey = data.firebaseKey
     entity.firstName = data.firstName
     entity.lastName = data.lastName
+    entity.isEmailVerified = data.isEmailVerified
     entity.phoneNumber = data.phoneNumber
     entity.dateOfBirth = data.dateOfBirth
     entity.photoUrl = data.photoUrl
