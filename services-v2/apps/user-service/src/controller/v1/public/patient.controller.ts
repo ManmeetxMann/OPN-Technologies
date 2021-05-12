@@ -8,7 +8,13 @@ import {
   OpnSources,
   RequiredUserPermission,
 } from '@opn-services/common/types/authorization'
-import {AuthUserDecorator, Roles, OpnHeaders, PublicDecorator} from '@opn-services/common/decorator'
+import {
+  AuthUserDecorator,
+  Roles,
+  OpnHeaders,
+  PublicDecorator,
+  ApiCommonHeaders,
+} from '@opn-services/common/decorator'
 import {
   BadRequestException,
   ForbiddenException,
@@ -34,6 +40,7 @@ import {Platform} from '@opn-common-v1/types/platform'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
+@ApiCommonHeaders()
 @Controller('/api/v1/patients')
 export class PatientController {
   constructor(private patientService: PatientService) {}
