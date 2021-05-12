@@ -58,7 +58,7 @@ import {
   PcrTestResultsListRequest,
   pcrTestResultsResponse,
   ResultReportStatus,
-  resultToStyle, Spec,
+  resultToStyle,
   TestResutsDTO,
 } from '../models/pcr-test-results'
 
