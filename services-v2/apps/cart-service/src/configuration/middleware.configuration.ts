@@ -1,3 +1,13 @@
-export const internalUrls = ['/api/v1/internal/cart/remove-expired-items']
+export const internalUrls = [
+  {
+    url: '/api/v1/internal/cart/remove-expired-items',
+    method: 'POST',
+  },
+]
 
-export const publicApiUrls = ['/api/v1/patients']
+export const publicApiUrls = [
+  {
+    url: '/api/v1/patients',
+    method: 'POST',
+  },
+]
