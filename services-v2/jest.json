@@ -13,7 +13,7 @@
     "^@opn-services/test/(.*)$": "<rootDir>/libs/test/$1",
     "^@opn-services/common$": "<rootDir>/libs/common/src",
     "^@opn-services/common/(.*)$": "<rootDir>/libs/common/src/$1",
-    "^@opn-services/cart/(.*)$": "<rootDir>/apps/cart-service/src/$1",
+    "^@opn-services/checkout/(.*)$": "<rootDir>/apps/checkout-service/src/$1",
     "^@opn-services/user/(.*)$": "<rootDir>/apps/user-service/src/$1",
     "^@opn-common-v1/(.*)$": "<rootDir>../packages/common/src/$1",
     "^@opn-reservation-v1/(.*)$": "<rootDir>../packages/reservation/src/$1",

@@ -13,10 +13,10 @@ import {
   PaymentAuthorizationResponseDto,
   CartUpdateRequestDto,
   CouponRequestDto,
-} from '@opn-services/cart/dto'
-import {UserCardService} from '@opn-services/cart/service/user-cart.service'
-import {StripeService} from '@opn-services/cart/service/stripe.service'
-import {CardItemDBModel, CartItemStatus} from '@opn-services/cart/model/cart'
+} from 'apps/checkout-service/src/dto'
+import {UserCardService} from 'apps/checkout-service/src/service/user-cart.service'
+import {StripeService} from 'apps/checkout-service/src/service/stripe.service'
+import {CardItemDBModel, CartItemStatus} from 'apps/checkout-service/src/model/cart'
 
 import {AppoinmentService} from '@opn-reservation-v1/services/appoinment.service'
 

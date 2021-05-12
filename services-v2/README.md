@@ -110,7 +110,7 @@ npm run start:dev [SERVICE_NAME]
 # production mode
 npm run start:prod [SERVICE_NAME]
 
-npm run start:dev cart-service
+npm run start:dev checkout-service
 npm run start:dev user-service
 
 # start cloud SQL proxy for service which uses SQL DB in the separate terminal:
@@ -119,7 +119,7 @@ npm run connect-sql-proxy
 # testing
 npm run test
 npm run test user-service
-npm run test cart-service
+npm run test checkout-service
 ```
 Open http://localhost:8080/api/doc/, enter login:password from .env APIDOCS_PASSWORD_V2
 
