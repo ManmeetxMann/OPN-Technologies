@@ -1,6 +1,9 @@
-export const devConfig: Record<string, string | number | boolean> = {
-  DASHBOARD_URL: 'https://opn-admin-dashboard-dev.nn.r.appspot.com',
-  DEV_DASHBOARD_URL: 'http://localhost:3000',
+export const devConfig: Record<string, string | string[] | number | boolean> = {
+  CORS_DOMAINS: [
+    'http://localhost:3000',
+    'https://opn-admin-dashboard-dev.nn.r.appspot.com',
+    'https://fh-home-dev.nn.r.appspot.com',
+  ],
 
   DOMAIN_ACCESS: 'https://access-dot-opn-platform-dev.nn.r.appspot.com/',
   DOMAIN_ENTERPRISE: 'https://enterprise-dot-opn-platform-dev.nn.r.appspot.com/',

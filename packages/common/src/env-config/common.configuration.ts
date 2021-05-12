@@ -1,7 +1,7 @@
 /**
  * Common configuration for All Environments
  */
-export const commonConfig: Record<string, string | number | boolean> = {
+export const commonConfig: Record<string, string | string[] | number | boolean> = {
   ACUITY_CALENDAR_URL: 'https://app.acuityscheduling.com/schedule.php',
   ACUITY_APPOINTMENT_TYPE_ID: 20791574,
   ACUITY_COUPON_ID: 1073154,

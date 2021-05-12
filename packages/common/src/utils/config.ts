@@ -39,7 +39,7 @@ export class Config {
     return value ? parseInt(value) : defaultValue
   }
 
-  static getAll(): Record<string, string | number | boolean> {
+  static getAll(): Record<string, string | string[] | number | boolean> {
     if (!Config.loaded) {
       Config.load()
     }
