@@ -966,6 +966,8 @@ components:
               type: string
             dateOfResult:
               type: string
+            couponCode:
+              type: string
             resultMetaData:
               type: object
               additionalProperties: false

@@ -183,6 +183,7 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   userId: string
   sortOrder: number
   appointmentStatus: AppointmentStatus
+  couponCode?: string
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -213,7 +214,7 @@ export type PCRTestResultEmailDTO = Omit<
   | 'userId'
   | 'sortOrder'
 > &
-  AppointmentDBModel & {labAssay: string}
+  AppointmentDBModel & {labAssay: string; resultId?: string}
 
 export type ProcessPCRResultRequest = {
   reportTrackerId: string
@@ -471,6 +472,7 @@ export type SinglePcrTestResultUi = {
   travelIDIssuingCountry: string
   dateOfResult: string
   resultMetaData: TestResultsMetaData
+  couponCode?: string
 }
 
 export const singlePcrTestResultDTO = (
@@ -540,6 +542,7 @@ export const singlePcrTestResultDTO = (
       ? formatStringDateRFC822Local(safeTimestamp(pcrTestResult.resultMetaData.resultDate))
       : 'N/A',
     resultMetaData: pcrTestResult.resultMetaData,
+    couponCode: pcrTestResult?.couponCode,
   }
 }
 
