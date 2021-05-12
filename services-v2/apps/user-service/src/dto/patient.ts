@@ -43,6 +43,9 @@ export class PatientCreateDto {
   @IsString()
   registrationId?: string
 
+  @ApiPropertyOptional({
+    description: 'Required for Normal Patient',
+  })
   @IsOptional()
   @IsString()
   photoUrl?: string
