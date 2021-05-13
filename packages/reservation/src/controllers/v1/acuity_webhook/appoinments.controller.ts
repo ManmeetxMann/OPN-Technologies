@@ -29,8 +29,7 @@ class AppointmentWebhookController implements IControllerBase {
         appointmentTypeID,
         action,
       })
-      const taskClient = new OPNCloudTasks('acuity-appointments-sync')
-      await taskClient.createTask(
+      console.log(
         {
           acuityID: id,
           calendarID,
