@@ -4178,3 +4178,21 @@ paths:
       responses:
         '200':
           description: Success
+
+
+  /reservation/admin/api/v1/test-results/{testResultId}/resend:
+    post:
+      description: resend result
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: path
+          name: testResultId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Success
