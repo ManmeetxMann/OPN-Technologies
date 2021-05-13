@@ -3,8 +3,6 @@ import App from '../../common/src/express/app'
 import * as bodyParser from 'body-parser'
 import loggerMiddleware from '../../common/src/middlewares/logger'
 
-import AdminController from './controllers/admin.controller'
-import UserController from './controllers/user.controller'
 import RootController from './controllers/root.controller'
 import QuestionnaireController from './controllers/questionnaire.controller'
 
@@ -16,8 +14,6 @@ const app = new App({
   corsOptions: '*',
   controllers: [
     new RootController(),
-    new UserController(),
-    new AdminController(),
     new QuestionnaireController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
