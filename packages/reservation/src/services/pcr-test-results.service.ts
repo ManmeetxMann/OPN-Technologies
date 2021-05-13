@@ -1739,7 +1739,11 @@ export class PCRTestResultsService {
     return status
   }
 
-  async getTestResultsByUserId(userId: string, organizationId?: string): Promise<TestResutsDTO[]> {
+  async getTestResultsByUserId(
+    userId: string,
+    organizationId?: string,
+    testType?: TestTypes,
+  ): Promise<TestResutsDTO[]> {
     const pcrTestResultsQuery = [
       {
         map: '/',
@@ -1763,6 +1767,14 @@ export class PCRTestResultsService {
         key: 'organizationId',
         operator: DataModelFieldMapOperatorType.Equals,
         value: organizationId,
+      })
+    }
+    if (testType) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'testType',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: testType,
       })
     }
 
@@ -1923,13 +1935,18 @@ export class PCRTestResultsService {
   async getAllResultsByUserAndChildren(
     userId: string,
     organizationid?: string,
+    testType?: TestTypes,
   ): Promise<TestResutsDTO[]> {
     const {guardian, dependants} = await this.userService.getUserAndDependants(userId)
-    const guardianTestResults = await this.getTestResultsByUserId(guardian.id, organizationid)
+    const guardianTestResults = await this.getTestResultsByUserId(
+      guardian.id,
+      organizationid,
+      testType,
+    )
 
     if (dependants.length) {
       const pendingResults = dependants.map(({id}) =>
-        this.getTestResultsByUserId(id, organizationid),
+        this.getTestResultsByUserId(id, organizationid, testType),
       )
       const dependantsTestResults = await Promise.all(pendingResults)
       const childrenTestResults = dependantsTestResults.flat()
