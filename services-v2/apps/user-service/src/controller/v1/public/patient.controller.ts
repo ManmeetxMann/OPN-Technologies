@@ -87,8 +87,10 @@ export class PatientController {
       if (patientExists) {
         throw new BadRequestException('User with given email already exists')
       }
-
-      patient = await this.patientService.createProfile(patientDto)
+      const hasPublicOrg = [OpnSources.FH_Android, OpnSources.FH_IOS].includes(
+        opnHeaders.opnSourceHeader,
+      )
+      patient = await this.patientService.createProfile(patientDto, hasPublicOrg)
     }
 
     return ResponseWrapper.actionSucceed(CreatePatientDTOResponse(patient))
