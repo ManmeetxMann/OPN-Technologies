@@ -188,32 +188,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /admin/add:
-    post:
-      deprecated: true
-      description: Register new app
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              properties:
-                registrationToken:
-                  type: string
-                  minLength: 5
-                  maxLength: 400
-              required:
-                - registrationToken
-
-      responses:
-        "200":
-          description: Successfully registered
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfRegistration'
-
   /v2/users/{userId}/dependants:
     get:
       description: Get all dependants
