@@ -8,12 +8,11 @@ import {Config} from '@opn-common-v1/utils/config'
 Config.useRootEnvFile()
 
 // Common
-import {AuthMiddleware, CommonModule, createSwagger} from '@opn-services/common'
+import {AuthMiddleware, CorsMiddleware, CommonModule, createSwagger} from '@opn-services/common'
 import {AllExceptionsFilter} from '@opn-services/common/exception'
 import {OpnValidationPipe} from '@opn-services/common/pipes'
 
 // Services
-import {corsOptions} from '@opn-services/common/configuration/cors.configuration'
 import {AppoinmentService} from '@opn-reservation-v1/services/appoinment.service'
 import {UserService} from '@opn-common-v1/service/user/user-service'
 import {UserCardService} from 'apps/checkout-service/src/service/user-cart.service'
@@ -29,7 +28,7 @@ import {CartInternalController} from './controller/v1/internal/cart.controller'
 })
 class App {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(AuthMiddleware).forRoutes({
+    consumer.apply(CorsMiddleware, AuthMiddleware).forRoutes({
       path: '(.*)',
       method: RequestMethod.ALL,
     })
@@ -38,7 +37,6 @@ class App {
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(App, new FastifyAdapter())
-  app.enableCors(corsOptions)
   app.useGlobalPipes(
     new OpnValidationPipe({
       whitelist: true,

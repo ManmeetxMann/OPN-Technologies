@@ -8,7 +8,7 @@ import {Config} from '@opn-common-v1/utils/config'
 Config.useRootEnvFile()
 
 // Common
-import {AuthMiddleware, CommonModule, createSwagger} from '@opn-services/common'
+import {AuthMiddleware, CorsMiddleware, CommonModule, createSwagger} from '@opn-services/common'
 import {AllExceptionsFilter} from '@opn-services/common/exception'
 import {OpnValidationPipe} from '@opn-services/common/pipes'
 
@@ -30,7 +30,6 @@ import {RapidHomeKitCodeService} from './service/patient/rapid-home-kit-code.ser
 import {TestResultService} from './service/patient/test-result.service'
 
 import {RapidHomeController} from './controller/v1/public/rapid-home.controller'
-import {corsOptions} from '@opn-services/common/configuration/cors.configuration'
 
 @Module({
   imports: [CommonModule, DatabaseConfiguration, RepositoryConfiguration],
@@ -52,7 +51,7 @@ import {corsOptions} from '@opn-services/common/configuration/cors.configuration
 })
 class App {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(AuthMiddleware).forRoutes({
+    consumer.apply(CorsMiddleware, AuthMiddleware).forRoutes({
       path: '(.*)',
       method: RequestMethod.ALL,
     })
@@ -61,7 +60,7 @@ class App {
 
 async function bootstrap() {
   const app = await NestFactory.create(App, new FastifyAdapter())
-  app.enableCors(corsOptions)
+
   app.useGlobalPipes(
     new OpnValidationPipe({
       whitelist: true,

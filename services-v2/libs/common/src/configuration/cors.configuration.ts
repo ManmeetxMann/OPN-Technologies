@@ -1,4 +1,3 @@
-import {CorsOptions} from '@nestjs/common/interfaces/external/cors-options.interface'
 import {envConfig} from '@opn-common-v1/env-config'
 
 /**
@@ -15,6 +14,4 @@ if (corsDomains.length === 0) {
  * TODO:
  * 1. Different domains per service
  */
-export const corsOptions: CorsOptions = {
-  origin: corsDomains,
-}
+export {corsDomains}
