@@ -3708,6 +3708,11 @@ paths:
           schema:
             type: string
           required: false
+        - in: query
+          name: testType
+          schema:
+            type: string
+          required: false
       responses:
         '200':
           description: Successfully Return
@@ -3729,6 +3734,10 @@ paths:
                           enum:
                             - PCR
                         name:
+                          type: string
+                        firstName:
+                          type: string
+                        lastName:
                           type: string
                         testDateTime:
                           type: string
@@ -4175,6 +4184,24 @@ paths:
       description: Triggers push notification reminder before appointment
       tags:
         - Cloud Scheduler triggered
+      responses:
+        '200':
+          description: Success
+
+
+  /reservation/admin/api/v1/test-results/{testResultId}/resend:
+    post:
+      description: resend result
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: path
+          name: testResultId
+          schema:
+            type: string
+          required: true
       responses:
         '200':
           description: Success

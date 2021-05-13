@@ -2,7 +2,7 @@ import {Body, Controller, Delete, Get, Param, Post, Put, UseGuards} from '@nestj
 import {ApiBearerAuth, ApiHeader, ApiOperation, ApiResponse, ApiTags} from '@nestjs/swagger'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
-import {AuthGuard, AuthUserDecorator, Roles} from '@opn-services/common'
+import {ApiCommonHeaders, AuthGuard, AuthUserDecorator, Roles} from '@opn-services/common'
 import {AuthUser} from '@opn-services/common/model'
 
 import {
@@ -13,10 +13,10 @@ import {
   PaymentAuthorizationResponseDto,
   CartUpdateRequestDto,
   CouponRequestDto,
-} from '@opn-services/cart/dto'
-import {UserCardService} from '@opn-services/cart/service/user-cart.service'
-import {StripeService} from '@opn-services/cart/service/stripe.service'
-import {CardItemDBModel, CartItemStatus} from '@opn-services/cart/model/cart'
+} from 'apps/checkout-service/src/dto'
+import {UserCardService} from 'apps/checkout-service/src/service/user-cart.service'
+import {StripeService} from 'apps/checkout-service/src/service/stripe.service'
+import {CardItemDBModel, CartItemStatus} from 'apps/checkout-service/src/model/cart'
 
 import {AppoinmentService} from '@opn-reservation-v1/services/appoinment.service'
 
@@ -24,8 +24,9 @@ import {CartFunctions, CartEvent} from '@opn-services/common/types/activity-logs
 import {LogInfo, LogWarning, LogError} from '@opn-services/common/utils/logging'
 
 @ApiTags('Cart')
-@Controller('/api/v1/cart')
 @ApiBearerAuth()
+@ApiCommonHeaders()
+@Controller('/api/v1/cart')
 @UseGuards(AuthGuard)
 export class CartController {
   private maxCartItemsCount = 50

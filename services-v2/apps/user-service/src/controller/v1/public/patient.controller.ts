@@ -8,7 +8,13 @@ import {
   OpnSources,
   RequiredUserPermission,
 } from '@opn-services/common/types/authorization'
-import {AuthUserDecorator, Roles, OpnHeaders, PublicDecorator} from '@opn-services/common/decorator'
+import {
+  AuthUserDecorator,
+  Roles,
+  OpnHeaders,
+  PublicDecorator,
+  ApiCommonHeaders,
+} from '@opn-services/common/decorator'
 import {
   BadRequestException,
   ForbiddenException,
@@ -34,6 +40,7 @@ import {Platform} from '@opn-common-v1/types/platform'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
+@ApiCommonHeaders()
 @Controller('/api/v1/patients')
 export class PatientController {
   constructor(private patientService: PatientService) {}
@@ -80,8 +87,10 @@ export class PatientController {
       if (patientExists) {
         throw new BadRequestException('User with given email already exists')
       }
-
-      patient = await this.patientService.createProfile(patientDto)
+      const hasPublicOrg = [OpnSources.FH_Android, OpnSources.FH_IOS].includes(
+        opnHeaders.opnSourceHeader,
+      )
+      patient = await this.patientService.createProfile(patientDto, hasPublicOrg)
     }
 
     return ResponseWrapper.actionSucceed(CreatePatientDTOResponse(patient))

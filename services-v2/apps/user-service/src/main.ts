@@ -1,14 +1,14 @@
 // NestJs
 import {NestFactory} from '@nestjs/core'
 import {FastifyAdapter} from '@nestjs/platform-fastify'
-import {MiddlewareConsumer, Module} from '@nestjs/common'
+import {MiddlewareConsumer, Module, RequestMethod} from '@nestjs/common'
 
 // Should be called before any v1 module import from v2
 import {Config} from '@opn-common-v1/utils/config'
 Config.useRootEnvFile()
 
 // Common
-import {AuthMiddleware, CommonModule, createSwagger} from '@opn-services/common'
+import {AuthMiddleware, CorsMiddleware, CommonModule, createSwagger} from '@opn-services/common'
 import {AllExceptionsFilter} from '@opn-services/common/exception'
 import {OpnValidationPipe} from '@opn-services/common/pipes'
 
@@ -30,7 +30,6 @@ import {RapidHomeKitCodeService} from './service/patient/rapid-home-kit-code.ser
 import {TestResultService} from './service/patient/test-result.service'
 
 import {RapidHomeController} from './controller/v1/public/rapid-home.controller'
-import {corsOptions} from '@opn-services/common/configuration/cors.configuration'
 
 @Module({
   imports: [CommonModule, DatabaseConfiguration, RepositoryConfiguration],
@@ -52,20 +51,16 @@ import {corsOptions} from '@opn-services/common/configuration/cors.configuration
 })
 class App {
   configure(consumer: MiddlewareConsumer): void {
-    consumer
-      .apply(AuthMiddleware)
-      .forRoutes(
-        AdminPatientController,
-        PatientController,
-        RapidHomeController,
-        TestResultController,
-      )
+    consumer.apply(CorsMiddleware, AuthMiddleware).forRoutes({
+      path: '(.*)',
+      method: RequestMethod.ALL,
+    })
   }
 }
 
 async function bootstrap() {
   const app = await NestFactory.create(App, new FastifyAdapter())
-  app.enableCors(corsOptions)
+
   app.useGlobalPipes(
     new OpnValidationPipe({
       whitelist: true,
@@ -73,6 +68,7 @@ async function bootstrap() {
       forbidUnknownValues: true,
     }),
   )
+  app.setGlobalPrefix('user')
   app.useGlobalFilters(new AllExceptionsFilter())
 
   // Each worker process is assigned a unique id (index-based that starts with 1)

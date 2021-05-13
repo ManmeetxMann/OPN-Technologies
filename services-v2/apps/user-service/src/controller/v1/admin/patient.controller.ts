@@ -5,7 +5,7 @@ import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard} from '@opn-services/common/guard'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {UserFunctions, UserEvent} from '@opn-services/common/types/activity-logs'
-import {Roles} from '@opn-services/common/decorator'
+import {ApiCommonHeaders, Roles} from '@opn-services/common/decorator'
 import {AuthUser} from '@opn-services/common/model'
 
 import {assignWithoutUndefined, ResponseStatusCodes} from '@opn-services/common/dto'
@@ -25,6 +25,7 @@ import {PatientToDelegates} from '../../../model/patient/patient-relations.entit
 
 @ApiTags('Patients - Admin')
 @ApiBearerAuth()
+@ApiCommonHeaders()
 @Controller('/api/v1/admin/patients')
 @UseGuards(AuthGuard)
 export class AdminPatientController {
