@@ -141,21 +141,6 @@ components:
           schema:
             $ref: '#/components/schemas/Response'
 paths:
-  /setTime:
-    post:
-      description: set the time on the server. Used in integration testing, and only works on local servers in guilible mode
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                  milliseconds:
-                    type: number
-      responses:
-        '200':
-          description: Successfully set
-
   /user/add:
     post:
       description: Register new app
