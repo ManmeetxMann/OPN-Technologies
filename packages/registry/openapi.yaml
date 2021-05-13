@@ -189,21 +189,6 @@ paths:
                 $ref: '#/components/schemas/Response'
 
   /v2/users/{userId}/dependants:
-    get:
-      description: Get all dependants
-      parameters:
-        - in: path
-          name: userId
-          schema:
-            type: string
-          required: true
-      responses:
-        "200":
-          description: Successfully registered
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfUserDependants'
     post:
       description: Add one or multiple dependant(s)
       parameters:
