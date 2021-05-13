@@ -12,7 +12,7 @@ import {
   TestResultsMetaData,
 } from './test-results'
 import {groupByChannel} from '../utils/analysis.helper'
-import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
+import {PassportStatus} from '../../../passport/src/models/passport'
 import {TemperatureStatusesUI} from './temperature'
 import {PulseOxygenStatuses} from './pulse-oxygen'
 import {Lab} from './lab'
@@ -379,9 +379,14 @@ export const pcrTestResultsResponse = (
   details: pcrTestResult.details,
 })
 
-export const resultToStyle = (
-  result: ResultTypes | PassportStatus | TemperatureStatusesUI | PulseOxygenStatuses,
-): TestResultStyle => {
+export type Result =
+  | ResultTypes
+  | PassportStatus
+  | TemperatureStatusesUI
+  | PulseOxygenStatuses
+  | AppointmentReasons.InProgress
+
+export const resultToStyle = (result: Result): TestResultStyle => {
   return TestResultStyle[result] ? TestResultStyle[result] : TestResultStyle.AnyOther
 }
 
@@ -391,7 +396,7 @@ export type TestResutsDTO = {
   name: string
   testDateTime: string
   style: TestResultStyle
-  result: ResultTypes | PassportStatuses | TemperatureStatusesUI
+  result: Result
   detailsAvailable: boolean
 }
 
