@@ -236,17 +236,31 @@ export class UserCardService {
       throw new ResourceNotFoundException('userCart-item with given id not found')
     }
 
-    await Promise.all(
+    const cartData = await Promise.all(
       cartItemsData.map(async cartItem => {
         const cartItemData = {
           ...cartItem,
           discountData: null,
         }
-        await userCartItemRepository.update(cartItemData)
+        return userCartItemRepository.update(cartItemData)
       }),
     )
 
-    return this.getUserCart(userId, organizationId)
+    const cartItems = cartData.map(cartDB => ({
+      cartItemId: cartDB.cartItemId,
+      label: cartDB.appointmentType.name,
+      subLabel: cartDB.appointment.calendarName,
+      patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
+      date: new Date(cartDB.appointment.time).toISOString(),
+      price: parseFloat(cartDB.appointmentType.price),
+      userId: cartDB.patient.userId,
+      discountedError: cartDB.discountData?.error,
+    }))
+
+    return {
+      cartItems,
+      paymentSummary: this.buildPaymentSummary(cartItems),
+    }
   }
 
   async getUserCart(userId: string, organizationId: string): Promise<CartResponseDto> {
