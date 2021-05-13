@@ -154,21 +154,14 @@ export class PatientService {
     data: PatientCreateDto | PatientCreateAdminDto,
     hasPublicOrg = false,
   ): Promise<Patient> {
-    // That is causing current firebase token expiry and brake mobile flow
-    // TODO: check if we need to update user email in firebase auth
-    // await this.firebaseAuthService.updateUser(data.authUserId, {
-    //   email: data.email,
-    // })
-
     const organizationIds = []
     if (hasPublicOrg) {
       organizationIds.push(this.configService.get('PUBLIC_ORG'))
     }
 
-    const firebaseUser = await this.userRepository.add({
-      email: data.email,
-      isEmailVerified: false,
+    const userData = {
       firstName: data.firstName,
+      isEmailVerified: false,
       lastName: data.lastName,
       registrationId: data.registrationId ?? null,
       photo: data.photoUrl ?? null,
@@ -179,7 +172,14 @@ export class PatientService {
       authUserId: data.authUserId,
       active: false,
       organizationIds,
-    } as AuthUser)
+    } as AuthUser
+
+    if (data.email) {
+      userData.email = data.email
+    }
+
+    const firebaseUser = await this.userRepository.add(userData)
+
     data.firebaseKey = firebaseUser.id
     data.isEmailVerified = false
 
