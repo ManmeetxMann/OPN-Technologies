@@ -144,9 +144,11 @@ export class PatientService {
    * @param data
    */
   async createProfile(data: PatientCreateDto | PatientCreateAdminDto): Promise<Patient> {
-    await this.firebaseAuthService.updateUser(data.authUserId, {
-      email: data.email,
-    })
+    // That is causing current firebase token expiry and brake mobile flow
+    // TODO: check if we need to update user email in firebase auth
+    // await this.firebaseAuthService.updateUser(data.authUserId, {
+    //   email: data.email,
+    // })
 
     const firebaseUser = await this.userRepository.add({
       email: data.email,
