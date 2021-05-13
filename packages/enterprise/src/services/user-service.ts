@@ -6,7 +6,6 @@ import {UpdateUserByAdminRequest, UpdateUserRequest} from '../types/update-user-
 import {UserRepository} from '../repository/user.repository'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {UserOrganizationProfileRepository} from '../repository/user-organization-profile.repository'
 import {UserDependencyRepository} from '../repository/user-dependency.repository'
 import {UserGroupRepository} from '../repository/user-group.repository'
 import {AuthUser, UserModel} from '../../../common/src/data/user'
@@ -17,7 +16,6 @@ import {UserServiceInterface} from '../interfaces/user-service-interface'
 export class UserService implements UserServiceInterface {
   private dataStore = new DataStore()
   private userRepository = new UserRepository(this.dataStore)
-  private userOrganizationProfileRepository = new UserOrganizationProfileRepository(this.dataStore)
   private userGroupRepository = new UserGroupRepository(this.dataStore)
   private userDependencyRepository = new UserDependencyRepository(this.dataStore)
 
@@ -396,15 +394,4 @@ export class UserService implements UserServiceInterface {
     return query.fetch()
   }
 
-  createOrganizationProfile(
-    userId: string,
-    organizationId: string,
-    memberId: string,
-  ): Promise<UserOrganizationProfile> {
-    return this.userOrganizationProfileRepository.add({
-      userId,
-      organizationId,
-      memberId,
-    } as UserOrganizationProfile)
-  }
 }

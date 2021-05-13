@@ -32,9 +32,4 @@ export interface UserServiceInterface {
   disconnectGroups(userId: string, groupIds: Set<string>): Promise<void>
   disconnectAllGroups(userId: string): Promise<void>
   updateGroup(userId: string, fromGroupId: string, toGroupId: string): Promise<void>
-  createOrganizationProfile(
-    userId: string,
-    organizationId: string,
-    memberId: string,
-  ): Promise<UserOrganizationProfile>
 }
