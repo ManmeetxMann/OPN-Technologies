@@ -120,6 +120,18 @@ export class CartController {
     return ResponseWrapper.actionSucceed(null)
   }
 
+  @Delete('/coupons')
+  @Roles([RequiredUserPermission.RegUser], true)
+  async deleteCartCoupons(
+    @AuthUserDecorator() authUser: AuthUser,
+  ): Promise<ResponseWrapper<CartResponseDto>> {
+    const userId = authUser.authUserId
+    const organizationId = authUser.requestOrganizationId
+
+    const userCart = await this.userCardService.removeCoupons(userId, organizationId)
+    return ResponseWrapper.actionSucceed(userCart)
+  }
+
   @Delete('/:cartItemId')
   @ApiHeader({
     name: 'organizationid',

@@ -227,6 +227,28 @@ export class UserCardService {
     return userCartItemRepository.count()
   }
 
+  async removeCoupons(userId: string, organizationId: string): Promise<CartResponseDto> {
+    const userOrgId = `${userId}_${organizationId}`
+    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
+    const cartItemsData = await userCartItemRepository.fetchAll()
+
+    if (!cartItemsData || !cartItemsData.length) {
+      throw new ResourceNotFoundException('userCart-item with given id not found')
+    }
+
+    await Promise.all(
+      cartItemsData.map(async cartItem => {
+        const cartItemData = {
+          ...cartItem,
+          discountData: null,
+        }
+        await userCartItemRepository.update(cartItemData)
+      }),
+    )
+
+    return this.getUserCart(userId, organizationId)
+  }
+
   async getUserCart(userId: string, organizationId: string): Promise<CartResponseDto> {
     const cartDBItems = await this.fetchUserAllCartItem(userId, organizationId)
     const cartItems = cartDBItems.map(cartDB => {
