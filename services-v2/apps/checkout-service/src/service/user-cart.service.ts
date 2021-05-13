@@ -543,6 +543,7 @@ export class UserCardService {
     discountType: DiscountTypes,
     discountAmount: number,
   ): number {
+    // eslint-disable-next-line max-lines
     return discountType === DiscountTypes.percentage
       ? initialPrice - (initialPrice * discountAmount) / 100
       : initialPrice - discountAmount
@@ -563,7 +564,6 @@ export class UserCardService {
   stripePriceFromCart(cartDdItems: CardItemDBModel[]): number {
     const round = num => Math.round(num * 100) / 100
     const sum = cartDdItems.reduce(
-      // eslint-disable-next-line max-lines
       (sum, item) => sum + (parseFloat(item.appointmentType.price) || 0),
       0,
     )
