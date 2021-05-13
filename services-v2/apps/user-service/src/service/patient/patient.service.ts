@@ -28,6 +28,7 @@ import {
 } from '../../repository/patient.repository'
 
 import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
+import {OpnConfigService} from '@opn-services/common/services'
 
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import {OrganizationModel} from '@opn-enterprise-v1/repository/organization.repository'
@@ -50,6 +51,7 @@ export class PatientService {
     private patientDigitalConsentRepository: PatientDigitalConsentRepository,
     private patientToDelegatesRepository: PatientToDelegatesRepository,
     private patientToOrganizationRepository: PatientToOrganizationRepository,
+    private configService: OpnConfigService,
   ) {}
 
   private dataStore = new DataStore()
@@ -148,10 +150,20 @@ export class PatientService {
    * Creates new patient profile with all relations
    * @param data
    */
-  async createProfile(data: PatientCreateDto | PatientCreateAdminDto): Promise<Patient> {
-    await this.firebaseAuthService.updateUser(data.authUserId, {
-      email: data.email,
-    })
+  async createProfile(
+    data: PatientCreateDto | PatientCreateAdminDto,
+    hasPublicOrg = false,
+  ): Promise<Patient> {
+    // That is causing current firebase token expiry and brake mobile flow
+    // TODO: check if we need to update user email in firebase auth
+    // await this.firebaseAuthService.updateUser(data.authUserId, {
+    //   email: data.email,
+    // })
+
+    const organizationIds = []
+    if (hasPublicOrg) {
+      organizationIds.push(this.configService.get('PUBLIC_ORG'))
+    }
 
     const firebaseUser = await this.userRepository.add({
       email: data.email,
@@ -166,7 +178,7 @@ export class PatientService {
       },
       authUserId: data.authUserId,
       active: false,
-      organizationIds: [],
+      organizationIds,
     } as AuthUser)
     data.firebaseKey = firebaseUser.id
     data.isEmailVerified = false

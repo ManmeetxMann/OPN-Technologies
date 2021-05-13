@@ -3420,7 +3420,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /enterprise/api/v1/users/result-admins:
+  /enterprise/admin/api/v1/users/result-admins:
     get:
       summary: Get result admins
       description: Get result admins for comments

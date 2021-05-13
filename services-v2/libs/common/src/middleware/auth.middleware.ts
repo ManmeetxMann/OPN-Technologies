@@ -29,9 +29,6 @@ export class AuthMiddleware implements NestMiddleware {
   /* eslint-disable  @typescript-eslint/explicit-module-boundary-types */
   /* eslint-disable complexity */
   private async validateAuth(req, res, next) {
-    await this.handleHeaders(req)
-
-    const bearerHeader = req.headers['authorization']
     if (
       internalUrls.find(
         internalUrl => internalUrl.url === req.originalUrl && internalUrl.method === req.method,
@@ -43,6 +40,10 @@ export class AuthMiddleware implements NestMiddleware {
       }
       return next()
     }
+
+    await this.validateHeaders(req)
+
+    const bearerHeader = req.headers['authorization']
     if (!bearerHeader) {
       throw new UnauthorizedException('Authorization token required')
     }
@@ -57,13 +58,16 @@ export class AuthMiddleware implements NestMiddleware {
     // Validate
     const validatedAuthUser = await this.firebaseAuthService.verifyAuthToken(idToken)
 
-    if (!validatedAuthUser) {
-      throw new UnauthorizedException('Invalid access-token')
+    // TODO refactor to use URL templates
+    let originalUrl = req.originalUrl
+    if (originalUrl.startsWith('/user/api/v1/rapid-home-kit-codes/')) {
+      originalUrl = '/user/api/v1/rapid-home-kit-codes'
     }
 
+    // Allow public URL without firebase token
     if (
       publicApiUrls.find(
-        publicApiUrl => publicApiUrl.url === req.originalUrl && publicApiUrl.method === req.method,
+        publicApiUrl => publicApiUrl.url === originalUrl && publicApiUrl.method === req.method,
       )
     ) {
       req.locals = {}
@@ -71,6 +75,10 @@ export class AuthMiddleware implements NestMiddleware {
         firebaseAuthUser: validatedAuthUser,
       }
       return next()
+    }
+
+    if (!validatedAuthUser) {
+      throw new UnauthorizedException('Invalid access-token')
     }
 
     // look up admin user for backwards compat
@@ -125,7 +133,7 @@ export class AuthMiddleware implements NestMiddleware {
     next()
   }
 
-  async handleHeaders(req): Promise<OpnCommonHeaders> {
+  private async validateHeaders(req): Promise<OpnCommonHeaders> {
     const headers: OpnCommonHeaders = {
       opnDeviceIdHeader: req.headers[OpnRawHeaders.OpnDeviceId],
       opnSourceHeader: req.headers[OpnRawHeaders.OpnSource] as OpnSources,
