@@ -9,6 +9,7 @@ import {
   IsString,
   Length,
 } from 'class-validator'
+import {Organization} from '../model/organization/organization.entity'
 import {Patient} from '../model/patient/patient.entity'
 
 export type PatientDTO = Partial<PatientCreateDto> & {
@@ -61,6 +62,11 @@ export class PatientCreateDto {
   @IsOptional()
   @IsString()
   dateOfBirth: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  organizationId?: string
 
   @IsOptional()
   @IsString()
@@ -126,6 +132,7 @@ export class PatientCreateDto {
   @IsBoolean()
   receiveNotificationsFromGov?: boolean
 
+  organizations?: Organization[]
   updatedBy?: string
 }
 
@@ -173,6 +180,11 @@ export class PatientCreateAdminDto {
   @IsString()
   @IsNotEmpty()
   dateOfBirth: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  organizationId?: string
 
   @ApiProperty()
   @IsString()
@@ -315,6 +327,7 @@ export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   email: patient.auth?.email,
   phoneNumber: patient.phoneNumber,
   photoUrl: patient.photoUrl,
+  organizations: patient.organizations,
   homeAddress: patient.addresses?.homeAddress,
   homeAddressUnit: patient.addresses?.homeAddressUnit,
   city: patient.addresses?.city,

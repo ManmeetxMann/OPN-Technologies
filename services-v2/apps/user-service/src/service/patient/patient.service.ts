@@ -15,7 +15,10 @@ import {
   PatientTravel,
 } from '../../model/patient/patient-profile.entity'
 import {Patient, PatientAddresses, PatientAuth} from '../../model/patient/patient.entity'
-import {PatientToDelegates} from '../../model/patient/patient-relations.entity'
+import {
+  PatientToDelegates,
+  PatientToOrganization,
+} from '../../model/patient/patient-relations.entity'
 import {
   PatientAddressesRepository,
   PatientAuthRepository,
@@ -23,6 +26,7 @@ import {
   PatientHealthRepository,
   PatientRepository,
   PatientToDelegatesRepository,
+  PatientToOrganizationRepository,
   PatientTravelRepository,
 } from '../../repository/patient.repository'
 
@@ -48,6 +52,7 @@ export class PatientService {
     private patientTravelRepository: PatientTravelRepository,
     private patientDigitalConsentRepository: PatientDigitalConsentRepository,
     private patientToDelegatesRepository: PatientToDelegatesRepository,
+    private patientToOrganizationRepository: PatientToOrganizationRepository,
     private configService: OpnConfigService,
   ) {}
 
@@ -69,7 +74,7 @@ export class PatientService {
    */
   async getProfilebyId(patientId: string): Promise<Patient> {
     return this.patientRepository.findOne(patientId, {
-      relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth'],
+      relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth', 'organizations'],
     })
   }
 
@@ -85,7 +90,7 @@ export class PatientService {
     return this.patientRepository.findOne(
       {firebaseKey},
       {
-        relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth'],
+        relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth', 'organizations'],
       },
     )
   }
@@ -98,7 +103,12 @@ export class PatientService {
     )
 
     if (organizationId) {
-      queryBuilder = queryBuilder.innerJoin('patient.organizations', 'organization')
+      queryBuilder = queryBuilder.innerJoinAndSelect(
+        'patient.organizations',
+        'organization',
+        'organization.firebaseOrganizationId = :firebaseOrganizationId',
+        {firebaseOrganizationId: organizationId},
+      )
     }
 
     if (nameOrId) {
@@ -195,6 +205,7 @@ export class PatientService {
       this.saveHealth(data),
       this.saveTravel(data),
       this.saveConsent(data),
+      this.saveOrganization(data),
     ])
 
     return patient
@@ -366,6 +377,15 @@ export class PatientService {
     consent.receiveResultsViaEmail = data.receiveResultsViaEmail
     consent.shareTestResultWithEmployer = data.shareTestResultWithEmployer
     return this.patientDigitalConsentRepository.save(consent)
+  }
+
+  private async saveOrganization(data: PatientUpdateDto, idPatientToOrganization?: string) {
+    const publicOrg = this.configService.get<string>('PUBLIC_ORG_ID')
+    const organization = new PatientToOrganization()
+    organization.idPatientToOrganization = idPatientToOrganization
+    organization.patientId = data.idPatient
+    organization.firebaseOrganizationId = data.organizationId ?? publicOrg
+    return this.patientToOrganizationRepository.save(organization)
   }
 
   async getDirectDependents(patientId: string): Promise<Patient> {
