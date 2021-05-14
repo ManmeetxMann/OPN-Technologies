@@ -141,21 +141,6 @@ components:
           schema:
             $ref: '#/components/schemas/Response'
 paths:
-  /setTime:
-    post:
-      description: set the time on the server. Used in integration testing, and only works on local servers in guilible mode
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                  milliseconds:
-                    type: number
-      responses:
-        '200':
-          description: Successfully set
-
   /user/add:
     post:
       description: Register new app
@@ -188,48 +173,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /admin/add:
-    post:
-      deprecated: true
-      description: Register new app
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              properties:
-                registrationToken:
-                  type: string
-                  minLength: 5
-                  maxLength: 400
-              required:
-                - registrationToken
-
-      responses:
-        "200":
-          description: Successfully registered
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfRegistration'
-
   /v2/users/{userId}/dependants:
-    get:
-      description: Get all dependants
-      parameters:
-        - in: path
-          name: userId
-          schema:
-            type: string
-          required: true
-      responses:
-        "200":
-          description: Successfully registered
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfUserDependants'
     post:
       description: Add one or multiple dependant(s)
       parameters:
@@ -259,38 +203,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfUserDependants'
-    delete:
-      description: Remove user's dependants
-      parameters:
-        - in: path
-          name: userId
-          schema:
-            type: string
-          required: true
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              properties:
-                organizationId:
-                  type: string
-                dependants:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/UserDependant'
-      responses:
-        "200":
-          description: Successfully removed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-
+    
   /v2/users/{userId}/dependants/{dependantId}:
     delete:
-      deprecated: true
       description: Remove a user's dependant (Use `DELETE -> /v2/users/{userId}/dependants` instead)
       parameters:
         - in: path

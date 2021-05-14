@@ -11,29 +11,10 @@ export type UserDTO = {
   isAdminEnabled: boolean
 }
 
-export type UserDependency = Auditable & {
-  id: string
-  userId: string
-  parentUserId: string
-}
-
 export type UserOrganization = Auditable & {
   id: string
   userId: string
   organizationId: string
-}
-
-export type UserOrganizationProfile = Auditable & {
-  id: string
-  userId: string
-  organizationId: string
-  memberId: string
-}
-
-export type UserGroup = Auditable & {
-  id: string
-  userId: string
-  groupId: string
 }
 
 export const userDTOResponse = (

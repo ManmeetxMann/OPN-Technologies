@@ -3,7 +3,6 @@ import {Handler, Router} from 'express'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {assertHasAuthorityOnDependent} from '../../middleware/user-dependent-authority'
 import {AuthService} from '../../../../common/src/service/auth/auth-service'
 import {AdminApprovalService} from '../../../../common/src/service/user/admin-service'
 import {UserService} from '../../services/user-service'
@@ -22,7 +21,7 @@ import {RegistrationConfirmationRequest} from '../../types/registration-confirma
 import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-exception'
 import {ConnectOrganizationRequest} from '../../types/user-organization-request'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
-import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
+import {ConnectGroupRequest} from '../../types/user-group-request'
 import {AdminProfile} from '../../../../common/src/data/admin'
 import {AuthUser, User as AuthenticatedUser} from '../../../../common/src/data/user'
 import {uniq, flatten} from 'lodash'
@@ -297,36 +296,6 @@ const completeRegistration: Handler = async (req, res, next): Promise<void> => {
 }
 
 /**
- * Fetch all the connected organizations of the authenticated user
- */
-const getConnectedOrganizations: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const authenticatedUser = res.locals.authenticatedUser as AuthUser
-    const user = await userService.getById(authenticatedUser.id)
-    const organizations = await organizationService.getAllByIds(user.organizationIds)
-
-    res.json(actionSucceed(organizations))
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Fetch all the connected organizations of a dependent
- */
-const getDependentConnectedOrganizations: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {dependentId} = req.params
-    const user = await userService.getById(dependentId)
-    const organizations = await organizationService.getAllByIds(user.organizationIds)
-
-    res.json(actionSucceed(organizations))
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
  * Connect an organization to the authenticated user, if relation doesn't yet exist
  */
 const connectOrganization: Handler = async (req, res, next): Promise<void> => {
@@ -347,105 +316,6 @@ const connectOrganization: Handler = async (req, res, next): Promise<void> => {
 }
 
 /**
- * Connect a dependent to an organization if relation doesn't yet exist
- */
-const connectDependentToOrganization: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {dependentId} = req.params
-    const {organizationId} = req.body as ConnectOrganizationRequest
-    const organization = await organizationService.findOneById(organizationId)
-    if (!organization) {
-      throw new ResourceNotFoundException(`Cannot find organization [${organizationId}]`)
-    }
-
-    await userService.connectOrganization(dependentId, organizationId)
-
-    res.json(actionSucceed())
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Removes the authenticated user from an organization and all the groups within that organization
- */
-const disconnectOrganization: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const authenticatedUser = res.locals.authenticatedUser as AuthUser
-    const {organizationId} = req.params
-    const organization = await organizationService.findOneById(organizationId)
-    if (!organization) {
-      throw new ResourceNotFoundException(`Cannot find organization [${organizationId}]`)
-    }
-
-    await userService.disconnectOrganization(authenticatedUser.id, organizationId)
-
-    res.json(actionSucceed())
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Removes the authenticated user's dependent from an organization and all the groups within that organization
- */
-const disconnectDependentOrganization: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {dependentId, organizationId} = req.params
-    const organization = await organizationService.findOneById(organizationId)
-    if (!organization) {
-      throw new ResourceNotFoundException(`Cannot find organization [${organizationId}]`)
-    }
-
-    await userService.disconnectOrganization(dependentId, organizationId)
-
-    res.json(actionSucceed())
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Get all the user's connected-groups
- */
-const getAllConnectedGroupsInAnOrganization: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {id} = res.locals.authenticatedUser as AuthUser
-    const {organizationId} = req.query
-    const groupIds = await userService.getAllGroupIdsForUser(id)
-    const groups = (
-      await organizationService.getPublicGroups(organizationId as string)
-    ).filter(({id}) => groupIds.has(id))
-
-    res.json(actionSucceed(groups))
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Get all the user's dependent's connected-groups
- */
-const getAllDependentConnectedGroupsInAnOrganization: Handler = async (
-  req,
-  res,
-  next,
-): Promise<void> => {
-  try {
-    const {dependentId} = req.params
-    const {organizationId} = req.query
-    const groupIds = await userService.getAllGroupIdsForUser(dependentId)
-    const groups = (
-      await organizationService.getPublicGroups(organizationId as string)
-    ).filter(({id}) => groupIds.has(id))
-
-    res.json(actionSucceed(groups))
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
  * Connect a user to a group
  */
 const connectGroup: Handler = async (req, res, next): Promise<void> => {
@@ -458,151 +328,6 @@ const connectGroup: Handler = async (req, res, next): Promise<void> => {
 
     await organizationService.addUserToGroup(organizationId, groupId, authenticatedUser.id)
     // adds to root collection. Disabled for compatibility
-    // await userService.connectGroups(authenticatedUser.id, [group.id])
-
-    res.json(actionSucceed())
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Connect a user's dependent to a group
- */
-const connectDependentToGroup: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {dependentId} = req.params
-    const {organizationId, groupId} = req.body as ConnectGroupRequest
-    const group = await organizationService.getGroup(organizationId, groupId)
-
-    await userService.connectGroups(dependentId, [group.id])
-
-    res.json(actionSucceed())
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Disconnect a user from a group
- */
-const disconnectGroup: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const authenticatedUser = res.locals.authenticatedUser as AuthUser
-    const {groupId} = req.params
-    await userService.disconnectGroups(authenticatedUser.id, new Set([groupId]))
-
-    res.json(actionSucceed())
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Update a user's dependent group within the same organization
- */
-const updateDependentGroup: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {dependentId} = req.params
-    const {organizationId, fromGroupId, toGroupId} = req.body as UpdateGroupRequest
-
-    // Assert destination group exists
-    await organizationService.getGroup(organizationId, toGroupId)
-
-    // Update
-    await userService.updateGroup(dependentId, fromGroupId, toGroupId)
-
-    res.json(actionSucceed())
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Get Direct parents for a given user-id
- * Only the approved parent-child relations will be returned
- */
-const getParents: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {id} = res.locals.authenticatedUser as AuthUser
-    const parents = await userService.getParents(id)
-    res.json(actionSucceed(parents.map((dependant) => userDTOResponse(dependant))))
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Get Direct dependents for a given user-id
- * Only the approved parent-child relations will be returned
- */
-const getDependents: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {id} = res.locals.authenticatedUser as AuthUser
-    const dependents = await userService.getDirectDependents(id)
-    res.json(actionSucceed(dependents.map((dependant) => userDTOResponse(dependant))))
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Add dependents to the authenticated user
- * If a `dependent.id` is provided, the matching dependent will be linked,
- * with a pending for approval state
- */
-const addDependents: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {id} = res.locals.authenticatedUser as AuthUser
-    const users = req.body as AuthUser[]
-    const dependents = await userService.addDependents(users, id)
-    res.json(actionSucceed(dependents.map((dependant) => userDTOResponse(dependant))))
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Update a dependent
- */
-const updateDependent: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {dependentId} = req.params
-    const updateRequest = req.body as UpdateUserRequest
-    const user = await userService.getById(dependentId)
-    const updatedUser = await userService.update(dependentId, updateRequest)
-    await userSyncService.update(updatedUser.id, updateRequest)
-
-    LogInfo(functions.updateDependent, events.updateDependent, {
-      user,
-      updatedUser,
-      updatedBy: getUserId(res.locals.authenticatedUser),
-    })
-
-    // TODO check with Postman request
-    res.json(actionSucceed())
-  } catch (error) {
-    LogError(functions.updateDependent, events.updateDependentError, {...error})
-    next(error)
-  }
-}
-
-/**
- * Remove a user as a dependent of the authenticated user
- * Delete the dependent's data if query param `hard` is true
- */
-const removeDependent: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {id} = res.locals.authenticatedUser as AuthUser
-    const {dependentId} = req.params
-    const hard = req.query.hard ?? false
-    await userService.removeDependent(dependentId, id)
-
-    if (hard) {
-      // TODO: Make transactional and support pessimistic isolation level
-      await userService.disconnectAllGroups(dependentId)
-      await userService.removeUser(dependentId)
-    }
 
     res.json(actionSucceed())
   } catch (error) {
@@ -637,43 +362,14 @@ class UserController implements IControllerBase {
     // authenticate the user while requiring an organizationId
     const regUserWithOrg = authorizationMiddleware([RequiredUserPermission.RegUser], true)
 
-    const dependents = innerRouter().use(
-      '/dependents',
-      innerRouter().get('/', regUser, getDependents).post('/', regUser, addDependents).use(
-        '/:dependentId',
-        assertHasAuthorityOnDependent,
-        innerRouter()
-          .put('/', regUser, updateDependent)
-          .delete('/', regUser, removeDependent)
-
-          .get('/organizations', regUser, getDependentConnectedOrganizations)
-          .post('/organizations', regUserWithOrg, connectDependentToOrganization)
-          .delete('/organizations/:organizationId', regUserWithOrg, disconnectDependentOrganization)
-
-          .get('/groups', regUserWithOrg, getAllDependentConnectedGroupsInAnOrganization)
-          .post('/groups', regUserWithOrg, connectDependentToGroup)
-          .put('/groups', regUserWithOrg, updateDependentGroup),
-      ),
-    )
-
     const selfProfile = innerRouter().use(
       '/self',
       innerRouter()
         .get('/', regUser, get)
         .put('/', regUser, update)
-        .get('/organizations', regUser, getConnectedOrganizations)
         // regUser is not an error even though this request contains organizationId
         .post('/organizations', regUser, connectOrganization)
-
-        .delete('/organizations/:organizationId', regUserWithOrg, disconnectOrganization)
-
-        .get('/groups', regUserWithOrg, getAllConnectedGroupsInAnOrganization)
-        .post('/groups', regUserWithOrg, connectGroup)
-        .delete('/groups/:groupId', regUser, disconnectGroup)
-
-        .get('/parents', regUser, getParents)
-
-        .use(dependents),
+        .post('/groups', regUserWithOrg, connectGroup),
     )
 
     this.router.use(root, authentication, selfProfile)
