@@ -4,6 +4,7 @@
  */
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {Gender} from '../../../../../packages/reservation/src/models/appointment'
+import {AvailableTimeIdParams} from '../../../../../packages/reservation/src/types/base64-coverter.type'
 
 import {
   IsBoolean,
@@ -16,7 +17,6 @@ import {
   IsNumber,
   IsEmail,
 } from 'class-validator'
-import {AvailableTimeIdParams} from '@opn-reservation-v1/types/base64-coverter.type'
 
 export type CartItemResponse = {
   patient: Omit<CartAddDto, 'slotId'>
