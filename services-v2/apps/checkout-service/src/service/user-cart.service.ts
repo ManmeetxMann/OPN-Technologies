@@ -23,6 +23,7 @@ import {CardItemDBModel, CartItemStatus, CouponErrorsEnum} from '../model/cart'
 import {
   CartAddDto,
   CartItemDto,
+  CartItemResponse,
   CartResponseDto,
   CartSummaryDto,
   CartUpdateRequestDto,
@@ -209,7 +210,8 @@ export class UserCardService {
       iteration++
     }
   }
-  async getCartItemById(cartItemId: string, userOrgId: string): Promise<CardItemDBModel> {
+
+  async getCartItemById(cartItemId: string, userOrgId: string): Promise<CartItemResponse> {
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
     const cartItem = await userCartItemRepository.findWhereEqual('cartItemId', cartItemId)
     const cartItemExist = cartItem[0]
@@ -217,8 +219,10 @@ export class UserCardService {
     if (!cartItemExist) {
       throw new ResourceNotFoundException('userCart-item with given id not found')
     }
-
-    return cartItemExist
+    return {
+      patient: cartItemExist.patient,
+      appointment: cartItemExist.appointment,
+    }
   }
 
   async cartItemsCount(userId: string, organizationId: string): Promise<number> {

@@ -16,6 +16,12 @@ import {
   IsNumber,
   IsEmail,
 } from 'class-validator'
+import {AvailableTimeIdParams} from '@opn-reservation-v1/types/base64-coverter.type'
+
+export type CartItemResponse = {
+  patient: Omit<CartAddDto, 'slotId'>
+  appointment: AvailableTimeIdParams
+}
 
 export class CartAddDto {
   @ApiProperty()

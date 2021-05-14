@@ -13,6 +13,7 @@ import {
   PaymentAuthorizationResponseDto,
   CartUpdateRequestDto,
   CouponRequestDto,
+  CartItemResponse,
 } from 'apps/checkout-service/src/dto'
 import {UserCardService} from 'apps/checkout-service/src/service/user-cart.service'
 import {StripeService} from 'apps/checkout-service/src/service/stripe.service'
@@ -58,7 +59,7 @@ export class CartController {
   async getCartItem(
     @AuthUserDecorator() authUser: AuthUser,
     @Param('cartItemId') cartItemId: string,
-  ): Promise<ResponseWrapper<CardItemDBModel>> {
+  ): Promise<ResponseWrapper<CartItemResponse>> {
     const userOrgId = `${authUser.authUserId}_${authUser.requestOrganizationId}`
     const userCard = await this.userCardService.getCartItemById(cartItemId, userOrgId)
 
