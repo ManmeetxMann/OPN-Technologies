@@ -175,10 +175,15 @@ export class PatientService {
 
     if (data.email) {
       userData.email = data.email
+
+      // user is being created by Admin
+      if (!data.authUserId) {
+        userData.authUserId = await this.firebaseAuthService.createUser(data.email)
+        data.authUserId = userData.authUserId
+      }
     }
 
     const firebaseUser = await this.userRepository.add(userData)
-
     data.firebaseKey = firebaseUser.id
 
     const patient = await this.createPatient(data)

@@ -237,7 +237,7 @@ export class AuthGuard implements CanActivate {
       console.warn(`Admin user ${userId} needs isTestKitBatchAdmin`)
       return false
     }
-    if (seekPatientsAdmin && (!admin?.isPatientsAdmin && !admin?.isOpnSuperAdmin)) {
+    if (seekPatientsAdmin && !admin?.isPatientsAdmin && !admin?.isOpnSuperAdmin) {
       console.warn(`Admin user ${userId} needs isPatientsAdmin`)
       return false
     }

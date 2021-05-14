@@ -200,7 +200,6 @@ export class PatientCreateAdminDto {
   country?: string
 
   @ApiPropertyOptional()
-  @IsNumberString()
   @IsOptional()
   postalCode?: string
 
