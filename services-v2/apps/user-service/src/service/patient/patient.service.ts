@@ -133,7 +133,7 @@ export class PatientService {
   }
 
   async createHomePatientProfile(data: HomeTestPatientDto): Promise<Patient> {
-    const firebaseUser = await this.userRepository.add({
+    const userData = {
       firstName: data.firstName,
       lastName: data.lastName,
       phone: {
@@ -143,15 +143,19 @@ export class PatientService {
       authUserId: data.authUserId,
       active: false,
       organizationIds: [],
-    } as AuthUser)
+    } as AuthUser
 
+    if (data.organizationId) {
+      userData.organizationIds.push(data.organizationId)
+    }
+
+    const firebaseUser = await this.userRepository.add(userData)
     data.firebaseKey = firebaseUser.id
 
     const patient = await this.createPatient(data as PatientCreateDto)
-
     data.idPatient = patient.idPatient
 
-    await Promise.all([this.saveAuth(data), this.saveAddress(data)])
+    await Promise.all([this.saveAuth(data), this.saveAddress(data), this.saveOrganization(data)])
 
     return patient
   }
@@ -167,6 +171,10 @@ export class PatientService {
     const organizationIds = []
     if (hasPublicOrg) {
       organizationIds.push(this.configService.get('PUBLIC_ORG_ID'))
+    }
+
+    if (data.organizationId) {
+      organizationIds.push(data.organizationId)
     }
 
     const userData = {
@@ -303,6 +311,10 @@ export class PatientService {
 
     data.firebaseKey = firebaseUser.id
 
+    if (data.organizationId) {
+      firebaseUser.organizationIds.push(data.organizationId)
+    }
+
     const dependant = await this.createPatient(data)
     data.idPatient = dependant.idPatient
 
@@ -311,6 +323,7 @@ export class PatientService {
       this.saveHealth(data),
       this.saveTravel(data),
       this.saveConsent(data),
+      this.saveOrganization(data),
       this.saveDependantOrDelegate(delegateId, dependant.idPatient),
     ])
 
