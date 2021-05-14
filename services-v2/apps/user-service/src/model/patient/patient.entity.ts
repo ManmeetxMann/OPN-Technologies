@@ -13,7 +13,8 @@ import {Auditable} from '../../../../../libs/common/src/model'
 import {ApiProperty} from '@nestjs/swagger'
 import {IsBoolean, IsEmail, IsString} from 'class-validator'
 import {PatientDigitalConsent, PatientHealth, PatientTravel} from './patient-profile.entity'
-import {PatientToDelegates} from './patient-relations.entity'
+import {PatientToDelegates, PatientToOrganization} from './patient-relations.entity'
+import {Organization} from '../organization/organization.entity'
 
 @Entity('patientAuth')
 @Unique(['authUserId', 'email'])
@@ -305,13 +306,19 @@ export class Patient extends Auditable {
     () => PatientToDelegates,
     patientToDelegate => patientToDelegate.delegateId,
   )
-  dependants: PatientToDelegates[]
+  dependants?: PatientToDelegates[]
 
   @OneToMany(
     () => PatientToDelegates,
     patientToDelegate => patientToDelegate.dependantId,
   )
-  delegates: PatientToDelegates[]
+  delegates?: PatientToDelegates[]
+
+  @OneToMany(
+    () => PatientToOrganization,
+    patientToOrganization => patientToOrganization.patientId,
+  )
+  organizations?: Organization[]
 
   /** Hooks */
   @BeforeInsert()
