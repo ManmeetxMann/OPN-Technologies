@@ -94,6 +94,12 @@ export class PatientService {
       },
     )
   }
+
+  async getProfilesByIds(patientIds: string[]): Promise<Patient[]> {
+    return this.patientRepository.findByIds(patientIds, {
+      relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth', 'organizations'],
+    })
+  }
   /**
    * Fetch all patients with pagination
    */
