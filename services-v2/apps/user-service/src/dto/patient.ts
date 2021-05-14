@@ -328,4 +328,5 @@ export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   receiveResultsViaEmail: patient?.digitalConsent?.receiveResultsViaEmail,
   receiveNotificationsFromGov: patient?.digitalConsent?.receiveNotificationsFromGov,
   trainingCompletedOn: patient?.trainingCompletedOn,
+  postalCode: patient.addresses?.postalCode,
 })

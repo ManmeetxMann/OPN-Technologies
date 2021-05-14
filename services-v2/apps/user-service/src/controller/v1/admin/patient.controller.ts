@@ -32,7 +32,7 @@ export class AdminPatientController {
   constructor(private patientService: PatientService) {}
 
   @Get()
-  @Roles([RequiredUserPermission.OPNAdmin])
+  @Roles([RequiredUserPermission.PatientsAdmin])
   async getAll(@Query() filter: PatientFilter): Promise<ResponseWrapper<PatientUpdateDto[]>> {
     const {data, page, totalItems, totalPages} = await this.patientService.getAll(
       assignWithoutUndefined(filter, new PatientFilter()),
@@ -49,7 +49,7 @@ export class AdminPatientController {
   }
 
   @Get('/:patientId')
-  @Roles([RequiredUserPermission.OPNAdmin])
+  @Roles([RequiredUserPermission.PatientsAdmin])
   async getById(@Param('patientId') id: string): Promise<ResponseWrapper<PatientUpdateDto>> {
     const patient = await this.patientService.getProfilebyId(id)
 
@@ -61,7 +61,7 @@ export class AdminPatientController {
   }
 
   @Get('/:patientId/dependants')
-  @Roles([RequiredUserPermission.OPNAdmin])
+  @Roles([RequiredUserPermission.PatientsAdmin])
   async getDependents(
     @Param('patientId') id: string,
   ): Promise<ResponseWrapper<PatientToDelegates[]>> {
@@ -75,7 +75,7 @@ export class AdminPatientController {
   }
 
   @Post()
-  @Roles([RequiredUserPermission.OPNAdmin])
+  @Roles([RequiredUserPermission.PatientsAdmin])
   async add(
     @Body() patientDto: PatientCreateAdminDto,
     @AuthUserDecorator() authUser: AuthUser,
@@ -97,7 +97,7 @@ export class AdminPatientController {
   }
 
   @Put('/:patientId')
-  @Roles([RequiredUserPermission.OPNAdmin])
+  @Roles([RequiredUserPermission.PatientsAdmin])
   async update(
     @AuthUserDecorator() authUser: AuthUser,
     @Param('patientId') id: string,
@@ -121,7 +121,7 @@ export class AdminPatientController {
   }
 
   @Post('/:patientId/dependants')
-  @Roles([RequiredUserPermission.OPNAdmin])
+  @Roles([RequiredUserPermission.PatientsAdmin])
   async addDependents(
     @Param('patientId') delegateId: string,
     @Body() dependantBody: DependantCreateDto,
