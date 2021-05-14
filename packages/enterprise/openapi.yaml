@@ -3040,28 +3040,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/Response'
 
-  /user/connect/locations:
-    post:
-      deprecated: true
-      summary: Use `GET -> /api/v3/users/self/organizations` instead
-      description: Find all the user's connected-organizations
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                userId:
-                  type: string
-              required:
-                - userId
-      responses:
-        '200':
-          description: Successfully found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfOrganizations'
-
   /admin/auth/signIn/request:
     post:
       description: Admin Auth Sign In Request

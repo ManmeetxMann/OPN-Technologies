@@ -39,7 +39,6 @@ class UserController implements IControllerBase {
     this.router.post(this.path + '/connect/add', this.connect)
     this.router.post(this.path + '/connect/v2/add', this.connect)
     this.router.post(this.path + '/connect/remove', this.disconnect)
-    this.router.post(this.path + '/connect/locations', this.connectedLocations)
     this.router.put(this.path + '/connect/link/:userId', this.userLink)
     this.router.put(this.path + '/connect/edit/:userId', this.userEdit)
     this.router.get(this.path + '/connect/:organizationId/users/:userId', this.getUser)
@@ -139,21 +138,6 @@ class UserController implements IControllerBase {
     }
 
     res.json(response)
-  }
-
-  connectedLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const {userId} = req.body
-      const user = await this.userService.findOne(userId)
-      const organizations: Organization[] = await Promise.all(
-        user.organizationIds
-          .map((organizationId) => this.organizationService.findOneById(organizationId))
-          .filter((org) => !!org),
-      )
-      res.json(actionSucceed(organizations))
-    } catch (error) {
-      next(error)
-    }
   }
 
   getUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
