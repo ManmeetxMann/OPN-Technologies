@@ -92,10 +92,14 @@ export class PatientService {
   /**
    * Fetch all patients with pagination
    */
-  async getAll({nameOrId, page, perPage}: PatientFilter): Promise<Page<Patient>> {
-    let queryBuilder: SelectQueryBuilder<Patient> = this.patientRepository
-      .createQueryBuilder('patient')
-      .select()
+  async getAll({nameOrId, organizationId, page, perPage}: PatientFilter): Promise<Page<Patient>> {
+    let queryBuilder: SelectQueryBuilder<Patient> = this.patientRepository.createQueryBuilder(
+      'patient',
+    )
+
+    if (organizationId) {
+      queryBuilder = queryBuilder.innerJoin('patient.organizations', 'organization')
+    }
 
     if (nameOrId) {
       const lower = nameOrId.toLowerCase()
@@ -111,6 +115,7 @@ export class PatientService {
     }
 
     return queryBuilder
+      .select()
       .limit(perPage)
       .offset(page * perPage)
       .getManyAndCount()

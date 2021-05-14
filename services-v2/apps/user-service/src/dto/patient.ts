@@ -289,6 +289,10 @@ export class PatientFilter extends PageableRequestFilter {
   @ApiPropertyOptional()
   @IsOptional()
   nameOrId?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  organizationId?: string
 }
 
 export const CreatePatientDTOResponse = (patient: Patient): PatientDTO => ({
