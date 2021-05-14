@@ -13,11 +13,7 @@ export const app = new App({
   port: PORT,
   validation: true,
   corsOptions: '*',
-  controllers: [
-    new RootController(),
-    new UserController(),
-    new UserV2Controller(),
-  ],
+  controllers: [new RootController(), new UserController(), new UserV2Controller()],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })
 

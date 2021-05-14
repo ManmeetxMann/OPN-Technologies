@@ -1,6 +1,5 @@
 import {firestore} from 'firebase-admin'
 import {Config} from './config'
-import {Request, Response} from 'express'
 import {GenericTimestamp, safeTimestamp} from './datetime-util'
 import moment from 'moment-timezone'
 
@@ -10,7 +9,7 @@ const timeZone = Config.get('DEFAULT_TIME_ZONE')
 // used for testing to change the server timestamp
 
 const manualModeEnabled = Config.get('FEATURE_DEBUG_MANUAL_TIMESTAMPS') === 'enabled'
-let currentTimeMillis = 0
+const currentTimeMillis = 0
 
 export const serverTimestamp = (): firestore.FieldValue => {
   if (manualModeEnabled && currentTimeMillis) {

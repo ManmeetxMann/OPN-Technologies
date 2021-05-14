@@ -257,5 +257,4 @@ export class UserService implements UserServiceInterface {
         ),
       )
   }
-
 }

@@ -21,7 +21,7 @@ import {RegistrationConfirmationRequest} from '../../types/registration-confirma
 import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-exception'
 import {ConnectOrganizationRequest} from '../../types/user-organization-request'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
-import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
+import {ConnectGroupRequest} from '../../types/user-group-request'
 import {AdminProfile} from '../../../../common/src/data/admin'
 import {AuthUser, User as AuthenticatedUser} from '../../../../common/src/data/user'
 import {uniq, flatten} from 'lodash'
@@ -295,7 +295,6 @@ const completeRegistration: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
-
 /**
  * Connect an organization to the authenticated user, if relation doesn't yet exist
  */
@@ -370,8 +369,7 @@ class UserController implements IControllerBase {
         .put('/', regUser, update)
         // regUser is not an error even though this request contains organizationId
         .post('/organizations', regUser, connectOrganization)
-        .post('/groups', regUserWithOrg, connectGroup)
-
+        .post('/groups', regUserWithOrg, connectGroup),
     )
 
     this.router.use(root, authentication, selfProfile)

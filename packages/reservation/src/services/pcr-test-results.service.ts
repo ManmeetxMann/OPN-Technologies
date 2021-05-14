@@ -1706,7 +1706,7 @@ export class PCRTestResultsService {
       },
     ]
 
-    console.log({ userId });
+    console.log({userId})
 
     if (organizationId) {
       pcrTestResultsQuery.push({

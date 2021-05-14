@@ -5,8 +5,6 @@ import {UserService} from '../../../../common/src/service/user/user-service'
 import {LegacyDependant, User} from '../../../../common/src/data/user'
 import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
 
-import * as _ from 'lodash'
-
 class UserController implements IRouteController {
   public router = Router()
   private userService = new UserService()
@@ -85,7 +83,6 @@ class UserController implements IRouteController {
       next(error)
     }
   }
-
 }
 
 export default UserController

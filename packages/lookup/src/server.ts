@@ -12,10 +12,7 @@ const app = new App({
   port: PORT,
   validation: true,
   corsOptions: '*',
-  controllers: [
-    new RootController(),
-    new QuestionnaireController(),
-  ],
+  controllers: [new RootController(), new QuestionnaireController()],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })
 
