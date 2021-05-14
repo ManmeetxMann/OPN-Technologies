@@ -3589,26 +3589,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /enterprise/api/v3/users/self/organizations/{organizationId}:
-    delete:
-      summary: Unlink organization
-      description: Removes the authenticated user from an organization and all the groups within that organization
-      tags:
-        - Account Management
-      parameters:
-        - in: path
-          name: organizationId
-          schema:
-            type: string
-          required: true
-      responses:
-        '200':
-          description: Successfull unlinked
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-
   /enterprise/admin/api/v3/organizations/{organizationId}/groups/{groupId}/users:
     get:
       summary: Get users by group Id
@@ -3823,108 +3803,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfUsers'
-
-  /enterprise/api/v3/users/self/dependents/{dependentId}:
-    delete:
-      summary: Unlink dependent
-      description: |
-        Remove a user as a dependent of the authenticated user
-        Delete the dependent's data if query param `hard` is true
-      tags:
-        - Account Management
-      parameters:
-        - in: path
-          name: dependentId
-          schema:
-            type: string
-          required: true
-        - in: query
-          name: hard
-          description: Delete dependent's data if true
-          schema:
-            type: boolean
-          required: false
-      responses:
-        '200':
-          description: Successfull unlinked/removed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-
-  /enterprise/api/v3/users/self/dependents/{dependentId}/organizations:
-    get:
-      summary: Connected organizations
-      description: Get all the organizations connected with an authenticated-user's dependent
-      tags:
-        - Account Management
-      parameters:
-        - in: path
-          name: dependentId
-          schema:
-            type: string
-          required: true
-      responses:
-        '200':
-          description: Successfull retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfOrganizations'
-
-    post:
-      summary: Organization connection
-      description: Connect an organization to a dependent, if relation doesn't yet exist
-      tags:
-        - Account Management
-      parameters:
-        - in: path
-          name: dependentId
-          schema:
-            type: string
-          required: true
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                organizationId:
-                  type: string
-                  nullable: false
-              required:
-                - organizationId
-      responses:
-        '200':
-          description: Successfull updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-
-  /enterprise/api/v3/users/self/dependents/{dependentId}/organizations/{organizationId}:
-    delete:
-      summary: Unlink dependent from an organization
-      description: Removes the authenticated user's dependent from an organization and all the groups within that organization
-      tags:
-        - Account Management
-      parameters:
-        - in: path
-          name: dependentId
-          schema:
-            type: string
-          required: true
-        - in: path
-          name: organizationId
-          schema:
-            type: string
-          required: true
-      responses:
-        '200':
-          description: Successfull unlinked/removed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
 
   /enterprise/internal/api/v1/user:
     post:

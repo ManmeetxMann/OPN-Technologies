@@ -21,13 +21,9 @@ export interface UserServiceInterface {
   getAllByIds(userIds: string[]): Promise<AuthUser[]>
   activate(user: AuthUser): Promise<AuthUser>
   addDependents(dependents: AuthUser[], parentUserId: string): Promise<AuthUser[]>
-  removeUser(userId: string): Promise<void>
-  removeDependent(dependentId: string, parentUserId: string): Promise<void>
   getDirectDependents(userId: string): Promise<AuthUser[]>
   getParents(userId: string): Promise<AuthUser[]>
   connectOrganization(userId: string, organizationId: string): void
-  disconnectOrganization(userId: string, organizationId: string): Promise<void>
   getAllGroupIdsForUser(userId: string): Promise<Set<string>>
   disconnectGroups(userId: string, groupIds: Set<string>): Promise<void>
-  disconnectAllGroups(userId: string): Promise<void>
 }

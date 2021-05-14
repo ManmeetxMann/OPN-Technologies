@@ -311,20 +311,6 @@ const getConnectedOrganizations: Handler = async (req, res, next): Promise<void>
   }
 }
 
-/**
- * Fetch all the connected organizations of a dependent
- */
-const getDependentConnectedOrganizations: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {dependentId} = req.params
-    const user = await userService.getById(dependentId)
-    const organizations = await organizationService.getAllByIds(user.organizationIds)
-
-    res.json(actionSucceed(organizations))
-  } catch (error) {
-    next(error)
-  }
-}
 
 /**
  * Connect an organization to the authenticated user, if relation doesn't yet exist
@@ -346,64 +332,6 @@ const connectOrganization: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
-/**
- * Connect a dependent to an organization if relation doesn't yet exist
- */
-const connectDependentToOrganization: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {dependentId} = req.params
-    const {organizationId} = req.body as ConnectOrganizationRequest
-    const organization = await organizationService.findOneById(organizationId)
-    if (!organization) {
-      throw new ResourceNotFoundException(`Cannot find organization [${organizationId}]`)
-    }
-
-    await userService.connectOrganization(dependentId, organizationId)
-
-    res.json(actionSucceed())
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Removes the authenticated user from an organization and all the groups within that organization
- */
-const disconnectOrganization: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const authenticatedUser = res.locals.authenticatedUser as AuthUser
-    const {organizationId} = req.params
-    const organization = await organizationService.findOneById(organizationId)
-    if (!organization) {
-      throw new ResourceNotFoundException(`Cannot find organization [${organizationId}]`)
-    }
-
-    await userService.disconnectOrganization(authenticatedUser.id, organizationId)
-
-    res.json(actionSucceed())
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Removes the authenticated user's dependent from an organization and all the groups within that organization
- */
-const disconnectDependentOrganization: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {dependentId, organizationId} = req.params
-    const organization = await organizationService.findOneById(organizationId)
-    if (!organization) {
-      throw new ResourceNotFoundException(`Cannot find organization [${organizationId}]`)
-    }
-
-    await userService.disconnectOrganization(dependentId, organizationId)
-
-    res.json(actionSucceed())
-  } catch (error) {
-    next(error)
-  }
-}
 
 /**
  * Get all the user's connected-groups
@@ -528,29 +456,6 @@ const updateDependent: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
-/**
- * Remove a user as a dependent of the authenticated user
- * Delete the dependent's data if query param `hard` is true
- */
-const removeDependent: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {id} = res.locals.authenticatedUser as AuthUser
-    const {dependentId} = req.params
-    const hard = req.query.hard ?? false
-    await userService.removeDependent(dependentId, id)
-
-    if (hard) {
-      // TODO: Make transactional and support pessimistic isolation level
-      await userService.disconnectAllGroups(dependentId)
-      await userService.removeUser(dependentId)
-    }
-
-    res.json(actionSucceed())
-  } catch (error) {
-    next(error)
-  }
-}
-
 class UserController implements IControllerBase {
   public router = express.Router()
 
@@ -580,16 +485,14 @@ class UserController implements IControllerBase {
 
     const dependents = innerRouter().use(
       '/dependents',
-      innerRouter().get('/', regUser, getDependents).post('/', regUser, addDependents).use(
+      innerRouter()
+      .get('/', regUser, getDependents)
+      .post('/', regUser, addDependents)
+      .use(
         '/:dependentId',
         assertHasAuthorityOnDependent,
         innerRouter()
           .put('/', regUser, updateDependent)
-          .delete('/', regUser, removeDependent)
-
-          .get('/organizations', regUser, getDependentConnectedOrganizations)
-          .post('/organizations', regUserWithOrg, connectDependentToOrganization)
-          .delete('/organizations/:organizationId', regUserWithOrg, disconnectDependentOrganization)
 
       ),
     )
@@ -602,8 +505,6 @@ class UserController implements IControllerBase {
         .get('/organizations', regUser, getConnectedOrganizations)
         // regUser is not an error even though this request contains organizationId
         .post('/organizations', regUser, connectOrganization)
-
-        .delete('/organizations/:organizationId', regUserWithOrg, disconnectOrganization)
 
         .get('/groups', regUserWithOrg, getAllConnectedGroupsInAnOrganization)
         .post('/groups', regUserWithOrg, connectGroup)

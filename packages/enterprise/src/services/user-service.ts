@@ -274,24 +274,6 @@ export class UserService implements UserServiceInterface {
     )
   }
 
-  removeUser(userId: string): Promise<void> {
-    return this.userRepository.delete(userId)
-  }
-
-  removeDependent(dependentId: string, parentUserId: string): Promise<void> {
-    return this.userDependencyRepository
-      .collection()
-      .where('userId', '==', dependentId)
-      .where('parentUserId', '==', parentUserId)
-      .fetch()
-      .then((results) => {
-        if (results.length === 0)
-          throw new ResourceNotFoundException(
-            `User [${dependentId}] is not a dependent of user [${parentUserId}]`,
-          )
-        return this.userDependencyRepository.delete(results[0].id)
-      })
-  }
 
   getDirectDependents(userId: string): Promise<AuthUser[]> {
     return this.userDependencyRepository
@@ -322,17 +304,6 @@ export class UserService implements UserServiceInterface {
       )
   }
 
-  disconnectOrganization(userId: string, organizationId: string): Promise<void> {
-    const userRepository = new UserModel(this.dataStore)
-    return userRepository.get(userId).then((user) => {
-      userRepository.updateProperty(
-        userId,
-        'organizationIds',
-        user.organizationIds.filter((orgId) => orgId != organizationId),
-      )
-    })
-  }
-
   getAllGroupIdsForUser(userId: string): Promise<Set<string>> {
     return this.userGroupRepository
       .findWhereEqual('userId', userId)
@@ -355,18 +326,6 @@ export class UserService implements UserServiceInterface {
       ),
     ).then()
   }
-
-  disconnectAllGroups(userId: string): Promise<void> {
-    return this.findUserGroupsBy(userId).then((targets) =>
-      this.userGroupRepository
-        .collection()
-        .bulkDelete(targets.map(({id}) => id))
-        .then(() => {
-          console.log(`Deleted all user-group relation for user ${userId}`)
-        }),
-    )
-  }
-
 
   private findUserGroupsBy(userId: string, groupIds?: string[]): Promise<UserGroup[]> {
     let query = this.userGroupRepository.collection().where('userId', '==', userId)
