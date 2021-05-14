@@ -415,46 +415,6 @@ const getDependents: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
-/**
- * Add dependents to the authenticated user
- * If a `dependent.id` is provided, the matching dependent will be linked,
- * with a pending for approval state
- */
-const addDependents: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {id} = res.locals.authenticatedUser as AuthUser
-    const users = req.body as AuthUser[]
-    const dependents = await userService.addDependents(users, id)
-    res.json(actionSucceed(dependents.map((dependant) => userDTOResponse(dependant))))
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Update a dependent
- */
-const updateDependent: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {dependentId} = req.params
-    const updateRequest = req.body as UpdateUserRequest
-    const user = await userService.getById(dependentId)
-    const updatedUser = await userService.update(dependentId, updateRequest)
-    await userSyncService.update(updatedUser.id, updateRequest)
-
-    LogInfo(functions.updateDependent, events.updateDependent, {
-      user,
-      updatedUser,
-      updatedBy: getUserId(res.locals.authenticatedUser),
-    })
-
-    // TODO check with Postman request
-    res.json(actionSucceed())
-  } catch (error) {
-    LogError(functions.updateDependent, events.updateDependentError, {...error})
-    next(error)
-  }
-}
 
 class UserController implements IControllerBase {
   public router = express.Router()
@@ -487,14 +447,6 @@ class UserController implements IControllerBase {
       '/dependents',
       innerRouter()
       .get('/', regUser, getDependents)
-      .post('/', regUser, addDependents)
-      .use(
-        '/:dependentId',
-        assertHasAuthorityOnDependent,
-        innerRouter()
-          .put('/', regUser, updateDependent)
-
-      ),
     )
 
     const selfProfile = innerRouter().use(

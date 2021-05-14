@@ -250,31 +250,6 @@ export class UserService implements UserServiceInterface {
     return this.userRepository.update({...user, active: true})
   }
 
-  addDependents(dependents: AuthUser[], parentUserId: string): Promise<AuthUser[]> {
-    return Promise.all(
-      dependents
-        // Normalize
-        .map(({email, ...dependent}) => ({
-          ...dependent,
-          email: email ?? null,
-          photo: null,
-          active: true,
-          authUserId: null,
-        }))
-        .map((dependent) =>
-          (dependent.id
-            ? this.getById(dependent.id)
-            : this.userRepository.add(dependent)
-          ).then((user) =>
-            this.userDependencyRepository
-              .add({parentUserId, userId: user.id} as UserDependency)
-              .then(() => user),
-          ),
-        ),
-    )
-  }
-
-
   getDirectDependents(userId: string): Promise<AuthUser[]> {
     return this.userDependencyRepository
       .collection()

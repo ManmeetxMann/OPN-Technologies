@@ -20,7 +20,6 @@ export interface UserServiceInterface {
   getByEmail(email: string): Promise<AuthUser>
   getAllByIds(userIds: string[]): Promise<AuthUser[]>
   activate(user: AuthUser): Promise<AuthUser>
-  addDependents(dependents: AuthUser[], parentUserId: string): Promise<AuthUser[]>
   getDirectDependents(userId: string): Promise<AuthUser[]>
   getParents(userId: string): Promise<AuthUser[]>
   connectOrganization(userId: string, organizationId: string): void

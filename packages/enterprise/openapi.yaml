@@ -3754,42 +3754,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /enterprise/api/v3/users/self/dependents:
-    get:
-      summary: Account dependents
-      description: Gets the authenticated user's direct dependents
-      tags:
-        - Account Management
-      responses:
-        '200':
-          description: Successfull retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfUsers'
-
-    post:
-      summary: Account dependent link
-      description: |
-        Create and/or links one or multiple user(s) to the authenticated user
-        If the "dependent.id" is provided, the found dependent will be linked
-      tags:
-        - Account Management
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/UserV3'
-      responses:
-        '200':
-          description: Successfully linked
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfUsers'
-
   /enterprise/api/v3/users/self/parents:
     get:
       summary: Account parents
