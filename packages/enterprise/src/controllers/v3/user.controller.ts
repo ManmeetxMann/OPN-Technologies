@@ -3,7 +3,6 @@ import {Handler, Router} from 'express'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {assertHasAuthorityOnDependent} from '../../middleware/user-dependent-authority'
 import {AuthService} from '../../../../common/src/service/auth/auth-service'
 import {AdminApprovalService} from '../../../../common/src/service/user/admin-service'
 import {UserService} from '../../services/user-service'
@@ -401,20 +400,6 @@ const getParents: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
-/**
- * Get Direct dependents for a given user-id
- * Only the approved parent-child relations will be returned
- */
-const getDependents: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {id} = res.locals.authenticatedUser as AuthUser
-    const dependents = await userService.getDirectDependents(id)
-    res.json(actionSucceed(dependents.map((dependant) => userDTOResponse(dependant))))
-  } catch (error) {
-    next(error)
-  }
-}
-
 
 class UserController implements IControllerBase {
   public router = express.Router()
@@ -443,12 +428,6 @@ class UserController implements IControllerBase {
     // authenticate the user while requiring an organizationId
     const regUserWithOrg = authorizationMiddleware([RequiredUserPermission.RegUser], true)
 
-    const dependents = innerRouter().use(
-      '/dependents',
-      innerRouter()
-      .get('/', regUser, getDependents)
-    )
-
     const selfProfile = innerRouter().use(
       '/self',
       innerRouter()
@@ -463,8 +442,6 @@ class UserController implements IControllerBase {
         .delete('/groups/:groupId', regUser, disconnectGroup)
 
         .get('/parents', regUser, getParents)
-
-        .use(dependents),
     )
 
     this.router.use(root, authentication, selfProfile)

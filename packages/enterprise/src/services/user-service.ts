@@ -250,14 +250,6 @@ export class UserService implements UserServiceInterface {
     return this.userRepository.update({...user, active: true})
   }
 
-  getDirectDependents(userId: string): Promise<AuthUser[]> {
-    return this.userDependencyRepository
-      .collection()
-      .where('parentUserId', '==', userId)
-      .fetch()
-      .then((results) => this.getAllByIds(results.map(({userId}) => userId)))
-  }
-
   getParents(userId: string): Promise<AuthUser[]> {
     return this.userDependencyRepository
       .collection()
