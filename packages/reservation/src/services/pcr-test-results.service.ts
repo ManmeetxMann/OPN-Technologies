@@ -57,6 +57,7 @@ import {
   PcrTestResultsListByDeadlineRequest,
   PcrTestResultsListRequest,
   pcrTestResultsResponse,
+  Result,
   ResultReportStatus,
   resultToStyle,
   TestResutsDTO,
@@ -1759,8 +1760,6 @@ export class PCRTestResultsService {
       },
     ]
 
-    console.log({userId})
-
     if (organizationId) {
       pcrTestResultsQuery.push({
         map: '/',
@@ -1798,12 +1797,18 @@ export class PCRTestResultsService {
     const testResult = []
 
     pcrResults.map((pcr) => {
-      let result = pcr.result
+      const appointment = appoinments.find(({id}) => id === pcr.appointmentId)
+      let result: Result
 
-      if (result === ResultTypes.Pending) {
-        const appoinment = appoinments.find(({id}) => id === pcr.appointmentId)
-
-        result = ResultTypes[appoinment?.appointmentStatus] || pcr.result
+      if (appointment?.appointmentStatus === AppointmentStatus.Pending) {
+        result = ResultTypes.Pending
+      } else if (
+        AppointmentStatus.ReCollectRequired === appointment?.appointmentStatus ||
+        AppointmentStatus.Reported === appointment?.appointmentStatus
+      ) {
+        result = ResultTypes[appointment?.appointmentStatus] || pcr.result
+      } else {
+        result = AppointmentReasons.InProgress
       }
 
       testResult.push({
@@ -1871,6 +1876,23 @@ export class PCRTestResultsService {
         return PCRResultPDFType.Positive
       case ResultTypes.PresumptivePositive:
         return PCRResultPDFType.PresumptivePositive
+
+      default:
+        LogError('PCRTestResultsService: getPDFType', 'UnSupportedPDFResultType', {
+          appointmentID,
+          errorMessage: `NotSupported Result ${result}`,
+        })
+    }
+  }
+
+  getAntibodyPDFType(appointmentID: string, result: ResultTypes): PCRResultPDFType {
+    switch (result) {
+      case ResultTypes.Negative:
+        return PCRResultPDFType.Negative
+      case ResultTypes.Positive:
+        return PCRResultPDFType.Positive
+      case ResultTypes.Indeterminate:
+        return PCRResultPDFType.Intermediate
 
       default:
         LogError('PCRTestResultsService: getPDFType', 'UnSupportedPDFResultType', {

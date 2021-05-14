@@ -2,7 +2,6 @@ import * as express from 'express'
 import moment from 'moment-timezone'
 import {Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-import {setTime} from '../../../common/src/utils/times'
 import TraceListener from '../effects/executeTrace'
 import ReportSender from '../effects/sendReports'
 import {now} from '../../../common/src/utils/times'
@@ -23,7 +22,6 @@ class RootController implements IControllerBase {
 
   public initRoutes(): void {
     this.router.get('/', this.index)
-    this.router.post('/setTime', setTime)
     // this is a get because it's a cron job
     this.router.get('/triggerReports', (req: Request, res: Response) =>
       this.triggerReports(req, res),

@@ -12,7 +12,7 @@ export class PatientToOrganization {
 
   @ManyToOne(
     () => Patient,
-    organization => organization.idPatient,
+    patient => patient.idPatient,
   )
   @JoinColumn({name: 'patientId'})
   @Column({nullable: false})

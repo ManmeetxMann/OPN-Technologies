@@ -6,6 +6,8 @@ import positiveTemplate from './positive'
 import negativeTemplate from './negative'
 import intermediateTemplate from './intermediate'
 import {PCRResultPDFType, PCRTestResultEmailDTO} from '../../models/pcr-test-results'
+import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
+import {Stream} from 'stream'
 
 export const AntibodyIgmPDFContent = async (
   resultData: PCRTestResultEmailDTO,
@@ -19,6 +21,20 @@ export const AntibodyIgmPDFContent = async (
   }
 
   return await pdfService.generatePDFBase64(data.content, data.tableLayouts)
+}
+
+export const AntibodyIgmPDFStream = (
+  resultData: PCRTestResultEmailDTO,
+  pdfType: PCRResultPDFType,
+): Stream => {
+  const pdfService = new PdfService()
+  const data = getAntibodyIgmTemplate(resultData, pdfType)
+
+  if (!data) {
+    throw new BadRequestException(`Not supported result ${pdfType}`)
+  }
+
+  return pdfService.generatePDFStream(data.content, data.tableLayouts)
 }
 
 const getAntibodyIgmTemplate = (

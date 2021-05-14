@@ -15,7 +15,10 @@ import {
   PatientTravel,
 } from '../../model/patient/patient-profile.entity'
 import {Patient, PatientAddresses, PatientAuth} from '../../model/patient/patient.entity'
-import {PatientToDelegates} from '../../model/patient/patient-relations.entity'
+import {
+  PatientToDelegates,
+  PatientToOrganization,
+} from '../../model/patient/patient-relations.entity'
 import {
   PatientAddressesRepository,
   PatientAuthRepository,
@@ -23,6 +26,7 @@ import {
   PatientHealthRepository,
   PatientRepository,
   PatientToDelegatesRepository,
+  PatientToOrganizationRepository,
   PatientTravelRepository,
 } from '../../repository/patient.repository'
 
@@ -48,6 +52,7 @@ export class PatientService {
     private patientTravelRepository: PatientTravelRepository,
     private patientDigitalConsentRepository: PatientDigitalConsentRepository,
     private patientToDelegatesRepository: PatientToDelegatesRepository,
+    private patientToOrganizationRepository: PatientToOrganizationRepository,
     private configService: OpnConfigService,
   ) {}
 
@@ -69,7 +74,7 @@ export class PatientService {
    */
   async getProfilebyId(patientId: string): Promise<Patient> {
     return this.patientRepository.findOne(patientId, {
-      relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth'],
+      relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth', 'organizations'],
     })
   }
 
@@ -85,17 +90,26 @@ export class PatientService {
     return this.patientRepository.findOne(
       {firebaseKey},
       {
-        relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth'],
+        relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth', 'organizations'],
       },
     )
   }
   /**
    * Fetch all patients with pagination
    */
-  async getAll({nameOrId, page, perPage}: PatientFilter): Promise<Page<Patient>> {
-    let queryBuilder: SelectQueryBuilder<Patient> = this.patientRepository
-      .createQueryBuilder('patient')
-      .select()
+  async getAll({nameOrId, organizationId, page, perPage}: PatientFilter): Promise<Page<Patient>> {
+    let queryBuilder: SelectQueryBuilder<Patient> = this.patientRepository.createQueryBuilder(
+      'patient',
+    )
+
+    if (organizationId) {
+      queryBuilder = queryBuilder.innerJoinAndSelect(
+        'patient.organizations',
+        'organization',
+        'organization.firebaseOrganizationId = :firebaseOrganizationId',
+        {firebaseOrganizationId: organizationId},
+      )
+    }
 
     if (nameOrId) {
       const lower = nameOrId.toLowerCase()
@@ -111,6 +125,7 @@ export class PatientService {
     }
 
     return queryBuilder
+      .select()
       .limit(perPage)
       .offset(page * perPage)
       .getManyAndCount()
@@ -118,7 +133,7 @@ export class PatientService {
   }
 
   async createHomePatientProfile(data: HomeTestPatientDto): Promise<Patient> {
-    const firebaseUser = await this.userRepository.add({
+    const userData = {
       firstName: data.firstName,
       lastName: data.lastName,
       phone: {
@@ -128,15 +143,19 @@ export class PatientService {
       authUserId: data.authUserId,
       active: false,
       organizationIds: [],
-    } as AuthUser)
+    } as AuthUser
 
+    if (data.organizationId) {
+      userData.organizationIds.push(data.organizationId)
+    }
+
+    const firebaseUser = await this.userRepository.add(userData)
     data.firebaseKey = firebaseUser.id
 
     const patient = await this.createPatient(data as PatientCreateDto)
-
     data.idPatient = patient.idPatient
 
-    await Promise.all([this.saveAuth(data), this.saveAddress(data)])
+    await Promise.all([this.saveAuth(data), this.saveAddress(data), this.saveOrganization(data)])
 
     return patient
   }
@@ -152,6 +171,10 @@ export class PatientService {
     const organizationIds = []
     if (hasPublicOrg) {
       organizationIds.push(this.configService.get('PUBLIC_ORG_ID'))
+    }
+
+    if (data.organizationId) {
+      organizationIds.push(data.organizationId)
     }
 
     const userData = {
@@ -170,10 +193,15 @@ export class PatientService {
 
     if (data.email) {
       userData.email = data.email
+
+      // user is being created by Admin
+      if (!data.authUserId) {
+        userData.authUserId = await this.firebaseAuthService.createUser(data.email)
+        data.authUserId = userData.authUserId
+      }
     }
 
     const firebaseUser = await this.userRepository.add(userData)
-
     data.firebaseKey = firebaseUser.id
 
     const patient = await this.createPatient(data)
@@ -185,6 +213,7 @@ export class PatientService {
       this.saveHealth(data),
       this.saveTravel(data),
       this.saveConsent(data),
+      this.saveOrganization(data),
     ])
 
     return patient
@@ -282,6 +311,10 @@ export class PatientService {
 
     data.firebaseKey = firebaseUser.id
 
+    if (data.organizationId) {
+      firebaseUser.organizationIds.push(data.organizationId)
+    }
+
     const dependant = await this.createPatient(data)
     data.idPatient = dependant.idPatient
 
@@ -290,6 +323,7 @@ export class PatientService {
       this.saveHealth(data),
       this.saveTravel(data),
       this.saveConsent(data),
+      this.saveOrganization(data),
       this.saveDependantOrDelegate(delegateId, dependant.idPatient),
     ])
 
@@ -356,6 +390,15 @@ export class PatientService {
     consent.receiveResultsViaEmail = data.receiveResultsViaEmail
     consent.shareTestResultWithEmployer = data.shareTestResultWithEmployer
     return this.patientDigitalConsentRepository.save(consent)
+  }
+
+  private async saveOrganization(data: PatientUpdateDto, idPatientToOrganization?: string) {
+    const publicOrg = this.configService.get<string>('PUBLIC_ORG_ID')
+    const organization = new PatientToOrganization()
+    organization.idPatientToOrganization = idPatientToOrganization
+    organization.patientId = data.idPatient
+    organization.firebaseOrganizationId = data.organizationId ?? publicOrg
+    return this.patientToOrganizationRepository.save(organization)
   }
 
   async getDirectDependents(patientId: string): Promise<Patient> {

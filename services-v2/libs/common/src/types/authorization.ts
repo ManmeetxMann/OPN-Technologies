@@ -21,6 +21,7 @@ export enum RequiredUserPermission {
   TestKitBatchAdmin = 'TestKitBatchAdmin',
   GenerateBarCodeAdmin = 'GenerateBarCodeAdmin',
   LookupAdmin = 'LookupAdmin',
+  PatientsAdmin = 'PatientsAdmin',
 }
 
 export type RolesData = {
