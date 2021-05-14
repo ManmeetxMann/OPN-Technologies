@@ -1885,6 +1885,23 @@ export class PCRTestResultsService {
     }
   }
 
+  getAntibodyPDFType(appointmentID: string, result: ResultTypes): PCRResultPDFType {
+    switch (result) {
+      case ResultTypes.Negative:
+        return PCRResultPDFType.Negative
+      case ResultTypes.Positive:
+        return PCRResultPDFType.Positive
+      case ResultTypes.Indeterminate:
+        return PCRResultPDFType.Intermediate
+
+      default:
+        LogError('PCRTestResultsService: getPDFType', 'UnSupportedPDFResultType', {
+          appointmentID,
+          errorMessage: `NotSupported Result ${result}`,
+        })
+    }
+  }
+
   async getTestResultAndAppointment(
     id: string,
     userId: string,
