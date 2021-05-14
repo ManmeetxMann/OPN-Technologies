@@ -127,7 +127,7 @@ export class PatientService {
     return queryBuilder
       .select()
       .limit(perPage)
-      .offset(page * perPage)
+      .offset((page - 1) * perPage)
       .getManyAndCount()
       .then(([data, totalItems]) => Page.of(data, page, perPage, totalItems))
   }
