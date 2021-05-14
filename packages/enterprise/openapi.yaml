@@ -825,27 +825,6 @@ components:
                 - pending
                 - proceed
                 - caution
-        dependents:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-              firstName:
-                type: string
-              lastName:
-                type: string
-              groupId:
-                type: string
-              groupName:
-                type: string
-              status:
-                type: string
-                enum:
-                  - pending
-                  - proceed
-                  - caution
 
     AdminProfile:
       type: object
@@ -3753,20 +3732,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
-
-  /enterprise/api/v3/users/self/parents:
-    get:
-      summary: Account parents
-      description: Gets the authenticated user's direct-parents
-      tags:
-        - Account Management
-      responses:
-        '200':
-          description: Successfull retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfUsers'
 
   /enterprise/internal/api/v1/user:
     post:

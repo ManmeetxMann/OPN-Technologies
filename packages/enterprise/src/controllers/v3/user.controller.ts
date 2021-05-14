@@ -385,22 +385,6 @@ const disconnectGroup: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
-
-/**
- * Get Direct parents for a given user-id
- * Only the approved parent-child relations will be returned
- */
-const getParents: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {id} = res.locals.authenticatedUser as AuthUser
-    const parents = await userService.getParents(id)
-    res.json(actionSucceed(parents.map((dependant) => userDTOResponse(dependant))))
-  } catch (error) {
-    next(error)
-  }
-}
-
-
 class UserController implements IControllerBase {
   public router = express.Router()
 
@@ -441,7 +425,6 @@ class UserController implements IControllerBase {
         .post('/groups', regUserWithOrg, connectGroup)
         .delete('/groups/:groupId', regUser, disconnectGroup)
 
-        .get('/parents', regUser, getParents)
     )
 
     this.router.use(root, authentication, selfProfile)

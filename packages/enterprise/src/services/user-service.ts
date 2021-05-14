@@ -250,14 +250,6 @@ export class UserService implements UserServiceInterface {
     return this.userRepository.update({...user, active: true})
   }
 
-  getParents(userId: string): Promise<AuthUser[]> {
-    return this.userDependencyRepository
-      .collection()
-      .where('userId', '==', userId)
-      .fetch()
-      .then((results) => this.getAllByIds(results.map(({parentUserId}) => parentUserId)))
-  }
-
   connectOrganization(userId: string, organizationId: string): void {
     const userRepository = new UserModel(this.dataStore)
     userRepository
