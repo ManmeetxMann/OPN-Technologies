@@ -28,8 +28,6 @@ export interface UserServiceInterface {
   connectOrganization(userId: string, organizationId: string): void
   disconnectOrganization(userId: string, organizationId: string): Promise<void>
   getAllGroupIdsForUser(userId: string): Promise<Set<string>>
-  connectGroups(userId: string, groupIds: string[]): Promise<UserGroup[]>
   disconnectGroups(userId: string, groupIds: Set<string>): Promise<void>
   disconnectAllGroups(userId: string): Promise<void>
-  updateGroup(userId: string, fromGroupId: string, toGroupId: string): Promise<void>
 }

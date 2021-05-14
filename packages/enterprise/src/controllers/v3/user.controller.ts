@@ -424,28 +424,6 @@ const getAllConnectedGroupsInAnOrganization: Handler = async (req, res, next): P
 }
 
 /**
- * Get all the user's dependent's connected-groups
- */
-const getAllDependentConnectedGroupsInAnOrganization: Handler = async (
-  req,
-  res,
-  next,
-): Promise<void> => {
-  try {
-    const {dependentId} = req.params
-    const {organizationId} = req.query
-    const groupIds = await userService.getAllGroupIdsForUser(dependentId)
-    const groups = (
-      await organizationService.getPublicGroups(organizationId as string)
-    ).filter(({id}) => groupIds.has(id))
-
-    res.json(actionSucceed(groups))
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
  * Connect a user to a group
  */
 const connectGroup: Handler = async (req, res, next): Promise<void> => {
@@ -458,24 +436,6 @@ const connectGroup: Handler = async (req, res, next): Promise<void> => {
 
     await organizationService.addUserToGroup(organizationId, groupId, authenticatedUser.id)
     // adds to root collection. Disabled for compatibility
-    // await userService.connectGroups(authenticatedUser.id, [group.id])
-
-    res.json(actionSucceed())
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Connect a user's dependent to a group
- */
-const connectDependentToGroup: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {dependentId} = req.params
-    const {organizationId, groupId} = req.body as ConnectGroupRequest
-    const group = await organizationService.getGroup(organizationId, groupId)
-
-    await userService.connectGroups(dependentId, [group.id])
 
     res.json(actionSucceed())
   } catch (error) {
@@ -498,25 +458,6 @@ const disconnectGroup: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
-/**
- * Update a user's dependent group within the same organization
- */
-const updateDependentGroup: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {dependentId} = req.params
-    const {organizationId, fromGroupId, toGroupId} = req.body as UpdateGroupRequest
-
-    // Assert destination group exists
-    await organizationService.getGroup(organizationId, toGroupId)
-
-    // Update
-    await userService.updateGroup(dependentId, fromGroupId, toGroupId)
-
-    res.json(actionSucceed())
-  } catch (error) {
-    next(error)
-  }
-}
 
 /**
  * Get Direct parents for a given user-id
@@ -650,9 +591,6 @@ class UserController implements IControllerBase {
           .post('/organizations', regUserWithOrg, connectDependentToOrganization)
           .delete('/organizations/:organizationId', regUserWithOrg, disconnectDependentOrganization)
 
-          .get('/groups', regUserWithOrg, getAllDependentConnectedGroupsInAnOrganization)
-          .post('/groups', regUserWithOrg, connectDependentToGroup)
-          .put('/groups', regUserWithOrg, updateDependentGroup),
       ),
     )
 

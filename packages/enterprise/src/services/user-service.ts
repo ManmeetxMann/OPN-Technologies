@@ -339,16 +339,6 @@ export class UserService implements UserServiceInterface {
       .then((results) => new Set(results?.map(({groupId}) => groupId)))
   }
 
-  connectGroups(userId: string, groupIds: string[]): Promise<UserGroup[]> {
-    return this.getAllGroupIdsForUser(userId)
-      .then((existingGroupIds) => groupIds.filter((id) => !existingGroupIds.has(id)))
-      .then((groupIdsToConnect) =>
-        this.userGroupRepository.addAll(
-          groupIdsToConnect.map((groupId) => ({userId, groupId} as UserGroup)),
-        ),
-      )
-  }
-
   disconnectGroups(userId: string, groupIds: Set<string>): Promise<void> {
     return Promise.all(
       _.chunk([...groupIds], 10).map((chunk) =>
@@ -377,14 +367,6 @@ export class UserService implements UserServiceInterface {
     )
   }
 
-  updateGroup(userId: string, fromGroupId: string, toGroupId: string): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    return this.dataStore.firestoreORM.runTransaction((_transaction) =>
-      this.disconnectGroups(userId, new Set([fromGroupId]))
-        .then(() => this.connectGroups(userId, [toGroupId]))
-        .then(),
-    )
-  }
 
   private findUserGroupsBy(userId: string, groupIds?: string[]): Promise<UserGroup[]> {
     let query = this.userGroupRepository.collection().where('userId', '==', userId)
