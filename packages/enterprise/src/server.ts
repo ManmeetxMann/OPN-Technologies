@@ -20,7 +20,7 @@ import AdminOrganizationController from './controllers/admin/v1/organization.con
 import UserInternalController from './controllers/v1/internal/user.controller'
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
-import UserV1Controller from './controllers/v1/user.controller'
+import UserV1Controller from './controllers/admin/v1/user.controller'
 import InternalV1Controller from './controllers/v1/internal/internal.controller'
 
 // Init SQL connection and data model

@@ -4,7 +4,7 @@ import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 
 import {LinkCodeToAccountDto, LinkToAccountDto} from '../../../dto/patient'
-import {AuthGuard, AuthUserDecorator, Roles} from '@opn-services/common'
+import {ApiCommonHeaders, AuthGuard, AuthUserDecorator, Roles} from '@opn-services/common'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {User} from '@opn-common-v1/data/user'
 import {EncryptionService} from '@opn-common-v1/service/encryption/encryption-service'
@@ -13,6 +13,7 @@ import {ConfigService} from '@nestjs/config'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
+@ApiCommonHeaders()
 @Controller('/api/v1')
 export class RapidHomeController {
   private encryptionService: EncryptionService

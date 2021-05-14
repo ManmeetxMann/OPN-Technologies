@@ -1,14 +1,10 @@
 import * as _ from 'lodash'
 import DataStore from '../../../common/src/data/datastore'
-import {UserDependency, UserGroup, UserOrganizationProfile} from '../models/user'
 import {NewUser} from '../types/new-user'
 import {UpdateUserByAdminRequest, UpdateUserRequest} from '../types/update-user-request'
 import {UserRepository} from '../repository/user.repository'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {UserOrganizationProfileRepository} from '../repository/user-organization-profile.repository'
-import {UserDependencyRepository} from '../repository/user-dependency.repository'
-import {UserGroupRepository} from '../repository/user-group.repository'
 import {AuthUser, UserModel} from '../../../common/src/data/user'
 import {isEmail, titleCase, cleanStringField} from '../../../common/src/utils/utils'
 import {CursoredUsersRequestFilter} from '../types/user-organization-request'
@@ -17,9 +13,6 @@ import {UserServiceInterface} from '../interfaces/user-service-interface'
 export class UserService implements UserServiceInterface {
   private dataStore = new DataStore()
   private userRepository = new UserRepository(this.dataStore)
-  private userOrganizationProfileRepository = new UserOrganizationProfileRepository(this.dataStore)
-  private userGroupRepository = new UserGroupRepository(this.dataStore)
-  private userDependencyRepository = new UserDependencyRepository(this.dataStore)
 
   create(source: NewUser): Promise<AuthUser> {
     return this.getByEmail(source.email).then((existedUser) => {
@@ -252,65 +245,6 @@ export class UserService implements UserServiceInterface {
     return this.userRepository.update({...user, active: true})
   }
 
-  addDependents(dependents: AuthUser[], parentUserId: string): Promise<AuthUser[]> {
-    return Promise.all(
-      dependents
-        // Normalize
-        .map(({email, ...dependent}) => ({
-          ...dependent,
-          email: email ?? null,
-          photo: null,
-          active: true,
-          authUserId: null,
-        }))
-        .map((dependent) =>
-          (dependent.id
-            ? this.getById(dependent.id)
-            : this.userRepository.add(dependent)
-          ).then((user) =>
-            this.userDependencyRepository
-              .add({parentUserId, userId: user.id} as UserDependency)
-              .then(() => user),
-          ),
-        ),
-    )
-  }
-
-  removeUser(userId: string): Promise<void> {
-    return this.userRepository.delete(userId)
-  }
-
-  removeDependent(dependentId: string, parentUserId: string): Promise<void> {
-    return this.userDependencyRepository
-      .collection()
-      .where('userId', '==', dependentId)
-      .where('parentUserId', '==', parentUserId)
-      .fetch()
-      .then((results) => {
-        if (results.length === 0)
-          throw new ResourceNotFoundException(
-            `User [${dependentId}] is not a dependent of user [${parentUserId}]`,
-          )
-        return this.userDependencyRepository.delete(results[0].id)
-      })
-  }
-
-  getDirectDependents(userId: string): Promise<AuthUser[]> {
-    return this.userDependencyRepository
-      .collection()
-      .where('parentUserId', '==', userId)
-      .fetch()
-      .then((results) => this.getAllByIds(results.map(({userId}) => userId)))
-  }
-
-  getParents(userId: string): Promise<AuthUser[]> {
-    return this.userDependencyRepository
-      .collection()
-      .where('userId', '==', userId)
-      .fetch()
-      .then((results) => this.getAllByIds(results.map(({parentUserId}) => parentUserId)))
-  }
-
   connectOrganization(userId: string, organizationId: string): void {
     const userRepository = new UserModel(this.dataStore)
     userRepository
@@ -322,89 +256,5 @@ export class UserService implements UserServiceInterface {
           Array.from(new Set([...(user.organizationIds ?? []), organizationId])),
         ),
       )
-  }
-
-  disconnectOrganization(userId: string, organizationId: string): Promise<void> {
-    const userRepository = new UserModel(this.dataStore)
-    return userRepository.get(userId).then((user) => {
-      userRepository.updateProperty(
-        userId,
-        'organizationIds',
-        user.organizationIds.filter((orgId) => orgId != organizationId),
-      )
-    })
-  }
-
-  getAllGroupIdsForUser(userId: string): Promise<Set<string>> {
-    return this.userGroupRepository
-      .findWhereEqual('userId', userId)
-      .then((results) => new Set(results?.map(({groupId}) => groupId)))
-  }
-
-  connectGroups(userId: string, groupIds: string[]): Promise<UserGroup[]> {
-    return this.getAllGroupIdsForUser(userId)
-      .then((existingGroupIds) => groupIds.filter((id) => !existingGroupIds.has(id)))
-      .then((groupIdsToConnect) =>
-        this.userGroupRepository.addAll(
-          groupIdsToConnect.map((groupId) => ({userId, groupId} as UserGroup)),
-        ),
-      )
-  }
-
-  disconnectGroups(userId: string, groupIds: Set<string>): Promise<void> {
-    return Promise.all(
-      _.chunk([...groupIds], 10).map((chunk) =>
-        this.findUserGroupsBy(userId, chunk).then((targets) =>
-          this.userGroupRepository
-            .collection()
-            .bulkDelete(targets.map(({id}) => id))
-            .then(() => {
-              console.log(
-                `Deleted [${targets.length}/${chunk.length}] user-group relation for user ${userId}`,
-              )
-            }),
-        ),
-      ),
-    ).then()
-  }
-
-  disconnectAllGroups(userId: string): Promise<void> {
-    return this.findUserGroupsBy(userId).then((targets) =>
-      this.userGroupRepository
-        .collection()
-        .bulkDelete(targets.map(({id}) => id))
-        .then(() => {
-          console.log(`Deleted all user-group relation for user ${userId}`)
-        }),
-    )
-  }
-
-  updateGroup(userId: string, fromGroupId: string, toGroupId: string): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    return this.dataStore.firestoreORM.runTransaction((_transaction) =>
-      this.disconnectGroups(userId, new Set([fromGroupId]))
-        .then(() => this.connectGroups(userId, [toGroupId]))
-        .then(),
-    )
-  }
-
-  private findUserGroupsBy(userId: string, groupIds?: string[]): Promise<UserGroup[]> {
-    let query = this.userGroupRepository.collection().where('userId', '==', userId)
-    if (groupIds?.length) {
-      query = query.where('groupId', 'in', groupIds)
-    }
-    return query.fetch()
-  }
-
-  createOrganizationProfile(
-    userId: string,
-    organizationId: string,
-    memberId: string,
-  ): Promise<UserOrganizationProfile> {
-    return this.userOrganizationProfileRepository.add({
-      userId,
-      organizationId,
-      memberId,
-    } as UserOrganizationProfile)
   }
 }

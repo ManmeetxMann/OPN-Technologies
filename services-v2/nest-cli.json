@@ -36,13 +36,13 @@
         "assets": ["app.yaml"]
       }
     },
-    "cart-service": {
+    "checkout-service": {
       "type": "application",
-      "root": "apps/cart-service",
+      "root": "apps/checkout-service",
       "entryFile": "main",
-      "sourceRoot": "apps/cart-service/src",
+      "sourceRoot": "apps/checkout-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/cart-service/tsconfig.app.json",
+        "tsConfigPath": "apps/checkout-service/tsconfig.app.json",
         "assets": ["app.yaml"]
       }
     }
