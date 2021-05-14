@@ -1706,8 +1706,6 @@ export class PCRTestResultsService {
       },
     ]
 
-    console.log({ userId });
-
     if (organizationId) {
       pcrTestResultsQuery.push({
         map: '/',
@@ -1810,6 +1808,23 @@ export class PCRTestResultsService {
         return PCRResultPDFType.Positive
       case ResultTypes.PresumptivePositive:
         return PCRResultPDFType.PresumptivePositive
+
+      default:
+        LogError('PCRTestResultsService: getPDFType', 'UnSupportedPDFResultType', {
+          appointmentID,
+          errorMessage: `NotSupported Result ${result}`,
+        })
+    }
+  }
+
+  getAntibodyPDFType(appointmentID: string, result: ResultTypes): PCRResultPDFType {
+    switch (result) {
+      case ResultTypes.Negative:
+        return PCRResultPDFType.Negative
+      case ResultTypes.Positive:
+        return PCRResultPDFType.Positive
+      case ResultTypes.Indeterminate:
+        return PCRResultPDFType.Intermediate
 
       default:
         LogError('PCRTestResultsService: getPDFType', 'UnSupportedPDFResultType', {
