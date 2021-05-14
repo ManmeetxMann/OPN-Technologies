@@ -21,7 +21,6 @@ class UserController implements IRouteController {
       '/v2/users',
       Router()
         .post('/:userId/dependants', this.addDependants)
-        .delete('/:userId/dependants', this.removeDependants)
         .delete('/:userId/dependants/:dependantId', this.removeDependant),
     )
   }
@@ -87,28 +86,6 @@ class UserController implements IRouteController {
     }
   }
 
-  removeDependants = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const userId = req.params['userId']
-      const {organizationId, dependants} = req.body as {
-        organizationId: string
-        dependants: {id: string}[]
-      }
-      await Promise.all(
-        dependants.map((dependant) =>
-          this.userService
-            .removeDependant(userId, dependant.id)
-            .then(() =>
-              this.organizationService.removeUserFromAllGroups(organizationId, dependant.id),
-            ),
-        ),
-      )
-
-      res.json(actionSucceed())
-    } catch (error) {
-      next(error)
-    }
-  }
 }
 
 export default UserController

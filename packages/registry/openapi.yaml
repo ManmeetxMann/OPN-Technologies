@@ -203,38 +203,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfUserDependants'
-    delete:
-      description: Remove user's dependants
-      parameters:
-        - in: path
-          name: userId
-          schema:
-            type: string
-          required: true
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              properties:
-                organizationId:
-                  type: string
-                dependants:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/UserDependant'
-      responses:
-        "200":
-          description: Successfully removed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-
+    
   /v2/users/{userId}/dependants/{dependantId}:
     delete:
-      deprecated: true
       description: Remove a user's dependant (Use `DELETE -> /v2/users/{userId}/dependants` instead)
       parameters:
         - in: path
