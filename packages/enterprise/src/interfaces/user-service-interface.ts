@@ -1,7 +1,6 @@
 import {NewUser} from '../types/new-user'
 import {AuthUser} from '../../../common/src/data/user'
 import {UpdateUserByAdminRequest, UpdateUserRequest} from '../types/update-user-request'
-import {UserGroup, UserOrganizationProfile} from '../models/user'
 import {CursoredUsersRequestFilter} from '../types/user-organization-request'
 
 export interface UserServiceInterface {
@@ -20,8 +19,5 @@ export interface UserServiceInterface {
   getByEmail(email: string): Promise<AuthUser>
   getAllByIds(userIds: string[]): Promise<AuthUser[]>
   activate(user: AuthUser): Promise<AuthUser>
-  getParents(userId: string): Promise<AuthUser[]>
   connectOrganization(userId: string, organizationId: string): void
-  getAllGroupIdsForUser(userId: string): Promise<Set<string>>
-  disconnectGroups(userId: string, groupIds: Set<string>): Promise<void>
 }

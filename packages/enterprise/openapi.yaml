@@ -2926,7 +2926,7 @@ paths:
   /user/connect/add:
     post:
       deprecated: true
-      summary: Use `POST -> /api/v3/users/self/organizations` instead
+      summary: Use Patient Service to add  instead
       description: Connect a user to an organization
       requestBody:
         content:
@@ -2944,7 +2944,7 @@ paths:
   /user/connect/v2/add:
     post:
       deprecated: true
-      summary: Use `POST -> /api/v3/users/self/organizations` instead
+      summary: Use Patient Service to add instead
       description: Connect a user to an organization
       requestBody:
         content:
@@ -3532,18 +3532,6 @@ paths:
                 $ref: '#/components/schemas/ResponseOfUser'
 
   /enterprise/api/v3/users/self/organizations:
-    get:
-      summary: Connected organizations
-      description: Get all the authenticated-user's organizations
-      tags:
-        - Account Management
-      responses:
-        '200':
-          description: Successfull retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfOrganizations'
 
     post:
       summary: Organization connection
@@ -3667,25 +3655,7 @@ paths:
                   $ref: '#/components/schemas/ResponseOfOrganizationGroups'
 
   /enterprise/api/v3/users/self/groups:
-    get:
-      summary: Connected groups
-      description: Get all the authenticated-user's connected-groups within an organization
-      tags:
-        - Account Management
-      parameters:
-        - in: query
-          name: organizationId
-          schema:
-            type: string
-          required: true
-      responses:
-        '200':
-          description: Successfull retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfOrganizationGroups'
-
+  
     post:
       summary: Group connection
       description: Connects the authenticated user to a group if not linked already
@@ -3708,26 +3678,6 @@ paths:
       responses:
         '200':
           description: Successfull linked
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-
-  /enterprise/api/v3/users/self/groups/{groupId}:
-    delete:
-      summary: Unlink group
-      description: Removes the authenticated user from a group
-      tags:
-        - Account Management
-      parameters:
-        - in: path
-          name: groupId
-          schema:
-            type: string
-          required: true
-      responses:
-        '200':
-          description: Successfull unlinked
           content:
             application/json:
               schema:

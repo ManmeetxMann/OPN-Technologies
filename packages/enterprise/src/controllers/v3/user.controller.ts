@@ -295,21 +295,6 @@ const completeRegistration: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
-/**
- * Fetch all the connected organizations of the authenticated user
- */
-const getConnectedOrganizations: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const authenticatedUser = res.locals.authenticatedUser as AuthUser
-    const user = await userService.getById(authenticatedUser.id)
-    const organizations = await organizationService.getAllByIds(user.organizationIds)
-
-    res.json(actionSucceed(organizations))
-  } catch (error) {
-    next(error)
-  }
-}
-
 
 /**
  * Connect an organization to the authenticated user, if relation doesn't yet exist
@@ -331,25 +316,6 @@ const connectOrganization: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
-
-/**
- * Get all the user's connected-groups
- */
-const getAllConnectedGroupsInAnOrganization: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {id} = res.locals.authenticatedUser as AuthUser
-    const {organizationId} = req.query
-    const groupIds = await userService.getAllGroupIdsForUser(id)
-    const groups = (
-      await organizationService.getPublicGroups(organizationId as string)
-    ).filter(({id}) => groupIds.has(id))
-
-    res.json(actionSucceed(groups))
-  } catch (error) {
-    next(error)
-  }
-}
-
 /**
  * Connect a user to a group
  */
@@ -363,21 +329,6 @@ const connectGroup: Handler = async (req, res, next): Promise<void> => {
 
     await organizationService.addUserToGroup(organizationId, groupId, authenticatedUser.id)
     // adds to root collection. Disabled for compatibility
-
-    res.json(actionSucceed())
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Disconnect a user from a group
- */
-const disconnectGroup: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const authenticatedUser = res.locals.authenticatedUser as AuthUser
-    const {groupId} = req.params
-    await userService.disconnectGroups(authenticatedUser.id, new Set([groupId]))
 
     res.json(actionSucceed())
   } catch (error) {
@@ -417,13 +368,9 @@ class UserController implements IControllerBase {
       innerRouter()
         .get('/', regUser, get)
         .put('/', regUser, update)
-        .get('/organizations', regUser, getConnectedOrganizations)
         // regUser is not an error even though this request contains organizationId
         .post('/organizations', regUser, connectOrganization)
-
-        .get('/groups', regUserWithOrg, getAllConnectedGroupsInAnOrganization)
         .post('/groups', regUserWithOrg, connectGroup)
-        .delete('/groups/:groupId', regUser, disconnectGroup)
 
     )
 

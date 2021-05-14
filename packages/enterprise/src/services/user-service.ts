@@ -1,13 +1,10 @@
 import * as _ from 'lodash'
 import DataStore from '../../../common/src/data/datastore'
-import {UserDependency, UserGroup, UserOrganizationProfile} from '../models/user'
 import {NewUser} from '../types/new-user'
 import {UpdateUserByAdminRequest, UpdateUserRequest} from '../types/update-user-request'
 import {UserRepository} from '../repository/user.repository'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {UserDependencyRepository} from '../repository/user-dependency.repository'
-import {UserGroupRepository} from '../repository/user-group.repository'
 import {AuthUser, UserModel} from '../../../common/src/data/user'
 import {isEmail, titleCase, cleanStringField} from '../../../common/src/utils/utils'
 import {CursoredUsersRequestFilter} from '../types/user-organization-request'
@@ -16,8 +13,6 @@ import {UserServiceInterface} from '../interfaces/user-service-interface'
 export class UserService implements UserServiceInterface {
   private dataStore = new DataStore()
   private userRepository = new UserRepository(this.dataStore)
-  private userGroupRepository = new UserGroupRepository(this.dataStore)
-  private userDependencyRepository = new UserDependencyRepository(this.dataStore)
 
   create(source: NewUser): Promise<AuthUser> {
     return this.getByEmail(source.email).then((existedUser) => {
@@ -261,37 +256,6 @@ export class UserService implements UserServiceInterface {
           Array.from(new Set([...(user.organizationIds ?? []), organizationId])),
         ),
       )
-  }
-
-  getAllGroupIdsForUser(userId: string): Promise<Set<string>> {
-    return this.userGroupRepository
-      .findWhereEqual('userId', userId)
-      .then((results) => new Set(results?.map(({groupId}) => groupId)))
-  }
-
-  disconnectGroups(userId: string, groupIds: Set<string>): Promise<void> {
-    return Promise.all(
-      _.chunk([...groupIds], 10).map((chunk) =>
-        this.findUserGroupsBy(userId, chunk).then((targets) =>
-          this.userGroupRepository
-            .collection()
-            .bulkDelete(targets.map(({id}) => id))
-            .then(() => {
-              console.log(
-                `Deleted [${targets.length}/${chunk.length}] user-group relation for user ${userId}`,
-              )
-            }),
-        ),
-      ),
-    ).then()
-  }
-
-  private findUserGroupsBy(userId: string, groupIds?: string[]): Promise<UserGroup[]> {
-    let query = this.userGroupRepository.collection().where('userId', '==', userId)
-    if (groupIds?.length) {
-      query = query.where('groupId', 'in', groupIds)
-    }
-    return query.fetch()
   }
 
 }
