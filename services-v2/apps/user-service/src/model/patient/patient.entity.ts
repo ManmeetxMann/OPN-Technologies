@@ -306,19 +306,19 @@ export class Patient extends Auditable {
     () => PatientToDelegates,
     patientToDelegate => patientToDelegate.delegateId,
   )
-  dependants: PatientToDelegates[]
+  dependants?: PatientToDelegates[]
 
   @OneToMany(
     () => PatientToDelegates,
     patientToDelegate => patientToDelegate.dependantId,
   )
-  delegates: PatientToDelegates[]
+  delegates?: PatientToDelegates[]
 
   @OneToMany(
     () => PatientToOrganization,
     patientToOrganization => patientToOrganization.patientId,
   )
-  organizations: Organization[]
+  organizations?: Organization[]
 
   /** Hooks */
   @BeforeInsert()
