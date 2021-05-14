@@ -27,6 +27,7 @@ import {
 } from '../../repository/patient.repository'
 
 import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
+import {OpnConfigService} from '@opn-services/common/services'
 
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import DataStore from '@opn-common-v1/data/datastore'
@@ -47,6 +48,7 @@ export class PatientService {
     private patientTravelRepository: PatientTravelRepository,
     private patientDigitalConsentRepository: PatientDigitalConsentRepository,
     private patientToDelegatesRepository: PatientToDelegatesRepository,
+    private configService: OpnConfigService,
   ) {}
 
   private dataStore = new DataStore()
@@ -143,15 +145,16 @@ export class PatientService {
    * Creates new patient profile with all relations
    * @param data
    */
-  async createProfile(data: PatientCreateDto | PatientCreateAdminDto): Promise<Patient> {
-    // That is causing current firebase token expiry and brake mobile flow
-    // TODO: check if we need to update user email in firebase auth
-    // await this.firebaseAuthService.updateUser(data.authUserId, {
-    //   email: data.email,
-    // })
+  async createProfile(
+    data: PatientCreateDto | PatientCreateAdminDto,
+    hasPublicOrg = false,
+  ): Promise<Patient> {
+    const organizationIds = []
+    if (hasPublicOrg) {
+      organizationIds.push(this.configService.get('PUBLIC_ORG_ID'))
+    }
 
-    const firebaseUser = await this.userRepository.add({
-      email: data.email,
+    const userData = {
       firstName: data.firstName,
       lastName: data.lastName,
       registrationId: data.registrationId ?? null,
@@ -162,8 +165,14 @@ export class PatientService {
       },
       authUserId: data.authUserId,
       active: false,
-      organizationIds: [],
-    } as AuthUser)
+      organizationIds,
+    } as AuthUser
+
+    if (data.email) {
+      userData.email = data.email
+    }
+
+    const firebaseUser = await this.userRepository.add(userData)
 
     data.firebaseKey = firebaseUser.id
 

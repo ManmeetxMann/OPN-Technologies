@@ -1061,6 +1061,55 @@ export class PCRTestResultsService {
     }
   }
 
+  async resendReport(testResultId: string, userId: string): Promise<void> {
+    const {appointment, pcrTestResult} = await this.getTestResultAndAppointment(
+      testResultId,
+      userId,
+      true,
+    )
+
+    const lab = await this.labService.findOneById(appointment.labId)
+
+    const resultData = {
+      adminId: userId,
+      labAssay: lab.assay,
+      ...appointment,
+      appointmentId: pcrTestResult.appointmentId,
+      confirmed: pcrTestResult.confirmed,
+      dateTime: pcrTestResult.dateTime,
+      displayInResult: pcrTestResult.displayInResult,
+      firstName: pcrTestResult.firstName,
+      lastName: pcrTestResult.lastName,
+      organizationId: pcrTestResult.organizationId,
+      recollected: pcrTestResult.recollected,
+      result: pcrTestResult.result,
+      testRunId: pcrTestResult.testRunId,
+      waitingResult: pcrTestResult.waitingResult,
+      testType: pcrTestResult.testType,
+      resultMetaData: pcrTestResult.resultMetaData,
+      resultAnalysis: pcrTestResult.resultAnalysis,
+      templateId: pcrTestResult.templateId,
+      labId: pcrTestResult.labId,
+      appointmentStatus: pcrTestResult.appointmentStatus,
+    }
+
+    if (resultData.result === ResultTypes.Negative) {
+      await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Negative)
+    } else if (resultData.result === ResultTypes.Positive) {
+      await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
+    } else if (resultData.result === ResultTypes.PresumptivePositive) {
+      await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
+    } else if (
+      resultData.result === ResultTypes.Indeterminate &&
+      (resultData.testType === TestTypes.Antibody_All ||
+        resultData.testType === TestTypes.Antibody_IgM)
+    ) {
+      await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Intermediate)
+    } else {
+      throw new BadRequestException(`Not allowed resend result ${resultData.id}`)
+    }
+  }
+
   async sendTestResultsWithAttachment(
     resultData: PCRTestResultEmailDTO,
     pcrResultPDFType: PCRResultPDFType,
@@ -1690,7 +1739,11 @@ export class PCRTestResultsService {
     return status
   }
 
-  async getTestResultsByUserId(userId: string, organizationId?: string): Promise<TestResutsDTO[]> {
+  async getTestResultsByUserId(
+    userId: string,
+    organizationId?: string,
+    testType?: TestTypes,
+  ): Promise<TestResutsDTO[]> {
     const pcrTestResultsQuery = [
       {
         map: '/',
@@ -1712,6 +1765,14 @@ export class PCRTestResultsService {
         key: 'organizationId',
         operator: DataModelFieldMapOperatorType.Equals,
         value: organizationId,
+      })
+    }
+    if (testType) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'testType',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: testType,
       })
     }
 
@@ -1889,13 +1950,18 @@ export class PCRTestResultsService {
   async getAllResultsByUserAndChildren(
     userId: string,
     organizationid?: string,
+    testType?: TestTypes,
   ): Promise<TestResutsDTO[]> {
     const {guardian, dependants} = await this.userService.getUserAndDependants(userId)
-    const guardianTestResults = await this.getTestResultsByUserId(guardian.id, organizationid)
+    const guardianTestResults = await this.getTestResultsByUserId(
+      guardian.id,
+      organizationid,
+      testType,
+    )
 
     if (dependants.length) {
       const pendingResults = dependants.map(({id}) =>
-        this.getTestResultsByUserId(id, organizationid),
+        this.getTestResultsByUserId(id, organizationid, testType),
       )
       const dependantsTestResults = await Promise.all(pendingResults)
       const childrenTestResults = dependantsTestResults.flat()

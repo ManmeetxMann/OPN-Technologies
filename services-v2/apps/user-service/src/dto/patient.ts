@@ -86,7 +86,7 @@ export class PatientCreateDto {
     description: 'Required for Home Test Patient',
   })
   @IsOptional()
-  @IsNumberString()
+  @IsString()
   postalCode?: string
 
   @IsOptional()

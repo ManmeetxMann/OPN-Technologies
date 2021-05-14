@@ -130,6 +130,12 @@ class AdminPCRTestResultController implements IControllerBase {
     )
 
     innerRouter.post(
+      this.path + '/test-results/:testResultId/resend',
+      listTestResultsAuth,
+      this.resendTestResult,
+    )
+
+    innerRouter.post(
       this.path + '/test-results/:testResultId/comment',
       listTestResultsAuth,
       this.addComment,
@@ -648,6 +654,19 @@ class AdminPCRTestResultController implements IControllerBase {
       pdfStream.pipe(res)
 
       res.status(200)
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  resendTestResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = getUserId(res.locals.authenticatedUser)
+      const {testResultId} = req.params as {testResultId: string}
+
+      await this.pcrTestResultsService.resendReport(testResultId, userId)
+
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }
