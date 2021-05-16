@@ -571,28 +571,9 @@ export class AppoinmentService {
       couponCode = '',
       userId,
     } = additionalData
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const getNewUserId = async (): Promise<string | null> => {
-      if (Config.getInt('FEATURE_CREATE_USER_ON_ENTERPRISE')) {
-        const user = await this.enterpriseAdapter.findOrCreateUser({
-          email: acuityAppointment.email,
-          firstName: acuityAppointment.firstName,
-          lastName: acuityAppointment.lastName,
-          organizationId: acuityAppointment.organizationId || '',
-          address: acuityAppointment.address,
-          dateOfBirth: acuityAppointment.dateOfBirth,
-          agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
-          shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
-          readTermsAndConditions: acuityAppointment.readTermsAndConditions,
-          receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
-          receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
-        })
-        return user.data ? user.data.id : null
-      }
-      return null
-    }
 
-    const currentUserId = appointmentDb?.userId || (await this.checkWithPhone(acuityAppointment))
+    const currentUserId =
+      userId || appointmentDb?.userId || (await this.checkWithPhone(acuityAppointment))
 
     return {
       acuityAppointmentId: Number(acuityAppointment.id),
@@ -1811,41 +1792,38 @@ export class AppoinmentService {
   }
   private async createUser(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
     const publicOrgId = Config.get('PUBLIC_ORG_ID')
-    try {
-      const user = await this.userService.create({
-        email: acuityAppointment.email,
-        firstName: acuityAppointment.firstName,
-        lastName: acuityAppointment.lastName,
-        dateOfBirth: acuityAppointment.dateOfBirth,
-        base64Photo: Config.get('DEFAULT_USER_PHOTO') || '',
-        organizationIds: acuityAppointment.organizationId
-          ? [acuityAppointment.organizationId]
-          : [publicOrgId],
-        delegates: [],
-        registrationId: '',
-        phoneNumber: acuityAppointment.phone,
-        status: UserStatus.NEW,
-      })
-      // await this.userSyncService.create({
-      //   firstName: user.firstName,
-      //   lastName: user.lastName,
-      //   phoneNumber: user.phoneNumber,
-      //   photoUrl: user.base64Photo ?? null,
-      //   firebaseKey: user.id,
-      //   registrationId: user.registrationId || '',
-      //   dateOfBirth: user.dateOfBirth,
-      //   dependants: [],
-      //   delegates: [],
-        // status: UserStatus.NEW,
-      // })
-      return user.id
-    } catch (e) {
-      console.log(e)
-    }
+    const user = await this.userService.create({
+      email: acuityAppointment.email,
+      firstName: acuityAppointment.firstName,
+      lastName: acuityAppointment.lastName,
+      dateOfBirth: acuityAppointment.dateOfBirth,
+      base64Photo: Config.get('DEFAULT_USER_PHOTO') || '',
+      organizationIds: acuityAppointment.organizationId
+        ? [acuityAppointment.organizationId]
+        : [publicOrgId],
+      delegates: [],
+      registrationId: '',
+      phoneNumber: acuityAppointment.phone,
+      status: UserStatus.NEW,
+    })
+    await this.userSyncService.create({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: user.phoneNumber,
+      photoUrl: user.base64Photo ?? null,
+      firebaseKey: user.id,
+      registrationId: user.registrationId || '',
+      dateOfBirth: user.dateOfBirth,
+      dependants: [],
+      delegates: [],
+      status: UserStatus.NEW,
+    })
+    return user.id
   }
   private async checkWithEmail(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
     const user = await this.userService.findOneByEmail(acuityAppointment.email)
     if (
+      user &&
       user.firstName === acuityAppointment.firstName &&
       user.lastName === acuityAppointment.lastName
     ) {
