@@ -75,6 +75,10 @@ runs:
       cd ./cloud-functions/src/${{ inputs.function_name }}
       npm install
       npm run build
-      npm run deploy
+      gcloud functions deploy hl7-test \
+        --source=./dist \
+        --runtime nodejs12 \
+        --memory 128MB \
+        --trigger-topic pcr-test-topic
       echo "::endgroup::"
     shell: bash
