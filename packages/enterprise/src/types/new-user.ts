@@ -40,15 +40,6 @@ export type CreateUserRequest = NewUser & {
   idToken: string
 }
 
-export type MigrateUserRequest = {
-  email: string
-  firstName: string
-  lastName: string
-  registrationId: string
-  legacyProfiles: LegacyProfile[]
-  photo?: string //url
-}
-
 export type LegacyProfile = {
   userId: string
   organizationId: string

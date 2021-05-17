@@ -143,6 +143,9 @@ export class AuthGuard implements CanActivate {
     const seekTestKitBatchAdmin = listOfRequiredPermissions.includes(
       RequiredUserPermission.TestKitBatchAdmin,
     )
+    const seekPatientsAdmin = listOfRequiredPermissions.includes(
+      RequiredUserPermission.PatientsAdmin,
+    )
 
     const labUserWithLabId = admin.isLabUser && !labId ? false : true
 
@@ -232,6 +235,10 @@ export class AuthGuard implements CanActivate {
     }
     if (seekTestKitBatchAdmin && !admin?.isTestKitBatchAdmin) {
       console.warn(`Admin user ${userId} needs isTestKitBatchAdmin`)
+      return false
+    }
+    if (seekPatientsAdmin && !admin?.isPatientsAdmin && !admin?.isOpnSuperAdmin) {
+      console.warn(`Admin user ${userId} needs isPatientsAdmin`)
       return false
     }
     return true

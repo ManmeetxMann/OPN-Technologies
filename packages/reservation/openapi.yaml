@@ -3708,6 +3708,11 @@ paths:
           schema:
             type: string
           required: false
+        - in: query
+          name: testType
+          schema:
+            type: string
+          required: false
       responses:
         '200':
           description: Successfully Return
@@ -3729,6 +3734,10 @@ paths:
                           enum:
                             - PCR
                         name:
+                          type: string
+                        firstName:
+                          type: string
+                        lastName:
                           type: string
                         testDateTime:
                           type: string

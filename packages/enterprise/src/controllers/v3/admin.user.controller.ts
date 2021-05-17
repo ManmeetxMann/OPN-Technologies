@@ -131,10 +131,6 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
 
     await organizationService.addUserToGroup(organizationId, groupId, user.id)
 
-    if (memberId) {
-      await userService.createOrganizationProfile(user.id, organizationId, memberId)
-    }
-
     res.json(actionSucceed(userDTOResponse(user)))
   } catch (error) {
     LogError(functions.createUser, events.createUserError, {...error})

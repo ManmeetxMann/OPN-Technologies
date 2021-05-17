@@ -57,6 +57,7 @@ import {
   PcrTestResultsListByDeadlineRequest,
   PcrTestResultsListRequest,
   pcrTestResultsResponse,
+  Result,
   ResultReportStatus,
   resultToStyle,
   TestResutsDTO,
@@ -1739,7 +1740,11 @@ export class PCRTestResultsService {
     return status
   }
 
-  async getTestResultsByUserId(userId: string, organizationId?: string): Promise<TestResutsDTO[]> {
+  async getTestResultsByUserId(
+    userId: string,
+    organizationId?: string,
+    testType?: TestTypes,
+  ): Promise<TestResutsDTO[]> {
     const pcrTestResultsQuery = [
       {
         map: '/',
@@ -1755,14 +1760,20 @@ export class PCRTestResultsService {
       },
     ]
 
-    console.log({userId})
-
     if (organizationId) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'organizationId',
         operator: DataModelFieldMapOperatorType.Equals,
         value: organizationId,
+      })
+    }
+    if (testType) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'testType',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: testType,
       })
     }
 
@@ -1786,12 +1797,18 @@ export class PCRTestResultsService {
     const testResult = []
 
     pcrResults.map((pcr) => {
-      let result = pcr.result
+      const appointment = appoinments.find(({id}) => id === pcr.appointmentId)
+      let result: Result
 
-      if (result === ResultTypes.Pending) {
-        const appoinment = appoinments.find(({id}) => id === pcr.appointmentId)
-
-        result = ResultTypes[appoinment?.appointmentStatus] || pcr.result
+      if (appointment?.appointmentStatus === AppointmentStatus.Pending) {
+        result = ResultTypes.Pending
+      } else if (
+        AppointmentStatus.ReCollectRequired === appointment?.appointmentStatus ||
+        AppointmentStatus.Reported === appointment?.appointmentStatus
+      ) {
+        result = ResultTypes[appointment?.appointmentStatus] || pcr.result
+      } else {
+        result = AppointmentReasons.InProgress
       }
 
       testResult.push({
@@ -1868,6 +1885,23 @@ export class PCRTestResultsService {
     }
   }
 
+  getAntibodyPDFType(appointmentID: string, result: ResultTypes): PCRResultPDFType {
+    switch (result) {
+      case ResultTypes.Negative:
+        return PCRResultPDFType.Negative
+      case ResultTypes.Positive:
+        return PCRResultPDFType.Positive
+      case ResultTypes.Indeterminate:
+        return PCRResultPDFType.Intermediate
+
+      default:
+        LogError('PCRTestResultsService: getPDFType', 'UnSupportedPDFResultType', {
+          appointmentID,
+          errorMessage: `NotSupported Result ${result}`,
+        })
+    }
+  }
+
   async getTestResultAndAppointment(
     id: string,
     userId: string,
@@ -1923,13 +1957,18 @@ export class PCRTestResultsService {
   async getAllResultsByUserAndChildren(
     userId: string,
     organizationid?: string,
+    testType?: TestTypes,
   ): Promise<TestResutsDTO[]> {
     const {guardian, dependants} = await this.userService.getUserAndDependants(userId)
-    const guardianTestResults = await this.getTestResultsByUserId(guardian.id, organizationid)
+    const guardianTestResults = await this.getTestResultsByUserId(
+      guardian.id,
+      organizationid,
+      testType,
+    )
 
     if (dependants.length) {
       const pendingResults = dependants.map(({id}) =>
-        this.getTestResultsByUserId(id, organizationid),
+        this.getTestResultsByUserId(id, organizationid, testType),
       )
       const dependantsTestResults = await Promise.all(pendingResults)
       const childrenTestResults = dependantsTestResults.flat()

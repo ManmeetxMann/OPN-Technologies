@@ -10,7 +10,7 @@ import {UserService as EnterpriseUserService} from '../services/user-service'
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
 import {UserEdit, UserWithGroup, UserDependant} from '../../../common/src/data/user'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
-import {Organization, OrganizationUsersGroup} from '../models/organization'
+import {OrganizationUsersGroup} from '../models/organization'
 import * as _ from 'lodash'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {AuthService, SignInProvides} from '../../../common/src/service/auth/auth-service'
@@ -41,7 +41,6 @@ class UserController implements IControllerBase {
     this.router.post(this.path + '/connect/add', this.connect)
     this.router.post(this.path + '/connect/v2/add', this.connect)
     this.router.post(this.path + '/connect/remove', this.disconnect)
-    this.router.post(this.path + '/connect/locations', this.connectedLocations)
     this.router.put(this.path + '/connect/link/:userId', this.userLink)
     this.router.put(this.path + '/connect/edit/:userId', this.userEdit)
     this.router.get(this.path + '/connect/:organizationId/users/:userId', this.getUser)
@@ -155,21 +154,6 @@ class UserController implements IControllerBase {
     }
 
     res.json(response)
-  }
-
-  connectedLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const {userId} = req.body
-      const user = await this.userService.findOne(userId)
-      const organizations: Organization[] = await Promise.all(
-        user.organizationIds
-          .map((organizationId) => this.organizationService.findOneById(organizationId))
-          .filter((org) => !!org),
-      )
-      res.json(actionSucceed(organizations))
-    } catch (error) {
-      next(error)
-    }
   }
 
   getUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

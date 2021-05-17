@@ -34,7 +34,7 @@ export class TestResultCreateDto {
   @ApiProperty({enum: TestTypes})
   @IsString()
   @IsNotEmpty()
-  testResult: TestTypes
+  result: TestTypes
 
   @ApiProperty({enum: ReportAs})
   @IsString()

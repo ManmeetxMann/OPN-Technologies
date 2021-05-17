@@ -825,27 +825,6 @@ components:
                 - pending
                 - proceed
                 - caution
-        dependents:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-              firstName:
-                type: string
-              lastName:
-                type: string
-              groupId:
-                type: string
-              groupName:
-                type: string
-              status:
-                type: string
-                enum:
-                  - pending
-                  - proceed
-                  - caution
 
     AdminProfile:
       type: object
@@ -1134,53 +1113,6 @@ components:
         organizationId:
           type: string
           nullable: true
-
-    MigrateUserRequest:
-      type: object
-      properties:
-        email:
-          type: string
-          nullable: false
-        firstName:
-          type: string
-          nullable: false
-        lastName:
-          type: string
-          nullable: false
-        registrationId:
-          type: string
-          nullable: false
-        legacyProfiles:
-          type: array
-          items:
-            properties:
-              userId:
-                type: string
-                description: The principal user ID
-              organizationId:
-                type: string
-                description: the principal user connected-organization
-              groupId:
-                type: string
-                description: the principal user group ID
-              dependentIds:
-                type: array
-                items:
-                  type: string
-                nullable: true
-            required:
-              - userId
-              - organizationId
-              - groupId
-        photo:
-          type: string
-          description: Photo URL
-          nullable: true
-      required:
-        - email
-        - firstName
-        - lastName
-        - legacyProfiles
 
     UserEdit:
       type: object
@@ -2190,20 +2122,6 @@ components:
             $ref: '#/components/schemas/Response'
 
 paths:
-  /setTime:
-    post:
-      description: set the time on the server. Used in integration testing, and only works on local servers in guilible mode
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                milliseconds:
-                  type: number
-      responses:
-        '200':
-          description: Successfully set
 
   /enterprise/admin/api/v1/organizations:
     get:
@@ -3008,7 +2926,7 @@ paths:
   /user/connect/add:
     post:
       deprecated: true
-      summary: Use `POST -> /api/v3/users/self/organizations` instead
+      summary: Use Patient Service to add  instead
       description: Connect a user to an organization
       requestBody:
         content:
@@ -3026,7 +2944,7 @@ paths:
   /user/connect/v2/add:
     post:
       deprecated: true
-      summary: Use `POST -> /api/v3/users/self/organizations` instead
+      summary: Use Patient Service to add instead
       description: Connect a user to an organization
       requestBody:
         content:
@@ -3121,28 +3039,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Response'
-
-  /user/connect/locations:
-    post:
-      deprecated: true
-      summary: Use `GET -> /api/v3/users/self/organizations` instead
-      description: Find all the user's connected-organizations
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                userId:
-                  type: string
-              required:
-                - userId
-      responses:
-        '200':
-          description: Successfully found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfOrganizations'
 
   /admin/auth/signIn/request:
     post:
@@ -3614,18 +3510,6 @@ paths:
                 $ref: '#/components/schemas/ResponseOfUser'
 
   /enterprise/api/v3/users/self/organizations:
-    get:
-      summary: Connected organizations
-      description: Get all the authenticated-user's organizations
-      tags:
-        - Account Management
-      responses:
-        '200':
-          description: Successfull retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfOrganizations'
 
     post:
       summary: Organization connection
@@ -3645,26 +3529,6 @@ paths:
       responses:
         '200':
           description: Successfull updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-
-  /enterprise/api/v3/users/self/organizations/{organizationId}:
-    delete:
-      summary: Unlink organization
-      description: Removes the authenticated user from an organization and all the groups within that organization
-      tags:
-        - Account Management
-      parameters:
-        - in: path
-          name: organizationId
-          schema:
-            type: string
-          required: true
-      responses:
-        '200':
-          description: Successfull unlinked
           content:
             application/json:
               schema:
@@ -3769,25 +3633,7 @@ paths:
                   $ref: '#/components/schemas/ResponseOfOrganizationGroups'
 
   /enterprise/api/v3/users/self/groups:
-    get:
-      summary: Connected groups
-      description: Get all the authenticated-user's connected-groups within an organization
-      tags:
-        - Account Management
-      parameters:
-        - in: query
-          name: organizationId
-          schema:
-            type: string
-          required: true
-      responses:
-        '200':
-          description: Successfull retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfOrganizationGroups'
-
+  
     post:
       summary: Group connection
       description: Connects the authenticated user to a group if not linked already
@@ -3810,178 +3656,6 @@ paths:
       responses:
         '200':
           description: Successfull linked
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-
-  /enterprise/api/v3/users/self/groups/{groupId}:
-    delete:
-      summary: Unlink group
-      description: Removes the authenticated user from a group
-      tags:
-        - Account Management
-      parameters:
-        - in: path
-          name: groupId
-          schema:
-            type: string
-          required: true
-      responses:
-        '200':
-          description: Successfull unlinked
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-
-  /enterprise/api/v3/users/self/dependents:
-    get:
-      summary: Account dependents
-      description: Gets the authenticated user's direct dependents
-      tags:
-        - Account Management
-      responses:
-        '200':
-          description: Successfull retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfUsers'
-
-    post:
-      summary: Account dependent link
-      description: |
-        Create and/or links one or multiple user(s) to the authenticated user
-        If the "dependent.id" is provided, the found dependent will be linked
-      tags:
-        - Account Management
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/UserV3'
-      responses:
-        '200':
-          description: Successfully linked
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfUsers'
-
-  /enterprise/api/v3/users/self/parents:
-    get:
-      summary: Account parents
-      description: Gets the authenticated user's direct-parents
-      tags:
-        - Account Management
-      responses:
-        '200':
-          description: Successfull retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfUsers'
-
-  /enterprise/api/v3/users/self/dependents/{dependentId}:
-    delete:
-      summary: Unlink dependent
-      description: |
-        Remove a user as a dependent of the authenticated user
-        Delete the dependent's data if query param `hard` is true
-      tags:
-        - Account Management
-      parameters:
-        - in: path
-          name: dependentId
-          schema:
-            type: string
-          required: true
-        - in: query
-          name: hard
-          description: Delete dependent's data if true
-          schema:
-            type: boolean
-          required: false
-      responses:
-        '200':
-          description: Successfull unlinked/removed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-
-  /enterprise/api/v3/users/self/dependents/{dependentId}/organizations:
-    get:
-      summary: Connected organizations
-      description: Get all the organizations connected with an authenticated-user's dependent
-      tags:
-        - Account Management
-      parameters:
-        - in: path
-          name: dependentId
-          schema:
-            type: string
-          required: true
-      responses:
-        '200':
-          description: Successfull retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfOrganizations'
-
-    post:
-      summary: Organization connection
-      description: Connect an organization to a dependent, if relation doesn't yet exist
-      tags:
-        - Account Management
-      parameters:
-        - in: path
-          name: dependentId
-          schema:
-            type: string
-          required: true
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                organizationId:
-                  type: string
-                  nullable: false
-              required:
-                - organizationId
-      responses:
-        '200':
-          description: Successfull updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-
-  /enterprise/api/v3/users/self/dependents/{dependentId}/organizations/{organizationId}:
-    delete:
-      summary: Unlink dependent from an organization
-      description: Removes the authenticated user's dependent from an organization and all the groups within that organization
-      tags:
-        - Account Management
-      parameters:
-        - in: path
-          name: dependentId
-          schema:
-            type: string
-          required: true
-        - in: path
-          name: organizationId
-          schema:
-            type: string
-          required: true
-      responses:
-        '200':
-          description: Successfull unlinked/removed
           content:
             application/json:
               schema:
@@ -4040,95 +3714,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /enterprise/api/v3/users/self/dependents/{dependentId}/groups:
-    get:
-      summary: Connected groups
-      description: Get all the connected-groups of a dependent
-      tags:
-        - Account Management
-      parameters:
-        - in: path
-          name: dependentId
-          schema:
-            type: string
-          required: true
-      responses:
-        '200':
-          description: Successfull retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfOrganizationGroups'
-
-    post:
-      summary: Group connection
-      description: Connects an authenticated-user's dependent to a group if not linked already
-      tags:
-        - Account Management
-      parameters:
-        - in: path
-          name: dependentId
-          schema:
-            type: string
-          required: true
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                organizationId:
-                  type: string
-                  nullable: false
-                groupId:
-                  type: string
-                  nullable: false
-              required:
-                - organizationId
-                - groupId
-      responses:
-        '200':
-          description: Successfull linked
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
-
-    put:
-      summary: Update Group
-      description: Update a user's dependent group within the same organization
-      tags:
-        - Account Management
-      parameters:
-        - in: path
-          name: dependentId
-          schema:
-            type: string
-          required: true
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                organizationId:
-                  type: string
-                  nullable: false
-                fromGroupId:
-                  type: string
-                  nullable: false
-                toGroupId:
-                  type: string
-                  nullable: false
-              required:
-                - organizationId
-                - fromGroupId
-                - toGroupId
-      responses:
-        '200':
-          description: Successfull updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
   /enterprise/api/v3/recommendations:
     get:
       summary: recommendations for user

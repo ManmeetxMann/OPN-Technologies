@@ -9,6 +9,7 @@ import {
   IsString,
   Length,
 } from 'class-validator'
+import {Organization} from '../model/organization/organization.entity'
 import {Patient} from '../model/patient/patient.entity'
 
 export type PatientDTO = Partial<PatientCreateDto> & {
@@ -70,6 +71,11 @@ export class PatientCreateDto {
   @IsOptional()
   @IsString()
   dateOfBirth: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  organizationId?: string
 
   @IsOptional()
   @IsString()
@@ -135,6 +141,7 @@ export class PatientCreateDto {
   @IsBoolean()
   receiveNotificationsFromGov?: boolean
 
+  organizations?: Organization[]
   updatedBy?: string
 }
 
@@ -187,6 +194,11 @@ export class PatientCreateAdminDto {
   @IsNotEmpty()
   dateOfBirth: string
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  organizationId?: string
+
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
@@ -213,7 +225,6 @@ export class PatientCreateAdminDto {
   country?: string
 
   @ApiPropertyOptional()
-  @IsNumberString()
   @IsOptional()
   postalCode?: string
 
@@ -302,6 +313,10 @@ export class PatientFilter extends PageableRequestFilter {
   @ApiPropertyOptional()
   @IsOptional()
   nameOrId?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  organizationId?: string
 }
 
 export const CreatePatientDTOResponse = (patient: Patient): PatientDTO => ({
@@ -325,6 +340,7 @@ export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   email: patient.auth?.email,
   phoneNumber: patient.phoneNumber,
   photoUrl: patient.photoUrl,
+  organizations: patient.organizations,
   homeAddress: patient.addresses?.homeAddress,
   homeAddressUnit: patient.addresses?.homeAddressUnit,
   city: patient.addresses?.city,
@@ -341,4 +357,5 @@ export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   receiveResultsViaEmail: patient?.digitalConsent?.receiveResultsViaEmail,
   receiveNotificationsFromGov: patient?.digitalConsent?.receiveNotificationsFromGov,
   trainingCompletedOn: patient?.trainingCompletedOn,
+  postalCode: patient.addresses?.postalCode,
 })
