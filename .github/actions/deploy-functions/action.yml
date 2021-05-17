@@ -80,7 +80,7 @@ runs:
         --source=./dist \
         --runtime nodejs12 \
         --memory 128MB \
-        --trigger-topic pcr-test-topic
+        --trigger-topic pcr-test-topic \
         --env-vars-file=./.env
       echo "::endgroup::"
     shell: bash
