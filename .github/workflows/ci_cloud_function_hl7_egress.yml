@@ -17,7 +17,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: ./.github/actions/deploy-functions
       with:
-        function_name: "hl7Handler"
+        function_name: "hl7-egress"
       name: Build & Deploy to Cloud Functions
       env:
           dev_service_account: ${{ secrets.DEV_GCP_CLOUDBUILD_SA_KEY}}
