@@ -5,15 +5,10 @@ read_var() {
     echo ${VAR[1]}
 }
 
-gcloud functions deploy smsNotification \
-    --source=./dist/src/sms-notification \
+gcloud functions deploy hl7-test \
+    --source=./dist \
     --runtime nodejs12 \
     --memory 128MB \
     --trigger-topic pcr-test-topic \
     --set-env-vars TWILIO_ACCOUNT_SID=$(read_var TWILIO_ACCOUNT_SID .env),TWILIO_AUTH_TOKEN=$(read_var TWILIO_AUTH_TOKEN .env),TWILIO_FROM_PHONE_NUMBER=$(read_var TWILIO_FROM_PHONE_NUMBER .env)
 
-# gcloud functions deploy anotherHandler \
-#     --source=./dist/src/another-handler \
-#     --runtime nodejs12 \
-#     --memory 128MB \
-#     --trigger-topic test-sms-notfication \
