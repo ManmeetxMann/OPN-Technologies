@@ -11,4 +11,3 @@ gcloud functions deploy hl7-test \
     --memory 128MB \
     --trigger-topic pcr-test-topic \
     --set-env-vars TWILIO_ACCOUNT_SID=$(read_var TWILIO_ACCOUNT_SID .env),TWILIO_AUTH_TOKEN=$(read_var TWILIO_AUTH_TOKEN .env),TWILIO_FROM_PHONE_NUMBER=$(read_var TWILIO_FROM_PHONE_NUMBER .env)
-

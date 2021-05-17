@@ -3,7 +3,7 @@ name: CloudFunctionSMSNotification
 on:
   push: 
     paths:
-      - "cloud-functions/hl7-egress/**"
+      - "cloud-functions/src/hl7-egress/**"
       - ".github/workflows/ci_cloud_function_hl7_egress.yml"
       - ".github/actions/deploy-functions/**"
     branches: 
