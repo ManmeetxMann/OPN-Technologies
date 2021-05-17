@@ -75,7 +75,7 @@ runs:
       cd ./cloud-functions/src/${{ inputs.function_name }}
       npm install
       npm run build
-      gcloud functions deploy hl7-test \
+      gcloud functions deploy hl7Handler \
         --source=./dist \
         --runtime nodejs12 \
         --memory 128MB \
