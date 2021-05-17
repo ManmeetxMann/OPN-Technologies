@@ -18,6 +18,7 @@ jobs:
     - uses: ./.github/actions/deploy-functions
       with:
         function_name: "hl7-egress"
+        secret_file_name: "CF_HL7_EGRESS"
       name: Build & Deploy to Cloud Functions
       env:
           dev_service_account: ${{ secrets.DEV_GCP_CLOUDBUILD_SA_KEY}}
