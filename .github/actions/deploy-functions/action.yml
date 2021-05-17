@@ -68,17 +68,18 @@ runs:
       rm ./service-account.json
       echo "::endgroup::"
       echo "::group::Add Application Environment Variables"
+      cd ./cloud-functions/src/${{ inputs.function_name }}
       echo "Writing Environment Variables CF_SMS_NOTIFICATIONS to: ./cloud-functions/src/.env"
-      gcloud secrets versions access latest --secret=CF_SMS_NOTIFICATIONS > ./cloud-functions/src/${{ inputs.function_name }}/.env
+      gcloud secrets versions access latest --secret=CF_SMS_NOTIFICATIONS > ./.env
       echo "::endgroup::"
       echo "::group::Deploy to GAE"
-      cd ./cloud-functions/src/${{ inputs.function_name }}
       npm install
       npm run build
-      gcloud functions deploy hl7Handler \
+      gcloud functions deploy ${{ inputs.function_name }} \
         --source=./dist \
         --runtime nodejs12 \
         --memory 128MB \
         --trigger-topic pcr-test-topic
+        --env-vars-file=./.env
       echo "::endgroup::"
     shell: bash
