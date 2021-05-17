@@ -39,6 +39,7 @@ import {DiscountTypes} from '@opn-reservation-v1/models/coupons'
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
 import {acuityTypesSchema, cartItemSchema} from '@opn-services/common/schemas'
 import {AcuityErrorValues} from '@opn-reservation-v1/models/acuity'
+import {OPNPubSub} from '@opn-common-v1/service/google/pub_sub'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -51,6 +52,7 @@ export class UserCardService {
   private userCartRepository = new UserCartRepository(this.dataStore)
   private userOrderRepository = new UserOrderRepository(this.dataStore)
   private acuityTypesRepository = new AcuityTypesRepository(this.dataStore)
+  private patientUpdatePubSub = new OPNPubSub(this.configService.get('PATIENT_UPDATE_TOPIC'))
 
   private hstTax = 0.13
   public timeSlotNotAvailMsg = 'Time Slot Unavailable: Book Another Slot'
@@ -93,6 +95,12 @@ export class UserCardService {
     ]
 
     return paymentSummary
+  }
+
+  postPatientUpdate(data: Partial<CartAddDto>, attributes: {userId: string}): void {
+    this.patientUpdatePubSub.publish(data, {
+      userId: attributes.userId,
+    })
   }
 
   private async fetchUserAllCartItem(
