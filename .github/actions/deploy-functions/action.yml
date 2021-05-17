@@ -68,11 +68,11 @@ runs:
       rm ./service-account.json
       echo "::endgroup::"
       echo "::group::Add Application Environment Variables"
-      echo "Writing Environment Variables CF_SMS_NOTIFICATIONS to: ./cloud-functions/.env"
-      gcloud secrets versions access latest --secret=CF_SMS_NOTIFICATIONS > ./cloud-functions/.env
+      echo "Writing Environment Variables CF_SMS_NOTIFICATIONS to: ./cloud-functions/src/.env"
+      gcloud secrets versions access latest --secret=CF_SMS_NOTIFICATIONS > ./cloud-functions/src/${{ inputs.function_name }}/.env
       echo "::endgroup::"
       echo "::group::Deploy to GAE"
-      cd ./cloud-functions
+      cd ./cloud-functions/src/${{ inputs.function_name }}
       npm install
       npm run build
       npm run deploy
