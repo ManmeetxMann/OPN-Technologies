@@ -76,11 +76,11 @@ runs:
       npm install
       npm run build
       gcloud functions deploy ${{ inputs.function_name }} \
-        --entry-point=requestHandler
+        --entry-point=requestHandler \
         --source=./dist \
-        --runtime nodejs12 \
-        --memory 128MB \
-        --trigger-topic pcr-test-topic \
+        --runtime=nodejs12 \
+        --memory=128MB \
+        --trigger-topic=pcr-test-topic \
         --env-vars-file=./.env
       echo "::endgroup::"
     shell: bash
