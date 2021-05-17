@@ -54,6 +54,7 @@ export const commonConfig: Record<string, string | string[] | number | boolean> 
   ATTESTATION_TOPIC: 'attestation-topic',
   PUBSUB_TRACE_TOPIC: 'tracing',
   PUBSUB_TRACE_SUBSCRIPTION: 'executeTrace',
+  PATIENT_UPDATE_TOPIC: 'patient-update-topic',
 
   PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS: 12,
   PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS: 7,
