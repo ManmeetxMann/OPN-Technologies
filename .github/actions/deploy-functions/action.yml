@@ -67,9 +67,14 @@ runs:
       gcloud auth activate-service-account --key-file=./service-account.json --project=${{ env.PROJECT_ID }}
       rm ./service-account.json
       echo "::endgroup::"
-      
+      echo "::group::Add Application Environment Variables"
+      echo "Writing Environment Variables CF_SMS_NOTIFICATIONS to: ./cloud-functions/.env"
+      gcloud secrets versions access latest --secret=CF_SMS_NOTIFICATIONS > ./cloud-functions/.env
+      echo "::endgroup::"
       echo "::group::Deploy to GAE"
-      cd ./cloud-functions/sms-notification
-      gcloud functions deploy ${{ inputs.function_name }} --entry-point sendSMS --project ${{ env.PROJECT_ID }}
+      cd ./cloud-functions
+      npm install
+      npm run build
+      npm run deploy
       echo "::endgroup::"
     shell: bash

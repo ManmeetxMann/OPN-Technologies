@@ -123,18 +123,19 @@ export class PCRTestResultsService {
       LogInfo('PCRTestResultsService:postPubsub', 'PubSubDisabled', {})
       return
     }
-    this.pubsub.publish(
-      {
-        id: testResult.id,
-        result: testResult.result,
-        date: safeTimestamp(testResult.dateTime).toISOString(),
-      },
-      {
-        userId: testResult.userId,
-        organizationId: testResult.organizationId,
-        actionType: action,
-      },
-    )
+    const data: Record<string, string> = {
+      id: testResult.id,
+      result: testResult.result,
+      date: safeTimestamp(testResult.dateTime).toISOString(),
+    }
+    const attributes: Record<string, string> = {
+      userId: testResult.userId,
+      organizationId: testResult.organizationId,
+      actionType: action,
+      phone: testResult.phone.toString(),
+      firstName: testResult.firstName,
+    }
+    this.pubsub.publish(data, attributes)
   }
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
