@@ -489,7 +489,11 @@ export const singlePcrTestResultDTO = (
   let resultAnalysis = null
 
   const getAnalysis = (pcrTestResult: PCRTestResultDBModel): Spec[] => {
-    if (pcrTestResult.testType === TestTypes.Antibody_All && (pcrTestResult.result === ResultTypes.Positive || pcrTestResult.result === ResultTypes.Inconclusive)) {
+    if (
+      pcrTestResult.testType === TestTypes.Antibody_All &&
+      (pcrTestResult.result === ResultTypes.Positive ||
+        pcrTestResult.result === ResultTypes.Inconclusive)
+    ) {
       return pcrTestResult.resultAnalysis.map(({label, value}) => {
         if (label === SpecLabel.IgG || label === SpecLabel.IgM) {
           return {
