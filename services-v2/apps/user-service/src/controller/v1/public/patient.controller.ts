@@ -149,7 +149,7 @@ export class PatientController {
     return ResponseWrapper.actionSucceed()
   }
 
-  @Post('/dependant')
+  @Post('/dependants')
   @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
   async addDependents(
