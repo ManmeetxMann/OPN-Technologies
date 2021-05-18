@@ -235,6 +235,42 @@ export class UserCardService {
     return userCartItemRepository.count()
   }
 
+  async removeCoupons(userId: string, organizationId: string): Promise<CartResponseDto> {
+    const userOrgId = `${userId}_${organizationId}`
+    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
+    const cartItemsData = await userCartItemRepository.fetchAll()
+
+    if (!cartItemsData || !cartItemsData.length) {
+      throw new ResourceNotFoundException('userCart-item with given id not found')
+    }
+
+    const cartData = await Promise.all(
+      cartItemsData.map(async cartItem => {
+        const cartItemData = {
+          ...cartItem,
+          discountData: null,
+        }
+        return userCartItemRepository.update(cartItemData)
+      }),
+    )
+
+    const cartItems = cartData.map(cartDB => ({
+      cartItemId: cartDB.cartItemId,
+      label: cartDB.appointmentType.name,
+      subLabel: cartDB.appointment.calendarName,
+      patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
+      date: new Date(cartDB.appointment.time).toISOString(),
+      price: parseFloat(cartDB.appointmentType.price),
+      userId: cartDB.patient.userId,
+      discountedError: cartDB.discountData?.error,
+    }))
+
+    return {
+      cartItems,
+      paymentSummary: this.buildPaymentSummary(cartItems),
+    }
+  }
+
   async getUserCart(userId: string, organizationId: string): Promise<CartResponseDto> {
     const cartDBItems = await this.fetchUserAllCartItem(userId, organizationId)
     const cartItems = cartDBItems.map(cartDB => {
@@ -515,6 +551,7 @@ export class UserCardService {
     discountType: DiscountTypes,
     discountAmount: number,
   ): number {
+    // eslint-disable-next-line max-lines
     return discountType === DiscountTypes.percentage
       ? initialPrice - (initialPrice * discountAmount) / 100
       : initialPrice - discountAmount
