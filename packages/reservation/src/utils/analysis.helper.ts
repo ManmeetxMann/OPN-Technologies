@@ -40,7 +40,7 @@ const groups = [
   {
     name: 'Antigen',
     description: 'lorem',
-    columns: ['IgAResult', 'IgGResult', 'IgMResult', 'IgA', 'IgG', 'IgM'],
+    columns: ['IgAResult', 'IgGResult', 'IgMResult', 'IgG', 'IgM'],
   },
   {
     name: 'other',
@@ -110,7 +110,6 @@ const channelLabelMapping = new Map([
   ['IgAResult', 'IgAResult'],
   ['IgGResult', 'IgGResult'],
   ['IgMResult', 'IgMResult'],
-  ['IgA', 'IgA'],
   ['IgG', 'IgG'],
   ['IgM', 'IgM'],
 ])
