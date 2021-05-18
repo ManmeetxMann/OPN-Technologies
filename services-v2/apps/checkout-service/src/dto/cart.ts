@@ -59,6 +59,14 @@ export class CartResponseDto {
 
   @ApiProperty({type: [CartSummaryDto]})
   paymentSummary: CartSummaryDto[]
+
+  @ApiProperty()
+  cart?: CartCoupon
+}
+
+export class CartCoupon {
+  @ApiProperty()
+  couponCode: string
 }
 
 export class CartUpdateRequestDto extends CartAddDto {
