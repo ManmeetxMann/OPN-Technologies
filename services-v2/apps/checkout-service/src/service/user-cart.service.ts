@@ -137,23 +137,6 @@ export class UserCardService {
       }
     }
 
-    // TODO check why this validation call returns weird result
-    // const timeCheckItems = _.uniqBy(cartDdItems, (elem) => {
-    //   return JSON.stringify(
-    //     _.pick(elem, [
-    //       'appointment.time',
-    //       'appointment.appointmentTypeId',
-    //       'appointment.calendarId',
-    //     ]),
-    //   )
-    // }).map((el) => ({
-    //   datetime: el.appointment.time,
-    //   appointmentTypeID: el.appointment.appointmentTypeId,
-    //   calendarId: el.appointment.calendarId,
-    // }))
-    // console.log(timeCheckItems)
-    // console.log(await this.acuityRepository.getAvailableByTimes(timeCheckItems))
-
     // Fetch slotsAvailable for each variant from acuity
     for (const acuitySlot of acuitySlots) {
       const response = await this.acuityRepository.getAvailableSlots(
@@ -486,7 +469,6 @@ export class UserCardService {
 
   async discount(coupon: string, userId: string, organizationId: string): Promise<CartResponseDto> {
     const userOrgId = `${userId}_${organizationId}`
-
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
 
     const cardItems = await this.fetchUserAllCartItem(userId, organizationId)
