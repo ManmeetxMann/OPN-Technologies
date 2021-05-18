@@ -23,6 +23,7 @@ import {CardItemDBModel, CartItemStatus, CouponErrorsEnum} from '../model/cart'
 import {
   CartAddDto,
   CartItemDto,
+  CartItemResponse,
   CartResponseDto,
   CartSummaryDto,
   CartUpdateRequestDto,
@@ -39,6 +40,7 @@ import {DiscountTypes} from '@opn-reservation-v1/models/coupons'
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
 import {acuityTypesSchema, cartItemSchema} from '@opn-services/common/schemas'
 import {AcuityErrorValues} from '@opn-reservation-v1/models/acuity'
+import {OPNPubSub} from '@opn-common-v1/service/google/pub_sub'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -51,6 +53,7 @@ export class UserCardService {
   private userCartRepository = new UserCartRepository(this.dataStore)
   private userOrderRepository = new UserOrderRepository(this.dataStore)
   private acuityTypesRepository = new AcuityTypesRepository(this.dataStore)
+  private patientUpdatePubSub = new OPNPubSub(this.configService.get('PATIENT_UPDATE_TOPIC'))
 
   private hstTax = 0.13
   public timeSlotNotAvailMsg = 'Time Slot Unavailable: Book Another Slot'
@@ -93,6 +96,12 @@ export class UserCardService {
     ]
 
     return paymentSummary
+  }
+
+  postPatientUpdate(data: Partial<CartAddDto>, attributes: {userId: string}): void {
+    this.patientUpdatePubSub.publish(data, {
+      userId: attributes.userId,
+    })
   }
 
   private async fetchUserAllCartItem(
@@ -209,7 +218,8 @@ export class UserCardService {
       iteration++
     }
   }
-  async getCartItemById(cartItemId: string, userOrgId: string): Promise<CardItemDBModel> {
+
+  async getCartItemById(cartItemId: string, userOrgId: string): Promise<CartItemResponse> {
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
     const cartItem = await userCartItemRepository.findWhereEqual('cartItemId', cartItemId)
     const cartItemExist = cartItem[0]
@@ -217,14 +227,52 @@ export class UserCardService {
     if (!cartItemExist) {
       throw new ResourceNotFoundException('userCart-item with given id not found')
     }
-
-    return cartItemExist
+    return {
+      patient: cartItemExist.patient,
+      appointment: cartItemExist.appointment,
+    }
   }
 
   async cartItemsCount(userId: string, organizationId: string): Promise<number> {
     const userOrgId = `${userId}_${organizationId}`
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
     return userCartItemRepository.count()
+  }
+
+  async removeCoupons(userId: string, organizationId: string): Promise<CartResponseDto> {
+    const userOrgId = `${userId}_${organizationId}`
+    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
+    const cartItemsData = await userCartItemRepository.fetchAll()
+
+    if (!cartItemsData || !cartItemsData.length) {
+      throw new ResourceNotFoundException('userCart-item with given id not found')
+    }
+
+    const cartData = await Promise.all(
+      cartItemsData.map(async cartItem => {
+        const cartItemData = {
+          ...cartItem,
+          discountData: null,
+        }
+        return userCartItemRepository.update(cartItemData)
+      }),
+    )
+
+    const cartItems = cartData.map(cartDB => ({
+      cartItemId: cartDB.cartItemId,
+      label: cartDB.appointmentType.name,
+      subLabel: cartDB.appointment.calendarName,
+      patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
+      date: new Date(cartDB.appointment.time).toISOString(),
+      price: parseFloat(cartDB.appointmentType.price),
+      userId: cartDB.patient.userId,
+      discountedError: cartDB.discountData?.error,
+    }))
+
+    return {
+      cartItems,
+      paymentSummary: this.buildPaymentSummary(cartItems),
+    }
   }
 
   async getUserCart(userId: string, organizationId: string): Promise<CartResponseDto> {
@@ -507,6 +555,7 @@ export class UserCardService {
     discountType: DiscountTypes,
     discountAmount: number,
   ): number {
+    // eslint-disable-next-line max-lines
     return discountType === DiscountTypes.percentage
       ? initialPrice - (initialPrice * discountAmount) / 100
       : initialPrice - discountAmount

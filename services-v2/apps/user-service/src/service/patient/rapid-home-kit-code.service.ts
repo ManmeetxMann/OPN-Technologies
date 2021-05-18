@@ -6,6 +6,8 @@ import {
 } from '../../repository/rapid-home-kit-code.repository'
 import {RapidHomeKitCodeToUserAssocRepository} from '../../repository/rapid-home-kit-code-to-user-assoc.repository'
 import {RapidHomeKitToUserAssoc} from '../../dto/home-patient'
+import {DataModelFieldMapOperatorType} from '@opn-common-v1/data/datamodel.base'
+import {BadRequestException} from '@opn-services/common/exception'
 
 @Injectable()
 export class RapidHomeKitCodeService {
@@ -22,6 +24,23 @@ export class RapidHomeKitCodeService {
   }
 
   async assocHomeKitToUser(code: string, userId: string): Promise<RapidHomeKitCode> {
+    const homeKitCodeAssociations = await this.homeKitCodeToUserRepository.findWhereEqualInMap([
+      {
+        map: '/',
+        key: 'rapidHomeKitId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: code,
+      },
+      {
+        map: '/',
+        key: 'userId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: userId,
+      },
+    ])
+    if (homeKitCodeAssociations.length) {
+      throw new BadRequestException('Associations already exists')
+    }
     await this.homeKitCodeToUserRepository.save(code, userId)
     const [homeKitCode] = await this.get(code)
     const userIds = homeKitCode.userIds ? [...homeKitCode.userIds, userId] : [userId]

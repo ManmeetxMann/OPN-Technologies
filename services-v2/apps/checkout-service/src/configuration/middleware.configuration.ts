@@ -7,6 +7,10 @@ export const internalUrls = [
     url: '/user/api/v1/internal/cart/sync-acuity-appointment-types',
     method: 'POST',
   },
+  {
+    url: '/user/api/v1/internal/patients/pubsub/update',
+    method: 'POST',
+  },
 ]
 
 export const publicApiUrls = [

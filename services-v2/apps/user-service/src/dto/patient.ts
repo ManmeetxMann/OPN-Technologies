@@ -1,5 +1,6 @@
 import {ApiProperty, ApiPropertyOptional, OmitType, PartialType} from '@nestjs/swagger'
 import {PageableRequestFilter} from '@opn-services/common/dto'
+import {Type} from 'class-transformer'
 import {
   IsBoolean,
   IsEmail,
@@ -8,6 +9,7 @@ import {
   IsOptional,
   IsString,
   Length,
+  ValidateNested,
 } from 'class-validator'
 import {Organization} from '../model/organization/organization.entity'
 import {Patient} from '../model/patient/patient.entity'
@@ -304,6 +306,42 @@ export class PatientFilter extends PageableRequestFilter {
   @ApiPropertyOptional()
   @IsOptional()
   organizationId?: string
+}
+
+class PatientUpdatePubSubAttributes {
+  @ApiProperty()
+  @IsString()
+  userId: string
+}
+
+export class PatientUpdatePubSubMessage {
+  @ApiProperty()
+  @IsString()
+  data: string
+
+  @ApiProperty({type: PatientUpdatePubSubAttributes})
+  @Type(() => PatientUpdatePubSubAttributes)
+  @ValidateNested()
+  attributes: PatientUpdatePubSubAttributes
+}
+
+export type PatientUpdatePubSubPayload = {
+  phone: string
+  gender: string
+  ohipCard: string
+  travelID: string
+  travelIDIssuingCountry: string
+  address: string
+  addressUnit: string
+  city: string
+  province: string
+  country: string
+  postalCode: string
+  readTermsAndConditions: boolean
+  receiveResultsViaEmail: boolean
+  agreeToConductFHHealthAssessment: boolean
+  receiveNotificationsFromGov: boolean
+  shareTestResultWithEmployer: boolean
 }
 
 export const CreatePatientDTOResponse = (patient: Patient): PatientDTO => ({

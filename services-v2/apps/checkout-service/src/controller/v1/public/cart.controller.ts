@@ -13,6 +13,7 @@ import {
   PaymentAuthorizationResponseDto,
   CartUpdateRequestDto,
   CouponRequestDto,
+  CartItemResponse,
 } from 'apps/checkout-service/src/dto'
 import {UserCardService} from 'apps/checkout-service/src/service/user-cart.service'
 import {StripeService} from 'apps/checkout-service/src/service/stripe.service'
@@ -58,7 +59,7 @@ export class CartController {
   async getCartItem(
     @AuthUserDecorator() authUser: AuthUser,
     @Param('cartItemId') cartItemId: string,
-  ): Promise<ResponseWrapper<CardItemDBModel>> {
+  ): Promise<ResponseWrapper<CartItemResponse>> {
     const userOrgId = `${authUser.authUserId}_${authUser.requestOrganizationId}`
     const userCard = await this.userCardService.getCartItemById(cartItemId, userOrgId)
 
@@ -118,6 +119,18 @@ export class CartController {
 
     await this.userCardService.updateItem(userOrgId, cartItems)
     return ResponseWrapper.actionSucceed(null)
+  }
+
+  @Delete('/coupons')
+  @Roles([RequiredUserPermission.RegUser], true)
+  async deleteCartCoupons(
+    @AuthUserDecorator() authUser: AuthUser,
+  ): Promise<ResponseWrapper<CartResponseDto>> {
+    const userId = authUser.authUserId
+    const organizationId = authUser.requestOrganizationId
+
+    const userCart = await this.userCardService.removeCoupons(userId, organizationId)
+    return ResponseWrapper.actionSucceed(userCart)
   }
 
   @Delete('/:cartItemId')
@@ -354,6 +367,12 @@ export class CartController {
             userId,
             cartDdItem.patient.email || userEmailAuthToken,
           )
+
+          // update patient profile when appointments are created
+          this.userCardService.postPatientUpdate(cartDdItem.patient, {
+            userId: cartDdItem.patient.userId,
+          })
+
           return {
             cartItemId: cartDdItem.cartItemId,
             appointmentId: newAppointment.id,

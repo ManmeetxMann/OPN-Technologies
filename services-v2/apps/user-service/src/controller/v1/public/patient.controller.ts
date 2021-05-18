@@ -106,7 +106,13 @@ export class PatientController {
     }
 
     const patient = await this.patientService.getDirectDependents(patientExists.idPatient)
-    return ResponseWrapper.actionSucceed(patient.dependants)
+
+    const dependantProfiles = await this.patientService.getProfilesByIds(
+      patient.dependants.map(dependant => dependant.dependantId),
+    )
+    const dependantProfileDto = dependantProfiles.map(profile => patientProfileDto(profile))
+
+    return ResponseWrapper.actionSucceed(dependantProfileDto)
   }
 
   @Put()
