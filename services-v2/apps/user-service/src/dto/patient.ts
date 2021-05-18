@@ -1,15 +1,14 @@
 import {ApiProperty, ApiPropertyOptional, OmitType, PartialType} from '@nestjs/swagger'
-import {PageableRequestFilter} from '@opn-services/common/dto'
-import {Type} from 'class-transformer'
+import {PageableRequestFilter, PubSubMessage, PubSubPayload} from '@opn-services/common/dto'
 import {
   IsBoolean,
+  IsDefined,
   IsEmail,
   IsNotEmpty,
   IsNumberString,
   IsOptional,
   IsString,
   Length,
-  ValidateNested,
 } from 'class-validator'
 import {Organization} from '../model/organization/organization.entity'
 import {Patient} from '../model/patient/patient.entity'
@@ -314,18 +313,19 @@ class PatientUpdatePubSubAttributes {
   userId: string
 }
 
-export class PatientUpdatePubSubMessage {
-  @ApiProperty()
-  @IsString()
-  data: string
-
+class PatientUpdatePubSubMessage extends PubSubMessage<PatientUpdatePubSubAttributes> {
   @ApiProperty({type: PatientUpdatePubSubAttributes})
-  @Type(() => PatientUpdatePubSubAttributes)
-  @ValidateNested()
+  @IsDefined()
   attributes: PatientUpdatePubSubAttributes
 }
 
-export type PatientUpdatePubSubPayload = {
+export class PatientUpdatePubSubPayload extends PubSubPayload<PatientUpdatePubSubMessage> {
+  @ApiProperty({type: PatientUpdatePubSubMessage})
+  @IsDefined()
+  message: PatientUpdatePubSubMessage
+}
+
+export type PatientUpdatePubSubProfile = {
   phone: string
   gender: string
   ohipCard: string
