@@ -89,6 +89,7 @@ export class BookingLocationService {
         bookingLocations.push({
           id,
           appointmentTypeName: appointmentType.name,
+          appointmentTypeId: appointmentType.id,
           name: calendar.name,
           address: calendar.location,
           price: appointmentType.price,

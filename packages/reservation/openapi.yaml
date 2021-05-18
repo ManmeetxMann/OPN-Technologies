@@ -2998,6 +2998,8 @@ paths:
                       properties:
                         appointmentTypeName:
                           type: string
+                        appointmentTypeId:
+                          type: number
                         id:
                           type: string
                         name:
@@ -3010,6 +3012,7 @@ paths:
                           type: string
                       required:
                         - appointmentTypeName
+                        - appointmentTypeId
                         - id
                         - name
                         - address
