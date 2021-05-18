@@ -115,12 +115,12 @@ export class PCRTestResultsService {
   private temperatureService = new TemperatureService()
   private pulseOxygenService = new PulseOxygenService()
   private labService = new LabService()
-  private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
+
   private isAppointmentPushEnable = Config.get('APPOINTMENTS_PUSH_NOTIFY') === 'enabled'
 
-  private postPubsub(testResult: PCRTestResultEmailDTO, action: string): void {
+  private postPubSubForResultSend(testResult: PCRTestResultEmailDTO, action: string): void {
     if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
-      LogInfo('PCRTestResultsService:postPubsub', 'PubSubDisabled', {})
+      LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
       return
     }
     const data: Record<string, string> = {
@@ -135,7 +135,36 @@ export class PCRTestResultsService {
       phone: testResult.phone.toString(),
       firstName: testResult.firstName,
     }
-    this.pubsub.publish(data, attributes)
+    const pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
+    pubsub.publish(data, attributes)
+  }
+
+  private postPubSubForPresumptivePositiveResultSend(testResult: PCRTestResultEmailDTO): void {
+    /*if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
+      LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
+      return
+    }*/
+    const data: Record<string, string> = {
+      patientCode: 'FH00001',
+      barCode: testResult.barCode,
+      dateTimeForAppointment: '202104301310', //safeTimestamp(testResult.dateTime).toISOString()
+      firstName: testResult.firstName,
+      lastName: testResult.lastName,
+      healthCard: 'TestUser2',
+      dateOfBirth: 'TestUser2',
+      gender: 'TestUser2',
+      address1: 'TestUser2',
+      address2: 'TestUser2',
+      city: 'TestUser2',
+      province: 'TestUser2',
+      postalCode: 'TestUser2',
+      country: 'TestUser2',
+      testType: 'TestUser2',
+      clinicCode: 'MS112',
+    }
+
+    const pubsub = new OPNPubSub(Config.get('PRESUMPTIVE_POSITIVE_RESULTS_TOPIC'))
+    pubsub.publish(data)
   }
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
@@ -1029,6 +1058,7 @@ export class PCRTestResultsService {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
         } else if (resultData.result === ResultTypes.PresumptivePositive) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
+          this.postPubSubForPresumptivePositiveResultSend({...resultData, id: pcrId})
         } else if (
           resultData.result === ResultTypes.Indeterminate &&
           (resultData.testType === TestTypes.Antibody_All ||
@@ -1043,18 +1073,11 @@ export class PCRTestResultsService {
             resultSent: resultData.result,
           })
         }
-        if (addSuccessLog) {
-          this.postPubsub({...resultData, id: pcrId}, 'result')
-        }
       }
     }
 
-    // trigger pub sub to issue Stop passport on inconclusive result
-    if (resultData.result === ResultTypes.Inconclusive) {
-      this.postPubsub(resultData, 'result')
-    }
-
     if (addSuccessLog) {
+      this.postPubSubForResultSend({...resultData, id: pcrId}, 'result')
       LogInfo('sendNotification', 'SuccessfullEmailSent', {
         barCode: resultData.barCode,
         notficationType,
