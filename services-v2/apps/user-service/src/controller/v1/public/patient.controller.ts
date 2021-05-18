@@ -28,8 +28,6 @@ import {
   PatientUpdateDto,
   patientProfileDto,
   PatientCreateDto,
-  CreatePatientDTOResponse,
-  PatientDTO,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
@@ -68,7 +66,7 @@ export class PatientController {
     @PublicDecorator() firebaseAuthUser: AuthUser,
     @Body() patientDto: PatientCreateDto,
     @OpnHeaders() opnHeaders: OpnCommonHeaders,
-  ): Promise<ResponseWrapper<PatientDTO>> {
+  ): Promise<ResponseWrapper<PatientUpdateDto>> {
     let patient: Patient
 
     patientDto.authUserId = firebaseAuthUser.authUserId
@@ -93,7 +91,9 @@ export class PatientController {
       patient = await this.patientService.createProfile(patientDto, hasPublicOrg)
     }
 
-    return ResponseWrapper.actionSucceed(CreatePatientDTOResponse(patient))
+    const profile = await this.patientService.getProfilebyId(patient.idPatient)
+
+    return ResponseWrapper.actionSucceed(patientProfileDto(profile))
   }
 
   @Get('/dependants')
@@ -146,7 +146,9 @@ export class PatientController {
       updatedBy: id,
     })
 
-    return ResponseWrapper.actionSucceed()
+    const profile = await this.patientService.getProfilebyId(updatedUser.idPatient)
+
+    return ResponseWrapper.actionSucceed(patientProfileDto(profile))
   }
 
   @Post('/dependant')
@@ -155,7 +157,7 @@ export class PatientController {
   async addDependents(
     @Body() dependantBody: DependantCreateDto,
     @AuthUserDecorator() authUser: AuthUser,
-  ): Promise<ResponseWrapper<Patient>> {
+  ): Promise<ResponseWrapper> {
     const delegateExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
     if (!delegateExists) {
       throw new ResourceNotFoundException('Delegate with given id not found')
@@ -176,6 +178,8 @@ export class PatientController {
       createdBy: authUser.id,
     })
 
-    return ResponseWrapper.actionSucceed(dependant)
+    const profile = await this.patientService.getProfilebyId(dependant.idPatient)
+
+    return ResponseWrapper.actionSucceed(patientProfileDto(profile))
   }
 }
