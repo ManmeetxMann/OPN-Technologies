@@ -229,7 +229,10 @@ export class UserCardService {
     }
     return {
       patient: cartItemExist.patient,
-      appointment: cartItemExist.appointment,
+      appointment: {
+        id: cartItemExist.appointment.slotId,
+        ..._.omit(cartItemExist.appointment, 'slotId'),
+      },
     }
   }
 
@@ -357,7 +360,10 @@ export class UserCardService {
     const cardItemDdModel = items.map(async item => {
       let appointment = null
       try {
-        appointment = decodeAvailableTimeId(item.slotId)
+        appointment = {
+          slotId: item.slotId,
+          ...decodeAvailableTimeId(item.slotId),
+        }
       } catch (_) {
         throw new BadRequestException('Invalid slotId')
       }
@@ -400,7 +406,10 @@ export class UserCardService {
       throw new ResourceNotFoundException('userCart-item with given id not found')
     }
 
-    const appointment = decodeAvailableTimeId(cartItems.slotId)
+    const appointment = {
+      slotId: cartItems.slotId,
+      ...decodeAvailableTimeId(cartItems.slotId),
+    }
 
     const cartItem = {
       id: cartItemExist.id,
