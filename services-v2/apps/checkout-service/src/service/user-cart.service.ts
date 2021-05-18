@@ -551,15 +551,6 @@ export class UserCardService {
       ? initialPrice - (initialPrice * discountAmount) / 100
       : initialPrice - discountAmount
   }
-  /**
-   * converts acuity price format to Stripe amount in cent
-   */
-  stripePriceWithTax(acuityPrice: string): number {
-    const price = parseFloat(acuityPrice)
-    const tax = price + price * this.hstTax
-    const total = price + tax
-    return total * 100
-  }
 
   /**
    * Get cart total in stipe format
