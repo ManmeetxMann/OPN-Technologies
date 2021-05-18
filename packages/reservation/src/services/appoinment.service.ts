@@ -125,6 +125,7 @@ export class AppoinmentService {
         status: appointment.appointmentStatus,
         date: safeTimestamp(appointment.dateTime).toISOString(),
         testType: appointment.testType,
+        appointment: appointment,
       },
       attrs,
     )
@@ -620,6 +621,9 @@ export class AppoinmentService {
         ReservationPushTypes.before24hours,
         ReservationPushTypes.before3hours,
       ],
+      city: acuityAppointment.city,
+      province: acuityAppointment.province,
+      country: acuityAppointment.country,
     }
   }
 

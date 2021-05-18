@@ -311,6 +311,14 @@ class PatientUpdatePubSubAttributes {
   @ApiProperty()
   @IsString()
   userId: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  organizationId: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  actionType: string
 }
 
 class PatientUpdatePubSubMessage extends PubSubMessage<PatientUpdatePubSubAttributes> {
