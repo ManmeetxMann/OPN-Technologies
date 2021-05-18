@@ -1,7 +1,7 @@
 import * as express from 'express'
 import {Handler, Router} from 'express'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
-import {OpnSources, RequiredUserPermission} from '../../../../common/src/types/authorization'
+import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {AuthService} from '../../../../common/src/service/auth/auth-service'
 import {AdminApprovalService} from '../../../../common/src/service/user/admin-service'
