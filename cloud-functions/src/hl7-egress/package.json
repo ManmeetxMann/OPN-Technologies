@@ -10,11 +10,10 @@
     "start": "dist/*.js"
   },
   "scripts": {
-    "start": "node node_modules/@google-cloud/functions-framework --source dist/execute/index.js --target=index",
+    "start": "node node_modules/@google-cloud/functions-framework --source dist/index.js --target=httpTestHandler",
     "watch": "npx tsc-watch --onFirstSuccess 'npm-watch start'",
     "lint": "tslint --project .",
-    "build": "sh ./build.sh",
-    "deploy": "sh ./deploy.sh"
+    "build": "sh ./build.sh"
   },
   "devDependencies": {
     "@google-cloud/functions-framework": "^1.7.1",
@@ -28,6 +27,7 @@
   "dependencies": {
     "simple-hl7": "^3.2.2",
     "@google-cloud/logging-bunyan": "^3.0.2",
-    "bunyan": "^1.8.15"
+    "bunyan": "^1.8.15",
+    "dayjs": "^1.10.4"
   }
 }
