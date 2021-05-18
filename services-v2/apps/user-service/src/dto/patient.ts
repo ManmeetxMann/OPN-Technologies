@@ -358,6 +358,7 @@ export const CreatePatientDTOResponse = (patient: Patient): PatientDTO => ({
 
 export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   id: patient.idPatient,
+  firebaseKey: patient.firebaseKey,
   patientPublicId: patient.patientPublicId,
   firstName: patient.firstName,
   lastName: patient.lastName,
