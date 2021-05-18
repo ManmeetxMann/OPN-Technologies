@@ -105,39 +105,52 @@ export class PatientController {
       patient = await this.patientService.createProfile(patientDto, hasPublicOrg)
     }
 
+    const users = await this.patientService.findNewUsersByEmail(patientExists.email)
+    const resultExitsForProvidedEmail = !!users.length
+
+    return ResponseWrapper.actionSucceed(CreatePatientDTOResponse({resultExitsForProvidedEmail, ...patient}))
+  }
+
+  @Put('/email/verify')
+  @Roles([RequiredUserPermission.RegUser])
+  async triggerEmail(
+    @AuthUserDecorator() authUser: AuthUser,
+  ): Promise<void> {
+    const patientExists = await this.patientService.getAuthByAuthUserId(authUser.authUserId)
+    if (!patientExists) {
+      throw new ResourceNotFoundException('User with given uid not found')
+    }
+
+    await this.patientService.findAndRemoveShortCodes(patientExists.email)
     const authShortCode = await this.authShortCodeService.generateAndSaveShortCode(
-      patientDto.email,
+      patientExists.email,
       this.configService.get<string>('PUBLIC_ORG_ID'),
-      firebaseAuthUser.id,
-      OpnPlatforms.FHHealth,
+      authUser.id,
+      false,
     )
 
     await this.magicLinkService.send({
-      email: patientDto.email,
+      email: patientExists.email,
       meta: {
         shortCode: authShortCode.shortCode,
-        signInLink: authShortCode.magicLink,
       },
     })
-
-    return ResponseWrapper.actionSucceed(CreatePatientDTOResponse(patient))
-    const profile = await this.patientService.getProfilebyId(patient.idPatient)
-
-    return ResponseWrapper.actionSucceed(patientProfileDto(profile))
   }
 
-  @Put('/auth/confirmation')
+  @Put('/email/verified')
   @Roles([RequiredUserPermission.RegUser])
   async authenticate(
     @AuthUserDecorator() authUser: AuthUser,
     @Body() authenticateDto: AuthenticateDto,
   ): Promise<ResponseWrapper> {
-    const {patientId, organizationId} = authenticateDto
-    const patientExists = await this.patientService.getbyId(authenticateDto.patientId)
+    const {patientId, organizationId, code} = authenticateDto
+    const patientExists = await this.patientService.getAuthByAuthUserId(authUser.authUserId)
     if (!patientExists) {
       throw new NotFoundException('User with given id not found')
     }
 
+    const shortCode = await this.patientService.findShortCodeByPatientEmail(patientExists.email)
+    await this.patientService.verifyCodeOrThrowError(shortCode.shortCode, code)
     await this.patientService.connectOrganization(patientId, organizationId)
     await this.patientService.updateProfile(patientId, {isEmailVerified: true})
     return ResponseWrapper.actionSucceed()

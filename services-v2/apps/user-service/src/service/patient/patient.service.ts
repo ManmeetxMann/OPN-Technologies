@@ -27,7 +27,6 @@ import {
   PatientHealthRepository,
   PatientRepository,
   PatientToDelegatesRepository,
-  PatientToOrganizationRepository,
   PatientTravelRepository,
   PatientToOrganizationRepository,
 } from '../../repository/patient.repository'
@@ -40,10 +39,12 @@ import {LogError} from '@opn-services/common/utils/logging'
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import {OrganizationModel} from '@opn-enterprise-v1/repository/organization.repository'
 import DataStore from '@opn-common-v1/data/datastore'
-import {AuthUser} from '@opn-common-v1/data/user'
+import {AuthUser, UserStatus} from '@opn-common-v1/data/user'
 import {Registration} from '@opn-common-v1/data/registration'
 import {RegistrationService} from '@opn-common-v1/service/registry/registration-service'
 import {MessagingFactory} from '@opn-common-v1/service/messaging/messaging-service'
+import {AuthShortCodeRepository} from '@opn-enterprise-v1/repository/auth-short-code.repository'
+import {AuthShortCode} from '@opn-enterprise-v1/models/auth'
 
 @Injectable()
 export class PatientService {
@@ -64,6 +65,7 @@ export class PatientService {
   private dataStore = new DataStore()
   private userRepository = new UserRepository(this.dataStore)
   private organizationModel = new OrganizationModel(this.dataStore)
+  private authShortCodeRepository = new AuthShortCodeRepository(this.dataStore)
   private messaging = MessagingFactory.getPushableMessagingService()
   private registrationService = new RegistrationService()
 
@@ -232,6 +234,34 @@ export class PatientService {
     ])
 
     return patient
+  }
+
+  async findNewUsersByEmail(email: string): Promise<Patient[]> {
+    return this.patientRepository
+      .createQueryBuilder('patient')
+      .innerJoinAndSelect('patient.auth', 'auth')
+      .where('status = :status', {status: UserStatus.NEW})
+      .andWhere('auth.email = :email', {
+        email,
+      }).getMany()
+  }
+
+  async findShortCodeByPatientEmail(email: string): Promise<AuthShortCode> {
+    const shortCodes = await this.authShortCodeRepository.findWhereEqual('email', email)
+    return shortCodes[0]
+  }
+
+  async findAndRemoveShortCodes(email: string): Promise<void> {
+    const shortCodes = await this.authShortCodeRepository.findWhereEqual('email', email)
+    if (shortCodes.length) {
+      await this.authShortCodeRepository.deleteBulk(shortCodes.map(code => code.id))
+    }
+  }
+
+  verifyCodeOrThrowError(code: string, userCode: string): void {
+    if (code !== userCode) {
+      throw new NotFoundException('ShortCode not found')
+    }
   }
 
   /**

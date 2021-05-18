@@ -16,11 +16,13 @@ import {Patient} from '../model/patient/patient.entity'
 export type PatientDTO = Partial<PatientCreateDto> & {
   lastAppointment: Date
   trainingCompletedOn: Date
+  resultExitsForProvidedEmail?: boolean
 }
 
 export type AuthenticateDto = {
   patientId: string
   organizationId: string
+  code: string
 }
 
 export class PatientCreateDto {
@@ -357,7 +359,7 @@ export type PatientUpdatePubSubProfile = {
   shareTestResultWithEmployer: boolean
 }
 
-export const CreatePatientDTOResponse = (patient: Patient): PatientDTO => ({
+export const CreatePatientDTOResponse = (patient): PatientDTO => ({
   idPatient: patient.idPatient,
   firstName: patient.firstName,
   lastName: patient.lastName,
@@ -367,6 +369,7 @@ export const CreatePatientDTOResponse = (patient: Patient): PatientDTO => ({
   photoUrl: patient.photoUrl,
   lastAppointment: patient.lastAppointment,
   trainingCompletedOn: patient.trainingCompletedOn,
+  resultExitsForProvidedEmail: patient.resultExitsForProvidedEmail,
 })
 
 export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({

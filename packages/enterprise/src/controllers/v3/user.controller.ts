@@ -166,7 +166,7 @@ const authenticate: Handler = async (req, res, next): Promise<void> => {
       email,
       organizationId,
       userId,
-      OpnSources.OPN,
+      true,
     )
 
     await magicLinkService.send({

@@ -17,18 +17,17 @@ export class AuthShortCodeService {
     email: string,
     organizationId: string,
     userId: string,
-    applicationName: string,
+    generateMagicLink: boolean,
   ): Promise<AuthShortCode> {
     const shortCode = nanoid()
     // @TODO without ts-ignore gives typescript error, because this function used in v2
     // @ts-ignore
     const expiresAt = moment().add(1, 'hours').toDate()
-    const magicLink = await this.magicLinkService.generateMagicLink(
+    const magicLink = !generateMagicLink ? null : await this.magicLinkService.generateMagicLink(
       {
         email,
         meta: {organizationId, userId, shortCode},
       },
-      applicationName,
     )
     const authShortCode = await this.findAuthShortCode(email)
 

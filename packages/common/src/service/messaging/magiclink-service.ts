@@ -4,7 +4,6 @@ import {Config} from '../../utils/config'
 import {FirebaseManager} from '../../utils/firebase'
 import {auth} from 'firebase-admin'
 import {encodeQueryParams} from '../../utils/utils'
-import {OpnSources} from '../../types/authorization'
 
 // TODO: Deprecated
 export class MagicLinkMail extends Mail {
@@ -18,20 +17,12 @@ export type MagicLinkMessage = {
   signInLink?: string
 }
 
-const opnMagicLinkSettings: auth.ActionCodeSettings = {
+const magicLinkSettings: auth.ActionCodeSettings = {
   url: Config.get('AUTH_EMAIL_SIGNIN_LINK'),
   handleCodeInApp: true,
   iOS: {bundleId: Config.get('AUTH_EMAIL_SIGNIN_IOS')},
   android: {packageName: Config.get('AUTH_EMAIL_SIGNIN_ANDROID'), installApp: true},
   dynamicLinkDomain: Config.get('AUTH_EMAIL_SIGNIN_DOMAIN'),
-}
-
-const fhHealthMagicLinkSettings: auth.ActionCodeSettings = {
-  url: Config.get('FH_AUTH_EMAIL_SIGNIN_LINK'),
-  handleCodeInApp: true,
-  iOS: {bundleId: Config.get('FH_AUTH_EMAIL_SIGNIN_IOS')},
-  android: {packageName: Config.get('FH_AUTH_EMAIL_SIGNIN_ANDROID'), installApp: true},
-  dynamicLinkDomain: Config.get('FH_AUTH_EMAIL_SIGNIN_DOMAIN'),
 }
 
 const magicLinkEmailTemplateId = Config.getInt('AUTH_EMAIL_TEMPLATE_ID', 1)
@@ -51,18 +42,12 @@ export class MagicLinkService implements MessagingService<MagicLinkMessage> {
     })
   }
 
-  generateMagicLink(message: MagicLinkMessage, applicationName: string): Promise<string> {
+  generateMagicLink(message: MagicLinkMessage): Promise<string> {
     const additionalQueryParams = encodeQueryParams(message.meta ?? {})
-    let linkSettings
-    if (applicationName === OpnSources.OPN) {
-      linkSettings = opnMagicLinkSettings
-    } else if (applicationName === OpnSources.FHHealth) {
-      linkSettings = fhHealthMagicLinkSettings
-    }
     const url = additionalQueryParams
-      ? `${linkSettings.url}?${additionalQueryParams}`
-      : linkSettings.url
+      ? `${magicLinkSettings.url}?${additionalQueryParams}`
+      : magicLinkSettings.url
 
-    return this.firebaseAuth.generateSignInWithEmailLink(message.email, {...linkSettings, url})
+    return this.firebaseAuth.generateSignInWithEmailLink(message.email, {...magicLinkSettings, url})
   }
 }
