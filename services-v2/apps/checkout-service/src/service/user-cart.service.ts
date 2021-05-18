@@ -269,9 +269,13 @@ export class UserCardService {
       discountedError: cartDB.discountData?.error,
     }))
 
+    const couponCode = cartData.find(cartItem => cartItem.discountData?.couponId !== null)
     return {
       cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
+      cart: {
+        couponCode: couponCode ? couponCode.discountData.couponId : null
+      }
     }
   }
 
@@ -300,9 +304,13 @@ export class UserCardService {
       return cartItem
     })
 
+    const couponCode = cartDBItems.find(cartItem => cartItem.discountData?.couponId !== null)
     return {
       cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
+      cart: {
+        couponCode: couponCode ? couponCode.discountData.couponId : null
+      }
     }
   }
 
@@ -545,9 +553,14 @@ export class UserCardService {
       ),
       discountedError: cartDB.discountData.error,
     }))
+
+    const couponCode = discountedCartItems.find(cartItem => cartItem.discountData?.couponId !== null)
     return {
       cartItems: cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
+      cart: {
+        couponCode: couponCode ? couponCode.discountData.couponId : null
+      }
     }
   }
   private countDiscount(
