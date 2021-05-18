@@ -1,7 +1,8 @@
 import {ApiProperty, ApiPropertyOptional, OmitType, PartialType} from '@nestjs/swagger'
-import {PageableRequestFilter} from '@opn-services/common/dto'
+import {PageableRequestFilter, PubSubMessage, PubSubPayload} from '@opn-services/common/dto'
 import {
   IsBoolean,
+  IsDefined,
   IsEmail,
   IsNotEmpty,
   IsNumberString,
@@ -319,6 +320,43 @@ export class PatientFilter extends PageableRequestFilter {
   organizationId?: string
 }
 
+class PatientUpdatePubSubAttributes {
+  @ApiProperty()
+  @IsString()
+  userId: string
+}
+
+class PatientUpdatePubSubMessage extends PubSubMessage<PatientUpdatePubSubAttributes> {
+  @ApiProperty({type: PatientUpdatePubSubAttributes})
+  @IsDefined()
+  attributes: PatientUpdatePubSubAttributes
+}
+
+export class PatientUpdatePubSubPayload extends PubSubPayload<PatientUpdatePubSubMessage> {
+  @ApiProperty({type: PatientUpdatePubSubMessage})
+  @IsDefined()
+  message: PatientUpdatePubSubMessage
+}
+
+export type PatientUpdatePubSubProfile = {
+  phone: string
+  gender: string
+  ohipCard: string
+  travelID: string
+  travelIDIssuingCountry: string
+  address: string
+  addressUnit: string
+  city: string
+  province: string
+  country: string
+  postalCode: string
+  readTermsAndConditions: boolean
+  receiveResultsViaEmail: boolean
+  agreeToConductFHHealthAssessment: boolean
+  receiveNotificationsFromGov: boolean
+  shareTestResultWithEmployer: boolean
+}
+
 export const CreatePatientDTOResponse = (patient: Patient): PatientDTO => ({
   idPatient: patient.idPatient,
   firstName: patient.firstName,
@@ -333,6 +371,7 @@ export const CreatePatientDTOResponse = (patient: Patient): PatientDTO => ({
 
 export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   id: patient.idPatient,
+  firebaseKey: patient?.firebaseKey,
   patientPublicId: patient.patientPublicId,
   firstName: patient.firstName,
   lastName: patient.lastName,

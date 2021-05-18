@@ -80,7 +80,7 @@ export class PatientController {
     @PublicDecorator() firebaseAuthUser: AuthUser,
     @Body() patientDto: PatientCreateDto,
     @OpnHeaders() opnHeaders: OpnCommonHeaders,
-  ): Promise<ResponseWrapper<PatientDTO>> {
+  ): Promise<ResponseWrapper<PatientUpdateDto>> {
     let patient: Patient
 
     patientDto.authUserId = firebaseAuthUser.authUserId
@@ -121,6 +121,9 @@ export class PatientController {
     })
 
     return ResponseWrapper.actionSucceed(CreatePatientDTOResponse(patient))
+    const profile = await this.patientService.getProfilebyId(patient.idPatient)
+
+    return ResponseWrapper.actionSucceed(patientProfileDto(profile))
   }
 
   @Put('/auth/confirmation')
@@ -150,7 +153,13 @@ export class PatientController {
     }
 
     const patient = await this.patientService.getDirectDependents(patientExists.idPatient)
-    return ResponseWrapper.actionSucceed(patient.dependants)
+
+    const dependantProfiles = await this.patientService.getProfilesByIds(
+      patient.dependants.map(dependant => dependant.dependantId),
+    )
+    const dependantProfileDto = dependantProfiles.map(profile => patientProfileDto(profile))
+
+    return ResponseWrapper.actionSucceed(dependantProfileDto)
   }
 
   @Put()
@@ -184,16 +193,18 @@ export class PatientController {
       updatedBy: id,
     })
 
-    return ResponseWrapper.actionSucceed()
+    const profile = await this.patientService.getProfilebyId(updatedUser.idPatient)
+
+    return ResponseWrapper.actionSucceed(patientProfileDto(profile))
   }
 
-  @Post('/dependant')
+  @Post('/dependants')
   @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
   async addDependents(
     @Body() dependantBody: DependantCreateDto,
     @AuthUserDecorator() authUser: AuthUser,
-  ): Promise<ResponseWrapper<Patient>> {
+  ): Promise<ResponseWrapper> {
     const delegateExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
     if (!delegateExists) {
       throw new ResourceNotFoundException('Delegate with given id not found')
@@ -214,6 +225,8 @@ export class PatientController {
       createdBy: authUser.id,
     })
 
-    return ResponseWrapper.actionSucceed(dependant)
+    const profile = await this.patientService.getProfilebyId(dependant.idPatient)
+
+    return ResponseWrapper.actionSucceed(patientProfileDto(profile))
   }
 }

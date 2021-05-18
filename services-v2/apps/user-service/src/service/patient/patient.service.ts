@@ -7,6 +7,7 @@ import {
   PatientCreateDto,
   PatientFilter,
   PatientUpdateDto,
+  PatientUpdatePubSubProfile,
 } from '../../dto/patient'
 import {HomeTestPatientDto} from '../../dto/home-patient'
 import {
@@ -33,6 +34,8 @@ import {
 
 import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
 import {OpnConfigService} from '@opn-services/common/services'
+import {BadRequestException} from '@opn-services/common/exception'
+import {LogError} from '@opn-services/common/utils/logging'
 
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import {OrganizationModel} from '@opn-enterprise-v1/repository/organization.repository'
@@ -96,6 +99,12 @@ export class PatientService {
         relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth', 'organizations'],
       },
     )
+  }
+
+  async getProfilesByIds(patientIds: string[]): Promise<Patient[]> {
+    return this.patientRepository.findByIds(patientIds, {
+      relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth', 'organizations'],
+    })
   }
   /**
    * Fetch all patients with pagination
@@ -488,5 +497,38 @@ export class PatientService {
         pushToken,
       })
     }
+  }
+
+  async updateProfileWithPubSub(
+    userId: string,
+    data: Partial<PatientUpdatePubSubProfile>,
+  ): Promise<void> {
+    const patient = await this.patientRepository.findOne({firebaseKey: userId})
+
+    if (!patient) {
+      const errorMessage = `Profile with ${userId} not exists`
+      LogError('updateProfileWithPubSub', 'PubSubProfileUpdateFailed', {
+        errorMessage,
+      })
+      throw new BadRequestException(errorMessage)
+    }
+
+    const updateDto = new PatientUpdateDto()
+    updateDto.phoneNumber = data?.phone
+    updateDto.healthCardType = data?.ohipCard
+    updateDto.travelPassport = data?.travelID
+    updateDto.travelCountry = data?.travelIDIssuingCountry
+    updateDto.homeAddress = data?.address
+    updateDto.homeAddressUnit = data?.addressUnit
+    updateDto.city = data?.city
+    updateDto.country = data?.country
+    updateDto.province = data?.province
+    updateDto.agreeToConductFHHealthAssessment = data?.agreeToConductFHHealthAssessment
+    updateDto.readTermsAndConditions = data?.readTermsAndConditions
+    updateDto.receiveNotificationsFromGov = data?.receiveNotificationsFromGov
+    updateDto.receiveResultsViaEmail = data?.receiveResultsViaEmail
+    updateDto.shareTestResultWithEmployer = data?.shareTestResultWithEmployer
+
+    await this.updateProfile(patient.idPatient, updateDto)
   }
 }

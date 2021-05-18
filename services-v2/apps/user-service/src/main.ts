@@ -20,6 +20,7 @@ import {
 
 import {AdminPatientController} from './controller/v1/admin/patient.controller'
 import {PatientController} from './controller/v1/public/patient.controller'
+import {PatientPubSubController} from './controller/v1/internal/patient-pubsub.controller'
 import {RapidHomeKitCodeController} from './controller/v1/public/rapid-home-kit-code.controller'
 import {TestResultController} from './controller/v1/public/test-result.controller'
 
@@ -37,6 +38,7 @@ import {RapidHomeController} from './controller/v1/public/rapid-home.controller'
   controllers: [
     AdminPatientController,
     PatientController,
+    PatientPubSubController,
     RapidHomeController,
     RapidHomeKitCodeController,
     TestResultController,

@@ -4,6 +4,7 @@ import {
   BadRequestException,
   UnprocessableEntityException,
 } from '@nestjs/common'
+import {LogWarning} from '../utils/logging'
 
 /**
  * Trows UnprocessableEntityException insted of BadRequestException so
@@ -14,6 +15,10 @@ export class OpnValidationPipe extends ValidationPipe {
     try {
       return await super.transform(value, metadata)
     } catch (e) {
+      LogWarning('transform', 'ValidationPipeError', {
+        error: e,
+      })
+
       // Create string for array of validation string
       const message = e.response?.message
 
