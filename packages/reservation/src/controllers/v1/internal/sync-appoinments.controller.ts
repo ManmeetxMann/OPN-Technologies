@@ -18,11 +18,16 @@ import {
   ResultTypes,
   AppointmentDBModel,
 } from '../../../models/appointment'
+import {UserService} from '../../../../../common/src/service/user/user-service'
+import {UserSyncService} from '../../../../../enterprise/src/services/user-sync-service'
 
 class InternalSyncAppointmentController implements IControllerBase {
   public path = '/reservation/internal/api/v1/appointments'
   public router = Router()
-  private appoinmentService = new AppoinmentService()
+  private appoinmentService = new AppoinmentService({
+    userService: new UserService(),
+    userSyncService: new UserSyncService(),
+  })
   private packageService = new PackageService()
   private pcrTestResultsService = new PCRTestResultsService()
 

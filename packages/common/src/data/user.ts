@@ -24,6 +24,7 @@ export type User = {
   readTermsAndConditions?: boolean
   receiveResultsViaEmail?: boolean
   receiveNotificationsFromGov?: boolean
+  status?: UserStatus
 }
 
 export type LocalUser = Auditable & {
@@ -111,3 +112,9 @@ export const userDTO = (user: AuthUser | User, forceAdminEnabled?: boolean): Use
   isAdminEnabled: !!(user as User).admin || forceAdminEnabled,
   delegates: (user as User).delegates ?? [],
 })
+
+export enum UserStatus {
+  NEW = 'NEW',
+  CONFIRMED = 'CONFIRMED',
+  MERGED = 'MERGED',
+}

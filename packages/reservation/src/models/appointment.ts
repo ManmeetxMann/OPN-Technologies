@@ -53,7 +53,7 @@ export type AppointmentDBModel = {
   gender?: Gender
   organizationId?: string
   packageCode?: string
-  phone: number
+  phone: string
   postalCode?: string
   registeredNursePractitioner?: string
   latestResult: ResultTypes
@@ -125,7 +125,7 @@ export type AppointmentAcuityResponse = {
   ohipCard?: string
   location: string
   organizationId?: string
-  phone: number
+  phone: string
   postalCode: string
   readTermsAndConditions: boolean
   receiveNotificationsFromGov: boolean
@@ -236,7 +236,7 @@ export type AppointmentUiDTO = {
   location?: string
   transportRunId?: string
   email: string
-  phone: number
+  phone: string
   deadline?: string
   latestResult?: string
   vialLocation?: string

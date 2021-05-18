@@ -7,8 +7,9 @@ import {
   DataModelFieldMapOperatorType,
 } from '../../../../common/src/data/datamodel.base'
 import UserDbSchema from '../../dbschemas/user.schema'
+import {UserServiceInterface} from '../../../../common/src/interfaces/user-service-interface'
 
-export class UserService {
+export class UserService implements UserServiceInterface {
   private dataStore = new DataStore()
   private userRepository = new UserModel(this.dataStore)
 
@@ -41,7 +42,7 @@ export class UserService {
     await this.userRepository.updateProperties(id, fields)
   }
 
-  private cleanUserData(user: Omit<User, 'id'>): Omit<User, 'id'> {
+  cleanUserData(user: Omit<User, 'id'>): Omit<User, 'id'> {
     const cleanUser = user
     cleanUser.firstName = cleanStringField(user.firstName)
     cleanUser.lastName = cleanStringField(user.lastName)
@@ -64,6 +65,14 @@ export class UserService {
     const results = await this.userRepository.findWhereEqual('email', email.toLowerCase())
     if (results.length > 1) {
       console.warn(`${results.length} users found with email ${email}`)
+    }
+    return results.length > 0 ? results.shift() : null
+  }
+
+  async findOneByPhone(phone: string): Promise<User> {
+    const results = await this.userRepository.findWhereEqual('phoneNumber', phone)
+    if (results.length > 1) {
+      console.warn(`${results.length} users found with phone ${phone}`)
     }
     return results.length > 0 ? results.shift() : null
   }

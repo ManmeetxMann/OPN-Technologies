@@ -18,4 +18,5 @@ export default Joi.object({
   readTermsAndConditions: Joi.boolean(),
   receiveResultsViaEmail: Joi.boolean(),
   receiveNotificationsFromGov: Joi.boolean(),
+  status: Joi.string(),
 })
