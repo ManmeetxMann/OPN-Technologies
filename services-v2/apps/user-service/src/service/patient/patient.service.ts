@@ -443,6 +443,7 @@ export class PatientService {
    * Update or insert push token
    */
   async upsertPushToken(
+    patientId: string,
     registrationId: string,
     registration: Omit<Registration, 'id'>,
   ): Promise<void> {
@@ -454,13 +455,13 @@ export class PatientService {
     }
 
     // create or update token
-    if (osVersion && platform) {
-      await this.registrationService.upsert(registrationId, {
-        osVersion,
-        platform,
-        pushToken,
-      })
-    }
+    const {id} = await this.registrationService.upsert(registrationId, {
+      osVersion,
+      platform,
+      pushToken,
+    })
+
+    await this.patientRepository.update({idPatient: patientId}, {registrationId: id})
   }
 
   async updateProfileWithPubSub(
