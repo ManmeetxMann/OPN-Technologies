@@ -264,6 +264,25 @@ export class PatientCreateAdminDto {
   updatedBy?: string
 }
 
+class FCMRegistration {
+  @ApiPropertyOptional()
+  @IsOptional()
+  pushToken?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  osVersion?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  platform?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  registrationId?: string
+}
+
 export class PatientUpdateDto extends PartialType(PatientCreateDto) {
   @IsOptional()
   id?: string
@@ -273,14 +292,9 @@ export class PatientUpdateDto extends PartialType(PatientCreateDto) {
   @IsBoolean()
   trainingCompletedOn?: boolean | Date
 
-  @ApiPropertyOptional()
-  pushToken?: string
-
-  @ApiPropertyOptional()
-  osVersion?: string
-
-  @ApiPropertyOptional()
-  platform?: string
+  @ApiPropertyOptional({type: FCMRegistration})
+  @IsOptional()
+  registration?: FCMRegistration
 }
 
 export class LinkCodeToAccountDto {
@@ -372,6 +386,7 @@ export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   lastName: patient.lastName,
   dateOfBirth: patient.dateOfBirth,
   email: patient.auth?.email,
+  registrationId: patient?.registrationId,
   phoneNumber: patient.phoneNumber,
   photoUrl: patient.photoUrl,
   organizations: patient.organizations,
