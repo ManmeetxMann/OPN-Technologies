@@ -132,12 +132,14 @@ export class PatientController {
       throw new ForbiddenException('Permission not found for this resource')
     }
 
-    const {registrationId, pushToken, osVersion, platform} = patientUpdateDto
-    await this.patientService.upsertPushToken(registrationId, {
-      osVersion,
-      platform: platform as Platform,
-      pushToken,
-    })
+    if (patientUpdateDto?.registration) {
+      const {registrationId, pushToken, osVersion, platform} = patientUpdateDto.registration
+      await this.patientService.upsertPushToken(id, registrationId, {
+        osVersion,
+        platform: platform as Platform,
+        pushToken,
+      })
+    }
 
     const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
     LogInfo(UserFunctions.update, UserEvent.updateProfile, {

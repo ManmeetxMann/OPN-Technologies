@@ -3,7 +3,10 @@ import {Injectable} from '@nestjs/common'
 // Common
 import DataStore from '@opn-common-v1/data/datastore'
 import {AcuityRepository} from '@opn-reservation-v1/respository/acuity.repository'
-import {decodeAvailableTimeId} from '@opn-reservation-v1/utils/base64-converter'
+import {
+  decodeAvailableTimeId,
+  encodeBookingLocationId,
+} from '@opn-reservation-v1/utils/base64-converter'
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
 
@@ -40,7 +43,6 @@ import {DiscountTypes} from '@opn-reservation-v1/models/coupons'
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
 import {acuityTypesSchema, cartItemSchema} from '@opn-services/common/schemas'
 import {AcuityErrorValues} from '@opn-reservation-v1/models/acuity'
-import {OPNPubSub} from '@opn-common-v1/service/google/pub_sub'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -53,7 +55,6 @@ export class UserCardService {
   private userCartRepository = new UserCartRepository(this.dataStore)
   private userOrderRepository = new UserOrderRepository(this.dataStore)
   private acuityTypesRepository = new AcuityTypesRepository(this.dataStore)
-  private patientUpdatePubSub = new OPNPubSub(this.configService.get('PATIENT_UPDATE_TOPIC'))
 
   private hstTax = 0.13
   public timeSlotNotAvailMsg = 'Time Slot Unavailable: Book Another Slot'
@@ -96,12 +97,6 @@ export class UserCardService {
     ]
 
     return paymentSummary
-  }
-
-  postPatientUpdate(data: Partial<CartAddDto>, attributes: {userId: string}): void {
-    this.patientUpdatePubSub.publish(data, {
-      userId: attributes.userId,
-    })
   }
 
   private async fetchUserAllCartItem(
@@ -210,10 +205,24 @@ export class UserCardService {
     if (!cartItemExist) {
       throw new ResourceNotFoundException('userCart-item with given id not found')
     }
+
+    const appointment = cartItemExist.appointment
+
+    // Same encoded id as booking locations list returns
+    const idBuf = {
+      appointmentTypeId: appointment.appointmentTypeId,
+      calendarTimezone: appointment.calendarTimezone,
+      calendarName: appointment.calendarName,
+      calendarId: appointment.calendarId,
+      organizationId: appointment.organizationId,
+      packageCode: appointment.packageCode,
+    }
+    const id = encodeBookingLocationId(idBuf)
+
     return {
       patient: cartItemExist.patient,
       appointment: {
-        id: cartItemExist.appointment.slotId,
+        id,
         ..._.omit(cartItemExist.appointment, 'slotId'),
       },
     }
@@ -255,13 +264,13 @@ export class UserCardService {
       discountedError: cartDB.discountData?.error,
     }))
 
-    const couponCode = cartData.find(cartItem => cartItem.discountData?.couponId !== null)
+    const couponCode = cartData.find(cartItem => cartItem?.discountData?.name)
     return {
       cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
       cart: {
-        couponCode: couponCode ? couponCode.discountData.couponId : null
-      }
+        couponCode: couponCode?.discountData ? couponCode.discountData.name : null,
+      },
     }
   }
 
@@ -290,13 +299,13 @@ export class UserCardService {
       return cartItem
     })
 
-    const couponCode = cartDBItems.find(cartItem => cartItem.discountData?.couponId !== null)
+    const couponCode = cartDBItems.find(cartItem => cartItem?.discountData?.name)
     return {
       cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
       cart: {
-        couponCode: couponCode ? couponCode.discountData.couponId : null
-      }
+        couponCode: couponCode?.discountData ? couponCode.discountData.name : null,
+      },
     }
   }
 
@@ -351,10 +360,7 @@ export class UserCardService {
     const cardItemDdModel = items.map(async item => {
       let appointment = null
       try {
-        appointment = {
-          slotId: item.slotId,
-          ...decodeAvailableTimeId(item.slotId),
-        }
+        appointment = decodeAvailableTimeId(item.slotId)
       } catch (_) {
         throw new BadRequestException('Invalid slotId')
       }
@@ -397,10 +403,7 @@ export class UserCardService {
       throw new ResourceNotFoundException('userCart-item with given id not found')
     }
 
-    const appointment = {
-      slotId: cartItems.slotId,
-      ...decodeAvailableTimeId(cartItems.slotId),
-    }
+    const appointment = decodeAvailableTimeId(cartItems.slotId)
 
     const cartItem = {
       id: cartItemExist.id,
@@ -545,13 +548,13 @@ export class UserCardService {
       discountedError: cartDB.discountData.error,
     }))
 
-    const couponCode = discountedCartItems.find(cartItem => cartItem.discountData?.couponId !== null)
+    const couponCode = discountedCartItems.find(cartItem => cartItem?.discountData?.name)
     return {
       cartItems: cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
       cart: {
-        couponCode: couponCode ? couponCode.discountData.couponId : null
-      }
+        couponCode: couponCode?.discountData ? couponCode.discountData.name : null,
+      },
     }
   }
   private countDiscount(

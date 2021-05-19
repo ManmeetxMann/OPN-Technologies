@@ -5,7 +5,6 @@ export const cartItemSchema = Joi.object({
   cartItemId: Joi.string().required(),
   patient: Joi.any(),
   appointment: {
-    slotId: Joi.string(),
     appointmentTypeId: Joi.number(),
     calendarTimezone: Joi.string(),
     calendarId: Joi.number(),

@@ -8,7 +8,7 @@ export type CardItemDBModel = {
   id: string
   cartItemId: string
   patient: Omit<CartAddDto, 'slotId'>
-  appointment: AvailableTimeIdParams & {slotId: string}
+  appointment: AvailableTimeIdParams
   appointmentType: Pick<AppointmentTypes, 'name' | 'price'>
   discountData?: Pick<
     CouponCheckResponse,
