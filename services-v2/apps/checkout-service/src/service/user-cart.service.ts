@@ -247,12 +247,12 @@ export class UserCardService {
       discountedError: cartDB.discountData?.error,
     }))
 
-    const couponCode = cartData.find(cartItem => cartItem.discountData?.couponId !== null)
+    const couponCode = cartData.find(cartItem => cartItem?.discountData?.name)
     return {
       cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
       cart: {
-        couponCode: couponCode?.discountData ? couponCode.discountData.couponId : null,
+        couponCode: couponCode?.discountData ? couponCode.discountData.name : null,
       },
     }
   }
@@ -282,12 +282,12 @@ export class UserCardService {
       return cartItem
     })
 
-    const couponCode = cartDBItems.find(cartItem => cartItem.discountData?.couponId !== null)
+    const couponCode = cartDBItems.find(cartItem => cartItem?.discountData?.name)
     return {
       cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
       cart: {
-        couponCode: couponCode?.discountData ? couponCode.discountData.couponId : null,
+        couponCode: couponCode?.discountData ? couponCode.discountData.name : null,
       },
     }
   }
@@ -537,14 +537,12 @@ export class UserCardService {
       discountedError: cartDB.discountData.error,
     }))
 
-    const couponCode = discountedCartItems.find(
-      cartItem => cartItem.discountData?.couponId !== null,
-    )
+    const couponCode = discountedCartItems.find(cartItem => cartItem?.discountData?.name)
     return {
       cartItems: cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
       cart: {
-        couponCode: couponCode?.discountData ? couponCode.discountData.couponId : null,
+        couponCode: couponCode?.discountData ? couponCode.discountData.name : null,
       },
     }
   }
