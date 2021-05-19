@@ -1,6 +1,5 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {ResponseStatus, ResponseStatusCodes} from './response-status'
-import {of} from '@opn-common-v1/utils/response-wrapper'
 
 /**
  * Generic response wrapper.
