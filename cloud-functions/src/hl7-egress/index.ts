@@ -15,6 +15,7 @@ const client = hl7.Server.createTcpClient({
       console.log('*******ERROR********')
       console.log(err.message)
     } else {
+      console.log('*******SUCCESS ********')
       // tslint:disable: no-console
       console.log(ack.log())
     }
@@ -195,12 +196,13 @@ const requestHandler: EventFunctionWithCallback = async (pubSubMessage, context,
 
 const httpTestHandler: HttpFunction = async (req, res) => {
   // tslint:disable: no-console
-  console.log(req.body)
+  //console.log(req.body)
   const appointmentDataToHL7ORM = new AppointmentDataToHL7ORM(req.body)
   const message = appointmentDataToHL7ORM.get()
   // tslint:disable: no-console
-  console.log(message)
+  //console.log(message)
   client.send(message)
+  console.log('Message Sent')
   res.send('No function to test!')
 }
 
