@@ -8,7 +8,6 @@ import {
   OpnSources,
   RequiredUserPermission,
 } from '@opn-services/common/types/authorization'
-import {OpnSources as OpnPlatforms} from '@opn-common-v1/types/authorization'
 import {
   AuthUserDecorator,
   Roles,
