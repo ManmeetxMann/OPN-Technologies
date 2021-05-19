@@ -1546,13 +1546,13 @@ export class AppoinmentService {
         count,
       }),
     )
-    const appointmentStatsByLabIdArr = Object.entries(appointmentStatsByLabId)
-      .filter(([labId]) => labId !== 'undefined') // @TODO REMOVE THIS FILTER AFTER MIGRATING APPOINTMENTS
-      .map(([labId, count]) => ({
+    const appointmentStatsByLabIdArr = Object.entries(appointmentStatsByLabId).map(
+      ([labId, count]) => ({
         id: labId === 'undefined' ? 'null' : labId,
         name: labId === 'undefined' ? 'None' : labs[labId],
         count,
-      }))
+      }),
+    )
     return {
       appointmentStatusArray: appointmentStatsByTypesArr,
       orgIdArray: appointmentStatsByOrgIdArr,
