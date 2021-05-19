@@ -35,10 +35,12 @@ import {OpnConfigService} from '@opn-services/common/services'
 
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import DataStore from '@opn-common-v1/data/datastore'
-import {AuthUser} from '@opn-common-v1/data/user'
+import {AuthUser, UserStatus} from '@opn-common-v1/data/user'
 import {Registration} from '@opn-common-v1/data/registration'
 import {RegistrationService} from '@opn-common-v1/service/registry/registration-service'
 import {MessagingFactory} from '@opn-common-v1/service/messaging/messaging-service'
+import {ResourceNotFoundException} from '@opn-services/common/exception'
+import {PCRTestResultsRepository} from '@opn-services/user/repository/test-result.repository'
 
 @Injectable()
 export class PatientService {
@@ -58,6 +60,7 @@ export class PatientService {
 
   private dataStore = new DataStore()
   private userRepository = new UserRepository(this.dataStore)
+  private testResultRepository = new PCRTestResultsRepository(this.dataStore)
   private messaging = MessagingFactory.getPushableMessagingService()
   private registrationService = new RegistrationService()
 
@@ -136,10 +139,7 @@ export class PatientService {
     const userData = {
       firstName: data.firstName,
       lastName: data.lastName,
-      phone: {
-        diallingCode: 0,
-        number: Number(data.phoneNumber),
-      },
+      phoneNumber: data.phoneNumber,
       authUserId: data.authUserId,
       active: false,
       organizationIds: [],
@@ -182,10 +182,7 @@ export class PatientService {
       lastName: data.lastName,
       registrationId: data.registrationId ?? null,
       photo: data.photoUrl ?? null,
-      phone: {
-        diallingCode: 0,
-        number: Number(data.phoneNumber),
-      },
+      phoneNumber: data.phoneNumber,
       authUserId: data.authUserId,
       active: false,
       organizationIds,
@@ -286,6 +283,7 @@ export class PatientService {
     entity.photoUrl = data.photoUrl
     entity.registrationId = data.registrationId
     entity.consentFileUrl = data.consentFileUrl
+    entity.isEmailVerified = true
 
     return this.patientRepository.save(entity)
   }
@@ -399,6 +397,47 @@ export class PatientService {
     organization.patientId = data.idPatient
     organization.firebaseOrganizationId = data.organizationId ?? publicOrg
     return this.patientToOrganizationRepository.save(organization)
+  }
+
+  async getUnconfirmedPatients(
+    phoneNumber: string,
+    email: string,
+    authUserId: string,
+  ): Promise<(Omit<Patient, 'generatePublicId'> & {resultsCount: number})[]> {
+    console.log(phoneNumber, email)
+    const patientQuery = this.patientRepository
+      .createQueryBuilder('patient')
+      .innerJoinAndSelect('patient.auth', 'auth')
+      .where('status = :status', {status: UserStatus.NEW})
+      .andWhere('auth.phoneNumber = :phoneNumber', {
+        phoneNumber,
+      })
+
+    const patient = await this.patientRepository.findOne({firebaseKey: authUserId})
+
+    if (!patient) {
+      throw new ResourceNotFoundException('User with given id not found')
+    }
+
+    if (email && patient.isEmailVerified) {
+      patientQuery.orWhere('auth.email = :email AND status = :status', {email})
+    }
+
+    const patients = await patientQuery.getMany()
+
+    const patientKeys = patients.map(patient => patient.firebaseKey)
+
+    const testResults = await this.testResultRepository.findWhereIn('userId', patientKeys)
+
+    return patients.map(patient => ({
+      ...patient,
+      resultsCount: testResults.reduce((previousValue, currentValue) => {
+        if (currentValue.userId === patient.firebaseKey) {
+          return previousValue + 1
+        }
+        return previousValue
+      }, 0),
+    }))
   }
 
   async getDirectDependents(patientId: string): Promise<Patient> {

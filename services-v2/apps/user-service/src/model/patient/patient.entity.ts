@@ -35,8 +35,8 @@ export class PatientAuth {
   patientId: string
 
   @Column()
-  @ApiProperty({required: true})
-  authUserId: string
+  @Column({nullable: true, default: null})
+  authUserId?: string
 
   @Column({nullable: true, default: null})
   @ApiProperty()
