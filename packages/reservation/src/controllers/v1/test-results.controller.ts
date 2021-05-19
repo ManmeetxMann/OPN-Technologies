@@ -59,7 +59,7 @@ class TestResultsController implements IControllerBase {
   testResultDetails = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {id} = req.params as SingleTestResultsRequest
-      const userId = 'dCpEb9F6sPIlVaEDy70B' //getUserId(res.locals.authenticatedUser)
+      const userId = getUserId(res.locals.authenticatedUser)
 
       const {
         appointment,
