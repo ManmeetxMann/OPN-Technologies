@@ -545,7 +545,9 @@ export class UserCardService {
       discountedError: cartDB.discountData.error,
     }))
 
-    const couponCode = discountedCartItems.find(cartItem => cartItem.discountData?.couponId !== null)
+    const couponCode = discountedCartItems.find(
+      cartItem => cartItem.discountData?.couponId !== null,
+    )
     return {
       cartItems: cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),

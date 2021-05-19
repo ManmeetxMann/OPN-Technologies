@@ -13,7 +13,7 @@ import {Auditable} from '../../../../../libs/common/src/model'
 import {ApiProperty} from '@nestjs/swagger'
 import {IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsString} from 'class-validator'
 import {PatientDigitalConsent, PatientHealth, PatientTravel} from './patient-profile.entity'
-import {UserStatus} from "../../../../../../packages/common/src/data/user"
+import {UserStatus} from '../../../../../../packages/common/src/data/user'
 import {PatientToDelegates, PatientToOrganization} from './patient-relations.entity'
 import {Organization} from '../organization/organization.entity'
 
