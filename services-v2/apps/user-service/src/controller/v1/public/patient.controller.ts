@@ -78,7 +78,7 @@ export class PatientController {
     @PublicDecorator() firebaseAuthUser: AuthUser,
     @Body() patientDto: PatientCreateDto,
     @OpnHeaders() opnHeaders: OpnCommonHeaders,
-  ): Promise<ResponseWrapper<PatientUpdateDto>> {
+  ): Promise<ResponseWrapper<Partial<PatientCreateDto> & {lastAppointment: Date; trainingCompletedOn: Date; resultExitsForProvidedEmail?: boolean}>> {
     let patient: Patient
 
     patientDto.authUserId = firebaseAuthUser.authUserId
