@@ -359,7 +359,7 @@ export type PatientUpdatePubSubProfile = {
   shareTestResultWithEmployer: boolean
 }
 
-export const CreatePatientDTOResponse = (patient): PatientDTO => ({
+export const CreatePatientDTOResponse = (patient: Patient & {resultExitsForProvidedEmail?: boolean}): PatientDTO => ({
   idPatient: patient.idPatient,
   firstName: patient.firstName,
   lastName: patient.lastName,

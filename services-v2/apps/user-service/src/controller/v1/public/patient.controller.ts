@@ -29,7 +29,6 @@ import {
   patientProfileDto,
   PatientCreateDto,
   CreatePatientDTOResponse,
-  PatientDTO,
   AuthenticateDto,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
