@@ -90,7 +90,7 @@ runs:
       npm run build
       gcloud functions deploy ${{ inputs.function_name }} \
         --entry-point=requestHandler \
-        --egress-settings=private-ranges-only
+        --egress-settings=private-ranges-only \
         --source=./dist \
         --runtime=nodejs12 \
         --memory=128MB \
