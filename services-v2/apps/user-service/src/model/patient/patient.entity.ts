@@ -11,8 +11,9 @@ import {
 } from 'typeorm'
 import {Auditable} from '../../../../../libs/common/src/model'
 import {ApiProperty} from '@nestjs/swagger'
-import {IsBoolean, IsEmail, IsString} from 'class-validator'
+import {IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsString} from 'class-validator'
 import {PatientDigitalConsent, PatientHealth, PatientTravel} from './patient-profile.entity'
+import {UserStatus} from '../../../../../../packages/common/src/data/user'
 import {PatientToDelegates, PatientToOrganization} from './patient-relations.entity'
 import {Organization} from '../organization/organization.entity'
 
@@ -257,6 +258,12 @@ export class Patient extends Auditable {
   @ApiProperty()
   @IsString()
   consentFileUrl?: string
+
+  @Column({type: 'enum', enum: UserStatus, nullable: true, default: UserStatus.CONFIRMED})
+  @IsString()
+  @IsNotEmpty()
+  @IsEnum(UserStatus)
+  status?: UserStatus
 
   @Column({type: 'timestamp', nullable: true, default: null})
   @ApiProperty()

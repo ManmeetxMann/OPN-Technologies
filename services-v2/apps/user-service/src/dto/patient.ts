@@ -1,15 +1,14 @@
 import {ApiProperty, ApiPropertyOptional, OmitType, PartialType} from '@nestjs/swagger'
-import {PageableRequestFilter} from '@opn-services/common/dto'
-import {Type} from 'class-transformer'
+import {PageableRequestFilter, PubSubMessage, PubSubPayload} from '@opn-services/common/dto'
 import {
   IsBoolean,
+  IsDefined,
   IsEmail,
   IsNotEmpty,
   IsNumberString,
   IsOptional,
   IsString,
   Length,
-  ValidateNested,
 } from 'class-validator'
 import {Organization} from '../model/organization/organization.entity'
 import {Patient} from '../model/patient/patient.entity'
@@ -265,6 +264,25 @@ export class PatientCreateAdminDto {
   updatedBy?: string
 }
 
+class FCMRegistration {
+  @ApiPropertyOptional()
+  @IsOptional()
+  pushToken?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  osVersion?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  platform?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  registrationId?: string
+}
+
 export class PatientUpdateDto extends PartialType(PatientCreateDto) {
   @IsOptional()
   id?: string
@@ -274,14 +292,9 @@ export class PatientUpdateDto extends PartialType(PatientCreateDto) {
   @IsBoolean()
   trainingCompletedOn?: boolean | Date
 
-  @ApiPropertyOptional()
-  pushToken?: string
-
-  @ApiPropertyOptional()
-  osVersion?: string
-
-  @ApiPropertyOptional()
-  platform?: string
+  @ApiPropertyOptional({type: FCMRegistration})
+  @IsOptional()
+  registration?: FCMRegistration
 }
 
 export class LinkCodeToAccountDto {
@@ -312,20 +325,29 @@ class PatientUpdatePubSubAttributes {
   @ApiProperty()
   @IsString()
   userId: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  organizationId: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  actionType: string
 }
 
-export class PatientUpdatePubSubMessage {
-  @ApiProperty()
-  @IsString()
-  data: string
-
+class PatientUpdatePubSubMessage extends PubSubMessage<PatientUpdatePubSubAttributes> {
   @ApiProperty({type: PatientUpdatePubSubAttributes})
-  @Type(() => PatientUpdatePubSubAttributes)
-  @ValidateNested()
+  @IsDefined()
   attributes: PatientUpdatePubSubAttributes
 }
 
-export type PatientUpdatePubSubPayload = {
+export class PatientUpdatePubSubPayload extends PubSubPayload<PatientUpdatePubSubMessage> {
+  @ApiProperty({type: PatientUpdatePubSubMessage})
+  @IsDefined()
+  message: PatientUpdatePubSubMessage
+}
+
+export type PatientUpdatePubSubProfile = {
   phone: string
   gender: string
   ohipCard: string
@@ -358,11 +380,13 @@ export const CreatePatientDTOResponse = (patient: Patient): PatientDTO => ({
 
 export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   id: patient.idPatient,
+  firebaseKey: patient?.firebaseKey,
   patientPublicId: patient.patientPublicId,
   firstName: patient.firstName,
   lastName: patient.lastName,
   dateOfBirth: patient.dateOfBirth,
   email: patient.auth?.email,
+  registrationId: patient?.registrationId,
   phoneNumber: patient.phoneNumber,
   photoUrl: patient.photoUrl,
   organizations: patient.organizations,

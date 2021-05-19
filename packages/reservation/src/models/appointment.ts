@@ -53,7 +53,7 @@ export type AppointmentDBModel = {
   gender?: Gender
   organizationId?: string
   packageCode?: string
-  phone: number
+  phone: string
   postalCode?: string
   registeredNursePractitioner?: string
   latestResult: ResultTypes
@@ -80,6 +80,9 @@ export type AppointmentDBModel = {
   labId?: string
   scheduledPushesToSend?: Array<ReservationPushTypes>
   checkedInOn?: firestore.Timestamp
+  city?: string
+  province?: string
+  country?: string
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
@@ -125,7 +128,7 @@ export type AppointmentAcuityResponse = {
   ohipCard?: string
   location: string
   organizationId?: string
-  phone: number
+  phone: string
   postalCode: string
   readTermsAndConditions: boolean
   receiveNotificationsFromGov: boolean
@@ -136,6 +139,9 @@ export type AppointmentAcuityResponse = {
   time: string
   travelID?: string
   travelIDIssuingCountry?: string
+  city?: string
+  province?: string
+  country?: string
 }
 
 export type LabelsAcuityResponse = {
@@ -236,7 +242,7 @@ export type AppointmentUiDTO = {
   location?: string
   transportRunId?: string
   email: string
-  phone: number
+  phone: string
   deadline?: string
   latestResult?: string
   vialLocation?: string

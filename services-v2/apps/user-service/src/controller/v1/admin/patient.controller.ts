@@ -25,7 +25,7 @@ import {BadRequestException, ResourceNotFoundException} from '@opn-services/comm
 @ApiTags('Patients - Admin')
 @ApiBearerAuth()
 @ApiCommonHeaders()
-@Controller('/api/v1/admin/patients')
+@Controller('/admin/api/v1/patients')
 @UseGuards(AuthGuard)
 export class AdminPatientController {
   constructor(private patientService: PatientService) {}
@@ -96,7 +96,7 @@ export class AdminPatientController {
       createdBy: authUser.id,
     })
 
-    return ResponseWrapper.actionSucceed(patient)
+    return ResponseWrapper.actionSuccess(patient, 'Patient created successfully')
   }
 
   @Put('/:patientId')

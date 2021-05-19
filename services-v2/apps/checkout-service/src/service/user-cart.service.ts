@@ -3,7 +3,10 @@ import {Injectable} from '@nestjs/common'
 // Common
 import DataStore from '@opn-common-v1/data/datastore'
 import {AcuityRepository} from '@opn-reservation-v1/respository/acuity.repository'
-import {decodeAvailableTimeId} from '@opn-reservation-v1/utils/base64-converter'
+import {
+  decodeAvailableTimeId,
+  encodeBookingLocationId,
+} from '@opn-reservation-v1/utils/base64-converter'
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
 
@@ -40,7 +43,6 @@ import {DiscountTypes} from '@opn-reservation-v1/models/coupons'
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
 import {acuityTypesSchema, cartItemSchema} from '@opn-services/common/schemas'
 import {AcuityErrorValues} from '@opn-reservation-v1/models/acuity'
-import {OPNPubSub} from '@opn-common-v1/service/google/pub_sub'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -53,7 +55,6 @@ export class UserCardService {
   private userCartRepository = new UserCartRepository(this.dataStore)
   private userOrderRepository = new UserOrderRepository(this.dataStore)
   private acuityTypesRepository = new AcuityTypesRepository(this.dataStore)
-  private patientUpdatePubSub = new OPNPubSub(this.configService.get('PATIENT_UPDATE_TOPIC'))
 
   private hstTax = 0.13
   public timeSlotNotAvailMsg = 'Time Slot Unavailable: Book Another Slot'
@@ -98,12 +99,6 @@ export class UserCardService {
     return paymentSummary
   }
 
-  postPatientUpdate(data: Partial<CartAddDto>, attributes: {userId: string}): void {
-    this.patientUpdatePubSub.publish(data, {
-      userId: attributes.userId,
-    })
-  }
-
   private async fetchUserAllCartItem(
     userId: string,
     organizationId: string,
@@ -136,23 +131,6 @@ export class UserCardService {
         })
       }
     }
-
-    // TODO check why this validation call returns weird result
-    // const timeCheckItems = _.uniqBy(cartDdItems, (elem) => {
-    //   return JSON.stringify(
-    //     _.pick(elem, [
-    //       'appointment.time',
-    //       'appointment.appointmentTypeId',
-    //       'appointment.calendarId',
-    //     ]),
-    //   )
-    // }).map((el) => ({
-    //   datetime: el.appointment.time,
-    //   appointmentTypeID: el.appointment.appointmentTypeId,
-    //   calendarId: el.appointment.calendarId,
-    // }))
-    // console.log(timeCheckItems)
-    // console.log(await this.acuityRepository.getAvailableByTimes(timeCheckItems))
 
     // Fetch slotsAvailable for each variant from acuity
     for (const acuitySlot of acuitySlots) {
@@ -227,9 +205,26 @@ export class UserCardService {
     if (!cartItemExist) {
       throw new ResourceNotFoundException('userCart-item with given id not found')
     }
+
+    const appointment = cartItemExist.appointment
+
+    // Same encoded id as booking locations list returns
+    const idBuf = {
+      appointmentTypeId: appointment.appointmentTypeId,
+      calendarTimezone: appointment.calendarTimezone,
+      calendarName: appointment.calendarName,
+      calendarId: appointment.calendarId,
+      organizationId: appointment.organizationId,
+      packageCode: appointment.packageCode,
+    }
+    const id = encodeBookingLocationId(idBuf)
+
     return {
       patient: cartItemExist.patient,
-      appointment: cartItemExist.appointment,
+      appointment: {
+        id,
+        ..._.omit(cartItemExist.appointment, 'slotId'),
+      },
     }
   }
 
@@ -269,9 +264,13 @@ export class UserCardService {
       discountedError: cartDB.discountData?.error,
     }))
 
+    const couponCode = cartData.find(cartItem => cartItem?.discountData?.name)
     return {
       cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
+      cart: {
+        couponCode: couponCode?.discountData ? couponCode.discountData.name : null,
+      },
     }
   }
 
@@ -300,9 +299,13 @@ export class UserCardService {
       return cartItem
     })
 
+    const couponCode = cartDBItems.find(cartItem => cartItem?.discountData?.name)
     return {
       cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
+      cart: {
+        couponCode: couponCode?.discountData ? couponCode.discountData.name : null,
+      },
     }
   }
 
@@ -477,7 +480,6 @@ export class UserCardService {
 
   async discount(coupon: string, userId: string, organizationId: string): Promise<CartResponseDto> {
     const userOrgId = `${userId}_${organizationId}`
-
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
 
     const cardItems = await this.fetchUserAllCartItem(userId, organizationId)
@@ -545,9 +547,14 @@ export class UserCardService {
       ),
       discountedError: cartDB.discountData.error,
     }))
+
+    const couponCode = discountedCartItems.find(cartItem => cartItem?.discountData?.name)
     return {
       cartItems: cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
+      cart: {
+        couponCode: couponCode?.discountData ? couponCode.discountData.name : null,
+      },
     }
   }
   private countDiscount(
@@ -559,15 +566,6 @@ export class UserCardService {
     return discountType === DiscountTypes.percentage
       ? initialPrice - (initialPrice * discountAmount) / 100
       : initialPrice - discountAmount
-  }
-  /**
-   * converts acuity price format to Stripe amount in cent
-   */
-  stripePriceWithTax(acuityPrice: string): number {
-    const price = parseFloat(acuityPrice)
-    const tax = price + price * this.hstTax
-    const total = price + tax
-    return total * 100
   }
 
   /**

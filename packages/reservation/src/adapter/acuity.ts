@@ -471,7 +471,7 @@ abstract class AcuityAdapter {
     appointment: AppointmentAcuityResponse,
   ): AppointmentAcuityResponse {
     //appointment.dateOfBirth = ''//Required
-    appointment.organizationId = null
+    appointment.organizationId = Config.get('PUBLIC_ORG_ID')
     appointment.registeredNursePractitioner = ''
     appointment.address = ''
     appointment.addressUnit = ''
@@ -486,6 +486,9 @@ abstract class AcuityAdapter {
     appointment.travelID = ''
     appointment.gender = null
     appointment.postalCode = ''
+    appointment.city = null
+    appointment.province = null
+    appointment.country = null
 
     if (Array.isArray(appointment.forms)) {
       appointment.forms.forEach((form) => {
@@ -500,7 +503,7 @@ abstract class AcuityAdapter {
             appointment.barCode = field.value
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_ORGANIZATION_ID'))) {
-            appointment.organizationId = field.value
+            appointment.organizationId = field.value ?? Config.get('PUBLIC_ORG_ID')
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS'))) {
             appointment.address = field.value
@@ -545,6 +548,15 @@ abstract class AcuityAdapter {
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_POSTAL_CODE'))) {
             appointment.postalCode = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_CITY'))) {
+            appointment.city = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_PROVINCE'))) {
+            appointment.province = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_COUNTRY'))) {
+            appointment.country = field.value
           }
         })
       })
