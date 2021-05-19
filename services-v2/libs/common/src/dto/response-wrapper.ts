@@ -1,5 +1,6 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {ResponseStatus, ResponseStatusCodes} from './response-status'
+import {of} from '@opn-common-v1/utils/response-wrapper'
 
 /**
  * Generic response wrapper.
@@ -48,5 +49,9 @@ export class ResponseWrapper<T = unknown> {
 
   static actionFailed<T>(message?: string, data: T = null): ResponseWrapper<T> {
     return ResponseWrapper.of(data, ResponseStatusCodes.Failed, message)
+  }
+
+  static actionSuccess<T>(data: T = null, message = ''): ResponseWrapper<T> {
+    return ResponseWrapper.of(data, ResponseStatusCodes.Succeed, message)
   }
 }
