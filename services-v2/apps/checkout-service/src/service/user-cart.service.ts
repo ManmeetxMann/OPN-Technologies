@@ -260,7 +260,7 @@ export class UserCardService {
       cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
       cart: {
-        couponCode: couponCode ? couponCode.discountData.couponId : null
+        couponCode: couponCode.discountData ? couponCode.discountData.couponId : null
       }
     }
   }
@@ -295,7 +295,7 @@ export class UserCardService {
       cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
       cart: {
-        couponCode: couponCode ? couponCode.discountData.couponId : null
+        couponCode: couponCode.discountData ? couponCode.discountData.couponId : null
       }
     }
   }
@@ -550,7 +550,7 @@ export class UserCardService {
       cartItems: cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
       cart: {
-        couponCode: couponCode ? couponCode.discountData.couponId : null
+        couponCode: couponCode.discountData ? couponCode.discountData.couponId : null
       }
     }
   }
