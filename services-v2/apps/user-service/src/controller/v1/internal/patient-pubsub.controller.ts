@@ -18,12 +18,11 @@ export class PatientPubSubController {
   async updatePatient(@Body() payload: PatientUpdatePubSubPayload): Promise<ResponseWrapper> {
     const {data, attributes} = payload.message
     const publishedData = await OPNPubSub.getPublishedData(data)
-
-    const updatePayload = publishedData as Partial<PatientUpdatePubSubProfile>
+    const updatePayload = publishedData['appointment'] as Partial<PatientUpdatePubSubProfile>
 
     LogInfo('updatePatient', 'UpdatePatientFromPubSub', {
       attributes,
-      data, //TODO: remove: for now debugging purpose
+      publishedData, //TODO: remove: for now debugging purpose
     })
 
     await this.patientService.updateProfileWithPubSub(attributes.userId, updatePayload)
