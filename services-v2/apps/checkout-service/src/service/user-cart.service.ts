@@ -255,7 +255,7 @@ export class UserCardService {
       discountedError: cartDB.discountData?.error,
     }))
 
-    const couponCode = cartData.find(cartItem => cartItem.discountData?.name !== null)
+    const couponCode = cartData.find(cartItem => cartItem?.discountData?.name)
     return {
       cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
@@ -290,7 +290,7 @@ export class UserCardService {
       return cartItem
     })
 
-    const couponCode = cartDBItems.find(cartItem => cartItem.discountData?.name !== null)
+    const couponCode = cartDBItems.find(cartItem => cartItem?.discountData?.name)
     return {
       cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
@@ -545,7 +545,7 @@ export class UserCardService {
       discountedError: cartDB.discountData.error,
     }))
 
-    const couponCode = discountedCartItems.find(cartItem => cartItem.discountData?.name !== null)
+    const couponCode = discountedCartItems.find(cartItem => cartItem?.discountData?.name)
     return {
       cartItems: cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
