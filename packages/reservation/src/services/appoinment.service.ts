@@ -470,6 +470,7 @@ export class AppoinmentService {
       latestResult: ResultTypes
       couponCode?: string
       userId?: string
+      labId?: string
     },
   ): Promise<AppointmentDBModel> {
     const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
@@ -539,6 +540,7 @@ export class AppoinmentService {
       latestResult: ResultTypes
       couponCode?: string
       userId?: string
+      labId?: string
     },
     appointmentDb?: AppointmentDBModel,
   ): Promise<Omit<AppointmentDBModel, 'id'>> {
@@ -569,6 +571,7 @@ export class AppoinmentService {
       appointmentStatus,
       latestResult,
       couponCode = '',
+      labId = null,
       userId,
     } = additionalData
 
@@ -613,6 +616,7 @@ export class AppoinmentService {
       testType: await this.appointmentToTestTypeRepository.getTestType(
         acuityAppointment.appointmentTypeID,
       ),
+      labId: appointmentDb?.labId ?? labId,
       gender: acuityAppointment.gender || Gender.PreferNotToSay,
       postalCode: acuityAppointment.postalCode,
       scheduledPushesToSend: [
