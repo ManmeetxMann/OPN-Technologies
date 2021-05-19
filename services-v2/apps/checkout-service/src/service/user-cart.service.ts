@@ -3,7 +3,10 @@ import {Injectable} from '@nestjs/common'
 // Common
 import DataStore from '@opn-common-v1/data/datastore'
 import {AcuityRepository} from '@opn-reservation-v1/respository/acuity.repository'
-import {decodeAvailableTimeId} from '@opn-reservation-v1/utils/base64-converter'
+import {
+  decodeAvailableTimeId,
+  encodeBookingLocationId,
+} from '@opn-reservation-v1/utils/base64-converter'
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
 
@@ -210,10 +213,24 @@ export class UserCardService {
     if (!cartItemExist) {
       throw new ResourceNotFoundException('userCart-item with given id not found')
     }
+
+    const appointment = cartItemExist.appointment
+
+    // Same encoded id as booking locations list returns
+    const idBuf = {
+      appointmentTypeId: appointment.appointmentTypeId,
+      calendarTimezone: appointment.calendarTimezone,
+      calendarName: appointment.calendarName,
+      calendarId: appointment.calendarId,
+      organizationId: appointment.organizationId,
+      packageCode: appointment.packageCode,
+    }
+    const id = encodeBookingLocationId(idBuf)
+
     return {
       patient: cartItemExist.patient,
       appointment: {
-        id: cartItemExist.appointment.slotId,
+        id,
         ..._.omit(cartItemExist.appointment, 'slotId'),
       },
     }
@@ -351,10 +368,7 @@ export class UserCardService {
     const cardItemDdModel = items.map(async item => {
       let appointment = null
       try {
-        appointment = {
-          slotId: item.slotId,
-          ...decodeAvailableTimeId(item.slotId),
-        }
+        appointment = decodeAvailableTimeId(item.slotId)
       } catch (_) {
         throw new BadRequestException('Invalid slotId')
       }
@@ -397,10 +411,7 @@ export class UserCardService {
       throw new ResourceNotFoundException('userCart-item with given id not found')
     }
 
-    const appointment = {
-      slotId: cartItems.slotId,
-      ...decodeAvailableTimeId(cartItems.slotId),
-    }
+    const appointment = decodeAvailableTimeId(cartItems.slotId)
 
     const cartItem = {
       id: cartItemExist.id,
