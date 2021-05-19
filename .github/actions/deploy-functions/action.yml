@@ -8,6 +8,10 @@ inputs:
     description: 'Secret File Nmae'
     required: true
     default: ""
+  trigger_topic:
+    description: 'Trigger Topic'
+    required: true
+    default: ""
 
 runs:
   using: 'composite'
@@ -84,7 +88,7 @@ runs:
         --source=./dist \
         --runtime=nodejs12 \
         --memory=128MB \
-        --trigger-topic=pcr-test-topic \
+        --trigger-topic=${{ inputs.trigger_topic }} \
         --env-vars-file=./.env
       echo "::endgroup::"
     shell: bash
