@@ -137,23 +137,6 @@ export class UserCardService {
       }
     }
 
-    // TODO check why this validation call returns weird result
-    // const timeCheckItems = _.uniqBy(cartDdItems, (elem) => {
-    //   return JSON.stringify(
-    //     _.pick(elem, [
-    //       'appointment.time',
-    //       'appointment.appointmentTypeId',
-    //       'appointment.calendarId',
-    //     ]),
-    //   )
-    // }).map((el) => ({
-    //   datetime: el.appointment.time,
-    //   appointmentTypeID: el.appointment.appointmentTypeId,
-    //   calendarId: el.appointment.calendarId,
-    // }))
-    // console.log(timeCheckItems)
-    // console.log(await this.acuityRepository.getAvailableByTimes(timeCheckItems))
-
     // Fetch slotsAvailable for each variant from acuity
     for (const acuitySlot of acuitySlots) {
       const response = await this.acuityRepository.getAvailableSlots(
@@ -229,7 +212,10 @@ export class UserCardService {
     }
     return {
       patient: cartItemExist.patient,
-      appointment: cartItemExist.appointment,
+      appointment: {
+        id: cartItemExist.appointment.slotId,
+        ..._.omit(cartItemExist.appointment, 'slotId'),
+      },
     }
   }
 
@@ -269,9 +255,13 @@ export class UserCardService {
       discountedError: cartDB.discountData?.error,
     }))
 
+    const couponCode = cartData.find(cartItem => cartItem.discountData?.couponId !== null)
     return {
       cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
+      cart: {
+        couponCode: couponCode ? couponCode.discountData.couponId : null
+      }
     }
   }
 
@@ -300,9 +290,13 @@ export class UserCardService {
       return cartItem
     })
 
+    const couponCode = cartDBItems.find(cartItem => cartItem.discountData?.couponId !== null)
     return {
       cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
+      cart: {
+        couponCode: couponCode ? couponCode.discountData.couponId : null
+      }
     }
   }
 
@@ -357,7 +351,10 @@ export class UserCardService {
     const cardItemDdModel = items.map(async item => {
       let appointment = null
       try {
-        appointment = decodeAvailableTimeId(item.slotId)
+        appointment = {
+          slotId: item.slotId,
+          ...decodeAvailableTimeId(item.slotId),
+        }
       } catch (_) {
         throw new BadRequestException('Invalid slotId')
       }
@@ -400,7 +397,10 @@ export class UserCardService {
       throw new ResourceNotFoundException('userCart-item with given id not found')
     }
 
-    const appointment = decodeAvailableTimeId(cartItems.slotId)
+    const appointment = {
+      slotId: cartItems.slotId,
+      ...decodeAvailableTimeId(cartItems.slotId),
+    }
 
     const cartItem = {
       id: cartItemExist.id,
@@ -477,7 +477,6 @@ export class UserCardService {
 
   async discount(coupon: string, userId: string, organizationId: string): Promise<CartResponseDto> {
     const userOrgId = `${userId}_${organizationId}`
-
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
 
     const cardItems = await this.fetchUserAllCartItem(userId, organizationId)
@@ -545,9 +544,14 @@ export class UserCardService {
       ),
       discountedError: cartDB.discountData.error,
     }))
+
+    const couponCode = discountedCartItems.find(cartItem => cartItem.discountData?.couponId !== null)
     return {
       cartItems: cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
+      cart: {
+        couponCode: couponCode ? couponCode.discountData.couponId : null
+      }
     }
   }
   private countDiscount(
@@ -559,15 +563,6 @@ export class UserCardService {
     return discountType === DiscountTypes.percentage
       ? initialPrice - (initialPrice * discountAmount) / 100
       : initialPrice - discountAmount
-  }
-  /**
-   * converts acuity price format to Stripe amount in cent
-   */
-  stripePriceWithTax(acuityPrice: string): number {
-    const price = parseFloat(acuityPrice)
-    const tax = price + price * this.hstTax
-    const total = price + tax
-    return total * 100
   }
 
   /**

@@ -873,6 +873,7 @@ export class PCRTestResultsService {
         action: metaData.action,
         templateId,
         labId,
+        id: testResult.id,
       },
       appointment,
       runNumber: testResult.runNumber,
@@ -887,6 +888,7 @@ export class PCRTestResultsService {
     if (metaData.notify) {
       const pcrResultDataForEmail = {
         adminId,
+        resultId: testResult.id,
         labAssay: lab.assay,
         ...appointment,
         ...pcrResultDataForDbUpdate,
@@ -915,6 +917,7 @@ export class PCRTestResultsService {
       labId: string
       templateId: string
       action: PCRResultActions
+      id: string
     }
     appointment: AppointmentDBModel
     runNumber: number
@@ -929,6 +932,7 @@ export class PCRTestResultsService {
         resultData.adminId,
       )
     }
+    const pcrResult = await this.pcrTestResultsRepository.findOneById(resultData.id)
     switch (resultData.action) {
       case PCRResultActions.SendPreliminaryPositive: {
         const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
@@ -986,10 +990,12 @@ export class PCRTestResultsService {
       }
       case PCRResultActions.RecollectAsInvalid: {
         await handledReCollect()
+        await this.generateCouponCode(appointment.email, pcrResult)
         break
       }
       case PCRResultActions.RecollectAsInconclusive: {
         await handledReCollect()
+        await this.generateCouponCode(appointment.email, pcrResult)
         break
       }
       default: {
@@ -1214,21 +1220,22 @@ export class PCRTestResultsService {
         return Config.getInt('TEST_RESULT_NO_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 5
       }
     }
-    let couponCode = null
-    if (!resultData.organizationId) {
-      couponCode = await this.couponService.createCoupon(resultData.email)
-      await this.couponService.saveCoupon(couponCode, resultData.organizationId, resultData.barCode)
-      LogInfo('sendReCollectNotification', 'CouponCodeCreated', {
-        barCode: resultData.barCode,
-        organizationId: resultData.organizationId,
-        appointmentId: resultData.appointmentId,
-        appointmentEmail: resultData.email,
-      })
-    }
+
+    const pcrResultDbRecord = await this.pcrTestResultsRepository.findOneById(resultData.resultId)
+
+    const couponCode = pcrResultDbRecord?.couponCode ?? null
     const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')
     const owner = Config.get('ACUITY_SCHEDULER_USERNAME')
     const appointmentBookingLink = `${appointmentBookingBaseURL}?owner=${owner}&certificate=${couponCode}`
     const templateId = getTemplateId()
+
+    LogInfo('sendReCollectNotification', 'SendingCouponCode', {
+      barCode: resultData.barCode,
+      organizationId: resultData.organizationId,
+      appointmentId: resultData.appointmentId,
+      appointmentEmail: resultData.email,
+      couponCode,
+    })
 
     await this.emailService.send({
       templateId: templateId,
@@ -1250,6 +1257,20 @@ export class PCRTestResultsService {
         ReservationPushTypes.reSample,
       )
     }
+  }
+
+  async generateCouponCode(email: string, resultData: PCRTestResultDBModel): Promise<string> {
+    const couponCode = await this.couponService.createCoupon(email)
+    await this.couponService.saveCoupon(couponCode, resultData.organizationId, resultData.barCode)
+
+    LogInfo('generateCouponCode', 'CouponCodeCreated', {
+      barCode: resultData.barCode,
+      pcrResultId: resultData.id,
+    })
+
+    await this.pcrTestResultsRepository.updateProperty(resultData.id, 'couponCode', couponCode)
+
+    return couponCode
   }
 
   async updateTestResults(

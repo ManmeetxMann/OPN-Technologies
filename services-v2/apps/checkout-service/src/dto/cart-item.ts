@@ -20,7 +20,7 @@ import {
 
 export type CartItemResponse = {
   patient: Omit<CartAddDto, 'slotId'>
-  appointment: AvailableTimeIdParams
+  appointment: AvailableTimeIdParams & {id: string}
 }
 
 export class CartAddDto {

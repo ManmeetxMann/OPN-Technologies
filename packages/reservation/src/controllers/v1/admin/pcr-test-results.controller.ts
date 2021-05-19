@@ -288,8 +288,8 @@ class AdminPCRTestResultController implements IControllerBase {
         userId,
         labId: queryLab,
       } = req.query as PcrTestResultsListRequest
-      if (!barCode && !date) {
-        throw new BadRequestException('One of the "barCode" or "date" should exist')
+      if (!barCode && !date && !userId) {
+        throw new BadRequestException('One of the "barCode" or "date" or "userId" should exist')
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
       const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)

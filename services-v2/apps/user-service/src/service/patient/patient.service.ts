@@ -7,7 +7,7 @@ import {
   PatientCreateDto,
   PatientFilter,
   PatientUpdateDto,
-  PatientUpdatePubSubPayload,
+  PatientUpdatePubSubProfile,
 } from '../../dto/patient'
 import {HomeTestPatientDto} from '../../dto/home-patient'
 import {
@@ -465,7 +465,7 @@ export class PatientService {
 
   async updateProfileWithPubSub(
     userId: string,
-    data: Partial<PatientUpdatePubSubPayload>,
+    data: Partial<PatientUpdatePubSubProfile>,
   ): Promise<void> {
     const patient = await this.patientRepository.findOne({firebaseKey: userId})
 
