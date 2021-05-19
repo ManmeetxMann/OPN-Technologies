@@ -368,11 +368,6 @@ export class CartController {
             cartDdItem.patient.email || userEmailAuthToken,
           )
 
-          // update patient profile when appointments are created
-          this.userCardService.postPatientUpdate(cartDdItem.patient, {
-            userId: cartDdItem.patient.userId,
-          })
-
           return {
             cartItemId: cartDdItem.cartItemId,
             appointmentId: newAppointment.id,
