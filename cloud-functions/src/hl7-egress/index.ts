@@ -184,7 +184,7 @@ export class AppointmentDataToHL7ORM {
   }
 }
 
-const sendMessage = (pubSubMessage:AppointmentData) => {
+const sendMessage = async (pubSubMessage:AppointmentData) => {
   const appointmentDataToHL7ORM = new AppointmentDataToHL7ORM(pubSubMessage)
   const message = appointmentDataToHL7ORM.get()
   // tslint:disable: no-console
@@ -197,12 +197,12 @@ const sendMessage = (pubSubMessage:AppointmentData) => {
 }
 
 const requestHandler: EventFunctionWithCallback = async (pubSubMessage, context, callback) => {
-  sendMessage(pubSubMessage as AppointmentData)
+  await sendMessage(pubSubMessage as AppointmentData)
   callback()
 }
 
 const httpTestHandler: HttpFunction = async (req, res) => {
-  sendMessage(req.body)
+  await sendMessage(req.body)
   res.send('No function to test!')
 }
 
