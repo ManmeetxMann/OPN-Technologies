@@ -115,26 +115,56 @@ export class PCRTestResultsService {
   private temperatureService = new TemperatureService()
   private pulseOxygenService = new PulseOxygenService()
   private labService = new LabService()
-  private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
+
   private isAppointmentPushEnable = Config.get('APPOINTMENTS_PUSH_NOTIFY') === 'enabled'
 
-  private postPubsub(testResult: PCRTestResultEmailDTO, action: string): void {
+  private postPubSubForResultSend(testResult: PCRTestResultEmailDTO, action: string): void {
     if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
-      LogInfo('PCRTestResultsService:postPubsub', 'PubSubDisabled', {})
+      LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
       return
     }
-    this.pubsub.publish(
-      {
-        id: testResult.id,
-        result: testResult.result,
-        date: safeTimestamp(testResult.dateTime).toISOString(),
-      },
-      {
-        userId: testResult.userId,
-        organizationId: testResult.organizationId,
-        actionType: action,
-      },
-    )
+    const data: Record<string, string> = {
+      id: testResult.id,
+      result: testResult.result,
+      date: safeTimestamp(testResult.dateTime).toISOString(),
+    }
+    const attributes: Record<string, string> = {
+      userId: testResult.userId,
+      organizationId: testResult.organizationId,
+      actionType: action,
+      phone: testResult.phone.toString(),
+      firstName: testResult.firstName,
+    }
+    const pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
+    pubsub.publish(data, attributes)
+  }
+
+  private postPubSubForPresumptivePositiveResultSend(testResult: PCRTestResultEmailDTO): void {
+    /*if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
+      LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
+      return
+    }*/
+    const data: Record<string, string> = {
+      patientCode: 'FH00001',
+      barCode: testResult.barCode,
+      dateTimeForAppointment: '202104301310', //safeTimestamp(testResult.dateTime).toISOString()
+      firstName: testResult.firstName,
+      lastName: testResult.lastName,
+      healthCard: 'TestUser2',
+      dateOfBirth: 'TestUser2',
+      gender: 'TestUser2',
+      address1: 'TestUser2',
+      address2: 'TestUser2',
+      city: 'TestUser2',
+      province: 'TestUser2',
+      postalCode: 'TestUser2',
+      country: 'TestUser2',
+      testType: 'TestUser2',
+      clinicCode: 'MS112',
+    }
+
+    const pubsub = new OPNPubSub(Config.get('PRESUMPTIVE_POSITIVE_RESULTS_TOPIC'))
+    pubsub.publish(data)
   }
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
@@ -843,6 +873,7 @@ export class PCRTestResultsService {
         action: metaData.action,
         templateId,
         labId,
+        id: testResult.id,
       },
       appointment,
       runNumber: testResult.runNumber,
@@ -857,6 +888,7 @@ export class PCRTestResultsService {
     if (metaData.notify) {
       const pcrResultDataForEmail = {
         adminId,
+        resultId: testResult.id,
         labAssay: lab.assay,
         ...appointment,
         ...pcrResultDataForDbUpdate,
@@ -885,6 +917,7 @@ export class PCRTestResultsService {
       labId: string
       templateId: string
       action: PCRResultActions
+      id: string
     }
     appointment: AppointmentDBModel
     runNumber: number
@@ -899,6 +932,7 @@ export class PCRTestResultsService {
         resultData.adminId,
       )
     }
+    const pcrResult = await this.pcrTestResultsRepository.findOneById(resultData.id)
     switch (resultData.action) {
       case PCRResultActions.SendPreliminaryPositive: {
         const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
@@ -956,10 +990,12 @@ export class PCRTestResultsService {
       }
       case PCRResultActions.RecollectAsInvalid: {
         await handledReCollect()
+        await this.generateCouponCode(appointment.email, pcrResult)
         break
       }
       case PCRResultActions.RecollectAsInconclusive: {
         await handledReCollect()
+        await this.generateCouponCode(appointment.email, pcrResult)
         break
       }
       default: {
@@ -1028,6 +1064,7 @@ export class PCRTestResultsService {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
         } else if (resultData.result === ResultTypes.PresumptivePositive) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
+          this.postPubSubForPresumptivePositiveResultSend({...resultData, id: pcrId})
         } else if (
           resultData.result === ResultTypes.Indeterminate &&
           (resultData.testType === TestTypes.Antibody_All ||
@@ -1042,18 +1079,11 @@ export class PCRTestResultsService {
             resultSent: resultData.result,
           })
         }
-        if (addSuccessLog) {
-          this.postPubsub({...resultData, id: pcrId}, 'result')
-        }
       }
     }
 
-    // trigger pub sub to issue Stop passport on inconclusive result
-    if (resultData.result === ResultTypes.Inconclusive) {
-      this.postPubsub(resultData, 'result')
-    }
-
     if (addSuccessLog) {
+      this.postPubSubForResultSend({...resultData, id: pcrId}, 'result')
       LogInfo('sendNotification', 'SuccessfullEmailSent', {
         barCode: resultData.barCode,
         notficationType,
@@ -1190,21 +1220,22 @@ export class PCRTestResultsService {
         return Config.getInt('TEST_RESULT_NO_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 5
       }
     }
-    let couponCode = null
-    if (!resultData.organizationId) {
-      couponCode = await this.couponService.createCoupon(resultData.email)
-      await this.couponService.saveCoupon(couponCode, resultData.organizationId, resultData.barCode)
-      LogInfo('sendReCollectNotification', 'CouponCodeCreated', {
-        barCode: resultData.barCode,
-        organizationId: resultData.organizationId,
-        appointmentId: resultData.appointmentId,
-        appointmentEmail: resultData.email,
-      })
-    }
+
+    const pcrResultDbRecord = await this.pcrTestResultsRepository.findOneById(resultData.resultId)
+
+    const couponCode = pcrResultDbRecord?.couponCode ?? null
     const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')
     const owner = Config.get('ACUITY_SCHEDULER_USERNAME')
     const appointmentBookingLink = `${appointmentBookingBaseURL}?owner=${owner}&certificate=${couponCode}`
     const templateId = getTemplateId()
+
+    LogInfo('sendReCollectNotification', 'SendingCouponCode', {
+      barCode: resultData.barCode,
+      organizationId: resultData.organizationId,
+      appointmentId: resultData.appointmentId,
+      appointmentEmail: resultData.email,
+      couponCode,
+    })
 
     await this.emailService.send({
       templateId: templateId,
@@ -1226,6 +1257,20 @@ export class PCRTestResultsService {
         ReservationPushTypes.reSample,
       )
     }
+  }
+
+  async generateCouponCode(email: string, resultData: PCRTestResultDBModel): Promise<string> {
+    const couponCode = await this.couponService.createCoupon(email)
+    await this.couponService.saveCoupon(couponCode, resultData.organizationId, resultData.barCode)
+
+    LogInfo('generateCouponCode', 'CouponCodeCreated', {
+      barCode: resultData.barCode,
+      pcrResultId: resultData.id,
+    })
+
+    await this.pcrTestResultsRepository.updateProperty(resultData.id, 'couponCode', couponCode)
+
+    return couponCode
   }
 
   async updateTestResults(

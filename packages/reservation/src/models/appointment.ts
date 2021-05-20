@@ -80,6 +80,9 @@ export type AppointmentDBModel = {
   labId?: string
   scheduledPushesToSend?: Array<ReservationPushTypes>
   checkedInOn?: firestore.Timestamp
+  city?: string
+  province?: string
+  country?: string
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
@@ -136,6 +139,9 @@ export type AppointmentAcuityResponse = {
   time: string
   travelID?: string
   travelIDIssuingCountry?: string
+  city?: string
+  province?: string
+  country?: string
 }
 
 export type LabelsAcuityResponse = {

@@ -3,7 +3,10 @@ import {Injectable} from '@nestjs/common'
 // Common
 import DataStore from '@opn-common-v1/data/datastore'
 import {AcuityRepository} from '@opn-reservation-v1/respository/acuity.repository'
-import {decodeAvailableTimeId} from '@opn-reservation-v1/utils/base64-converter'
+import {
+  decodeAvailableTimeId,
+  encodeBookingLocationId,
+} from '@opn-reservation-v1/utils/base64-converter'
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
 
@@ -23,6 +26,7 @@ import {CardItemDBModel, CartItemStatus, CouponErrorsEnum} from '../model/cart'
 import {
   CartAddDto,
   CartItemDto,
+  CartItemResponse,
   CartResponseDto,
   CartSummaryDto,
   CartUpdateRequestDto,
@@ -128,23 +132,6 @@ export class UserCardService {
       }
     }
 
-    // TODO check why this validation call returns weird result
-    // const timeCheckItems = _.uniqBy(cartDdItems, (elem) => {
-    //   return JSON.stringify(
-    //     _.pick(elem, [
-    //       'appointment.time',
-    //       'appointment.appointmentTypeId',
-    //       'appointment.calendarId',
-    //     ]),
-    //   )
-    // }).map((el) => ({
-    //   datetime: el.appointment.time,
-    //   appointmentTypeID: el.appointment.appointmentTypeId,
-    //   calendarId: el.appointment.calendarId,
-    // }))
-    // console.log(timeCheckItems)
-    // console.log(await this.acuityRepository.getAvailableByTimes(timeCheckItems))
-
     // Fetch slotsAvailable for each variant from acuity
     for (const acuitySlot of acuitySlots) {
       const response = await this.acuityRepository.getAvailableSlots(
@@ -209,7 +196,8 @@ export class UserCardService {
       iteration++
     }
   }
-  async getCartItemById(cartItemId: string, userOrgId: string): Promise<CardItemDBModel> {
+
+  async getCartItemById(cartItemId: string, userOrgId: string): Promise<CartItemResponse> {
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
     const cartItem = await userCartItemRepository.findWhereEqual('cartItemId', cartItemId)
     const cartItemExist = cartItem[0]
@@ -218,13 +206,72 @@ export class UserCardService {
       throw new ResourceNotFoundException('userCart-item with given id not found')
     }
 
-    return cartItemExist
+    const appointment = cartItemExist.appointment
+
+    // Same encoded id as booking locations list returns
+    const idBuf = {
+      appointmentTypeId: appointment.appointmentTypeId,
+      calendarTimezone: appointment.calendarTimezone,
+      calendarName: appointment.calendarName,
+      calendarId: appointment.calendarId,
+      organizationId: appointment.organizationId,
+      packageCode: appointment.packageCode,
+    }
+    const id = encodeBookingLocationId(idBuf)
+
+    return {
+      patient: cartItemExist.patient,
+      appointment: {
+        id,
+        ..._.omit(cartItemExist.appointment, 'slotId'),
+      },
+    }
   }
 
   async cartItemsCount(userId: string, organizationId: string): Promise<number> {
     const userOrgId = `${userId}_${organizationId}`
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
     return userCartItemRepository.count()
+  }
+
+  async removeCoupons(userId: string, organizationId: string): Promise<CartResponseDto> {
+    const userOrgId = `${userId}_${organizationId}`
+    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
+    const cartItemsData = await userCartItemRepository.fetchAll()
+
+    if (!cartItemsData || !cartItemsData.length) {
+      throw new ResourceNotFoundException('userCart-item with given id not found')
+    }
+
+    const cartData = await Promise.all(
+      cartItemsData.map(async cartItem => {
+        const cartItemData = {
+          ...cartItem,
+          discountData: null,
+        }
+        return userCartItemRepository.update(cartItemData)
+      }),
+    )
+
+    const cartItems = cartData.map(cartDB => ({
+      cartItemId: cartDB.cartItemId,
+      label: cartDB.appointmentType.name,
+      subLabel: cartDB.appointment.calendarName,
+      patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
+      date: new Date(cartDB.appointment.time).toISOString(),
+      price: parseFloat(cartDB.appointmentType.price),
+      userId: cartDB.patient.userId,
+      discountedError: cartDB.discountData?.error,
+    }))
+
+    const couponCode = cartData.find(cartItem => cartItem?.discountData?.name)
+    return {
+      cartItems,
+      paymentSummary: this.buildPaymentSummary(cartItems),
+      cart: {
+        couponCode: couponCode?.discountData ? couponCode.discountData.name : null,
+      },
+    }
   }
 
   async getUserCart(userId: string, organizationId: string): Promise<CartResponseDto> {
@@ -252,9 +299,13 @@ export class UserCardService {
       return cartItem
     })
 
+    const couponCode = cartDBItems.find(cartItem => cartItem?.discountData?.name)
     return {
       cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
+      cart: {
+        couponCode: couponCode?.discountData ? couponCode.discountData.name : null,
+      },
     }
   }
 
@@ -429,7 +480,6 @@ export class UserCardService {
 
   async discount(coupon: string, userId: string, organizationId: string): Promise<CartResponseDto> {
     const userOrgId = `${userId}_${organizationId}`
-
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
 
     const cardItems = await this.fetchUserAllCartItem(userId, organizationId)
@@ -497,9 +547,14 @@ export class UserCardService {
       ),
       discountedError: cartDB.discountData.error,
     }))
+
+    const couponCode = discountedCartItems.find(cartItem => cartItem?.discountData?.name)
     return {
       cartItems: cartItems,
       paymentSummary: this.buildPaymentSummary(cartItems),
+      cart: {
+        couponCode: couponCode?.discountData ? couponCode.discountData.name : null,
+      },
     }
   }
   private countDiscount(
@@ -507,18 +562,10 @@ export class UserCardService {
     discountType: DiscountTypes,
     discountAmount: number,
   ): number {
+    // eslint-disable-next-line max-lines
     return discountType === DiscountTypes.percentage
       ? initialPrice - (initialPrice * discountAmount) / 100
       : initialPrice - discountAmount
-  }
-  /**
-   * converts acuity price format to Stripe amount in cent
-   */
-  stripePriceWithTax(acuityPrice: string): number {
-    const price = parseFloat(acuityPrice)
-    const tax = price + price * this.hstTax
-    const total = price + tax
-    return total * 100
   }
 
   /**

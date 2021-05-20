@@ -9,6 +9,7 @@ import {
   PatientCreateDto,
   PatientFilter,
   PatientUpdateDto,
+  PatientUpdatePubSubProfile,
 } from '../../dto/patient'
 import {HomeTestPatientDto} from '../../dto/home-patient'
 import {
@@ -34,6 +35,8 @@ import {
 
 import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
 import {OpnConfigService} from '@opn-services/common/services'
+import {BadRequestException} from '@opn-services/common/exception'
+import {LogError} from '@opn-services/common/utils/logging'
 
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import DataStore from '@opn-common-v1/data/datastore'
@@ -104,6 +107,12 @@ export class PatientService {
       },
     )
   }
+
+  async getProfilesByIds(patientIds: string[]): Promise<Patient[]> {
+    return this.patientRepository.findByIds(patientIds, {
+      relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth', 'organizations'],
+    })
+  }
   /**
    * Fetch all patients with pagination
    */
@@ -137,7 +146,7 @@ export class PatientService {
     return queryBuilder
       .select()
       .limit(perPage)
-      .offset(page * perPage)
+      .offset((page - 1) * perPage)
       .getManyAndCount()
       .then(([data, totalItems]) => Page.of(data, page, perPage, totalItems))
   }
@@ -549,6 +558,7 @@ export class PatientService {
    * Update or insert push token
    */
   async upsertPushToken(
+    patientId: string,
     registrationId: string,
     registration: Omit<Registration, 'id'>,
   ): Promise<void> {
@@ -560,12 +570,45 @@ export class PatientService {
     }
 
     // create or update token
-    if (osVersion && platform) {
-      await this.registrationService.upsert(registrationId, {
-        osVersion,
-        platform,
-        pushToken,
+    const {id} = await this.registrationService.upsert(registrationId, {
+      osVersion,
+      platform,
+      pushToken,
+    })
+
+    await this.patientRepository.update({idPatient: patientId}, {registrationId: id})
+  }
+
+  async updateProfileWithPubSub(
+    userId: string,
+    data: Partial<PatientUpdatePubSubProfile>,
+  ): Promise<void> {
+    const patient = await this.patientRepository.findOne({firebaseKey: userId})
+
+    if (!patient) {
+      const errorMessage = `Profile with ${userId} not exists`
+      LogError('updateProfileWithPubSub', 'PubSubProfileUpdateFailed', {
+        errorMessage,
       })
+      throw new BadRequestException(errorMessage)
     }
+
+    const updateDto = new PatientUpdateDto()
+    updateDto.phoneNumber = data?.phone
+    updateDto.healthCardType = data?.ohipCard
+    updateDto.travelPassport = data?.travelID
+    updateDto.travelCountry = data?.travelIDIssuingCountry
+    updateDto.homeAddress = data?.address
+    updateDto.homeAddressUnit = data?.addressUnit
+    updateDto.city = data?.city
+    updateDto.country = data?.country
+    updateDto.province = data?.province
+    updateDto.agreeToConductFHHealthAssessment = data?.agreeToConductFHHealthAssessment
+    updateDto.readTermsAndConditions = data?.readTermsAndConditions
+    updateDto.receiveNotificationsFromGov = data?.receiveNotificationsFromGov
+    updateDto.receiveResultsViaEmail = data?.receiveResultsViaEmail
+    updateDto.shareTestResultWithEmployer = data?.shareTestResultWithEmployer
+
+    await this.updateProfile(patient.idPatient, updateDto)
   }
 }

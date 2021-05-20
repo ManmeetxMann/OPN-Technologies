@@ -21,12 +21,11 @@ import {
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
 import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
-import {PatientToDelegates} from '../../../model/patient/patient-relations.entity'
 
 @ApiTags('Patients - Admin')
 @ApiBearerAuth()
 @ApiCommonHeaders()
-@Controller('/api/v1/admin/patients')
+@Controller('/admin/api/v1/patients')
 @UseGuards(AuthGuard)
 export class AdminPatientController {
   constructor(private patientService: PatientService) {}
@@ -62,16 +61,20 @@ export class AdminPatientController {
 
   @Get('/:patientId/dependants')
   @Roles([RequiredUserPermission.PatientsAdmin])
-  async getDependents(
-    @Param('patientId') id: string,
-  ): Promise<ResponseWrapper<PatientToDelegates[]>> {
+  async getDependents(@Param('patientId') id: string): Promise<ResponseWrapper> {
     const patientExists = await this.patientService.getProfilebyId(id)
     if (!patientExists) {
       throw new ResourceNotFoundException('User with given id not found')
     }
 
     const patient = await this.patientService.getDirectDependents(id)
-    return ResponseWrapper.actionSucceed(patient.dependants)
+
+    const dependantProfiles = await this.patientService.getProfilesByIds(
+      patient.dependants.map(dependant => dependant.dependantId),
+    )
+    const dependantProfileDto = dependantProfiles.map(profile => patientProfileDto(profile))
+
+    return ResponseWrapper.actionSucceed(dependantProfileDto)
   }
 
   @Post()
@@ -93,7 +96,7 @@ export class AdminPatientController {
       createdBy: authUser.id,
     })
 
-    return ResponseWrapper.actionSucceed(patient)
+    return ResponseWrapper.actionSuccess(patient, 'Patient created successfully')
   }
 
   @Put('/:patientId')

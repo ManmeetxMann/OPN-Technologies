@@ -23,7 +23,7 @@ export class Page<T> {
 export class PageableRequestFilter {
   @ApiPropertyOptional()
   @IsOptional()
-  page?: number = 0
+  page?: number = 1
 
   @ApiPropertyOptional()
   @IsOptional()
