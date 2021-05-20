@@ -5,6 +5,7 @@ export type RapidHomeKitToUserAssoc = {
   id: string
   rapidHomeKitId: string
   userId: string
+  used: boolean
 }
 
 export class HomeTestPatientDto {

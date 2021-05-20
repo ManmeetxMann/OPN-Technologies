@@ -6,7 +6,6 @@ import {
 } from '../../repository/rapid-home-kit-code.repository'
 import {RapidHomeKitCodeToUserAssocRepository} from '../../repository/rapid-home-kit-code-to-user-assoc.repository'
 import {RapidHomeKitToUserAssoc} from '../../dto/home-patient'
-import {DataModelFieldMapOperatorType} from '@opn-common-v1/data/datamodel.base'
 import {BadRequestException} from '@opn-services/common/exception'
 
 @Injectable()
@@ -24,20 +23,10 @@ export class RapidHomeKitCodeService {
   }
 
   async assocHomeKitToUser(code: string, userId: string): Promise<RapidHomeKitCode> {
-    const homeKitCodeAssociations = await this.homeKitCodeToUserRepository.findWhereEqualInMap([
-      {
-        map: '/',
-        key: 'rapidHomeKitId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: code,
-      },
-      {
-        map: '/',
-        key: 'userId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: userId,
-      },
-    ])
+    const homeKitCodeAssociations = await this.homeKitCodeToUserRepository.getUnusedByUserIdAndCode(
+      userId,
+      code,
+    )
     if (homeKitCodeAssociations.length) {
       throw new BadRequestException('Associations already exists')
     }
@@ -46,6 +35,21 @@ export class RapidHomeKitCodeService {
     const userIds = homeKitCode.userIds ? [...homeKitCode.userIds, userId] : [userId]
     return this.homeKitCodeRepository.updateProperties(homeKitCode.id, {
       userIds: [...new Set(userIds)],
+    })
+  }
+
+  async markAsUsedHomeKitCode(
+    homeKitId: string,
+    code: string,
+    userId: string,
+  ): Promise<RapidHomeKitToUserAssoc> {
+    await this.homeKitCodeRepository.delete(homeKitId)
+    const [
+      homeKitCodeAssociations,
+    ] = await this.homeKitCodeToUserRepository.getUnusedByUserIdAndCode(userId, code)
+
+    return this.homeKitCodeToUserRepository.updateProperties(homeKitCodeAssociations.id, {
+      used: true,
     })
   }
 }
