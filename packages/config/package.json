@@ -3,7 +3,7 @@
     "private": true,
     "version": "0.0.0",
     "scripts": {
-        "start": "node config/src/server.js",
+        "start": "node packages/config/src/server.js",
         "test": "jest",
         "test:local": "FIRESTORE_EMULATOR_HOST=localhost:8080 FIREBASE_FIRESTORE_EMULATOR_ADDRESS=localhost:8080 jest",
         "test:coverage": "jest --coverage",
@@ -11,7 +11,7 @@
         "dev:debug": "nodemon --inspect=3001 src/server.ts",
         "dev:local": "FIRESTORE_EMULATOR_HOST=localhost:8080 PUBSUB_EMULATOR_HOST=localhost:8085 FEATURE_DEBUG_MANUAL_TIMESTAMPS=enabled DEBUG_GUILIBLE_MODE=enabled ts-node src/server.ts",
         "clean": "rimraf -rf ./dist",
-        "prepare": "copyfiles ../common/.env dist/common && copyfiles app.yaml dist && copyfiles openapi.yaml dist && copyfiles package.json dist && node ../../tools/package-cleaner.js config start",
+        "prepare": "copyfiles ../common/.env dist/packages/common && copyfiles app.yaml dist && copyfiles openapi.yaml dist && copyfiles package.json dist && node ../../tools/package-cleaner.js config start",
         "compile": "tsc -p tsconfig.build.json",
         "build": "npm run clean && npm run prepare && npm run compile",
         "gcloud_deploy": "gcloud app deploy ./dist --quiet",

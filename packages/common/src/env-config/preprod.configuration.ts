@@ -1,4 +1,7 @@
-export const preprodConfig: Record<string, string | number | boolean> = {
+export const preprodConfig: Record<string, string | string[] | number | boolean> = {
+  // TODO: add production origin domains
+  CORS_DOMAINS: [],
+
   DASHBOARD_URL: 'https://opn-admin-dashboard-preprod.nn.r.appspot.com',
   DOMAIN_ACCESS: 'https://access-dot-opn-platform-preprod.nn.r.appspot.com/',
   DOMAIN_ENTERPRISE: 'https://enterprise-dot-opn-platform-preprod.nn.r.appspot.com/',
@@ -6,7 +9,8 @@ export const preprodConfig: Record<string, string | number | boolean> = {
   DOMAIN_PASSPORT: 'https://passport-dot-opn-platform-preprod.nn.r.appspot.com/',
   DOMAIN_REGISTRY: 'https://registry-dot-opn-platform-preprod.nn.r.appspot.com/',
   DOMAIN_RESERVATION: 'https://reservation-dot-opn-platform-preprod.nn.r.appspot.com/',
-  DOMAIN_CART: 'https://cart-service-dot-opn-platform-preprod.nn.r.appspot.com/',
+  DOMAIN_CHECKOUT: 'https://checkout-service-dot-opn-platform-preprod.nn.r.appspot.com/checkout/',
+  DOMAIN_USER: 'https://user-service-dot-opn-platform-preprod.nn.r.appspot.com/user/',
 
   AUTH_EMAIL_TEMPLATE_ID: 1,
 

@@ -130,6 +130,12 @@ class AdminPCRTestResultController implements IControllerBase {
     )
 
     innerRouter.post(
+      this.path + '/test-results/:testResultId/resend',
+      listTestResultsAuth,
+      this.resendTestResult,
+    )
+
+    innerRouter.post(
       this.path + '/test-results/:testResultId/comment',
       listTestResultsAuth,
       this.addComment,
@@ -281,8 +287,8 @@ class AdminPCRTestResultController implements IControllerBase {
         searchQuery,
         userId,
       } = req.query as PcrTestResultsListRequest
-      if (!barCode && !date) {
-        throw new BadRequestException('One of the "barCode" or "date" should exist')
+      if (!barCode && !date && !userId) {
+        throw new BadRequestException('One of the "barCode" or "date" or "userId" should exist')
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
       const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
@@ -633,7 +639,7 @@ class AdminPCRTestResultController implements IControllerBase {
       const {
         appointment,
         pcrTestResult,
-      } = await this.pcrTestResultsService.getTestResultAndAppointment(testResultId, userId)
+      } = await this.pcrTestResultsService.getTestResultAndAppointment(testResultId, userId, true)
 
       if (!this.pcrTestResultsService.isDownloadable(pcrTestResult)) {
         throw new BadRequestException(
@@ -648,6 +654,19 @@ class AdminPCRTestResultController implements IControllerBase {
       pdfStream.pipe(res)
 
       res.status(200)
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  resendTestResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = getUserId(res.locals.authenticatedUser)
+      const {testResultId} = req.params as {testResultId: string}
+
+      await this.pcrTestResultsService.resendReport(testResultId, userId)
+
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }

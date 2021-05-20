@@ -1,39 +1,39 @@
-import moment from 'moment'
-import {fromPairs, sortBy, union} from 'lodash'
+import moment from "moment";
+import { fromPairs, sortBy, union } from "lodash";
 
-import DataStore from '../../../common/src/data/datastore'
-import {Config} from '../../../common/src/utils/config'
-import {EmailService} from '../../../common/src/service/messaging/email-service'
-import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
-import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
-import {ReservationPushTypes} from '../types/appointment-push'
-import {toDateFormat} from '../../../common/src/utils/times'
-import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
-import {safeTimestamp} from '../../../common/src/utils/datetime-util'
+import DataStore from "../../../common/src/data/datastore";
+import { Config } from "../../../common/src/utils/config";
+import { EmailService } from "../../../common/src/service/messaging/email-service";
+import { BadRequestException } from "../../../common/src/exceptions/bad-request-exception";
+import { ResourceNotFoundException } from "../../../common/src/exceptions/resource-not-found-exception";
+import { DataModelFieldMapOperatorType } from "../../../common/src/data/datamodel.base";
+import { ReservationPushTypes } from "../types/appointment-push";
+import { toDateFormat } from "../../../common/src/utils/times";
+import { OPNPubSub } from "../../../common/src/service/google/pub_sub";
+import { safeTimestamp } from "../../../common/src/utils/datetime-util";
 import {
   dateToDateTime,
   formatDateRFC822Local,
   formatStringDateRFC822Local,
   getFirestoreTimeStampDate,
-  makeDeadlineForFilter,
-} from '../utils/datetime.helper'
-import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
-import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
+  makeDeadlineForFilter
+} from "../utils/datetime.helper";
+import { OPNCloudTasks } from "../../../common/src/service/google/cloud_tasks";
+import { LogError, LogInfo, LogWarning } from "../../../common/src/utils/logging-setup";
 
 //service
-import {AppoinmentService} from './appoinment.service'
-import {CouponService} from './coupon.service'
-import {ReservationPushService} from './reservation-push.service'
+import { AppoinmentService } from "./appoinment.service";
+import { CouponService } from "./coupon.service";
+import { ReservationPushService } from "./reservation-push.service";
 
 //repository
-import {AppointmentsRepository} from '../respository/appointments-repository'
-import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
+import { AppointmentsRepository } from "../respository/appointments-repository";
+import { PCRTestResultsRepository } from "../respository/pcr-test-results-repository";
 
 import {
   TestResultsReportingTrackerPCRResultsRepository,
-  TestResultsReportingTrackerRepository,
-} from '../respository/test-results-reporting-tracker-repository'
+  TestResultsReportingTrackerRepository
+} from "../respository/test-results-reporting-tracker-repository";
 
 import {
   AppointmentReasons,
@@ -57,10 +57,11 @@ import {
   PcrTestResultsListByDeadlineRequest,
   PcrTestResultsListRequest,
   pcrTestResultsResponse,
+  Result,
   ResultReportStatus,
   resultToStyle,
-  TestResutsDTO,
-} from '../models/pcr-test-results'
+  TestResutsDTO
+} from "../models/pcr-test-results";
 
 import {
   AppointmentDBModel,
@@ -69,28 +70,28 @@ import {
   Filter,
   filteredAppointmentStatus,
   ResultTypes,
-  TestTypes,
-} from '../models/appointment'
-import {PCRResultPDFContent} from '../templates/pcr-test-results'
-import {ResultAlreadySentException} from '../exceptions/result_already_sent'
-import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
-import {TestRunsService} from '../services/test-runs.service'
-import {TemperatureService} from './temperature.service'
-import {LabService} from './lab.service'
-import {mapTemperatureStatusToResultTypes} from '../models/temperature'
+  TestTypes
+} from "../models/appointment";
+import { PCRResultPDFContent } from "../templates/pcr-test-results";
+import { ResultAlreadySentException } from "../exceptions/result_already_sent";
+import { BulkOperationResponse, BulkOperationStatus } from "../types/bulk-operation.type";
+import { TestRunsService } from "../services/test-runs.service";
+import { TemperatureService } from "./temperature.service";
+import { LabService } from "./lab.service";
+import { mapTemperatureStatusToResultTypes } from "../models/temperature";
 
-import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+import { OrganizationService } from "../../../enterprise/src/services/organization-service";
 
-import {UserService} from '../../../common/src/service/user/user-service'
-import {AttestationService} from '../../../passport/src/services/attestation-service'
-import {PassportStatuses} from '../../../passport/src/models/passport'
-import {PulseOxygenService} from './pulse-oxygen.service'
+import { UserService } from "../../../common/src/service/user/user-service";
+import { AttestationService } from "../../../passport/src/services/attestation-service";
+import { PassportStatuses } from "../../../passport/src/models/passport";
+import { PulseOxygenService } from "./pulse-oxygen.service";
 
-import {BulkTestResultRequest, TestResultsMetaData} from '../models/test-results'
-import {AntibodyAllPDFContent} from '../templates/antibody-all'
-import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
-import {normalizeAnalysis} from '../utils/analysis.helper'
-import {CouponEnum} from '../models/coupons'
+import { BulkTestResultRequest, TestResultsMetaData } from "../models/test-results";
+import { AntibodyAllPDFContent } from "../templates/antibody-all";
+import { AntibodyIgmPDFContent } from "../templates/antibody-igm";
+import { normalizeAnalysis } from "../utils/analysis.helper";
+import { CouponEnum } from "../models/coupons";
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -115,26 +116,56 @@ export class PCRTestResultsService {
   private temperatureService = new TemperatureService()
   private pulseOxygenService = new PulseOxygenService()
   private labService = new LabService()
-  private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
+
   private isAppointmentPushEnable = Config.get('APPOINTMENTS_PUSH_NOTIFY') === 'enabled'
 
-  private postPubsub(testResult: PCRTestResultEmailDTO, action: string): void {
+  private postPubSubForResultSend(testResult: PCRTestResultEmailDTO, action: string): void {
     if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
-      LogInfo('PCRTestResultsService:postPubsub', 'PubSubDisabled', {})
+      LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
       return
     }
-    this.pubsub.publish(
-      {
-        id: testResult.id,
-        result: testResult.result,
-        date: safeTimestamp(testResult.dateTime).toISOString(),
-      },
-      {
-        userId: testResult.userId,
-        organizationId: testResult.organizationId,
-        actionType: action,
-      },
-    )
+    const data: Record<string, string> = {
+      id: testResult.id,
+      result: testResult.result,
+      date: safeTimestamp(testResult.dateTime).toISOString(),
+    }
+    const attributes: Record<string, string> = {
+      userId: testResult.userId,
+      organizationId: testResult.organizationId,
+      actionType: action,
+      phone: testResult.phone.toString(),
+      firstName: testResult.firstName,
+    }
+    const pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
+    pubsub.publish(data, attributes)
+  }
+
+  private postPubSubForPresumptivePositiveResultSend(testResult: PCRTestResultEmailDTO): void {
+    /*if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
+      LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
+      return
+    }*/
+    const data: Record<string, string> = {
+      patientCode: 'FH00001',
+      barCode: testResult.barCode,
+      dateTimeForAppointment: '202104301310', //safeTimestamp(testResult.dateTime).toISOString()
+      firstName: testResult.firstName,
+      lastName: testResult.lastName,
+      healthCard: 'TestUser2',
+      dateOfBirth: 'TestUser2',
+      gender: 'TestUser2',
+      address1: 'TestUser2',
+      address2: 'TestUser2',
+      city: 'TestUser2',
+      province: 'TestUser2',
+      postalCode: 'TestUser2',
+      country: 'TestUser2',
+      testType: 'TestUser2',
+      clinicCode: 'MS112',
+    }
+
+    const pubsub = new OPNPubSub(Config.get('PRESUMPTIVE_POSITIVE_RESULTS_TOPIC'))
+    pubsub.publish(data)
   }
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
@@ -843,6 +874,7 @@ export class PCRTestResultsService {
         action: metaData.action,
         templateId,
         labId,
+        id: testResult.id,
       },
       appointment,
       runNumber: testResult.runNumber,
@@ -857,6 +889,7 @@ export class PCRTestResultsService {
     if (metaData.notify) {
       const pcrResultDataForEmail = {
         adminId,
+        resultId: testResult.id,
         labAssay: lab.assay,
         ...appointment,
         ...pcrResultDataForDbUpdate,
@@ -885,6 +918,7 @@ export class PCRTestResultsService {
       labId: string
       templateId: string
       action: PCRResultActions
+      id: string
     }
     appointment: AppointmentDBModel
     runNumber: number
@@ -899,6 +933,7 @@ export class PCRTestResultsService {
         resultData.adminId,
       )
     }
+    const pcrResult = await this.pcrTestResultsRepository.findOneById(resultData.id)
     switch (resultData.action) {
       case PCRResultActions.SendPreliminaryPositive: {
         const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
@@ -956,10 +991,12 @@ export class PCRTestResultsService {
       }
       case PCRResultActions.RecollectAsInvalid: {
         await handledReCollect()
+        await this.generateCouponCode(appointment.email, pcrResult)
         break
       }
       case PCRResultActions.RecollectAsInconclusive: {
         await handledReCollect()
+        await this.generateCouponCode(appointment.email, pcrResult)
         break
       }
       default: {
@@ -1028,6 +1065,7 @@ export class PCRTestResultsService {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
         } else if (resultData.result === ResultTypes.PresumptivePositive) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
+          this.postPubSubForPresumptivePositiveResultSend({...resultData, id: pcrId})
         } else if (
           resultData.result === ResultTypes.Indeterminate &&
           (resultData.testType === TestTypes.Antibody_All ||
@@ -1042,23 +1080,65 @@ export class PCRTestResultsService {
             resultSent: resultData.result,
           })
         }
-        if (addSuccessLog) {
-          this.postPubsub({...resultData, id: pcrId}, 'result')
-        }
       }
     }
 
-    // trigger pub sub to issue Stop passport on inconclusive result
-    if (resultData.result === ResultTypes.Inconclusive) {
-      this.postPubsub(resultData, 'result')
-    }
-
     if (addSuccessLog) {
+      this.postPubSubForResultSend({...resultData, id: pcrId}, 'result')
       LogInfo('sendNotification', 'SuccessfullEmailSent', {
         barCode: resultData.barCode,
         notficationType,
         resultSent: resultData.result,
       })
+    }
+  }
+
+  async resendReport(testResultId: string, userId: string): Promise<void> {
+    const {appointment, pcrTestResult} = await this.getTestResultAndAppointment(
+      testResultId,
+      userId,
+      true,
+    )
+
+    const lab = await this.labService.findOneById(appointment.labId)
+
+    const resultData = {
+      adminId: userId,
+      labAssay: lab.assay,
+      ...appointment,
+      appointmentId: pcrTestResult.appointmentId,
+      confirmed: pcrTestResult.confirmed,
+      dateTime: pcrTestResult.dateTime,
+      displayInResult: pcrTestResult.displayInResult,
+      firstName: pcrTestResult.firstName,
+      lastName: pcrTestResult.lastName,
+      organizationId: pcrTestResult.organizationId,
+      recollected: pcrTestResult.recollected,
+      result: pcrTestResult.result,
+      testRunId: pcrTestResult.testRunId,
+      waitingResult: pcrTestResult.waitingResult,
+      testType: pcrTestResult.testType,
+      resultMetaData: pcrTestResult.resultMetaData,
+      resultAnalysis: pcrTestResult.resultAnalysis,
+      templateId: pcrTestResult.templateId,
+      labId: pcrTestResult.labId,
+      appointmentStatus: pcrTestResult.appointmentStatus,
+    }
+
+    if (resultData.result === ResultTypes.Negative) {
+      await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Negative)
+    } else if (resultData.result === ResultTypes.Positive) {
+      await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
+    } else if (resultData.result === ResultTypes.PresumptivePositive) {
+      await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
+    } else if (
+      resultData.result === ResultTypes.Indeterminate &&
+      (resultData.testType === TestTypes.Antibody_All ||
+        resultData.testType === TestTypes.Antibody_IgM)
+    ) {
+      await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Intermediate)
+    } else {
+      throw new BadRequestException(`Not allowed resend result ${resultData.id}`)
     }
   }
 
@@ -1141,21 +1221,22 @@ export class PCRTestResultsService {
         return Config.getInt('TEST_RESULT_NO_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 5
       }
     }
-    let couponCode = null
-    if (!resultData.organizationId) {
-      couponCode = await this.couponService.createCoupon(resultData.email, CouponEnum.forResample)
-      await this.couponService.saveCoupon(couponCode, resultData.organizationId, resultData.barCode)
-      LogInfo('sendReCollectNotification', 'CouponCodeCreated', {
-        barCode: resultData.barCode,
-        organizationId: resultData.organizationId,
-        appointmentId: resultData.appointmentId,
-        appointmentEmail: resultData.email,
-      })
-    }
+
+    const pcrResultDbRecord = await this.pcrTestResultsRepository.findOneById(resultData.resultId)
+
+    const couponCode = pcrResultDbRecord?.couponCode ?? null
     const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')
     const owner = Config.get('ACUITY_SCHEDULER_USERNAME')
     const appointmentBookingLink = `${appointmentBookingBaseURL}?owner=${owner}&certificate=${couponCode}`
     const templateId = getTemplateId()
+
+    LogInfo('sendReCollectNotification', 'SendingCouponCode', {
+      barCode: resultData.barCode,
+      organizationId: resultData.organizationId,
+      appointmentId: resultData.appointmentId,
+      appointmentEmail: resultData.email,
+      couponCode,
+    })
 
     await this.emailService.send({
       templateId: templateId,
@@ -1177,6 +1258,20 @@ export class PCRTestResultsService {
         ReservationPushTypes.reSample,
       )
     }
+  }
+
+  async generateCouponCode(email: string, resultData: PCRTestResultDBModel): Promise<string> {
+    const couponCode = await this.couponService.createCoupon(email, CouponEnum.forResample)
+    await this.couponService.saveCoupon(couponCode, resultData.organizationId, resultData.barCode)
+
+    LogInfo('generateCouponCode', 'CouponCodeCreated', {
+      barCode: resultData.barCode,
+      pcrResultId: resultData.id,
+    })
+
+    await this.pcrTestResultsRepository.updateProperty(resultData.id, 'couponCode', couponCode)
+
+    return couponCode
   }
 
   async updateTestResults(
@@ -1691,7 +1786,11 @@ export class PCRTestResultsService {
     return status
   }
 
-  async getTestResultsByUserId(userId: string, organizationId: string): Promise<TestResutsDTO[]> {
+  async getTestResultsByUserId(
+    userId: string,
+    organizationId?: string,
+    testType?: TestTypes,
+  ): Promise<TestResutsDTO[]> {
     const pcrTestResultsQuery = [
       {
         map: '/',
@@ -1701,17 +1800,28 @@ export class PCRTestResultsService {
       },
       {
         map: '/',
-        key: 'organizationId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: organizationId,
-      },
-      {
-        map: '/',
         key: 'displayInResult',
         operator: DataModelFieldMapOperatorType.Equals,
         value: true,
       },
     ]
+
+    if (organizationId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'organizationId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: organizationId,
+      })
+    }
+    if (testType) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'testType',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: testType,
+      })
+    }
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
     const appoinmentIds = pcrResults
@@ -1719,20 +1829,34 @@ export class PCRTestResultsService {
       .map(({appointmentId}) => appointmentId)
     const [appoinments, attestations, temperatures, pulseOxygens] = await Promise.all([
       this.appointmentsRepository.getAppointmentsDBByIds(appoinmentIds),
-      this.attestationService.getAllAttestationByUserId(userId, organizationId),
-      this.temperatureService.getAllByUserAndOrgId(userId, organizationId),
-      this.pulseOxygenService.getAllByUserAndOrgId(userId, organizationId),
+      organizationId
+        ? this.attestationService.getAllAttestationByUserId(userId, organizationId)
+        : this.attestationService.getAllAttestationByOnlyUserId(userId),
+      organizationId
+        ? this.temperatureService.getAllByUserAndOrgId(userId, organizationId)
+        : this.temperatureService.getAllByUserId(userId),
+      organizationId
+        ? this.pulseOxygenService.getAllByUserAndOrgId(userId, organizationId)
+        : this.pulseOxygenService.getAllByUserId(userId),
     ])
 
     const testResult = []
 
     pcrResults.map((pcr) => {
-      let result = pcr.result
+      const appointment = appoinments.find(({id}) => id === pcr.appointmentId)
+      let result: Result
 
-      if (result === ResultTypes.Pending) {
-        const appoinment = appoinments.find(({id}) => id === pcr.appointmentId)
-
-        result = ResultTypes[appoinment?.appointmentStatus] || pcr.result
+      if (appointment?.appointmentStatus === AppointmentStatus.Pending) {
+        result = ResultTypes.Pending
+      } else if (
+        AppointmentStatus.ReCollectRequired === appointment?.appointmentStatus ||
+        AppointmentStatus.Reported === appointment?.appointmentStatus
+      ) {
+        result = ResultTypes[appointment?.appointmentStatus] || pcr.result
+      } else if (!appointment) {
+        result = pcr.result
+      } else {
+        result = AppointmentReasons.InProgress
       }
 
       testResult.push({
@@ -1809,9 +1933,27 @@ export class PCRTestResultsService {
     }
   }
 
+  getAntibodyPDFType(appointmentID: string, result: ResultTypes): PCRResultPDFType {
+    switch (result) {
+      case ResultTypes.Negative:
+        return PCRResultPDFType.Negative
+      case ResultTypes.Positive:
+        return PCRResultPDFType.Positive
+      case ResultTypes.Indeterminate:
+        return PCRResultPDFType.Intermediate
+
+      default:
+        LogError('PCRTestResultsService: getPDFType', 'UnSupportedPDFResultType', {
+          appointmentID,
+          errorMessage: `NotSupported Result ${result}`,
+        })
+    }
+  }
+
   async getTestResultAndAppointment(
     id: string,
     userId: string,
+    isAdmin = false,
   ): Promise<{appointment: AppointmentDBModel; pcrTestResult: PCRTestResultDBModel}> {
     const pcrTestResult = await this.getPCRResultsById(id)
 
@@ -1822,7 +1964,7 @@ export class PCRTestResultsService {
     const isParent = await this.userService.isParentForChild(userId, pcrTestResult?.userId)
 
     //TODO
-    if (pcrTestResult?.userId !== userId && !isParent) {
+    if (pcrTestResult?.userId !== userId && !isParent && !isAdmin) {
       throw new ResourceNotFoundException(`${id} does not exist`)
     }
 
@@ -1836,7 +1978,7 @@ export class PCRTestResultsService {
       )
     }
 
-    if (appointment?.userId !== userId && !isParent) {
+    if (appointment?.userId !== userId && !isParent && !isAdmin) {
       LogWarning('TestResultsController: testResultDetails', 'Unauthorized', {
         userId,
         resultId: id,
@@ -1862,14 +2004,19 @@ export class PCRTestResultsService {
 
   async getAllResultsByUserAndChildren(
     userId: string,
-    organizationid: string,
+    organizationid?: string,
+    testType?: TestTypes,
   ): Promise<TestResutsDTO[]> {
     const {guardian, dependants} = await this.userService.getUserAndDependants(userId)
-    const guardianTestResults = await this.getTestResultsByUserId(guardian.id, organizationid)
+    const guardianTestResults = await this.getTestResultsByUserId(
+      guardian.id,
+      organizationid,
+      testType,
+    )
 
     if (dependants.length) {
       const pendingResults = dependants.map(({id}) =>
-        this.getTestResultsByUserId(id, organizationid),
+        this.getTestResultsByUserId(id, organizationid, testType),
       )
       const dependantsTestResults = await Promise.all(pendingResults)
       const childrenTestResults = dependantsTestResults.flat()

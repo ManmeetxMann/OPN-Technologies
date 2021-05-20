@@ -1,10 +1,20 @@
 import {Body, Controller, Get, NotFoundException, Post, Put, UseGuards} from '@nestjs/common'
-import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
+import {ApiBearerAuth, ApiOperation, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard} from '@opn-services/common/guard'
-import {RequiredUserPermission} from '@opn-services/common/types/authorization'
-import {AuthUserDecorator, Roles} from '@opn-services/common/decorator'
+import {
+  OpnCommonHeaders,
+  OpnSources,
+  RequiredUserPermission,
+} from '@opn-services/common/types/authorization'
+import {
+  AuthUserDecorator,
+  Roles,
+  OpnHeaders,
+  PublicDecorator,
+  ApiCommonHeaders,
+} from '@opn-services/common/decorator'
 import {
   BadRequestException,
   ForbiddenException,
@@ -18,23 +28,26 @@ import {
   PatientUpdateDto,
   patientProfileDto,
   PatientCreateDto,
-  CreatePatientDTOResponse,
-  PatientDTO,
+  MigrateDto,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
+import {HomeTestPatientDto} from '@opn-services/user/dto/home-patient'
 import {UserEvent, UserFunctions} from '@opn-services/common/types/activity-logs'
 
 import {Platform} from '@opn-common-v1/types/platform'
+import * as _ from 'lodash'
+import {ActionStatus} from '@opn-services/opn/model/common'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
+@ApiCommonHeaders()
 @Controller('/api/v1/patients')
-@UseGuards(AuthGuard)
 export class PatientController {
   constructor(private patientService: PatientService) {}
 
   @Get()
+  @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
   async getById(
     @AuthUserDecorator() authUser: AuthUser,
@@ -48,25 +61,46 @@ export class PatientController {
   }
 
   @Post()
-  @Roles([RequiredUserPermission.RegUser])
+  @ApiOperation({
+    summary:
+      'Notice: email is required for normal patient, postalCode is required for Home Test Patient',
+  })
   async add(
-    @AuthUserDecorator() authUser: AuthUser,
+    @PublicDecorator() firebaseAuthUser: AuthUser,
     @Body() patientDto: PatientCreateDto,
-  ): Promise<ResponseWrapper<PatientDTO>> {
-    const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
+    @OpnHeaders() opnHeaders: OpnCommonHeaders,
+  ): Promise<ResponseWrapper<PatientUpdateDto>> {
+    let patient: Patient
 
+    patientDto.authUserId = firebaseAuthUser.authUserId
+
+    const patientExists = await this.patientService.getAuthByAuthUserId(firebaseAuthUser.authUserId)
     if (patientExists) {
-      throw new BadRequestException('User with given email already exists')
+      throw new BadRequestException('User with given uid already exists')
     }
 
-    patientDto.email = authUser.email
+    if (opnHeaders.opnSourceHeader == OpnSources.FH_RapidHome_Web) {
+      patientDto.phoneNumber = firebaseAuthUser.phoneNumber
 
-    const patient = await this.patientService.createProfile(patientDto)
+      patient = await this.patientService.createHomePatientProfile(patientDto as HomeTestPatientDto)
+    } else {
+      const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
+      if (patientExists) {
+        throw new BadRequestException('User with given email already exists')
+      }
+      const hasPublicOrg = [OpnSources.FH_Android, OpnSources.FH_IOS].includes(
+        opnHeaders.opnSourceHeader,
+      )
+      patient = await this.patientService.createProfile(patientDto, hasPublicOrg)
+    }
 
-    return ResponseWrapper.actionSucceed(CreatePatientDTOResponse(patient))
+    const profile = await this.patientService.getProfilebyId(patient.idPatient)
+
+    return ResponseWrapper.actionSucceed(patientProfileDto(profile))
   }
 
   @Get('/dependants')
+  @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
   async getDependents(@AuthUserDecorator() authUser: AuthUser): Promise<ResponseWrapper> {
     const patientExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
@@ -75,10 +109,17 @@ export class PatientController {
     }
 
     const patient = await this.patientService.getDirectDependents(patientExists.idPatient)
-    return ResponseWrapper.actionSucceed(patient.dependants)
+
+    const dependantProfiles = await this.patientService.getProfilesByIds(
+      patient.dependants.map(dependant => dependant.dependantId),
+    )
+    const dependantProfileDto = dependantProfiles.map(profile => patientProfileDto(profile))
+
+    return ResponseWrapper.actionSucceed(dependantProfileDto)
   }
 
   @Put()
+  @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
   async update(
     @Body() patientUpdateDto: PatientUpdateDto,
@@ -94,12 +135,14 @@ export class PatientController {
       throw new ForbiddenException('Permission not found for this resource')
     }
 
-    const {registrationId, pushToken, osVersion, platform} = patientUpdateDto
-    await this.patientService.upsertPushToken(registrationId, {
-      osVersion,
-      platform: platform as Platform,
-      pushToken,
-    })
+    if (patientUpdateDto?.registration) {
+      const {registrationId, pushToken, osVersion, platform} = patientUpdateDto.registration
+      await this.patientService.upsertPushToken(id, registrationId, {
+        osVersion,
+        platform: platform as Platform,
+        pushToken,
+      })
+    }
 
     const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
     LogInfo(UserFunctions.update, UserEvent.updateProfile, {
@@ -108,15 +151,18 @@ export class PatientController {
       updatedBy: id,
     })
 
-    return ResponseWrapper.actionSucceed()
+    const profile = await this.patientService.getProfilebyId(updatedUser.idPatient)
+
+    return ResponseWrapper.actionSucceed(patientProfileDto(profile))
   }
 
-  @Post('/dependant')
+  @Post('/dependants')
+  @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
   async addDependents(
     @Body() dependantBody: DependantCreateDto,
     @AuthUserDecorator() authUser: AuthUser,
-  ): Promise<ResponseWrapper<Patient>> {
+  ): Promise<ResponseWrapper> {
     const delegateExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
     if (!delegateExists) {
       throw new ResourceNotFoundException('Delegate with given id not found')
@@ -137,6 +183,39 @@ export class PatientController {
       createdBy: authUser.id,
     })
 
-    return ResponseWrapper.actionSucceed(dependant)
+    const profile = await this.patientService.getProfilebyId(dependant.idPatient)
+
+    return ResponseWrapper.actionSucceed(patientProfileDto(profile))
+  }
+
+  @Post('/migrate')
+  @UseGuards(AuthGuard)
+  @Roles([RequiredUserPermission.RegUser])
+  async migrate(
+    @Body() {migrations}: MigrateDto,
+    @AuthUserDecorator() authUser: AuthUser,
+  ): Promise<ResponseWrapper<Record<string, ActionStatus>>> {
+    const patientResponse = await Promise.all(
+      migrations.map(async migration => [
+        migration.notConfirmedPatientId,
+        await this.patientService.migratePatient(authUser.id, migration),
+      ]),
+    )
+    return ResponseWrapper.actionSucceed(_.fromPairs(patientResponse))
+  }
+
+  @Get('/unconfirmed')
+  @UseGuards(AuthGuard)
+  @Roles([RequiredUserPermission.RegUser])
+  async getUnconfirmedPatients(
+    @AuthUserDecorator() authUser: AuthUser,
+  ): Promise<ResponseWrapper<Omit<Patient, 'generatePublicId'>[]>> {
+    const patients = await this.patientService.getUnconfirmedPatients(
+      authUser.phoneNumber,
+      authUser.email,
+      authUser.id,
+    )
+
+    return ResponseWrapper.actionSucceed(patients)
   }
 }

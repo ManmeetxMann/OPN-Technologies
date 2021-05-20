@@ -8,6 +8,7 @@ import fetch from 'node-fetch'
 const APIURL = Config.get('ACUITY_SCHEDULER_API_URL')
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
+
 //LOCAL DB. HardCoding for now
 const conn = mysql.createConnection({
   host: 'localhost',
@@ -357,15 +358,15 @@ async function updateSourceForOneTimeUsedCoupons() {
   await updateWithUserPaidAmount()
   await updateWithPaidByOrgAmount()
 
-  const businessUpdatedPackages = await getPackagesWithBusinessInput()
-  await updatePerUnitCostForPackages(businessUpdatedPackages, PriceUpdateSource.FromBusinessInput)
-
   const packagesWithNoCost = await getPackagesWithZeroCost()
   const packagesWithCostInDescription = await getCostFromPackageDescription(packagesWithNoCost)
   await updatePerUnitCostForPackages(
     packagesWithCostInDescription,
     PriceUpdateSource.FromDescription,
   )
+
+  const businessUpdatedPackages = await getPackagesWithBusinessInput()
+  await updatePerUnitCostForPackages(businessUpdatedPackages, PriceUpdateSource.FromBusinessInput)
 
   await updateSourceForFreeAppointmentUnderFHHealthCalendar()
   await updateSourceForFreeAppointmentUnderFHHealthORG()

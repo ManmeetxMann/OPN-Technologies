@@ -1,5 +1,5 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsDateString, IsNotEmpty, IsNumberString, IsString} from 'class-validator'
+import {IsDateString, IsNotEmpty, IsString, IsUrl} from 'class-validator'
 
 enum TestTypes {
   Positive = 'Positive',
@@ -15,13 +15,28 @@ enum ReportAs {
 
 export class TestResultCreateDto {
   id: string
+  testType: string
+  userId: string
+  displayInResult: string
+  homeKitId: string
 
-  @ApiProperty({enum: [TestTypes]})
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  testResult: TestTypes
+  homeKitCode?: string
 
-  @ApiProperty({enum: [ReportAs]})
+  @ApiProperty()
+  @IsString()
+  @IsUrl()
+  @IsNotEmpty()
+  photoUrl: string
+
+  @ApiProperty({enum: TestTypes})
+  @IsString()
+  @IsNotEmpty()
+  result: TestTypes
+
+  @ApiProperty({enum: ReportAs})
   @IsString()
   @IsNotEmpty()
   reportAs: ReportAs
@@ -43,7 +58,7 @@ export class TestResultCreateDto {
   dateOfBirth: string
 
   @ApiProperty()
-  @IsNumberString()
+  @IsString()
   @IsNotEmpty()
   postalCode: string
 }

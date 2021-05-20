@@ -1,5 +1,5 @@
-import {ForbiddenException, Injectable, NestMiddleware} from '@nestjs/common'
-import {UnauthorizedException} from '@opn-services/common/exception'
+import {Injectable, NestMiddleware} from '@nestjs/common'
+import {ForbiddenException, UnauthorizedException} from '@opn-services/common/exception'
 import {OpnConfigService} from '@opn-services/common/services'
 
 import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
@@ -9,7 +9,11 @@ import {UserService as UserServiceV1} from '@opn-common-v1/service/user/user-ser
 import {
   internalUrls,
   publicApiUrls,
-} from '@opn-services/cart/configuration/middleware.configuration'
+} from '@opn-services/checkout/configuration/middleware.configuration'
+import {JoiValidator} from '../utils/joi-validator'
+import {opnHeadersSchema} from '../schemas'
+import {OpnCommonHeaders, OpnLang, OpnRawHeaders, OpnSources} from '../types/authorization'
+import {LogInfo} from '../utils/logging'
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
@@ -25,14 +29,21 @@ export class AuthMiddleware implements NestMiddleware {
   /* eslint-disable  @typescript-eslint/explicit-module-boundary-types */
   /* eslint-disable complexity */
   private async validateAuth(req, res, next) {
-    const bearerHeader = req.headers['authorization']
-    if (internalUrls.includes(req.originalUrl)) {
+    if (
+      internalUrls.find(
+        internalUrl => internalUrl.url === req.originalUrl && internalUrl.method === req.method,
+      )
+    ) {
       req.locals = {}
       req.locals = {
         opnSchedulerKey: req.headers['opn-scheduler-key'],
       }
       return next()
     }
+
+    await this.validateHeaders(req)
+
+    const bearerHeader = req.headers['authorization']
     if (!bearerHeader) {
       throw new UnauthorizedException('Authorization token required')
     }
@@ -47,16 +58,27 @@ export class AuthMiddleware implements NestMiddleware {
     // Validate
     const validatedAuthUser = await this.firebaseAuthService.verifyAuthToken(idToken)
 
-    if (!validatedAuthUser) {
-      throw new UnauthorizedException('Invalid access-token')
+    // TODO refactor to use URL templates
+    let originalUrl = req.originalUrl
+    if (originalUrl.startsWith('/user/api/v1/rapid-home-kit-codes/')) {
+      originalUrl = '/user/api/v1/rapid-home-kit-codes'
     }
 
-    if (publicApiUrls.includes(req.originalUrl)) {
+    // Allow public URL without firebase token
+    if (
+      publicApiUrls.find(
+        publicApiUrl => publicApiUrl.url === originalUrl && publicApiUrl.method === req.method,
+      )
+    ) {
       req.locals = {}
       req.locals = {
         firebaseAuthUser: validatedAuthUser,
       }
       return next()
+    }
+
+    if (!validatedAuthUser) {
+      throw new UnauthorizedException('Invalid access-token')
     }
 
     // look up admin user for backwards compat
@@ -109,6 +131,27 @@ export class AuthMiddleware implements NestMiddleware {
 
     // Done
     next()
+  }
+
+  private async validateHeaders(req): Promise<OpnCommonHeaders> {
+    const headers: OpnCommonHeaders = {
+      opnDeviceIdHeader: req.headers[OpnRawHeaders.OpnDeviceId],
+      opnSourceHeader: req.headers[OpnRawHeaders.OpnSource] as OpnSources,
+      opnRequestIdHeader: req.headers[OpnRawHeaders.OpnRequestId],
+      opnLangHeader: req.headers[OpnRawHeaders.OpnLang] as OpnLang,
+      opnAppVersion: req.headers[OpnRawHeaders.OpnAppVersion],
+    }
+
+    LogInfo('handleHeaders', 'ReadOpnHeaders', {headers})
+
+    const headerValidator = new JoiValidator(opnHeadersSchema)
+    const validHeaders = await headerValidator.validate(headers)
+
+    req.commonHeaders = {
+      ...headers,
+    }
+
+    return validHeaders
   }
 
   async use(req, res, next) {

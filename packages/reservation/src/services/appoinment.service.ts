@@ -1,9 +1,10 @@
-import {flatten, union, fromPairs} from 'lodash'
+import {flatten, fromPairs, union} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 
 import {
   AppoinmentBarCodeSequenceDBModel,
+  AppointmentActivityAction,
   AppointmentAcuityResponse,
   AppointmentByOrganizationRequest,
   AppointmentChangeToRerunRequest,
@@ -11,15 +12,14 @@ import {
   AppointmentStatus,
   CreateAppointmentRequest,
   DeadlineLabel,
+  Filter,
+  Gender,
+  RescheduleAppointmentDTO,
   ResultTypes,
+  TestTypes,
+  UpdateTransPortRun,
   UserAppointment,
   userAppointmentDTOResponse,
-  AppointmentActivityAction,
-  Filter,
-  TestTypes,
-  RescheduleAppointmentDTO,
-  UpdateTransPortRun,
-  Gender,
 } from '../models/appointment'
 
 import {dateFormats, timeFormats} from '../../../common/src/utils/times'
@@ -31,12 +31,12 @@ import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 
 import {
   firestoreTimeStampToUTC,
-  makeDeadline,
-  makeRapidDeadline,
-  makeFirestoreTimestamp,
-  getTimeFromFirestoreDateTime,
-  makeDefaultIsoDate,
   getFirestoreTimeStampDate,
+  getTimeFromFirestoreDateTime,
+  makeDeadline,
+  makeDefaultIsoDate,
+  makeFirestoreTimestamp,
+  makeRapidDeadline,
 } from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
@@ -46,8 +46,8 @@ import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 
 import {AvailableTimes} from '../models/available-times'
 import {
-  decodeBookingLocationId,
   decodeAvailableTimeId,
+  decodeBookingLocationId,
   encodeAvailableTimeId,
 } from '../utils/base64-converter'
 import {Enterprise} from '../adapter/enterprise'
@@ -80,6 +80,9 @@ import {CouponRepository} from '../respository/coupon.repository'
 import {AppointmentTypes} from '../models/appointment-types'
 import {PackageService} from './package.service'
 import {firestore} from 'firebase-admin'
+import {UserServiceInterface} from '../../../common/src/interfaces/user-service-interface'
+import {UserStatus} from '../../../common/src/data/user'
+import {UserSyncServiceInterface} from '../../../enterprise/src/interfaces/user-sync-service-interface'
 
 // Must to be require otherwise import to V2 fails
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -88,6 +91,9 @@ const moment = require('moment')
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 export class AppoinmentService {
+  private userService: UserServiceInterface
+  private userSyncService: UserSyncServiceInterface
+
   private dataStore = new DataStore()
   private acuityRepository = new AcuityRepository()
   private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence()
@@ -125,9 +131,21 @@ export class AppoinmentService {
         status: appointment.appointmentStatus,
         date: safeTimestamp(appointment.dateTime).toISOString(),
         testType: appointment.testType,
+        appointment: appointment,
       },
       attrs,
     )
+  }
+
+  constructor(
+    diServices: {
+      userService?: UserServiceInterface
+      userSyncService?: UserSyncServiceInterface
+    } = {},
+  ) {
+    const {userService, userSyncService} = diServices
+    this.userService = userService
+    this.userSyncService = userSyncService
   }
 
   async makeDeadlineRapidMinutes(
@@ -554,27 +572,9 @@ export class AppoinmentService {
       couponCode = '',
       userId,
     } = additionalData
-    const getNewUserId = async (): Promise<string | null> => {
-      if (Config.getInt('FEATURE_CREATE_USER_ON_ENTERPRISE')) {
-        const user = await this.enterpriseAdapter.findOrCreateUser({
-          email: acuityAppointment.email,
-          firstName: acuityAppointment.firstName,
-          lastName: acuityAppointment.lastName,
-          organizationId: acuityAppointment.organizationId || '',
-          address: acuityAppointment.address,
-          dateOfBirth: acuityAppointment.dateOfBirth,
-          agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
-          shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
-          readTermsAndConditions: acuityAppointment.readTermsAndConditions,
-          receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
-          receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
-        })
-        return user.data ? user.data.id : null
-      }
-      return null
-    }
 
-    const currentUserId = userId ? userId : await getNewUserId()
+    const currentUserId =
+      userId || appointmentDb?.userId || (await this.checkWithPhone(acuityAppointment))
 
     return {
       acuityAppointmentId: Number(acuityAppointment.id),
@@ -620,6 +620,9 @@ export class AppoinmentService {
         ReservationPushTypes.before24hours,
         ReservationPushTypes.before3hours,
       ],
+      city: acuityAppointment.city,
+      province: acuityAppointment.province,
+      country: acuityAppointment.country,
     }
   }
 
@@ -1219,7 +1222,7 @@ export class AppoinmentService {
     userId: string,
     email: string,
   ): Promise<AppointmentDBModel> {
-    const {appointment, patient} = cartDdItem
+    const {appointment, patient, discountData} = cartDdItem
 
     const utcDateTime = moment(appointment.time).utc()
     const dateTime = utcDateTime.tz(timeZone).format()
@@ -1230,9 +1233,10 @@ export class AppoinmentService {
       appointmentTypeID: appointment.appointmentTypeId,
       firstName: patient.firstName,
       lastName: patient.lastName,
+
       email,
       phone: patient.phone,
-      packageCode: appointment.packageCode,
+      packageCode: discountData?.name ? discountData.name : appointment.packageCode,
       calendarID: appointment.calendarId,
       fields: {
         dateOfBirth: patient.dateOfBirth,
@@ -1261,7 +1265,7 @@ export class AppoinmentService {
       appointmentStatus: AppointmentStatus.Pending,
       latestResult: ResultTypes.Pending,
       organizationId: appointment.organizationId,
-      couponCode: '',
+      couponCode: discountData?.name ? discountData.name : appointment.packageCode,
       userId,
     })
   }
@@ -1789,5 +1793,68 @@ export class AppoinmentService {
       }
     }
     return linkedBarcodes
+  }
+  private async createUser(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
+    const publicOrgId = Config.get('PUBLIC_ORG_ID')
+    const user = await this.userService.create({
+      email: acuityAppointment.email,
+      firstName: acuityAppointment.firstName,
+      lastName: acuityAppointment.lastName,
+      dateOfBirth: acuityAppointment.dateOfBirth,
+      base64Photo: Config.get('DEFAULT_USER_PHOTO') || '',
+      organizationIds: acuityAppointment.organizationId
+        ? [acuityAppointment.organizationId]
+        : [publicOrgId],
+      delegates: [],
+      registrationId: '',
+      phoneNumber: acuityAppointment.phone,
+      status: UserStatus.NEW,
+    })
+    await this.userSyncService.create(
+      {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber,
+        photoUrl: user.base64Photo ?? null,
+        firebaseKey: user.id,
+        registrationId: user.registrationId || '',
+        dateOfBirth: user.dateOfBirth,
+        dependants: [],
+        delegates: [],
+        status: UserStatus.NEW,
+      },
+      {
+        phoneNumber: user.phoneNumber,
+        email: user.email,
+      },
+    )
+    return user.id
+  }
+  private async checkWithEmail(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
+    const user = await this.userService.findOneByEmail(acuityAppointment.email)
+    if (
+      user &&
+      user.firstName === acuityAppointment.firstName &&
+      user.lastName === acuityAppointment.lastName
+    ) {
+      return user.id
+    } else {
+      return this.createUser(acuityAppointment)
+    }
+  }
+  private async checkWithPhone(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
+    const user = await this.userService.findOneByPhone(acuityAppointment.phone)
+    if (!user) {
+      return await this.checkWithEmail(acuityAppointment)
+    } else {
+      if (
+        user.firstName === acuityAppointment.firstName &&
+        user.lastName === acuityAppointment.lastName
+      ) {
+        return user.id
+      } else {
+        return await this.checkWithEmail(acuityAppointment)
+      }
+    }
   }
 }

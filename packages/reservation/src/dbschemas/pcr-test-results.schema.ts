@@ -40,6 +40,7 @@ export default Joi.object({
     .valid(
       'PCR',
       'RapidAntigen',
+      'RapidAntigenAtHome',
       'Temperature',
       'Attestation',
       'EmergencyRapidAntigen',

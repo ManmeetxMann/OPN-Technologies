@@ -1,7 +1,7 @@
 /**
  * Common configuration for All Environments
  */
-export const commonConfig: Record<string, string | number | boolean> = {
+export const commonConfig: Record<string, string | string[] | number | boolean> = {
   ACUITY_CALENDAR_URL: 'https://app.acuityscheduling.com/schedule.php',
   ACUITY_APPOINTMENT_TYPE_ID: 20791574,
   ACUITY_COUPON_ID_FOR_RESAMPLE: 1073154,
@@ -55,6 +55,9 @@ export const commonConfig: Record<string, string | number | boolean> = {
   ATTESTATION_TOPIC: 'attestation-topic',
   PUBSUB_TRACE_TOPIC: 'tracing',
   PUBSUB_TRACE_SUBSCRIPTION: 'executeTrace',
+  PRESUMPTIVE_POSITIVE_RESULTS_TOPIC: 'presumptive-positive-result-topic',
+  SAMPLE_TO_MOUNT_SINAI_LAB_TOPIC: 'sample-to-mount-sinai-lab-topic',
+  PATIENT_UPDATE_TOPIC: 'patient-update-topic',
 
   PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS: 12,
   PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS: 7,

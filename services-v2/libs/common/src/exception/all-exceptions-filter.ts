@@ -21,6 +21,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const status =
       exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR
 
+    // If unknown
+    if (!exception['response']) {
+      console.error('Unknown error')
+      console.error(exception)
+
+      return response.status(status).send({
+        data: null,
+        status: {
+          code: ResponseStatusCodes.UnknownError,
+          message: exception['message'],
+        },
+      })
+    }
+
     let code = exception['response']['code']
     let message = exception['response']['message']
     if (Array.isArray(message)) {

@@ -1,4 +1,5 @@
 // NestJs
+// eslint-disable-next-line no-restricted-imports
 import {ConfigService} from '@nestjs/config'
 import {OpnConfigService} from '../../services'
 

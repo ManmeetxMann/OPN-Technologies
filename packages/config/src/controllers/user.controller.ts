@@ -2,7 +2,7 @@ import * as express from 'express'
 import {Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {Config} from '../../../common/src/utils/config'
-import {ApplicationName} from '../models/content'
+import {OpnSources} from '../../../../services-v2/libs/common/src/types/authorization'
 
 class UserController implements IControllerBase {
   public path = ''
@@ -18,10 +18,10 @@ class UserController implements IControllerBase {
   }
 
   config = (req: Request, res: Response): void => {
-    const applicationName: ApplicationName =
-      (req.header('application-name') as ApplicationName) ?? ApplicationName.OPN
+    const opnSource: OpnSources = req.header('opn-source') as OpnSources
+
     let response
-    if (applicationName === ApplicationName.FHHealth) {
+    if ([OpnSources.FH_Android, OpnSources.FH_IOS].includes(opnSource)) {
       response = {
         data: {
           updates: {
@@ -43,7 +43,8 @@ class UserController implements IControllerBase {
             passport: Config.get('DOMAIN_PASSPORT'),
             registry: Config.get('DOMAIN_REGISTRY'),
             reservation: Config.get('DOMAIN_RESERVATION'),
-            cart: Config.get('DOMAIN_CART'),
+            cart: Config.get('DOMAIN_CHECKOUT'),
+            user: Config.get('DOMAIN_USER'),
           },
           links: {
             privacyPolicy: Config.get('FH_LINK_PRIVACYPOLICY'),
@@ -84,7 +85,8 @@ class UserController implements IControllerBase {
             passport: Config.get('DOMAIN_PASSPORT'),
             registry: Config.get('DOMAIN_REGISTRY'),
             reservation: Config.get('DOMAIN_RESERVATION'),
-            cart: Config.get('DOMAIN_CART'),
+            cart: Config.get('DOMAIN_CHECKOUT'),
+            user: Config.get('DOMAIN_USER'),
           },
           links: {
             privacyPolicy: Config.get('LINK_PRIVACYPOLICY'),

@@ -9,7 +9,11 @@ export class CouponService {
   private couponRepository = new CouponRepository(new DataStore())
   private acuityRepository = new AcuityRepository()
 
-  async saveCoupon(couponCode: string, organizationId: string, lastBarcode: string): Promise<void> {
+  async saveCoupon(
+    couponCode: string,
+    organizationId: string = null,
+    lastBarcode: string = null,
+  ): Promise<void> {
     await this.couponRepository.add({
       couponCode,
       organizationId,

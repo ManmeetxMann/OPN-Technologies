@@ -49,4 +49,8 @@ export class ResponseWrapper<T = unknown> {
   static actionFailed<T>(message?: string, data: T = null): ResponseWrapper<T> {
     return ResponseWrapper.of(data, ResponseStatusCodes.Failed, message)
   }
+
+  static actionSuccess<T>(data: T = null, message = ''): ResponseWrapper<T> {
+    return ResponseWrapper.of(data, ResponseStatusCodes.Succeed, message)
+  }
 }

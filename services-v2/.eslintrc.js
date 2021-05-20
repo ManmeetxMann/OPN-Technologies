@@ -14,7 +14,7 @@ module.exports = {
   },
   rules: {
     'max-params': ['error', {max: 3}],
-    'max-lines': ['error', {max: 450, skipBlankLines: true, skipComments: true}],
+    'max-lines': ['error', {max: 550, skipBlankLines: true, skipComments: true}],
     'max-lines-per-function': ['error', {max: 120, skipBlankLines: true, skipComments: true}],
     complexity: ['error', 20], // cyclomatic complexity
     '@typescript-eslint/no-explicit-any': 'error',
@@ -23,6 +23,8 @@ module.exports = {
       {argsIgnorePattern: '^_', ignoreRestSiblings: true},
     ],
     '@typescript-eslint/explicit-module-boundary-types': 'error',
+    // Use OpnConfigService from '@opn-services/common/services'
+    'no-restricted-imports': ['error', '@nestjs/config'],
   },
   root: true,
 }
