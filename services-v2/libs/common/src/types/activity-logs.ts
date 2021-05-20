@@ -57,3 +57,11 @@ export enum ValidatorFunctions {
 export enum ValidatorEvents {
   validationFailed = 'validationFailed',
 }
+
+export enum OpnHeaderFunctions {
+  validateHeaders = 'validateHeaders',
+}
+
+export enum OpnHeaderEvents {
+  ReadOpnHeaders = 'ReadOpnHeaders',
+}

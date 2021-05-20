@@ -4,6 +4,7 @@ import {ApiBearerAuth, ApiOperation, ApiTags} from '@nestjs/swagger'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard} from '@opn-services/common/guard'
 import {
+  AuthTypes,
   OpnCommonHeaders,
   OpnSources,
   RequiredUserPermission,
@@ -14,6 +15,7 @@ import {
   OpnHeaders,
   PublicDecorator,
   ApiCommonHeaders,
+  ApiAuthType,
 } from '@opn-services/common/decorator'
 import {
   BadRequestException,
@@ -62,6 +64,7 @@ export class PatientController {
     summary:
       'Notice: email is required for normal patient, postalCode is required for Home Test Patient',
   })
+  @ApiAuthType(AuthTypes.Firebase)
   async add(
     @PublicDecorator() firebaseAuthUser: AuthUser,
     @Body() patientDto: PatientCreateDto,

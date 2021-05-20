@@ -12,7 +12,7 @@ import {CaptchaService} from './services/google/captcha.service'
 import {AuthGuard} from './guard/auth.guard'
 import {CaptchaGuard} from './guard/captcha.guard'
 import {InternalGuard} from './guard/internal.guard'
-
+import {AuthGlobalGuard} from './guard'
 import {Config} from '@opn-common-v1/utils/config'
 
 @Global()
@@ -23,6 +23,7 @@ import {Config} from '@opn-common-v1/utils/config'
     }),
     OpnConfigService,
     AuthGuard,
+    AuthGlobalGuard,
     CaptchaGuard,
     InternalGuard,
   ],
@@ -34,6 +35,7 @@ import {Config} from '@opn-common-v1/utils/config'
     FirebaseAuthService,
     CaptchaService,
     AuthGuard,
+    AuthGlobalGuard,
     CaptchaGuard,
     InternalGuard,
   ],

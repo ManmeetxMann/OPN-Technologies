@@ -5,7 +5,8 @@ import {ConfigService} from '@nestjs/config'
 import {CaptchaGuard} from '@opn-services/common/guard'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {ResourceNotFoundException} from '@opn-services/common/exception/resource-not-found-exception'
-import {ApiCommonHeaders} from '@opn-services/common/decorator'
+import {ApiAuthType, ApiCommonHeaders} from '@opn-services/common/decorator'
+import {AuthTypes} from '@opn-services/common/types/authorization'
 
 import {EncryptionService} from '@opn-common-v1/service/encryption/encryption-service'
 
@@ -28,6 +29,7 @@ export class RapidHomeKitCodeController {
 
   @Get('/:code')
   @ApiHeader({name: 'captcha-token', required: true})
+  @ApiAuthType(AuthTypes.Public)
   @UseGuards(CaptchaGuard)
   async checkCode(@Param('code') code: string): Promise<ResponseWrapper> {
     const [homeKitCode] = await this.homeKitCodeService.get(code)

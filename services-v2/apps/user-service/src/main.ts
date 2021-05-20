@@ -1,5 +1,5 @@
 // NestJs
-import {NestFactory} from '@nestjs/core'
+import {APP_GUARD, NestFactory} from '@nestjs/core'
 import {FastifyAdapter} from '@nestjs/platform-fastify'
 import {MiddlewareConsumer, Module, RequestMethod} from '@nestjs/common'
 
@@ -8,7 +8,7 @@ import {Config} from '@opn-common-v1/utils/config'
 Config.useRootEnvFile()
 
 // Common
-import {AuthMiddleware, CorsMiddleware, CommonModule, createSwagger} from '@opn-services/common'
+import {CorsMiddleware, CommonModule, createSwagger, AuthGlobalGuard} from '@opn-services/common'
 import {AllExceptionsFilter} from '@opn-services/common/exception'
 import {OpnValidationPipe} from '@opn-services/common/pipes'
 
@@ -49,11 +49,15 @@ import {RapidHomeController} from './controller/v1/public/rapid-home.controller'
     PatientService,
     RapidHomeKitCodeService,
     TestResultService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGlobalGuard,
+    },
   ],
 })
 class App {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(CorsMiddleware, AuthMiddleware).forRoutes({
+    consumer.apply(CorsMiddleware).forRoutes({
       path: '(.*)',
       method: RequestMethod.ALL,
     })
