@@ -90,6 +90,7 @@ import {BulkTestResultRequest, TestResultsMetaData} from '../models/test-results
 import {AntibodyAllPDFContent} from '../templates/antibody-all'
 import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 import {normalizeAnalysis} from '../utils/analysis.helper'
+import {CouponEnum} from '../models/coupons'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -1142,7 +1143,7 @@ export class PCRTestResultsService {
     }
     let couponCode = null
     if (!resultData.organizationId) {
-      couponCode = await this.couponService.createCoupon(resultData.email)
+      couponCode = await this.couponService.createCoupon(resultData.email, CouponEnum.forResample)
       await this.couponService.saveCoupon(couponCode, resultData.organizationId, resultData.barCode)
       LogInfo('sendReCollectNotification', 'CouponCodeCreated', {
         barCode: resultData.barCode,

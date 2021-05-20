@@ -15,6 +15,7 @@ import {EncryptionService} from '@opn-common-v1/service/encryption/encryption-se
 import {RapidHomeKitCodeService} from '../../../service/patient/rapid-home-kit-code.service'
 import {ConfigService} from '@nestjs/config'
 import {CouponService} from '@opn-reservation-v1/services/coupon.service'
+import {CouponEnum} from '@opn-reservation-v1/models/coupons'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -87,7 +88,10 @@ export class RapidHomeController {
   @Roles([RequiredUserPermission.RegUser])
   @UseGuards(AuthGuard)
   async createCoupon(@AuthUserDecorator() authUser: User): Promise<ResponseWrapper> {
-    const couponCode = await this.couponService.createCoupon(authUser.email)
+    const couponCode = await this.couponService.createCoupon(
+      authUser.email,
+      CouponEnum.forRapidHome,
+    )
     return ResponseWrapper.actionSucceed({couponCode: couponCode})
   }
 }
