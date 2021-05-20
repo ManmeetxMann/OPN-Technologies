@@ -1813,12 +1813,19 @@ export class PCRTestResultsService {
         value: organizationId,
       })
     }
-    if (testType) {
+    if (testType && testType !== TestTypes.RapidAntigenAtHome) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'testType',
         operator: DataModelFieldMapOperatorType.Equals,
         value: testType,
+      })
+    } else {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'testType',
+        operator: DataModelFieldMapOperatorType.NotEquals,
+        value: TestTypes.RapidAntigenAtHome,
       })
     }
 
@@ -1967,25 +1974,23 @@ export class PCRTestResultsService {
       throw new ResourceNotFoundException(`${id} does not exist`)
     }
 
-    let appointment: AppointmentDBModel
+    const appointment = await this.appointmentService.getAppointmentDBById(
+      pcrTestResult.appointmentId,
+    )
 
-    if (pcrTestResult.testType !== TestTypes.RapidAntigenAtHome) {
-      appointment = await this.appointmentService.getAppointmentDBById(pcrTestResult.appointmentId)
+    if (!appointment) {
+      throw new ResourceNotFoundException(
+        `Appointment with appointmentId ${pcrTestResult.appointmentId} not found, PCR Result id ${id}`,
+      )
+    }
 
-      if (!appointment) {
-        throw new ResourceNotFoundException(
-          `Appointment with appointmentId ${pcrTestResult.appointmentId} not found, PCR Result id ${id}`,
-        )
-      }
-
-      if (appointment?.userId !== userId && !isParent && !isAdmin) {
-        LogWarning('TestResultsController: testResultDetails', 'Unauthorized', {
-          userId,
-          resultId: id,
-          appointmentId: pcrTestResult.appointmentId,
-        })
-        throw new ResourceNotFoundException(`${id} does not exist`)
-      }
+    if (appointment?.userId !== userId && !isParent && !isAdmin) {
+      LogWarning('TestResultsController: testResultDetails', 'Unauthorized', {
+        userId,
+        resultId: id,
+        appointmentId: pcrTestResult.appointmentId,
+      })
+      throw new ResourceNotFoundException(`${id} does not exist`)
     }
 
     return {

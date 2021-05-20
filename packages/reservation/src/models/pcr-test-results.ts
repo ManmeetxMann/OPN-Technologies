@@ -406,7 +406,7 @@ export type GroupedSpecs = {
   description: string
   groups: {
     label: string
-    value?: string | boolean | Date
+    value: string | boolean | Date
   }[]
 }
 
@@ -444,7 +444,7 @@ export enum GroupLabel {
 
 export type Spec = {
   label: SpecLabel
-  value?: string | boolean | Date
+  value: string | boolean | Date
 }
 
 export type SinglePcrTestResultUi = {
@@ -487,28 +487,6 @@ export const singlePcrTestResultDTO = (
 ): SinglePcrTestResultUi => {
   let resultSpecs = null
   let resultAnalysis = null
-
-  const getAnalysis = (pcrTestResult: PCRTestResultDBModel): Spec[] => {
-    if (
-      pcrTestResult.testType === TestTypes.Antibody_All &&
-      (pcrTestResult.result === ResultTypes.Positive ||
-        pcrTestResult.result === ResultTypes.Inconclusive)
-    ) {
-      return pcrTestResult.resultAnalysis.map(({label, value}) => {
-        if (label === SpecLabel.IgG || label === SpecLabel.IgM) {
-          return {
-            label,
-          }
-        }
-        return {
-          label,
-          value,
-        }
-      })
-    }
-
-    return pcrTestResult.resultAnalysis
-  }
   if (pcrTestResult.resultSpecs) {
     resultSpecs = Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
       label: resultKey,
@@ -523,7 +501,7 @@ export const singlePcrTestResultDTO = (
       })),
     )
   } else if (pcrTestResult.resultAnalysis) {
-    resultAnalysis = groupByChannel(getAnalysis(pcrTestResult))
+    resultAnalysis = groupByChannel(pcrTestResult.resultAnalysis)
   }
 
   let isBirthDateParsable: boolean
@@ -534,27 +512,25 @@ export const singlePcrTestResultDTO = (
   }
 
   return {
-    email: appointment?.email || 'N/A',
-    firstName: appointment?.firstName || pcrTestResult.firstName,
-    lastName: appointment?.lastName || pcrTestResult.lastName,
-    phone: `${appointment?.phone || 'N/A'}`,
-    ohipCard: appointment?.ohipCard || 'N/A',
+    email: appointment.email,
+    firstName: appointment.firstName,
+    lastName: appointment.lastName,
+    phone: `${appointment.phone}`,
+    ohipCard: appointment.ohipCard || 'N/A',
     dateOfBirth: isBirthDateParsable
       ? moment(appointment.dateOfBirth).format('LL')
-      : appointment?.dateOfBirth || 'N/A',
-    address: appointment?.address || 'N/A',
-    addressUnit: appointment?.addressUnit || 'N/A',
+      : appointment.dateOfBirth,
+    address: appointment.address,
+    addressUnit: appointment.addressUnit,
     barCode: pcrTestResult.barCode,
-    appointmentStatus: appointment?.appointmentStatus || 'N/A',
+    appointmentStatus: appointment.appointmentStatus,
     result: pcrTestResult.result,
     dateTime: formatStringDateRFC822Local(pcrTestResult.dateTime.toDate()),
-    registeredNursePractitioner: appointment?.registeredNursePractitioner || 'N/A',
+    registeredNursePractitioner: appointment.registeredNursePractitioner || 'N/A',
     physician: requisitionDoctor || 'N/A',
-    locationName: appointment?.locationName || 'N/A',
-    swabMethod: appointment?.swabMethod || 'N/A',
-    deadline: appointment?.deadline
-      ? formatStringDateRFC822Local(appointment?.deadline.toDate())
-      : 'N/A',
+    locationName: appointment.locationName || 'N/A',
+    swabMethod: appointment.swabMethod || 'N/A',
+    deadline: formatStringDateRFC822Local(appointment.deadline.toDate()),
     labName: lab?.name,
     testType: pcrTestResult.testType,
     equipment: lab?.assay,
@@ -563,8 +539,8 @@ export const singlePcrTestResultDTO = (
     style: resultToStyle(pcrTestResult.result),
     testName: 'SARS COV-2',
     doctorId: 'DR1',
-    travelID: appointment?.travelID.trim() ? appointment.travelID : 'N/A',
-    travelIDIssuingCountry: appointment?.travelIDIssuingCountry.trim()
+    travelID: appointment.travelID.trim() ? appointment.travelID : 'N/A',
+    travelIDIssuingCountry: appointment.travelIDIssuingCountry.trim()
       ? appointment.travelIDIssuingCountry
       : 'N/A',
     dateOfResult: pcrTestResult.resultMetaData
