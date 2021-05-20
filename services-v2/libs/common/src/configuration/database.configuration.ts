@@ -1,5 +1,6 @@
 import {TypeOrmModule} from '@nestjs/typeorm'
 import {DynamicModule} from '@nestjs/common'
+// eslint-disable-next-line no-restricted-imports
 import {ConfigModule} from '@nestjs/config'
 import {OpnConfigService} from '@opn-services/common/services'
 import {isRunningOnGCP} from '@opn-services/common/utils'

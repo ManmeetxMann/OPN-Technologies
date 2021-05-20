@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
 import {Injectable} from '@nestjs/common'
-import {ConfigService} from '@nestjs/config'
+import {OpnConfigService} from '@opn-services/common/services'
 
 import {LogError} from '@opn-services/common/utils/logging'
 import {CaptchaEvents, CaptchaFunctions} from '@opn-services/common/types/activity-logs'
@@ -9,7 +9,7 @@ import {CaptchaEvents, CaptchaFunctions} from '@opn-services/common/types/activi
 export class CaptchaService {
   private verifyUrl: string
 
-  constructor(private configService: ConfigService) {
+  constructor(private configService: OpnConfigService) {
     this.verifyUrl = this.configService.get('CAPTCHA_VERIFY_URL')
   }
 

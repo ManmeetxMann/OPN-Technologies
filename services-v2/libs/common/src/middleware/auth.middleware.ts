@@ -9,7 +9,7 @@ import {UserService as UserServiceV1} from '@opn-common-v1/service/user/user-ser
 import {
   internalUrls,
   publicApiUrls,
-} from 'apps/checkout-service/src/configuration/middleware.configuration'
+} from '@opn-services/checkout/configuration/middleware.configuration'
 import {JoiValidator} from '../utils/joi-validator'
 import {opnHeadersSchema} from '../schemas'
 import {OpnCommonHeaders, OpnLang, OpnRawHeaders, OpnSources} from '../types/authorization'
