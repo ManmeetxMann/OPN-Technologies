@@ -55,7 +55,7 @@ export class AuthGlobalGuard implements CanActivate {
   }
 
   /**
-   * Save decoded data from Firebase
+   * Save decoded user data from Firebase token in request
    */
   private async handleFirebaseAuth(req): Promise<void> {
     const firebaseAuthUser = await this.getFirebaseUser(req)
@@ -66,7 +66,7 @@ export class AuthGlobalGuard implements CanActivate {
   }
 
   /**
-   * Save data required by Internal requests in locals
+   * Save data required by Internal endpoints in request
    */
   private async handleInternalAuth(req) {
     req.raw.locals = {
