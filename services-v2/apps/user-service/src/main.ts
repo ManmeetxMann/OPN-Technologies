@@ -8,7 +8,13 @@ import {Config} from '@opn-common-v1/utils/config'
 Config.useRootEnvFile()
 
 // Common
-import {CorsMiddleware, CommonModule, createSwagger, AuthGlobalGuard} from '@opn-services/common'
+import {
+  CorsMiddleware,
+  CommonModule,
+  createSwagger,
+  AuthGlobalGuard,
+  SwaggerMiddleware,
+} from '@opn-services/common'
 import {AllExceptionsFilter} from '@opn-services/common/exception'
 import {OpnValidationPipe} from '@opn-services/common/pipes'
 
@@ -57,7 +63,7 @@ import {RapidHomeController} from './controller/v1/public/rapid-home.controller'
 })
 class App {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(CorsMiddleware).forRoutes({
+    consumer.apply(CorsMiddleware, SwaggerMiddleware).forRoutes({
       path: '(.*)',
       method: RequestMethod.ALL,
     })
