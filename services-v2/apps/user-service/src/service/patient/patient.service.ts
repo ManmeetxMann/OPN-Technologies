@@ -660,8 +660,8 @@ export class PatientService {
 
     const updateDto = new PatientUpdateDto()
     updateDto.phoneNumber = data?.phone
-    updateDto.healthCardType = data?.ohipCard
     // eslint-disable-next-line max-lines
+    updateDto.healthCardType = data?.ohipCard
     updateDto.travelPassport = data?.travelID
     updateDto.travelCountry = data?.travelIDIssuingCountry
     updateDto.homeAddress = data?.address
