@@ -273,7 +273,6 @@ export class Patient extends Auditable {
   @Column({type: 'timestamp', nullable: true, default: null})
   trainingCompletedOn?: Date
 
-  // @HINT Do not commit
   @Column()
   @ApiProperty({nullable: true, default: false})
   @IsBoolean()
