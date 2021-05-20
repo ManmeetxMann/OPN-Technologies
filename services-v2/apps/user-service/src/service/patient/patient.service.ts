@@ -3,6 +3,8 @@ import {Page} from '@opn-services/common/dto'
 import {Brackets, SelectQueryBuilder} from 'typeorm'
 import {
   DependantCreateDto,
+  Migration,
+  migrationActions,
   PatientCreateAdminDto,
   PatientCreateDto,
   PatientFilter,
@@ -38,10 +40,16 @@ import {LogError} from '@opn-services/common/utils/logging'
 
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import DataStore from '@opn-common-v1/data/datastore'
-import {AuthUser} from '@opn-common-v1/data/user'
+import {AuthUser, UserStatus} from '@opn-common-v1/data/user'
 import {Registration} from '@opn-common-v1/data/registration'
 import {RegistrationService} from '@opn-common-v1/service/registry/registration-service'
 import {MessagingFactory} from '@opn-common-v1/service/messaging/messaging-service'
+import {ResourceNotFoundException} from '@opn-services/common/exception'
+import {PCRTestResultsRepository} from '@opn-services/user/repository/test-result.repository'
+import {AppointmentsRepository} from '@opn-reservation-v1/respository/appointments-repository'
+import {AppointmentActivityAction} from '@opn-reservation-v1/models/appointment'
+import * as _ from 'lodash'
+import {ActionStatus} from '../../../../opn-services/src/model/common'
 
 @Injectable()
 export class PatientService {
@@ -61,6 +69,8 @@ export class PatientService {
 
   private dataStore = new DataStore()
   private userRepository = new UserRepository(this.dataStore)
+  private appointmentRepository = new AppointmentsRepository(this.dataStore)
+  private testResultRepository = new PCRTestResultsRepository(this.dataStore)
   private messaging = MessagingFactory.getPushableMessagingService()
   private registrationService = new RegistrationService()
 
@@ -145,10 +155,7 @@ export class PatientService {
     const userData = {
       firstName: data.firstName,
       lastName: data.lastName,
-      phone: {
-        diallingCode: 0,
-        number: Number(data.phoneNumber),
-      },
+      phoneNumber: data.phoneNumber,
       authUserId: data.authUserId,
       active: false,
       organizationIds: [],
@@ -191,10 +198,7 @@ export class PatientService {
       lastName: data.lastName,
       registrationId: data.registrationId ?? null,
       photo: data.photoUrl ?? null,
-      phone: {
-        diallingCode: 0,
-        number: Number(data.phoneNumber),
-      },
+      phoneNumber: data.phoneNumber,
       authUserId: data.authUserId,
       active: false,
       organizationIds,
@@ -295,6 +299,7 @@ export class PatientService {
     entity.photoUrl = data.photoUrl
     entity.registrationId = data.registrationId
     entity.consentFileUrl = data.consentFileUrl
+    entity.isEmailVerified = true
 
     return this.patientRepository.save(entity)
   }
@@ -408,6 +413,116 @@ export class PatientService {
     organization.patientId = data.idPatient
     organization.firebaseOrganizationId = data.organizationId ?? publicOrg
     return this.patientToOrganizationRepository.save(organization)
+  }
+
+  async getUnconfirmedPatients(
+    phoneNumber: string,
+    email: string,
+    authUserId: string,
+  ): Promise<(Omit<Patient, 'generatePublicId'> & {resultsCount: number})[]> {
+    console.log(phoneNumber, email)
+    const patientQuery = this.patientRepository
+      .createQueryBuilder('patient')
+      .innerJoinAndSelect('patient.auth', 'auth')
+      .where('status = :status', {status: UserStatus.NEW})
+      .andWhere('auth.phoneNumber = :phoneNumber', {
+        phoneNumber,
+      })
+
+    const patient = await this.patientRepository.findOne({firebaseKey: authUserId})
+
+    if (!patient) {
+      throw new ResourceNotFoundException('User with given id not found')
+    }
+
+    if (email && patient.isEmailVerified) {
+      patientQuery.orWhere('auth.email = :email AND status = :status', {email})
+    }
+
+    const patients = await patientQuery.getMany()
+
+    const patientKeys = patients.map(patient => patient.firebaseKey)
+
+    const testResults = await this.testResultRepository.findWhereIn('userId', patientKeys)
+
+    return patients.map(patient => ({
+      ...patient,
+      resultsCount: testResults.reduce((previousValue, currentValue) => {
+        if (currentValue.userId === patient.firebaseKey) {
+          return previousValue + 1
+        }
+        return previousValue
+      }, 0),
+    }))
+  }
+
+  async migratePatient(currentUserId: string, migration: Migration): Promise<ActionStatus> {
+    try {
+      const currentPatient = await this.patientRepository.findOne({
+        where: {
+          firebaseKey: currentUserId,
+        },
+      })
+      const patient = await this.patientRepository.findOne(migration.notConfirmedPatientId)
+      if (!patient) {
+        throw new ResourceNotFoundException('Patient was not found')
+      }
+      if (migration.action === migrationActions.New) {
+        await this.patientRepository.update(migration.notConfirmedPatientId, {
+          status: UserStatus.CONFIRMED,
+        })
+        await this.userRepository.updateProperties(patient.firebaseKey, {
+          status: UserStatus.CONFIRMED,
+        })
+
+        await this.saveDependantOrDelegate(currentPatient.idPatient, patient.idPatient)
+        await this.patientRepository.save(currentPatient)
+      } else if (migration.action === migrationActions.Merge) {
+        const providedPatient = await this.patientRepository.findOne(migration.patientId)
+        const appointments = await this.appointmentRepository.findWhereEqual(
+          'userId',
+          patient.firebaseKey,
+        )
+        const testResults = await this.testResultRepository.findWhereEqual(
+          'userId',
+          patient.firebaseKey,
+        )
+        await Promise.all(
+          appointments.map(async appointment => {
+            await this.appointmentRepository.updateAppointment({
+              id: appointment.id,
+              updates: {
+                userId: providedPatient.firebaseKey,
+              },
+              action: AppointmentActivityAction.MigrationFromUnconfirmed,
+              actionBy: currentPatient.firebaseKey,
+            })
+          }),
+        )
+        await Promise.all(
+          testResults.map(async testResult => {
+            await this.testResultRepository.updateProperties(testResult.id, {
+              userId: providedPatient.firebaseKey,
+            })
+          }),
+        )
+        const providedFirebasePatient = await this.userRepository.findOneById(
+          providedPatient.firebaseKey,
+        )
+        const firebasePatient = await this.userRepository.findOneById(providedFirebasePatient.id)
+        await this.userRepository.updateProperties(providedPatient.firebaseKey, {
+          organizationIds: _.uniq([
+            ...(providedFirebasePatient.organizationIds ?? []),
+            ...(firebasePatient.organizationIds ?? []),
+          ]),
+        })
+        await this.userRepository.delete(firebasePatient.id)
+        await this.patientRepository.remove(patient)
+      }
+      return ActionStatus.success
+    } catch (e) {
+      return ActionStatus.fail
+    }
   }
 
   async getDirectDependents(patientId: string): Promise<Patient> {

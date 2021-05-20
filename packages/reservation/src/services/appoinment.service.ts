@@ -1810,18 +1810,24 @@ export class AppoinmentService {
       phoneNumber: acuityAppointment.phone,
       status: UserStatus.NEW,
     })
-    await this.userSyncService.create({
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phoneNumber: user.phoneNumber,
-      photoUrl: user.base64Photo ?? null,
-      firebaseKey: user.id,
-      registrationId: user.registrationId || '',
-      dateOfBirth: user.dateOfBirth,
-      dependants: [],
-      delegates: [],
-      status: UserStatus.NEW,
-    })
+    await this.userSyncService.create(
+      {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber,
+        photoUrl: user.base64Photo ?? null,
+        firebaseKey: user.id,
+        registrationId: user.registrationId || '',
+        dateOfBirth: user.dateOfBirth,
+        dependants: [],
+        delegates: [],
+        status: UserStatus.NEW,
+      },
+      {
+        phoneNumber: user.phoneNumber,
+        email: user.email,
+      },
+    )
     return user.id
   }
   private async checkWithEmail(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
