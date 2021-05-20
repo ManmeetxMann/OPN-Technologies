@@ -404,7 +404,6 @@ export class PatientService {
     email: string,
     authUserId: string,
   ): Promise<(Omit<Patient, 'generatePublicId'> & {resultsCount: number})[]> {
-    console.log(phoneNumber, email)
     const patientQuery = this.patientRepository
       .createQueryBuilder('patient')
       .innerJoinAndSelect('patient.auth', 'auth')
