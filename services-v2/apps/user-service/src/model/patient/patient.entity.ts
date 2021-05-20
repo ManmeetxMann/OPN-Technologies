@@ -28,7 +28,7 @@ export class PatientAuth {
   @OneToOne(
     () => Patient,
     patient => patient.auth,
-    {onDelete: 'CASCADE' }
+    {onDelete: 'CASCADE'},
   )
   @JoinColumn({name: 'patientId'})
   @Column({nullable: false})
@@ -235,6 +235,11 @@ export class Patient extends Auditable {
   @IsString()
   lastName: string
 
+  @Column()
+  @ApiProperty({nullable: true, default: false})
+  @IsBoolean()
+  isEmailVerified?: boolean
+
   @Column({nullable: true})
   @ApiProperty()
   @IsString()
@@ -272,11 +277,6 @@ export class Patient extends Auditable {
 
   @Column({type: 'timestamp', nullable: true, default: null})
   trainingCompletedOn?: Date
-
-  @Column()
-  @ApiProperty({nullable: true, default: false})
-  @IsBoolean()
-  isEmailVerified?: boolean
 
   /** Relations */
   @OneToOne(

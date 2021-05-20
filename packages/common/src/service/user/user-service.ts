@@ -165,6 +165,7 @@ export class UserService implements UserServiceInterface {
       firstName: cleanStringField(dependant.firstName),
       lastName: cleanStringField(dependant.lastName),
       delegates: [userId],
+      isEmailVerified: false,
       registrationId: null,
       base64Photo: '',
       organizationIds: [organizationId],

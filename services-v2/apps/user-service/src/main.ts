@@ -14,6 +14,7 @@ if (!isJestTest) {
 import {AuthMiddleware, CorsMiddleware, CommonModule, createSwagger} from '@opn-services/common'
 import {AllExceptionsFilter} from '@opn-services/common/exception'
 import {OpnValidationPipe} from '@opn-services/common/pipes'
+import {AuthShortCodeService} from '@opn-enterprise-v1/services/auth-short-code-service'
 
 import {
   DatabaseConfiguration,
@@ -36,7 +37,7 @@ import {TestResultService} from './service/patient/test-result.service'
 import {RapidHomeController} from './controller/v1/public/rapid-home.controller'
 
 @Module({
-  imports: [CommonModule, DatabaseConfiguration, RepositoryConfiguration],
+  imports: [CommonModule, AuthShortCodeService, DatabaseConfiguration, RepositoryConfiguration],
   controllers: [
     AdminPatientController,
     PatientController,
@@ -52,6 +53,7 @@ import {RapidHomeController} from './controller/v1/public/rapid-home.controller'
     PatientService,
     RapidHomeKitCodeService,
     TestResultService,
+    AuthShortCodeService,
   ],
 })
 class App {

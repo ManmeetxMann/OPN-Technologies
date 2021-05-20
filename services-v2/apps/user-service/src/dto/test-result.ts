@@ -19,6 +19,7 @@ export class TestResultCreateDto {
   userId: string
   displayInResult: string
   homeKitId: string
+  resultExitsForProvidedEmail: boolean
 
   @ApiProperty()
   @IsString()

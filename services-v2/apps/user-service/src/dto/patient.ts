@@ -20,6 +20,13 @@ import {Type} from 'class-transformer'
 export type PatientDTO = Partial<PatientCreateDto> & {
   lastAppointment: Date
   trainingCompletedOn: Date
+  resultExitsForProvidedEmail?: boolean
+}
+
+export type AuthenticateDto = {
+  patientId: string
+  organizationId: string
+  code: string
 }
 
 export class PatientCreateDto {
@@ -34,6 +41,10 @@ export class PatientCreateDto {
   @IsOptional()
   @IsEmail()
   email: string
+
+  @IsOptional()
+  @IsBoolean()
+  isEmailVerified?: boolean
 
   @ApiProperty()
   @IsString()
@@ -150,6 +161,10 @@ export class PatientCreateAdminDto {
   @ApiProperty()
   @IsEmail()
   email: string
+
+  @IsOptional()
+  @IsBoolean()
+  isEmailVerified?: boolean
 
   @ApiProperty()
   @IsString()
@@ -401,7 +416,9 @@ export type PatientUpdatePubSubProfile = {
   shareTestResultWithEmployer: boolean
 }
 
-export const CreatePatientDTOResponse = (patient: Patient): PatientDTO => ({
+export const CreatePatientDTOResponse = (
+  patient: Omit<Patient, 'generatePublicId'> & {resultExitsForProvidedEmail?: boolean},
+): PatientDTO => ({
   idPatient: patient.idPatient,
   firstName: patient.firstName,
   lastName: patient.lastName,
@@ -411,6 +428,7 @@ export const CreatePatientDTOResponse = (patient: Patient): PatientDTO => ({
   photoUrl: patient.photoUrl,
   lastAppointment: patient.lastAppointment,
   trainingCompletedOn: patient.trainingCompletedOn,
+  resultExitsForProvidedEmail: patient.resultExitsForProvidedEmail,
 })
 
 export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({

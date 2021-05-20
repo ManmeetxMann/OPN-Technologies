@@ -1,4 +1,4 @@
-import {Injectable} from '@nestjs/common'
+import {Injectable, NotFoundException} from '@nestjs/common'
 import {Page} from '@opn-services/common/dto'
 import {Brackets, SelectQueryBuilder} from 'typeorm'
 import {
@@ -29,8 +29,8 @@ import {
   PatientHealthRepository,
   PatientRepository,
   PatientToDelegatesRepository,
-  PatientToOrganizationRepository,
   PatientTravelRepository,
+  PatientToOrganizationRepository,
 } from '../../repository/patient.repository'
 
 import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
@@ -39,16 +39,19 @@ import {BadRequestException} from '@opn-services/common/exception'
 import {LogError} from '@opn-services/common/utils/logging'
 
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
+import {OrganizationModel} from '@opn-enterprise-v1/repository/organization.repository'
 import DataStore from '@opn-common-v1/data/datastore'
 import {AuthUser, UserStatus} from '@opn-common-v1/data/user'
 import {Registration} from '@opn-common-v1/data/registration'
 import {RegistrationService} from '@opn-common-v1/service/registry/registration-service'
 import {MessagingFactory} from '@opn-common-v1/service/messaging/messaging-service'
+import {AuthShortCodeRepository} from '@opn-enterprise-v1/repository/auth-short-code.repository'
+import {AuthShortCode} from '@opn-enterprise-v1/models/auth'
+import _ from 'lodash'
 import {ResourceNotFoundException} from '@opn-services/common/exception'
 import {PCRTestResultsRepository} from '@opn-services/user/repository/test-result.repository'
 import {AppointmentsRepository} from '@opn-reservation-v1/respository/appointments-repository'
 import {AppointmentActivityAction} from '@opn-reservation-v1/models/appointment'
-import * as _ from 'lodash'
 import {ActionStatus} from '../../../../opn-services/src/model/common'
 
 @Injectable()
@@ -69,6 +72,8 @@ export class PatientService {
 
   private dataStore = new DataStore()
   private userRepository = new UserRepository(this.dataStore)
+  private organizationModel = new OrganizationModel(this.dataStore)
+  private authShortCodeRepository = new AuthShortCodeRepository(this.dataStore)
   private appointmentRepository = new AppointmentsRepository(this.dataStore)
   private testResultRepository = new PCRTestResultsRepository(this.dataStore)
   private messaging = MessagingFactory.getPushableMessagingService()
@@ -156,6 +161,7 @@ export class PatientService {
       firstName: data.firstName,
       lastName: data.lastName,
       phoneNumber: data.phoneNumber,
+      isEmailVerified: false,
       authUserId: data.authUserId,
       active: false,
       organizationIds: [],
@@ -167,7 +173,7 @@ export class PatientService {
 
     const firebaseUser = await this.userRepository.add(userData)
     data.firebaseKey = firebaseUser.id
-
+    data.isEmailVerified = false
     const patient = await this.createPatient(data as PatientCreateDto)
     data.idPatient = patient.idPatient
 
@@ -195,6 +201,7 @@ export class PatientService {
 
     const userData = {
       firstName: data.firstName,
+      isEmailVerified: false,
       lastName: data.lastName,
       registrationId: data.registrationId ?? null,
       photo: data.photoUrl ?? null,
@@ -216,6 +223,7 @@ export class PatientService {
 
     const firebaseUser = await this.userRepository.add(userData)
     data.firebaseKey = firebaseUser.id
+    data.isEmailVerified = false
 
     const patient = await this.createPatient(data)
     data.idPatient = patient.idPatient
@@ -232,6 +240,35 @@ export class PatientService {
     return patient
   }
 
+  async findNewUsersByEmail(email: string): Promise<Patient[]> {
+    return this.patientRepository
+      .createQueryBuilder('patient')
+      .innerJoinAndSelect('patient.auth', 'auth')
+      .where('status = :status', {status: UserStatus.NEW})
+      .andWhere('auth.email = :email', {
+        email,
+      })
+      .getMany()
+  }
+
+  async findShortCodeByPatientEmail(email: string): Promise<AuthShortCode> {
+    const shortCodes = await this.authShortCodeRepository.findWhereEqual('email', email)
+    return shortCodes[0]
+  }
+
+  async findAndRemoveShortCodes(email: string): Promise<void> {
+    const shortCodes = await this.authShortCodeRepository.findWhereEqual('email', email)
+    if (shortCodes.length) {
+      await this.authShortCodeRepository.deleteBulk(shortCodes.map(code => code.id))
+    }
+  }
+
+  verifyCodeOrThrowError(code: string, userCode: string): void {
+    if (code !== userCode) {
+      throw new NotFoundException('ShortCode not found')
+    }
+  }
+
   /**
    * Update patient records
    * @param id
@@ -244,6 +281,7 @@ export class PatientService {
     patient.lastName = data.lastName
     patient.dateOfBirth = data.dateOfBirth
     patient.phoneNumber = data.phoneNumber
+    patient.isEmailVerified = data.isEmailVerified
     patient.photoUrl = data.photoUrl
     patient.consentFileUrl = data.consentFileUrl
     if (data.trainingCompletedOn) {
@@ -262,6 +300,7 @@ export class PatientService {
       email: data.email,
       firstName: data.firstName,
       lastName: data.lastName,
+      isEmailVerified: data.isEmailVerified,
       ...(data.registrationId && {registrationId: data.registrationId}),
       ...(data.photoUrl && {photo: data.photoUrl}),
       phone: {
@@ -285,6 +324,33 @@ export class PatientService {
       this.saveConsent(data, digitalConsent?.idPatientDigitalConsent),
     ])
     return promises[0]
+  }
+
+  async connectOrganization(patientId: string, firebaseOrganizationId: string): Promise<void> {
+    const patient = await this.getProfilebyId(patientId)
+    if (!patient) {
+      throw new NotFoundException('User with given id not found')
+    }
+
+    await this.patientToOrganizationRepository.save({
+      patientId,
+      firebaseOrganizationId,
+    })
+
+    const organization = this.organizationModel.findOneById(firebaseOrganizationId)
+    if (!organization) {
+      throw new NotFoundException('Organization with given id not found')
+    }
+    const firebaseUser = await this.userRepository.findOneById(patient.firebaseKey)
+    if (!firebaseUser) {
+      throw new NotFoundException('User with given id not found')
+    }
+
+    await this.userRepository.updateProperty(
+      firebaseUser.id,
+      'organizationIds',
+      _.uniq([...(firebaseUser.organizationIds ?? []), firebaseOrganizationId]),
+    )
   }
 
   async createPatient(
@@ -594,6 +660,7 @@ export class PatientService {
 
     const updateDto = new PatientUpdateDto()
     updateDto.phoneNumber = data?.phone
+    // eslint-disable-next-line max-lines
     updateDto.healthCardType = data?.ohipCard
     updateDto.travelPassport = data?.travelID
     updateDto.travelCountry = data?.travelIDIssuingCountry
