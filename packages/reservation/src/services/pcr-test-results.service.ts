@@ -1852,6 +1852,8 @@ export class PCRTestResultsService {
         AppointmentStatus.Reported === appointment?.appointmentStatus
       ) {
         result = ResultTypes[appointment?.appointmentStatus] || pcr.result
+      } else if (!appointment) {
+        result = pcr.result
       } else {
         result = AppointmentReasons.InProgress
       }
