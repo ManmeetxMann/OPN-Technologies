@@ -3,6 +3,8 @@ import {Page} from '@opn-services/common/dto'
 import {Brackets, SelectQueryBuilder} from 'typeorm'
 import {
   DependantCreateDto,
+  Migration,
+  migrationActions,
   PatientCreateAdminDto,
   PatientCreateDto,
   PatientFilter,
@@ -41,6 +43,10 @@ import {RegistrationService} from '@opn-common-v1/service/registry/registration-
 import {MessagingFactory} from '@opn-common-v1/service/messaging/messaging-service'
 import {ResourceNotFoundException} from '@opn-services/common/exception'
 import {PCRTestResultsRepository} from '@opn-services/user/repository/test-result.repository'
+import {AppointmentsRepository} from '@opn-reservation-v1/respository/appointments-repository'
+import {AppointmentActivityAction} from '@opn-reservation-v1/models/appointment'
+import * as _ from 'lodash'
+import {ActionStatus} from '../../../../opn-services/src/model/common'
 
 @Injectable()
 export class PatientService {
@@ -60,6 +66,7 @@ export class PatientService {
 
   private dataStore = new DataStore()
   private userRepository = new UserRepository(this.dataStore)
+  private appointmentRepository = new AppointmentsRepository(this.dataStore)
   private testResultRepository = new PCRTestResultsRepository(this.dataStore)
   private messaging = MessagingFactory.getPushableMessagingService()
   private registrationService = new RegistrationService()
@@ -438,6 +445,75 @@ export class PatientService {
         return previousValue
       }, 0),
     }))
+  }
+
+  async migratePatient(currentUserId: string, migration: Migration): Promise<ActionStatus> {
+    try {
+      const currentPatient = await this.patientRepository.findOne({
+        where: {
+          firebaseKey: currentUserId,
+        },
+      })
+      const patient = await this.patientRepository.findOne(migration.notConfirmedPatientId)
+      if (!patient) {
+        throw new ResourceNotFoundException('Patient was not found')
+      }
+      if (migration.action === migrationActions.New) {
+        await this.patientRepository.update(migration.notConfirmedPatientId, {
+          status: UserStatus.CONFIRMED,
+        })
+        await this.userRepository.updateProperties(patient.firebaseKey, {
+          status: UserStatus.CONFIRMED,
+        })
+
+        await this.saveDependantOrDelegate(currentPatient.idPatient, patient.idPatient)
+        await this.patientRepository.save(currentPatient)
+      } else if (migration.action === migrationActions.Merge) {
+        const providedPatient = await this.patientRepository.findOne(migration.patientId)
+        const appointments = await this.appointmentRepository.findWhereEqual(
+          'userId',
+          patient.firebaseKey,
+        )
+        const testResults = await this.testResultRepository.findWhereEqual(
+          'userId',
+          patient.firebaseKey,
+        )
+        await Promise.all(
+          appointments.map(async appointment => {
+            await this.appointmentRepository.updateAppointment({
+              id: appointment.id,
+              updates: {
+                userId: providedPatient.firebaseKey,
+              },
+              action: AppointmentActivityAction.MigrationFromUnconfirmed,
+              actionBy: currentPatient.firebaseKey,
+            })
+          }),
+        )
+        await Promise.all(
+          testResults.map(async testResult => {
+            await this.testResultRepository.updateProperties(testResult.id, {
+              userId: providedPatient.firebaseKey,
+            })
+          }),
+        )
+        const providedFirebasePatient = await this.userRepository.findOneById(
+          providedPatient.firebaseKey,
+        )
+        const firebasePatient = await this.userRepository.findOneById(providedFirebasePatient.id)
+        await this.userRepository.updateProperties(providedPatient.firebaseKey, {
+          organizationIds: _.uniq([
+            ...(providedFirebasePatient.organizationIds ?? []),
+            ...(firebasePatient.organizationIds ?? []),
+          ]),
+        })
+        await this.userRepository.delete(firebasePatient.id)
+        await this.patientRepository.remove(patient)
+      }
+      return ActionStatus.success
+    } catch (e) {
+      return ActionStatus.fail
+    }
   }
 
   async getDirectDependents(patientId: string): Promise<Patient> {

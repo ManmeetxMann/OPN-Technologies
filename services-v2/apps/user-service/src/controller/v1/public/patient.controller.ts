@@ -30,6 +30,7 @@ import {
   PatientCreateDto,
   CreatePatientDTOResponse,
   PatientDTO,
+  MigrateDto,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
@@ -37,6 +38,8 @@ import {HomeTestPatientDto} from '@opn-services/user/dto/home-patient'
 import {UserEvent, UserFunctions} from '@opn-services/common/types/activity-logs'
 
 import {Platform} from '@opn-common-v1/types/platform'
+import * as _ from 'lodash'
+import { ActionStatus } from "../../../../../opn-services/src/model/common";
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -171,5 +174,36 @@ export class PatientController {
     })
 
     return ResponseWrapper.actionSucceed(dependant)
+  }
+
+  @Post('/migrate')
+  @UseGuards(AuthGuard)
+  @Roles([RequiredUserPermission.RegUser])
+  async migrate(
+    @Body() {migrations}: MigrateDto,
+    @AuthUserDecorator() authUser: AuthUser,
+  ): Promise<ResponseWrapper<Record<string, ActionStatus>>> {
+    const patientResponse = await Promise.all(
+      migrations.map(async migration => [
+        migration.notConfirmedPatientId,
+        await this.patientService.migratePatient(authUser.id, migration),
+      ]),
+    )
+    return ResponseWrapper.actionSucceed(_.fromPairs(patientResponse))
+  }
+
+  @Get('/unconfirmed')
+  @UseGuards(AuthGuard)
+  @Roles([RequiredUserPermission.RegUser])
+  async getUnconfirmedPatients(
+    @AuthUserDecorator() authUser: AuthUser,
+  ): Promise<ResponseWrapper<Omit<Patient, 'generatePublicId'>[]>> {
+    const patients = await this.patientService.getUnconfirmedPatients(
+      authUser.phoneNumber,
+      authUser.email,
+      authUser.id,
+    )
+
+    return ResponseWrapper.actionSucceed(patients)
   }
 }
