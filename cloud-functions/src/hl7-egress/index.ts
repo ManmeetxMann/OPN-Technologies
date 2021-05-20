@@ -202,8 +202,7 @@ const sendMessage = async (appointment:AppointmentData) => {
 
 const requestHandler: EventFunctionWithCallback = async (pubSubMessage:PubSubMessage, context, callback) => {
   // tslint:disable: no-console
-  console.log(pubSubMessage)
-  const data:unknown = Buffer.from(pubSubMessage.data, 'base64').toString()
+  const data = JSON.parse(Buffer.from(pubSubMessage.data, 'base64').toString())
   // tslint:disable: no-console
   console.log(data)
   await sendMessage(data as AppointmentData)
