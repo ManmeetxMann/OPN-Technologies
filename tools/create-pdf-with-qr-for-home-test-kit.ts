@@ -13,7 +13,7 @@ import {
 } from '../packages/common/src/service/reports/pdf-types'
 import {Config} from '../packages/common/src/utils/config'
 import {makeFirestoreTimestamp} from '../packages/reservation/src/utils/datetime.helper'
-
+const DOMAIN = 'https://fhathome.com/homekit'
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
   credential: credential.cert(serviceAccount),
@@ -53,7 +53,7 @@ const pageMargin = 0
 
 function makePDFContent(code: string): Content[] {
   const qrContent: ContentQr = {
-    qr: code,
+    qr: `${DOMAIN}/${code}`,
     fit: 63,
     margin: [35, 15, 10, 30],
   }
@@ -61,7 +61,7 @@ function makePDFContent(code: string): Content[] {
   const urlContent: Content = {
     text: [
       {text: 'Visit: ', color: '#000000', font: 'BrutalTypeRegular'},
-      {text: 'www.fhhealth.com', color: '#cb9b52', bold: true, font: 'BrutalType'},
+      {text: DOMAIN, color: '#cb9b52', bold: true, font: 'BrutalType'},
     ],
     alignment: 'left',
     margin: 0,
@@ -91,7 +91,7 @@ function makePDFContent(code: string): Content[] {
         lineHeight: 2,
         fontSize: contentFontSize + 4,
         color: '#cb9b52',
-        margin: [15, 40, 15, 40],
+        margin: [5, 40, 5, 40],
         font: 'BrutalType',
       },
       {
@@ -100,7 +100,7 @@ function makePDFContent(code: string): Content[] {
         margin: [15, 30, 0, 25],
         alignment: 'left',
         lineHeight: 2,
-        fontSize: contentFontSize + 2,
+        fontSize: contentFontSize + 1,
       },
       {
         width: 95,
