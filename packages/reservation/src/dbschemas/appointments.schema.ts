@@ -71,4 +71,7 @@ export default Joi.object({
     ),
   labId: Joi.string().allow(null),
   scheduledPushesToSend: Joi.array().items(Joi.number()),
+  city: Joi.string(),
+  province: Joi.string(),
+  country: Joi.string()
 })

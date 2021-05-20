@@ -13,7 +13,7 @@ import {Auditable} from '../../../../../libs/common/src/model'
 import {ApiProperty} from '@nestjs/swagger'
 import {IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsString} from 'class-validator'
 import {PatientDigitalConsent, PatientHealth, PatientTravel} from './patient-profile.entity'
-import {UserStatus} from "../../../../../../packages/common/src/data/user"
+import {UserStatus} from '../../../../../../packages/common/src/data/user'
 import {PatientToDelegates, PatientToOrganization} from './patient-relations.entity'
 import {Organization} from '../organization/organization.entity'
 
@@ -28,6 +28,7 @@ export class PatientAuth {
   @OneToOne(
     () => Patient,
     patient => patient.auth,
+    {onDelete: 'CASCADE' }
   )
   @JoinColumn({name: 'patientId'})
   @Column({nullable: false})
@@ -35,8 +36,8 @@ export class PatientAuth {
   patientId: string
 
   @Column()
-  @ApiProperty({required: true})
-  authUserId: string
+  @Column({nullable: true, default: null})
+  authUserId?: string
 
   @Column({nullable: true, default: null})
   @ApiProperty()
@@ -277,10 +278,16 @@ export class Patient extends Auditable {
   @Column({type: 'timestamp', nullable: true, default: null})
   trainingCompletedOn?: Date
 
+  @Column()
+  @ApiProperty({nullable: true, default: false})
+  @IsBoolean()
+  isEmailVerified?: boolean
+
   /** Relations */
   @OneToOne(
     () => PatientAuth,
     patientAddress => patientAddress.patientId,
+    {eager: true, onDelete: 'CASCADE'},
   )
   auth?: PatientAuth
 

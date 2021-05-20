@@ -1,17 +1,21 @@
 import {ApiProperty, ApiPropertyOptional, OmitType, PartialType} from '@nestjs/swagger'
 import {PageableRequestFilter, PubSubMessage, PubSubPayload} from '@opn-services/common/dto'
 import {
+  IsArray,
   IsBoolean,
   IsDefined,
   IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsNumberString,
   IsOptional,
   IsString,
   Length,
+  ValidateNested,
 } from 'class-validator'
 import {Organization} from '../model/organization/organization.entity'
 import {Patient} from '../model/patient/patient.entity'
+import {Type} from 'class-transformer'
 
 export type PatientDTO = Partial<PatientCreateDto> & {
   lastAppointment: Date
@@ -279,6 +283,25 @@ export class PatientCreateAdminDto {
   updatedBy?: string
 }
 
+class FCMRegistration {
+  @ApiPropertyOptional()
+  @IsOptional()
+  pushToken?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  osVersion?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  platform?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  registrationId?: string
+}
+
 export class PatientUpdateDto extends PartialType(PatientCreateDto) {
   @IsOptional()
   id?: string
@@ -288,14 +311,9 @@ export class PatientUpdateDto extends PartialType(PatientCreateDto) {
   @IsBoolean()
   trainingCompletedOn?: boolean | Date
 
-  @ApiPropertyOptional()
-  pushToken?: string
-
-  @ApiPropertyOptional()
-  osVersion?: string
-
-  @ApiPropertyOptional()
-  platform?: string
+  @ApiPropertyOptional({type: FCMRegistration})
+  @IsOptional()
+  registration?: FCMRegistration
 }
 
 export class LinkCodeToAccountDto {
@@ -308,6 +326,37 @@ export class LinkToAccountDto {
   @ApiProperty()
   @IsString()
   encryptedToken: string
+}
+
+export enum migrationActions {
+  Merge = 'MERGE',
+  New = 'NEW',
+}
+
+export class Migration {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  notConfirmedPatientId: string
+  @ApiProperty({enum: migrationActions})
+  @IsString()
+  @IsNotEmpty()
+  @IsEnum(migrationActions)
+  action: migrationActions
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  patientId?: string
+}
+
+export class MigrateDto {
+  @ApiProperty({nullable: false, type: [Migration]})
+  @IsArray()
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => Migration)
+  migrations: Migration[]
 }
 
 export class DependantCreateDto extends OmitType(PatientCreateDto, ['email'] as const) {}
@@ -326,6 +375,14 @@ class PatientUpdatePubSubAttributes {
   @ApiProperty()
   @IsString()
   userId: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  organizationId: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  actionType: string
 }
 
 class PatientUpdatePubSubMessage extends PubSubMessage<PatientUpdatePubSubAttributes> {
@@ -380,6 +437,7 @@ export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   lastName: patient.lastName,
   dateOfBirth: patient.dateOfBirth,
   email: patient.auth?.email,
+  registrationId: patient?.registrationId,
   phoneNumber: patient.phoneNumber,
   photoUrl: patient.photoUrl,
   organizations: patient.organizations,

@@ -4,8 +4,11 @@ import {FastifyAdapter} from '@nestjs/platform-fastify'
 import {MiddlewareConsumer, Module, RequestMethod} from '@nestjs/common'
 
 // Should be called before any v1 module import from v2
+import {getDefaultPort, isJestTest} from '@opn-services/common/utils'
 import {Config} from '@opn-common-v1/utils/config'
-Config.useRootEnvFile()
+if (!isJestTest) {
+  Config.useRootEnvFile()
+}
 
 // Common
 import {AuthMiddleware, CorsMiddleware, CommonModule, createSwagger} from '@opn-services/common'
@@ -75,17 +78,12 @@ async function bootstrap() {
   app.setGlobalPrefix('user')
   app.useGlobalFilters(new AllExceptionsFilter())
 
-  // Each worker process is assigned a unique id (index-based that starts with 1)
-  const nodeEnv = process.env.NODE_ENV
-  const jestWorkerId = process.env.JEST_WORKER_ID
-  if (nodeEnv === 'test') {
-    await app.listen(8080 + parseInt(jestWorkerId))
-    return
-  }
-
-  await app.listen(process.env.PORT || 8080)
+  const defaultPort = getDefaultPort()
+  await app.listen(process.env.PORT || defaultPort)
   createSwagger(app)
 }
-bootstrap()
+if (!isJestTest) {
+  bootstrap()
+}
 
 export {App}

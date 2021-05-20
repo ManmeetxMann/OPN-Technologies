@@ -28,6 +28,7 @@ import {
   PatientUpdateDto,
   patientProfileDto,
   PatientCreateDto,
+  MigrateDto,
   CreatePatientDTOResponse,
   AuthenticateDto,
   PatientDTO,
@@ -41,6 +42,8 @@ import {Platform} from '@opn-common-v1/types/platform'
 import {MagicLinkService} from '@opn-common-v1/service/messaging/magiclink-service'
 import {AuthShortCodeService} from '@opn-enterprise-v1/services/auth-short-code-service'
 import {OpnConfigService} from '@opn-services/common/services'
+import * as _ from 'lodash'
+import {ActionStatus} from '@opn-services/opn/model/common'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -191,12 +194,14 @@ export class PatientController {
       throw new ForbiddenException('Permission not found for this resource')
     }
 
-    const {registrationId, pushToken, osVersion, platform} = patientUpdateDto
-    await this.patientService.upsertPushToken(registrationId, {
-      osVersion,
-      platform: platform as Platform,
-      pushToken,
-    })
+    if (patientUpdateDto?.registration) {
+      const {registrationId, pushToken, osVersion, platform} = patientUpdateDto.registration
+      await this.patientService.upsertPushToken(id, registrationId, {
+        osVersion,
+        platform: platform as Platform,
+        pushToken,
+      })
+    }
 
     const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
     LogInfo(UserFunctions.update, UserEvent.updateProfile, {
@@ -240,5 +245,36 @@ export class PatientController {
     const profile = await this.patientService.getProfilebyId(dependant.idPatient)
 
     return ResponseWrapper.actionSucceed(patientProfileDto(profile))
+  }
+
+  @Post('/migrate')
+  @UseGuards(AuthGuard)
+  @Roles([RequiredUserPermission.RegUser])
+  async migrate(
+    @Body() {migrations}: MigrateDto,
+    @AuthUserDecorator() authUser: AuthUser,
+  ): Promise<ResponseWrapper<Record<string, ActionStatus>>> {
+    const patientResponse = await Promise.all(
+      migrations.map(async migration => [
+        migration.notConfirmedPatientId,
+        await this.patientService.migratePatient(authUser.id, migration),
+      ]),
+    )
+    return ResponseWrapper.actionSucceed(_.fromPairs(patientResponse))
+  }
+
+  @Get('/unconfirmed')
+  @UseGuards(AuthGuard)
+  @Roles([RequiredUserPermission.RegUser])
+  async getUnconfirmedPatients(
+    @AuthUserDecorator() authUser: AuthUser,
+  ): Promise<ResponseWrapper<Omit<Patient, 'generatePublicId'>[]>> {
+    const patients = await this.patientService.getUnconfirmedPatients(
+      authUser.phoneNumber,
+      authUser.email,
+      authUser.id,
+    )
+
+    return ResponseWrapper.actionSucceed(patients)
   }
 }
