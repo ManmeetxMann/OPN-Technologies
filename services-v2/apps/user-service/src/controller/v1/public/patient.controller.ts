@@ -30,6 +30,7 @@ import {
   PatientCreateDto,
   CreatePatientDTOResponse,
   AuthenticateDto,
+  PatientDTO,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
@@ -78,7 +79,7 @@ export class PatientController {
     @PublicDecorator() firebaseAuthUser: AuthUser,
     @Body() patientDto: PatientCreateDto,
     @OpnHeaders() opnHeaders: OpnCommonHeaders,
-  ): Promise<ResponseWrapper<Partial<PatientCreateDto> & {lastAppointment: Date; trainingCompletedOn: Date; resultExitsForProvidedEmail?: boolean}>> {
+  ): Promise<ResponseWrapper<PatientDTO>> {
     let patient: Patient
 
     patientDto.authUserId = firebaseAuthUser.authUserId
@@ -106,14 +107,14 @@ export class PatientController {
     const users = await this.patientService.findNewUsersByEmail(patientExists.email)
     const resultExitsForProvidedEmail = !!users.length
 
-    return ResponseWrapper.actionSucceed(CreatePatientDTOResponse({resultExitsForProvidedEmail, ...patient}))
+    return ResponseWrapper.actionSucceed(
+      CreatePatientDTOResponse({resultExitsForProvidedEmail, ...patient}),
+    )
   }
 
   @Put('/email/verify')
   @Roles([RequiredUserPermission.RegUser])
-  async triggerEmail(
-    @AuthUserDecorator() authUser: AuthUser,
-  ): Promise<void> {
+  async triggerEmail(@AuthUserDecorator() authUser: AuthUser): Promise<void> {
     const patientExists = await this.patientService.getAuthByAuthUserId(authUser.authUserId)
     if (!patientExists) {
       throw new ResourceNotFoundException('User with given uid not found')

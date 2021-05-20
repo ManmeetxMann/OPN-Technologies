@@ -23,12 +23,12 @@ export class AuthShortCodeService {
     // @TODO without ts-ignore gives typescript error, because this function used in v2
     // @ts-ignore
     const expiresAt = moment().add(1, 'hours').toDate()
-    const magicLink = !generateMagicLink ? null : await this.magicLinkService.generateMagicLink(
-      {
-        email,
-        meta: {organizationId, userId, shortCode},
-      },
-    )
+    const magicLink = !generateMagicLink
+      ? null
+      : await this.magicLinkService.generateMagicLink({
+          email,
+          meta: {organizationId, userId, shortCode},
+        })
     const authShortCode = await this.findAuthShortCode(email)
 
     const data = {

@@ -45,6 +45,7 @@ import {RegistrationService} from '@opn-common-v1/service/registry/registration-
 import {MessagingFactory} from '@opn-common-v1/service/messaging/messaging-service'
 import {AuthShortCodeRepository} from '@opn-enterprise-v1/repository/auth-short-code.repository'
 import {AuthShortCode} from '@opn-enterprise-v1/models/auth'
+import _ from 'lodash'
 
 @Injectable()
 export class PatientService {
@@ -185,7 +186,7 @@ export class PatientService {
   ): Promise<Patient> {
     const organizationIds = []
     if (hasPublicOrg) {
-      organizationIds.push(this.configService.get('PUBLIC_ORG'))
+      organizationIds.push(this.configService.get('PUBLIC_ORG_ID'))
     }
 
     if (data.organizationId) {
@@ -344,7 +345,7 @@ export class PatientService {
     await this.userRepository.updateProperty(
       firebaseUser.id,
       'organizationIds',
-      Array.from(new Set([...(firebaseUser.organizationIds ?? []), firebaseOrganizationId])),
+      _.uniq([...(firebaseUser.organizationIds ?? []), firebaseOrganizationId]),
     )
   }
 
