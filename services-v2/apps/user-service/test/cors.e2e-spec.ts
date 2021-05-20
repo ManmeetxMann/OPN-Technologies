@@ -53,7 +53,11 @@ describe('Cors settings (e2e)', () => {
         Origin: notAllowedOrigin,
       })
 
-    expect(result.headers['access-control-allow-origin']).toBe('false' || null)
+    const accessControlAllowOrigin = result.headers['access-control-allow-origin']
+    expect(
+      accessControlAllowOrigin === 'false' || accessControlAllowOrigin === undefined,
+    ).toBeTruthy()
+
     done()
   })
 })
