@@ -534,25 +534,27 @@ export const singlePcrTestResultDTO = (
   }
 
   return {
-    email: appointment.email,
-    firstName: appointment.firstName,
-    lastName: appointment.lastName,
-    phone: `${appointment.phone}`,
-    ohipCard: appointment.ohipCard || 'N/A',
+    email: appointment?.email || 'N/A',
+    firstName: appointment?.firstName || pcrTestResult.firstName,
+    lastName: appointment?.lastName || pcrTestResult.lastName,
+    phone: `${appointment?.phone || 'N/A'}`,
+    ohipCard: appointment?.ohipCard || 'N/A',
     dateOfBirth: isBirthDateParsable
       ? moment(appointment.dateOfBirth).format('LL')
-      : appointment.dateOfBirth,
-    address: appointment.address,
-    addressUnit: appointment.addressUnit,
+      : appointment?.dateOfBirth || 'N/A',
+    address: appointment?.address || 'N/A',
+    addressUnit: appointment?.addressUnit || 'N/A',
     barCode: pcrTestResult.barCode,
-    appointmentStatus: appointment.appointmentStatus,
+    appointmentStatus: appointment?.appointmentStatus || 'N/A',
     result: pcrTestResult.result,
     dateTime: formatStringDateRFC822Local(pcrTestResult.dateTime.toDate()),
-    registeredNursePractitioner: appointment.registeredNursePractitioner || 'N/A',
+    registeredNursePractitioner: appointment?.registeredNursePractitioner || 'N/A',
     physician: requisitionDoctor || 'N/A',
-    locationName: appointment.locationName || 'N/A',
-    swabMethod: appointment.swabMethod || 'N/A',
-    deadline: formatStringDateRFC822Local(appointment.deadline.toDate()),
+    locationName: appointment?.locationName || 'N/A',
+    swabMethod: appointment?.swabMethod || 'N/A',
+    deadline: appointment?.deadline
+      ? formatStringDateRFC822Local(appointment?.deadline.toDate())
+      : 'N/A',
     labName: lab?.name,
     testType: pcrTestResult.testType,
     equipment: lab?.assay,
@@ -561,8 +563,8 @@ export const singlePcrTestResultDTO = (
     style: resultToStyle(pcrTestResult.result),
     testName: 'SARS COV-2',
     doctorId: 'DR1',
-    travelID: appointment.travelID.trim() ? appointment.travelID : 'N/A',
-    travelIDIssuingCountry: appointment.travelIDIssuingCountry.trim()
+    travelID: appointment?.travelID.trim() ? appointment.travelID : 'N/A',
+    travelIDIssuingCountry: appointment?.travelIDIssuingCountry.trim()
       ? appointment.travelIDIssuingCountry
       : 'N/A',
     dateOfResult: pcrTestResult.resultMetaData

@@ -15,6 +15,7 @@ import {LabService} from '../../services/lab.service'
 import {singlePcrTestResultDTO, SingleTestResultsRequest} from '../../models/pcr-test-results'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {TestTypes} from '../../models/appointment'
+import {Lab} from '../../models/lab'
 
 class TestResultsController implements IControllerBase {
   public path = '/reservation/api/v1'
@@ -66,7 +67,11 @@ class TestResultsController implements IControllerBase {
         pcrTestResult,
       } = await this.pcrTestResultsService.getTestResultAndAppointment(id, userId)
 
-      const lab = await this.labService.findOneById(pcrTestResult.labId)
+      let lab: Lab
+
+      if (pcrTestResult.testType !== TestTypes.RapidAntigenAtHome) {
+        lab = await this.labService.findOneById(pcrTestResult.labId)
+      }
 
       res.json(
         actionSuccess({

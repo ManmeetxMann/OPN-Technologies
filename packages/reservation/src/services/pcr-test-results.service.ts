@@ -1967,23 +1967,25 @@ export class PCRTestResultsService {
       throw new ResourceNotFoundException(`${id} does not exist`)
     }
 
-    const appointment = await this.appointmentService.getAppointmentDBById(
-      pcrTestResult.appointmentId,
-    )
+    let appointment: AppointmentDBModel
 
-    if (!appointment) {
-      throw new ResourceNotFoundException(
-        `Appointment with appointmentId ${pcrTestResult.appointmentId} not found, PCR Result id ${id}`,
-      )
-    }
+    if (pcrTestResult.testType !== TestTypes.RapidAntigenAtHome) {
+      appointment = await this.appointmentService.getAppointmentDBById(pcrTestResult.appointmentId)
 
-    if (appointment?.userId !== userId && !isParent && !isAdmin) {
-      LogWarning('TestResultsController: testResultDetails', 'Unauthorized', {
-        userId,
-        resultId: id,
-        appointmentId: pcrTestResult.appointmentId,
-      })
-      throw new ResourceNotFoundException(`${id} does not exist`)
+      if (!appointment) {
+        throw new ResourceNotFoundException(
+          `Appointment with appointmentId ${pcrTestResult.appointmentId} not found, PCR Result id ${id}`,
+        )
+      }
+
+      if (appointment?.userId !== userId && !isParent && !isAdmin) {
+        LogWarning('TestResultsController: testResultDetails', 'Unauthorized', {
+          userId,
+          resultId: id,
+          appointmentId: pcrTestResult.appointmentId,
+        })
+        throw new ResourceNotFoundException(`${id} does not exist`)
+      }
     }
 
     return {
