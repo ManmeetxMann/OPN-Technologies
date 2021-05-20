@@ -35,6 +35,7 @@ import {FirebaseAuthService} from '@opn-services/common/services/firebase/fireba
 import {OpnConfigService} from '@opn-services/common/services'
 import {BadRequestException} from '@opn-services/common/exception'
 import {LogError} from '@opn-services/common/utils/logging'
+import {PubSubEvents, PubSubFunctions} from '@opn-services/common/types/activity-logs'
 
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import DataStore from '@opn-common-v1/data/datastore'
@@ -465,14 +466,16 @@ export class PatientService {
   }
 
   async updateProfileWithPubSub(
-    userId: string,
+    patientId: string,
     data: Partial<PatientUpdatePubSubProfile>,
   ): Promise<void> {
-    const patient = await this.patientRepository.findOne({firebaseKey: userId})
+    const patient = await this.patientRepository.findOne({
+      where: [{idPatient: patientId}, {firebaseKey: patientId}],
+    })
 
     if (!patient) {
-      const errorMessage = `Profile with ${userId} not exists`
-      LogError('updateProfileWithPubSub', 'PubSubProfileUpdateFailed', {
+      const errorMessage = `Profile with ${patientId} not exists`
+      LogError(PubSubFunctions.updateProfileWithPubSub, PubSubEvents.profileUpdateFailed, {
         errorMessage,
       })
       throw new BadRequestException(errorMessage)

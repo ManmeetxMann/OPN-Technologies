@@ -7,6 +7,7 @@ import {
   PatientUpdatePubSubPayload,
 } from '@opn-services/user/dto/patient'
 import {PatientService} from '@opn-services/user/service/patient/patient.service'
+import {PubSubEvents, PubSubFunctions} from '@opn-services/common/types/activity-logs'
 import {OPNPubSub} from '@opn-common-v1/service/google/pub_sub'
 
 @ApiTags('Patient PubSub')
@@ -15,12 +16,12 @@ export class PatientPubSubController {
   constructor(private patientService: PatientService) {}
 
   @Post('/update')
-  async updatePatient(@Body() payload: PatientUpdatePubSubPayload): Promise<ResponseWrapper> {
+  async updateProfile(@Body() payload: PatientUpdatePubSubPayload): Promise<ResponseWrapper> {
     const {data, attributes} = payload.message
     const publishedData = await OPNPubSub.getPublishedData(data)
     const updatePayload = publishedData['appointment'] as Partial<PatientUpdatePubSubProfile>
 
-    LogInfo('updatePatient', 'UpdatePatientFromPubSub', {
+    LogInfo(PubSubFunctions.updateProfile, PubSubEvents.profileUpdateStarted, {
       attributes,
       publishedData, //TODO: remove: for now debugging purpose
     })

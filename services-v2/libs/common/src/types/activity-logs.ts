@@ -57,3 +57,13 @@ export enum ValidatorFunctions {
 export enum ValidatorEvents {
   validationFailed = 'validationFailed',
 }
+
+export enum PubSubFunctions {
+  updateProfile = 'updateProfile',
+  updateProfileWithPubSub = 'updateProfileWithPubSub',
+}
+
+export enum PubSubEvents {
+  profileUpdateFailed = 'profileUpdateFailed',
+  profileUpdateStarted = 'profileUpdateStarted',
+}
