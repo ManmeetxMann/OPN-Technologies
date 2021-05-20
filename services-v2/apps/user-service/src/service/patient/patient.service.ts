@@ -7,7 +7,6 @@ import {
   PatientCreateDto,
   PatientFilter,
   PatientUpdateDto,
-  PatientUpdatePubSubProfile,
 } from '../../dto/patient'
 import {HomeTestPatientDto} from '../../dto/home-patient'
 import {
@@ -43,6 +42,7 @@ import {AuthUser} from '@opn-common-v1/data/user'
 import {Registration} from '@opn-common-v1/data/registration'
 import {RegistrationService} from '@opn-common-v1/service/registry/registration-service'
 import {MessagingFactory} from '@opn-common-v1/service/messaging/messaging-service'
+import {AppointmentDBModel} from '@opn-reservation-v1/models/appointment'
 
 @Injectable()
 export class PatientService {
@@ -465,16 +465,14 @@ export class PatientService {
     await this.patientRepository.update({idPatient: patientId}, {registrationId: id})
   }
 
-  async updateProfileWithPubSub(
-    patientId: string,
-    data: Partial<PatientUpdatePubSubProfile>,
-  ): Promise<void> {
+  async updateProfileWithPubSub(data: AppointmentDBModel): Promise<void> {
+    const {userId} = data
     const patient = await this.patientRepository.findOne({
-      where: [{idPatient: patientId}, {firebaseKey: patientId}],
+      where: [{idPatient: userId}, {firebaseKey: userId}],
     })
 
     if (!patient) {
-      const errorMessage = `Profile with ${patientId} not exists`
+      const errorMessage = `Profile with ${userId} not exists`
       LogError(PubSubFunctions.updateProfileWithPubSub, PubSubEvents.profileUpdateFailed, {
         errorMessage,
       })
