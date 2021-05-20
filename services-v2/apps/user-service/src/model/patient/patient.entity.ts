@@ -272,6 +272,11 @@ export class Patient extends Auditable {
   @Column({type: 'timestamp', nullable: true, default: null})
   trainingCompletedOn?: Date
 
+  @Column()
+  @ApiProperty({nullable: true, default: false})
+  @IsBoolean()
+  isEmailVerified?: boolean
+
   /** Relations */
   @OneToOne(
     () => PatientAuth,
