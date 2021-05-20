@@ -5,6 +5,10 @@ import type {
 import hl7 from 'simple-hl7'
 import dayjs from 'dayjs'
 
+type PubSubMessage = {
+  data: string
+}
+
 const client = hl7.Server.createTcpClient({
   host: '192.168.68.18',
   port: 5011,
@@ -184,8 +188,8 @@ export class AppointmentDataToHL7ORM {
   }
 }
 
-const sendMessage = async (pubSubMessage:AppointmentData) => {
-  const appointmentDataToHL7ORM = new AppointmentDataToHL7ORM(pubSubMessage)
+const sendMessage = async (appointment:AppointmentData) => {
+  const appointmentDataToHL7ORM = new AppointmentDataToHL7ORM(appointment)
   const message = appointmentDataToHL7ORM.get()
   // tslint:disable: no-console
   console.log('HL7 Ready to be Send')
@@ -196,8 +200,13 @@ const sendMessage = async (pubSubMessage:AppointmentData) => {
   console.log('Message Sent')
 }
 
-const requestHandler: EventFunctionWithCallback = async (pubSubMessage, context, callback) => {
-  await sendMessage(pubSubMessage as AppointmentData)
+const requestHandler: EventFunctionWithCallback = async (pubSubMessage:PubSubMessage, context, callback) => {
+  // tslint:disable: no-console
+  console.log(pubSubMessage)
+  const data:unknown = Buffer.from(pubSubMessage.data, 'base64').toString()
+  // tslint:disable: no-console
+  console.log(data)
+  await sendMessage(data as AppointmentData)
   callback()
 }
 
