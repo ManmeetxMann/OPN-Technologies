@@ -7,7 +7,7 @@ import dayjs from 'dayjs'
 
 const client = hl7.Server.createTcpClient({
   host: '192.168.68.18',
-  port: 6011,
+  port: 5011,
   keepalive: true,
   callback: (err, ack) => {
     if (err) {
