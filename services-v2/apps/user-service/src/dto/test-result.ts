@@ -58,7 +58,7 @@ export class TestResultCreateDto {
   dateOfBirth: string
 
   @ApiProperty()
-  @IsNumberString()
+  @IsString()
   @IsNotEmpty()
   postalCode: string
 }
