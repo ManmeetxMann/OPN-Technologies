@@ -4,20 +4,21 @@ import {MiddlewareConsumer, Module, RequestMethod} from '@nestjs/common'
 import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 
 // Should be called before any v1 module import from v2
+import {getDefaultPort, isJestTest} from '@opn-services/common/utils'
 import {Config} from '@opn-common-v1/utils/config'
-Config.useRootEnvFile()
+if (!isJestTest) {
+  Config.useRootEnvFile()
+}
 
 // Common
 import {AuthMiddleware, CorsMiddleware, CommonModule, createSwagger} from '@opn-services/common'
-import {getDefaultPort, isJestTest} from '@opn-services/common/utils'
 import {AllExceptionsFilter} from '@opn-services/common/exception'
 import {OpnValidationPipe} from '@opn-services/common/pipes'
 
 // Services
 import {AppoinmentService} from '@opn-reservation-v1/services/appoinment.service'
 import {UserService} from '@opn-common-v1/service/user/user-service'
-import {UserCardService} from 'apps/checkout-service/src/service/user-cart.service'
-import {StripeService} from 'apps/checkout-service/src/service/stripe.service'
+import {UserCardService, StripeService} from '@opn-services/checkout/service'
 
 // Controllers
 import {CartController} from './controller/v1/public/cart.controller'

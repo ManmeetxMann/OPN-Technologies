@@ -10,6 +10,7 @@ import {
   createUser,
   deleteUserByIdTestDataCreator,
   createUpdateAcuityTypes,
+  commonHeaders,
 } from '@opn-services/test/utils'
 
 /**
@@ -36,6 +37,7 @@ describe('Cart checkout', () => {
     accept: 'application/json',
     organizationid: organizationId,
     authorization: `Bearer userId:${userId}`,
+    ...commonHeaders,
   }
 
   beforeAll(async () => {
@@ -86,11 +88,6 @@ describe('Cart checkout', () => {
         .set(headers)
     }
 
-    console.log({
-      ...headers,
-      'Content-Type': 'application/json',
-    })
-
     await request(server)
       .post(url)
       .set({
@@ -99,7 +96,7 @@ describe('Cart checkout', () => {
       })
       .send({items: [cartItem]})
 
-    const paymentUrl = `${url}/payment-authorization`
+    const paymentUrl = `${url}/checkout-payment`
     const paymentResult = await request(server)
       .post(paymentUrl)
       .set(headers)

@@ -5,7 +5,7 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 
 import {App} from '../src/main'
 
-import {createUser, deleteUserByIdTestDataCreator} from '@opn-services/test/utils'
+import {createUser, deleteUserByIdTestDataCreator, commonHeaders} from '@opn-services/test/utils'
 import {cartItem} from './cart-seed'
 /**
  * Mock remote dependencies
@@ -31,6 +31,7 @@ describe('Cart basic', () => {
     accept: 'application/json',
     organizationid: organizationId,
     authorization: `Bearer userId:${userId}`,
+    ...commonHeaders,
   }
 
   beforeAll(async () => {

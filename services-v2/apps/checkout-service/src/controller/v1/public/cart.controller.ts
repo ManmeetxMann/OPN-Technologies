@@ -14,10 +14,9 @@ import {
   CartUpdateRequestDto,
   CouponRequestDto,
   CartItemResponse,
-} from 'apps/checkout-service/src/dto'
-import {UserCardService} from 'apps/checkout-service/src/service/user-cart.service'
-import {StripeService} from 'apps/checkout-service/src/service/stripe.service'
-import {CardItemDBModel, CartItemStatus} from 'apps/checkout-service/src/model/cart'
+} from '@opn-services/checkout/dto'
+import {UserCardService, StripeService} from '@opn-services/checkout/service'
+import {CardItemDBModel, CartItemStatus} from '@opn-services/checkout/model/cart'
 
 import {AppoinmentService} from '@opn-reservation-v1/services/appoinment.service'
 

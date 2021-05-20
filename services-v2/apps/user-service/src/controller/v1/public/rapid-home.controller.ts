@@ -9,7 +9,7 @@ import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {User} from '@opn-common-v1/data/user'
 import {EncryptionService} from '@opn-common-v1/service/encryption/encryption-service'
 import {RapidHomeKitCodeService} from '../../../service/patient/rapid-home-kit-code.service'
-import {ConfigService} from '@nestjs/config'
+import {OpnConfigService} from '@opn-services/common/services'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -20,7 +20,7 @@ export class RapidHomeController {
 
   constructor(
     private homeKitCodeService: RapidHomeKitCodeService,
-    private configService: ConfigService,
+    private configService: OpnConfigService,
   ) {
     this.encryptionService = new EncryptionService(
       this.configService.get('RAPID_HOME_KIT_CODE_ENCRYPTION_KEY'),

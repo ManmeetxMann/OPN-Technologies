@@ -4,8 +4,11 @@ import {FastifyAdapter} from '@nestjs/platform-fastify'
 import {MiddlewareConsumer, Module, RequestMethod} from '@nestjs/common'
 
 // Should be called before any v1 module import from v2
+import {getDefaultPort, isJestTest} from '@opn-services/common/utils'
 import {Config} from '@opn-common-v1/utils/config'
-Config.useRootEnvFile()
+if (!isJestTest) {
+  Config.useRootEnvFile()
+}
 
 // Common
 import {AuthMiddleware, CorsMiddleware, CommonModule, createSwagger} from '@opn-services/common'
@@ -31,7 +34,6 @@ import {RapidHomeKitCodeService} from './service/patient/rapid-home-kit-code.ser
 import {TestResultService} from './service/patient/test-result.service'
 
 import {RapidHomeController} from './controller/v1/public/rapid-home.controller'
-import {getDefaultPort, isJestTest} from '@opn-services/common/utils'
 
 @Module({
   imports: [CommonModule, DatabaseConfiguration, RepositoryConfiguration],
