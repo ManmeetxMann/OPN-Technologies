@@ -5,12 +5,14 @@ import {ConfigService} from '@nestjs/config'
 import {CaptchaGuard} from '@opn-services/common/guard'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {ResourceNotFoundException} from '@opn-services/common/exception/resource-not-found-exception'
+import {ApiCommonHeaders} from '@opn-services/common/decorator'
 
 import {EncryptionService} from '@opn-common-v1/service/encryption/encryption-service'
 
 import {RapidHomeKitCodeService} from '../../../service/patient/rapid-home-kit-code.service'
 
 @ApiTags('Rapid Home Kit Codes')
+@ApiCommonHeaders()
 @Controller('/api/v1/rapid-home-kit-codes')
 export class RapidHomeKitCodeController {
   private encryptionService: EncryptionService

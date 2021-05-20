@@ -6,7 +6,7 @@ import {prodConfig} from './prod.configuration'
 /**
  * Get public env specific configuration
  */
-export const envConfig = (): Record<string, string | number | boolean> => {
+export const envConfig = (): Record<string, string | string[] | number | boolean> => {
   const env = process.env.GOOGLE_CLOUD_PROJECT
 
   switch (env) {

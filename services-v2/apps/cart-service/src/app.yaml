@@ -1,4 +1,0 @@
-runtime: nodejs12
-service: cart-service
-
-entrypoint: node ./main.js

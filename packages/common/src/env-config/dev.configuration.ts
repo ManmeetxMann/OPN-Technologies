@@ -1,12 +1,18 @@
-export const devConfig: Record<string, string | number | boolean> = {
-  DASHBOARD_URL: 'https://opn-admin-dashboard-dev.nn.r.appspot.com',
+export const devConfig: Record<string, string | string[] | number | boolean> = {
+  CORS_DOMAINS: [
+    'http://localhost:3000',
+    'https://opn-admin-dashboard-dev.nn.r.appspot.com',
+    'https://fh-home-dev.nn.r.appspot.com',
+  ],
+
   DOMAIN_ACCESS: 'https://access-dot-opn-platform-dev.nn.r.appspot.com/',
   DOMAIN_ENTERPRISE: 'https://enterprise-dot-opn-platform-dev.nn.r.appspot.com/',
   DOMAIN_LOOKUP: 'https://lookup-dot-opn-platform-dev.nn.r.appspot.com/',
   DOMAIN_PASSPORT: 'https://passport-dot-opn-platform-dev.nn.r.appspot.com/',
   DOMAIN_REGISTRY: 'https://registry-dot-opn-platform-dev.nn.r.appspot.com/',
   DOMAIN_RESERVATION: 'https://reservation-dot-opn-platform-dev.nn.r.appspot.com/',
-  DOMAIN_CART: 'https://cart-service-dot-opn-platform-dev.nn.r.appspot.com/',
+  DOMAIN_CHECKOUT: 'https://checkout-service-dot-opn-platform-dev.nn.r.appspot.com/checkout/',
+  DOMAIN_USER: 'https://user-service-dot-opn-platform-dev.nn.r.appspot.com/user/',
 
   AUTH_EMAIL_TEMPLATE_ID: 3,
 

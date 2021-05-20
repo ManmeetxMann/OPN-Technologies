@@ -12,7 +12,7 @@ import {
   TestResultsMetaData,
 } from './test-results'
 import {groupByChannel} from '../utils/analysis.helper'
-import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
+import {PassportStatus} from '../../../passport/src/models/passport'
 import {TemperatureStatusesUI} from './temperature'
 import {PulseOxygenStatuses} from './pulse-oxygen'
 import {Lab} from './lab'
@@ -183,6 +183,7 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   userId: string
   sortOrder: number
   appointmentStatus: AppointmentStatus
+  couponCode?: string
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -213,7 +214,7 @@ export type PCRTestResultEmailDTO = Omit<
   | 'userId'
   | 'sortOrder'
 > &
-  AppointmentDBModel & {labAssay: string}
+  AppointmentDBModel & {labAssay: string; resultId?: string}
 
 export type ProcessPCRResultRequest = {
   reportTrackerId: string
@@ -379,9 +380,14 @@ export const pcrTestResultsResponse = (
   details: pcrTestResult.details,
 })
 
-export const resultToStyle = (
-  result: ResultTypes | PassportStatus | TemperatureStatusesUI | PulseOxygenStatuses,
-): TestResultStyle => {
+export type Result =
+  | ResultTypes
+  | PassportStatus
+  | TemperatureStatusesUI
+  | PulseOxygenStatuses
+  | AppointmentReasons.InProgress
+
+export const resultToStyle = (result: Result): TestResultStyle => {
   return TestResultStyle[result] ? TestResultStyle[result] : TestResultStyle.AnyOther
 }
 
@@ -391,7 +397,7 @@ export type TestResutsDTO = {
   name: string
   testDateTime: string
   style: TestResultStyle
-  result: ResultTypes | PassportStatuses | TemperatureStatusesUI
+  result: Result
   detailsAvailable: boolean
 }
 
@@ -471,6 +477,7 @@ export type SinglePcrTestResultUi = {
   travelIDIssuingCountry: string
   dateOfResult: string
   resultMetaData: TestResultsMetaData
+  couponCode?: string
 }
 
 export const singlePcrTestResultDTO = (
@@ -540,6 +547,7 @@ export const singlePcrTestResultDTO = (
       ? formatStringDateRFC822Local(safeTimestamp(pcrTestResult.resultMetaData.resultDate))
       : 'N/A',
     resultMetaData: pcrTestResult.resultMetaData,
+    couponCode: pcrTestResult?.couponCode,
   }
 }
 

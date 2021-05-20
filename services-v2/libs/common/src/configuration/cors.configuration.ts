@@ -1,13 +1,17 @@
-import {CorsOptions} from '@nestjs/common/interfaces/external/cors-options.interface'
-import {ConfigService} from '@nestjs/config'
-import {OpnConfigService} from '@opn-services/common/services'
-import {isRunningOnGCP} from '../utils'
+import {envConfig} from '@opn-common-v1/env-config'
 
-const baseConfigService = new ConfigService()
-const configService = new OpnConfigService(baseConfigService)
+/**
+ * Should use v1 config module since v2 is not initiated before all server launch
+ */
+const config = envConfig()
+const corsDomains = config['CORS_DOMAINS'] as string[]
 
-const allowedOrigins = [configService.get<string>('DASHBOARD_URL')]
-
-export const corsOptions: CorsOptions = {
-  origin: isRunningOnGCP() ? allowedOrigins : '*',
+if (corsDomains.length === 0) {
+  console.error('No CORS domains defined')
 }
+
+/**
+ * TODO:
+ * 1. Different domains per service
+ */
+export {corsDomains}

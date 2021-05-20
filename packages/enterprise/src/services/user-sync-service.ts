@@ -15,7 +15,7 @@ export class UserSyncService implements UserSyncServiceInterface {
   async create(
     source: Omit<
       Patient,
-      'generatePublicId' | 'idPatient' | 'createdAt' | 'updatedAt' | 'updatedBy'
+      'generatePublicId' | 'organizations' | 'idPatient' | 'createdAt' | 'updatedAt' | 'updatedBy'
     >,
     auth?: Omit<PatientAuth, 'patientId' | 'idPatientAuth'>,
   ): Promise<void> {

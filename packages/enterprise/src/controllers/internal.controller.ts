@@ -189,6 +189,7 @@ class InternalController implements IControllerBase {
         isRapidResultSenderAdmin: isRapidResultSenderAdmin ?? false,
         isRapidResultOrgAdmin: isRapidResultOrgAdmin ?? false,
         isOrganizeAdmin: isOrganizeAdmin ?? false,
+        isPatientsAdmin: isPackageAdmin ?? false,
       })
       res.json(actionSucceed())
     } catch (error) {

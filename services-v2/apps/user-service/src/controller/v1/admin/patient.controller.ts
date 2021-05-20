@@ -5,7 +5,7 @@ import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard} from '@opn-services/common/guard'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {UserFunctions, UserEvent} from '@opn-services/common/types/activity-logs'
-import {Roles} from '@opn-services/common/decorator'
+import {ApiCommonHeaders, Roles} from '@opn-services/common/decorator'
 import {AuthUser} from '@opn-services/common/model'
 
 import {assignWithoutUndefined, ResponseStatusCodes} from '@opn-services/common/dto'
@@ -21,27 +21,34 @@ import {
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
 import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
-import {PatientToDelegates} from '../../../model/patient/patient-relations.entity'
 
 @ApiTags('Patients - Admin')
 @ApiBearerAuth()
-@Controller('/api/v1/admin/patients')
+@ApiCommonHeaders()
+@Controller('/admin/api/v1/patients')
 @UseGuards(AuthGuard)
 export class AdminPatientController {
   constructor(private patientService: PatientService) {}
 
   @Get()
-  @Roles([RequiredUserPermission.OPNAdmin])
-  async getAll(@Query() filter: PatientFilter): Promise<ResponseWrapper<Patient[]>> {
+  @Roles([RequiredUserPermission.PatientsAdmin])
+  async getAll(@Query() filter: PatientFilter): Promise<ResponseWrapper<PatientUpdateDto[]>> {
     const {data, page, totalItems, totalPages} = await this.patientService.getAll(
       assignWithoutUndefined(filter, new PatientFilter()),
     )
 
-    return ResponseWrapper.of(data, ResponseStatusCodes.Succeed, null, page, totalPages, totalItems)
+    return ResponseWrapper.of(
+      data.map(patient => patientProfileDto(patient)),
+      ResponseStatusCodes.Succeed,
+      null,
+      page,
+      totalPages,
+      totalItems,
+    )
   }
 
   @Get('/:patientId')
-  @Roles([RequiredUserPermission.OPNAdmin])
+  @Roles([RequiredUserPermission.PatientsAdmin])
   async getById(@Param('patientId') id: string): Promise<ResponseWrapper<PatientUpdateDto>> {
     const patient = await this.patientService.getProfilebyId(id)
 
@@ -53,21 +60,25 @@ export class AdminPatientController {
   }
 
   @Get('/:patientId/dependants')
-  @Roles([RequiredUserPermission.OPNAdmin])
-  async getDependents(
-    @Param('patientId') id: string,
-  ): Promise<ResponseWrapper<PatientToDelegates[]>> {
+  @Roles([RequiredUserPermission.PatientsAdmin])
+  async getDependents(@Param('patientId') id: string): Promise<ResponseWrapper> {
     const patientExists = await this.patientService.getProfilebyId(id)
     if (!patientExists) {
       throw new ResourceNotFoundException('User with given id not found')
     }
 
     const patient = await this.patientService.getDirectDependents(id)
-    return ResponseWrapper.actionSucceed(patient.dependants)
+
+    const dependantProfiles = await this.patientService.getProfilesByIds(
+      patient.dependants.map(dependant => dependant.dependantId),
+    )
+    const dependantProfileDto = dependantProfiles.map(profile => patientProfileDto(profile))
+
+    return ResponseWrapper.actionSucceed(dependantProfileDto)
   }
 
   @Post()
-  @Roles([RequiredUserPermission.OPNAdmin])
+  @Roles([RequiredUserPermission.PatientsAdmin])
   async add(
     @Body() patientDto: PatientCreateAdminDto,
     @AuthUserDecorator() authUser: AuthUser,
@@ -85,11 +96,11 @@ export class AdminPatientController {
       createdBy: authUser.id,
     })
 
-    return ResponseWrapper.actionSucceed(patient)
+    return ResponseWrapper.actionSuccess(patient, 'Patient created successfully')
   }
 
   @Put('/:patientId')
-  @Roles([RequiredUserPermission.OPNAdmin])
+  @Roles([RequiredUserPermission.PatientsAdmin])
   async update(
     @AuthUserDecorator() authUser: AuthUser,
     @Param('patientId') id: string,
@@ -113,7 +124,7 @@ export class AdminPatientController {
   }
 
   @Post('/:patientId/dependants')
-  @Roles([RequiredUserPermission.OPNAdmin])
+  @Roles([RequiredUserPermission.PatientsAdmin])
   async addDependents(
     @Param('patientId') delegateId: string,
     @Body() dependantBody: DependantCreateDto,

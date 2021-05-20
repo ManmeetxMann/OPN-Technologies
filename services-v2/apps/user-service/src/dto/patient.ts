@@ -1,8 +1,8 @@
 import {ApiProperty, ApiPropertyOptional, OmitType, PartialType} from '@nestjs/swagger'
-import {ApiModelPropertyOptional} from '@nestjs/swagger/dist/decorators/api-model-property.decorator'
-import {PageableRequestFilter} from '@opn-services/common/dto'
+import {PageableRequestFilter, PubSubMessage, PubSubPayload} from '@opn-services/common/dto'
 import {
   IsBoolean,
+  IsDefined,
   IsEmail,
   IsNotEmpty,
   IsNumberString,
@@ -10,7 +10,13 @@ import {
   IsString,
   Length,
 } from 'class-validator'
+import {Organization} from '../model/organization/organization.entity'
 import {Patient} from '../model/patient/patient.entity'
+
+export type PatientDTO = Partial<PatientCreateDto> & {
+  lastAppointment: Date
+  trainingCompletedOn: Date
+}
 
 export class PatientCreateDto {
   idPatient: string
@@ -18,7 +24,10 @@ export class PatientCreateDto {
   authUserId: string // Firestore authUserId
   patientPublicId: string
 
-  @ApiProperty()
+  @ApiPropertyOptional({
+    description: 'Required for Normal Patient',
+  })
+  @IsOptional()
   @IsEmail()
   email: string
 
@@ -36,6 +45,9 @@ export class PatientCreateDto {
   @IsString()
   registrationId?: string
 
+  @ApiPropertyOptional({
+    description: 'Required for Normal Patient',
+  })
   @IsOptional()
   @IsString()
   photoUrl?: string
@@ -51,6 +63,11 @@ export class PatientCreateDto {
   @IsOptional()
   @IsString()
   dateOfBirth: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  organizationId?: string
 
   @IsOptional()
   @IsString()
@@ -72,8 +89,11 @@ export class PatientCreateDto {
   @IsString()
   country?: string
 
+  @ApiPropertyOptional({
+    description: 'Required for Home Test Patient',
+  })
   @IsOptional()
-  @IsNumberString()
+  @IsString()
   postalCode?: string
 
   @IsOptional()
@@ -113,6 +133,7 @@ export class PatientCreateDto {
   @IsBoolean()
   receiveNotificationsFromGov?: boolean
 
+  organizations?: Organization[]
   updatedBy?: string
 }
 
@@ -136,14 +157,15 @@ export class PatientCreateAdminDto {
   @IsNotEmpty()
   lastName: string
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   registrationId?: string
 
   @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  photoUrl: string
+  photoUrl?: string
 
   @ApiProperty()
   @IsString()
@@ -152,6 +174,7 @@ export class PatientCreateAdminDto {
 
   @ApiPropertyOptional()
   @IsString()
+  @IsOptional()
   consentFileUrl?: string
 
   @ApiProperty()
@@ -159,80 +182,119 @@ export class PatientCreateAdminDto {
   @IsNotEmpty()
   dateOfBirth: string
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  organizationId?: string
+
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
   homeAddress: string
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  @IsNotEmpty()
-  homeAddressUnit: string
+  @IsOptional()
+  homeAddressUnit?: string
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  @IsNotEmpty()
-  city: string
+  @IsOptional()
+  city?: string
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  @IsNotEmpty()
-  province: string
+  @IsOptional()
+  province?: string
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  @IsNotEmpty()
-  country: string
+  @IsOptional()
+  country?: string
 
-  @ApiProperty()
-  @IsNumberString()
-  postalCode: string
+  @ApiPropertyOptional()
+  @IsOptional()
+  postalCode?: string
 
   @IsOptional()
-  healthCardType: string
+  healthCardType?: string
 
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   @IsNumberString()
   @Length(9, 9)
-  healthCardNumber: string
+  healthCardNumber?: string
 
   @ApiPropertyOptional()
   @IsString()
-  travelPassport: string
+  @IsOptional()
+  travelPassport?: string
 
   @ApiPropertyOptional()
   @IsString()
-  travelCountry: string
+  @IsOptional()
+  travelCountry?: string
 
   @ApiPropertyOptional()
   @IsBoolean()
-  agreeToConductFHHealthAssessment: boolean
+  @IsOptional()
+  agreeToConductFHHealthAssessment?: boolean
 
   @ApiPropertyOptional()
   @IsBoolean()
-  shareTestResultWithEmployer: boolean
+  @IsOptional()
+  shareTestResultWithEmployer?: boolean
 
   @ApiPropertyOptional()
   @IsBoolean()
-  readTermsAndConditions: boolean
+  @IsOptional()
+  readTermsAndConditions?: boolean
 
   @ApiPropertyOptional()
   @IsBoolean()
-  receiveResultsViaEmail: boolean
+  @IsOptional()
+  receiveResultsViaEmail?: boolean
 
   @ApiPropertyOptional()
   @IsBoolean()
-  receiveNotificationsFromGov: boolean
+  @IsOptional()
+  receiveNotificationsFromGov?: boolean
 
   updatedBy?: string
 }
 
+class FCMRegistration {
+  @ApiPropertyOptional()
+  @IsOptional()
+  pushToken?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  osVersion?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  platform?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  registrationId?: string
+}
+
 export class PatientUpdateDto extends PartialType(PatientCreateDto) {
-  patientId?: string
-  @ApiModelPropertyOptional()
+  @IsOptional()
+  id?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsBoolean()
   trainingCompletedOn?: boolean | Date
+
+  @ApiPropertyOptional({type: FCMRegistration})
+  @IsOptional()
+  registration?: FCMRegistration
 }
 
 export class LinkCodeToAccountDto {
@@ -250,19 +312,84 @@ export class LinkToAccountDto {
 export class DependantCreateDto extends OmitType(PatientCreateDto, ['email'] as const) {}
 
 export class PatientFilter extends PageableRequestFilter {
-  @ApiModelPropertyOptional()
+  @ApiPropertyOptional()
+  @IsOptional()
   nameOrId?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  organizationId?: string
 }
 
-export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
+class PatientUpdatePubSubAttributes {
+  @ApiProperty()
+  @IsString()
+  userId: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  organizationId: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  actionType: string
+}
+
+class PatientUpdatePubSubMessage extends PubSubMessage<PatientUpdatePubSubAttributes> {
+  @ApiProperty({type: PatientUpdatePubSubAttributes})
+  @IsDefined()
+  attributes: PatientUpdatePubSubAttributes
+}
+
+export class PatientUpdatePubSubPayload extends PubSubPayload<PatientUpdatePubSubMessage> {
+  @ApiProperty({type: PatientUpdatePubSubMessage})
+  @IsDefined()
+  message: PatientUpdatePubSubMessage
+}
+
+export type PatientUpdatePubSubProfile = {
+  phone: string
+  gender: string
+  ohipCard: string
+  travelID: string
+  travelIDIssuingCountry: string
+  address: string
+  addressUnit: string
+  city: string
+  province: string
+  country: string
+  postalCode: string
+  readTermsAndConditions: boolean
+  receiveResultsViaEmail: boolean
+  agreeToConductFHHealthAssessment: boolean
+  receiveNotificationsFromGov: boolean
+  shareTestResultWithEmployer: boolean
+}
+
+export const CreatePatientDTOResponse = (patient: Patient): PatientDTO => ({
   idPatient: patient.idPatient,
+  firstName: patient.firstName,
+  lastName: patient.lastName,
+  phoneNumber: patient.phoneNumber,
+  patientPublicId: patient.patientPublicId,
+  dateOfBirth: patient.dateOfBirth,
+  photoUrl: patient.photoUrl,
+  lastAppointment: patient.lastAppointment,
+  trainingCompletedOn: patient.trainingCompletedOn,
+})
+
+export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
+  id: patient.idPatient,
+  firebaseKey: patient?.firebaseKey,
   patientPublicId: patient.patientPublicId,
   firstName: patient.firstName,
   lastName: patient.lastName,
   dateOfBirth: patient.dateOfBirth,
   email: patient.auth?.email,
+  registrationId: patient?.registrationId,
   phoneNumber: patient.phoneNumber,
   photoUrl: patient.photoUrl,
+  organizations: patient.organizations,
   homeAddress: patient.addresses?.homeAddress,
   homeAddressUnit: patient.addresses?.homeAddressUnit,
   city: patient.addresses?.city,
@@ -279,4 +406,5 @@ export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   receiveResultsViaEmail: patient?.digitalConsent?.receiveResultsViaEmail,
   receiveNotificationsFromGov: patient?.digitalConsent?.receiveNotificationsFromGov,
   trainingCompletedOn: patient?.trainingCompletedOn,
+  postalCode: patient.addresses?.postalCode,
 })

@@ -16,6 +16,7 @@ export enum CartFunctions {
   checkout = 'checkout',
   cancelBulkAppointment = 'cancelBulkAppointment',
   addItems = 'addItems',
+  createBulkAppointment = 'createBulkAppointment',
 }
 
 export enum CartEvent {
@@ -25,6 +26,7 @@ export enum CartEvent {
   cartNotValid = 'cartNotValid',
   appointmentsBookingError = 'appointmentsBookingError',
   appointmentTypeNotFound = 'appointmentTypeNotFound',
+  errorBookingAppointment = 'errorBookingAppointment',
 }
 
 export enum CaptchaFunctions {
@@ -46,4 +48,12 @@ export enum StripeFunctions {
 export enum StripeEvent {
   ephemeralKeysError = 'ephemeralKeysError',
   paymentIntentsError = 'paymentIntentsError',
+}
+
+export enum ValidatorFunctions {
+  validate = 'validate',
+}
+
+export enum ValidatorEvents {
+  validationFailed = 'validationFailed',
 }

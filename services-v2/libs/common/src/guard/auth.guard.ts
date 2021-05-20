@@ -1,4 +1,5 @@
-import {CanActivate, ExecutionContext, ForbiddenException, Injectable} from '@nestjs/common'
+import {CanActivate, ExecutionContext, Injectable} from '@nestjs/common'
+import {ForbiddenException} from '@opn-services/common/exception'
 import {Reflector} from '@nestjs/core'
 import {RequiredUserPermission, RolesData} from '../types/authorization'
 import {AdminProfile} from '@opn-common-v1/data/admin'
@@ -142,6 +143,9 @@ export class AuthGuard implements CanActivate {
     const seekTestKitBatchAdmin = listOfRequiredPermissions.includes(
       RequiredUserPermission.TestKitBatchAdmin,
     )
+    const seekPatientsAdmin = listOfRequiredPermissions.includes(
+      RequiredUserPermission.PatientsAdmin,
+    )
 
     const labUserWithLabId = admin.isLabUser && !labId ? false : true
 
@@ -231,6 +235,10 @@ export class AuthGuard implements CanActivate {
     }
     if (seekTestKitBatchAdmin && !admin?.isTestKitBatchAdmin) {
       console.warn(`Admin user ${userId} needs isTestKitBatchAdmin`)
+      return false
+    }
+    if (seekPatientsAdmin && !admin?.isPatientsAdmin && !admin?.isOpnSuperAdmin) {
+      console.warn(`Admin user ${userId} needs isPatientsAdmin`)
       return false
     }
     return true

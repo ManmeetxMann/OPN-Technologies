@@ -9,10 +9,12 @@
 				"tools:get-users-with-email-no-authuserid": "ts-node ./get-users-with-email-no-authuserid",
 				"tool:update-user-emails": "node ./update-user-emails",
 				"tool:appointments-finance": "ts-node ./appointments-finance",
+				"tool:add-status-to-appointments-finance": "ts-node ./add-status-to-appointments-finance",
 				"tool:non-org-packages-details": "ts-node ./non-org-packages-details",
 				"tool:update-final-cost": "ts-node ./update-final-cost",
 				"tool:create-firebase-token": "ts-node ./create-firebase-token",
 				"tool:get-stripe-payment": "ts-node ./get-stripe-payment-id",
+				"tool:get-rapid-home-kit-code": "ts-node ./get-rapid-home-kit-code",
 				"tool:appointments-check-duplicate-barcode": "ts-node ./appointments-check-duplicate-barcode"
 		},
 		"author": "",
@@ -20,6 +22,7 @@
 		"dependencies": {
 				"mysql": "^2.18.1",
 				"mysql-async-simple": "^1.0.3",
+				"nanoid": "^3.1.22",
 				"stripe": "^8.144.0",
 				"ts-node": "^9.1.1"
 		},

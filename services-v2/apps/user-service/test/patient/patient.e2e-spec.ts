@@ -24,7 +24,7 @@ const headers = {
 }
 
 describe('AdminPatientController (e2e)', () => {
-  const url = '/api/v1/admin/patients'
+  const url = '/admin/api/v1/patients'
   let app: NestFastifyApplication
   let server: HttpService
   let mockedUser: Patient

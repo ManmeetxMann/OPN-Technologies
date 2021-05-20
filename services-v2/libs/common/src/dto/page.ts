@@ -1,4 +1,5 @@
-import {ApiModelPropertyOptional} from '@nestjs/swagger/dist/decorators/api-model-property.decorator'
+import {ApiPropertyOptional} from '@nestjs/swagger'
+import {IsOptional} from 'class-validator'
 
 export class Page<T> {
   data: T[]
@@ -20,13 +21,16 @@ export class Page<T> {
 }
 
 export class PageableRequestFilter {
-  @ApiModelPropertyOptional()
-  page?: number = 0
+  @ApiPropertyOptional()
+  @IsOptional()
+  page?: number = 1
 
-  @ApiModelPropertyOptional()
+  @ApiPropertyOptional()
+  @IsOptional()
   perPage?: number = 100
 
-  @ApiModelPropertyOptional()
+  @ApiPropertyOptional()
+  @IsOptional()
   query?: string = null
 
   static of(page?: number, perPage?: number, query?: string): PageableRequestFilter {

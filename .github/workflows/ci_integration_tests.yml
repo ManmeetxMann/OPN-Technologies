@@ -10,8 +10,6 @@ on:
       - ".github/actions/**"
     branches: 
       - master
-    tags:
-      - preprod-*
 
 jobs:
   build:
@@ -25,7 +23,6 @@ jobs:
       name: Run Integration Tests
       env:
           infra_dev_service_account: ${{ secrets.INFRA_DEV_GCP_CLOUDBUILD_SA_KEY}}
-          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_INTEGRATION_TEST_URL }}
     - uses: sonots/slack-notice-action@v3
       with:
         status: ${{ job.status }}

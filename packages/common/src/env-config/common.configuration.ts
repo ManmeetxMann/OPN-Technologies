@@ -1,14 +1,17 @@
 /**
  * Common configuration for All Environments
  */
-export const commonConfig: Record<string, string | number | boolean> = {
+export const commonConfig: Record<string, string | string[] | number | boolean> = {
   ACUITY_CALENDAR_URL: 'https://app.acuityscheduling.com/schedule.php',
   ACUITY_APPOINTMENT_TYPE_ID: 20791574,
   ACUITY_COUPON_ID: 1073154,
   ACUITY_FIELD_ADDITIONAL_ADDRESS_NOTES: 9112814,
   ACUITY_FIELD_ADDRESS_FOR_TESTING: 9112811,
-  ACUITY_FIELD_ADDRESS_UNIT: 9082855,
   ACUITY_FIELD_ADDRESS: 9082854,
+  ACUITY_FIELD_ADDRESS_UNIT: 9082855,
+  ACUITY_FIELD_CITY: 9717163,
+  ACUITY_FIELD_PROVINCE: 9717173,
+  ACUITY_FIELD_COUNTRY: 9717176,
   ACUITY_FIELD_AGREE_TO_CONDUCT_FH_HEALTH_ACCESSMENT: 9082892,
   ACUITY_FIELD_BARCODE: 8622334,
   ACUITY_FIELD_DATE_OF_BIRTH: 8637043,
@@ -26,15 +29,21 @@ export const commonConfig: Record<string, string | number | boolean> = {
   ACUITY_FIELD_TRAVEL_ID: 9158228,
   ACUITY_FIELD_GENDER: 9507941,
   ACUITY_FIELD_POSTAL_CODE: 9507871,
+  ACUITY_FIELD_AGREE_CANCELLATION_REFUND: 9742364,
+  ACUITY_FIELD_HAD_COVID_CONFIRMED: 9717485,
+  ACUITY_FIELD_HAD_COVID_CONFIRMED_DATE: 9717480,
+  ACUITY_FIELD_HAD_COVID_EXPOSURE: 9717484,
+  ACUITY_FIELD_HAD_COVID_EXPOSURE_DATE: 9717489,
   ACUITY_SCHEDULER_API_URL: 'https://acuityscheduling.com',
 
   CAPTCHA_VERIFY_URL: 'https://www.google.com/recaptcha/api/siteverify',
 
   DEFAULT_TIME_ZONE: 'America/Toronto',
-  // DEFAULT_ORG_ID: 'defaulttest001',
-  // DEFAULT_GROUP_ID: 'defaulttestgroup001',
   DEFAULT_USER_PHOTO:
     'https://storage.googleapis.com/opn-platform-ca-prod.appspot.com/user_avatars/user_light.jpeg',
+  PUBLIC_ORG_ID: 'PUBLIC_ORG',
+  PUBLIC_GROUP_ID: 'PUBLIC_GROUP',
+  PUBLIC_LOCATION_ID: 'PUBLIC_LOCATION',
 
   EMAIL_FROM_NAME: 'StayOPN Team',
 
@@ -45,6 +54,9 @@ export const commonConfig: Record<string, string | number | boolean> = {
   ATTESTATION_TOPIC: 'attestation-topic',
   PUBSUB_TRACE_TOPIC: 'tracing',
   PUBSUB_TRACE_SUBSCRIPTION: 'executeTrace',
+  PRESUMPTIVE_POSITIVE_RESULTS_TOPIC: 'presumptive-positive-result-topic',
+  SAMPLE_TO_MOUNT_SINAI_LAB_TOPIC: 'sample-to-mount-sinai-lab-topic',
+  PATIENT_UPDATE_TOPIC: 'patient-update-topic',
 
   PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS: 12,
   PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS: 7,

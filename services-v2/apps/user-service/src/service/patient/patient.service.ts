@@ -3,17 +3,23 @@ import {Page} from '@opn-services/common/dto'
 import {Brackets, SelectQueryBuilder} from 'typeorm'
 import {
   DependantCreateDto,
+  PatientCreateAdminDto,
   PatientCreateDto,
   PatientFilter,
   PatientUpdateDto,
+  PatientUpdatePubSubProfile,
 } from '../../dto/patient'
+import {HomeTestPatientDto} from '../../dto/home-patient'
 import {
   PatientDigitalConsent,
   PatientHealth,
   PatientTravel,
 } from '../../model/patient/patient-profile.entity'
 import {Patient, PatientAddresses, PatientAuth} from '../../model/patient/patient.entity'
-import {PatientToDelegates} from '../../model/patient/patient-relations.entity'
+import {
+  PatientToDelegates,
+  PatientToOrganization,
+} from '../../model/patient/patient-relations.entity'
 import {
   PatientAddressesRepository,
   PatientAuthRepository,
@@ -21,13 +27,21 @@ import {
   PatientHealthRepository,
   PatientRepository,
   PatientToDelegatesRepository,
+  PatientToOrganizationRepository,
   PatientTravelRepository,
 } from '../../repository/patient.repository'
+
 import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
+import {OpnConfigService} from '@opn-services/common/services'
+import {BadRequestException} from '@opn-services/common/exception'
+import {LogError} from '@opn-services/common/utils/logging'
+
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import DataStore from '@opn-common-v1/data/datastore'
 import {AuthUser} from '@opn-common-v1/data/user'
-import {HomeTestPatientDto} from '../../dto/home-patient'
+import {Registration} from '@opn-common-v1/data/registration'
+import {RegistrationService} from '@opn-common-v1/service/registry/registration-service'
+import {MessagingFactory} from '@opn-common-v1/service/messaging/messaging-service'
 
 @Injectable()
 export class PatientService {
@@ -41,10 +55,14 @@ export class PatientService {
     private patientTravelRepository: PatientTravelRepository,
     private patientDigitalConsentRepository: PatientDigitalConsentRepository,
     private patientToDelegatesRepository: PatientToDelegatesRepository,
+    private patientToOrganizationRepository: PatientToOrganizationRepository,
+    private configService: OpnConfigService,
   ) {}
 
   private dataStore = new DataStore()
   private userRepository = new UserRepository(this.dataStore)
+  private messaging = MessagingFactory.getPushableMessagingService()
+  private registrationService = new RegistrationService()
 
   /**
    * Get patient record by id
@@ -59,7 +77,7 @@ export class PatientService {
    */
   async getProfilebyId(patientId: string): Promise<Patient> {
     return this.patientRepository.findOne(patientId, {
-      relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth'],
+      relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth', 'organizations'],
     })
   }
 
@@ -67,21 +85,40 @@ export class PatientService {
     return this.patientAuthRepository.findOne({where: {email}})
   }
 
+  async getAuthByAuthUserId(authUserId: string): Promise<PatientAuth> {
+    return this.patientAuthRepository.findOne({where: {authUserId}})
+  }
+
   async getProfileByFirebaseKey(firebaseKey: string): Promise<Patient> {
     return this.patientRepository.findOne(
       {firebaseKey},
       {
-        relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth'],
+        relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth', 'organizations'],
       },
     )
+  }
+
+  async getProfilesByIds(patientIds: string[]): Promise<Patient[]> {
+    return this.patientRepository.findByIds(patientIds, {
+      relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth', 'organizations'],
+    })
   }
   /**
    * Fetch all patients with pagination
    */
-  async getAll({nameOrId, page, perPage}: PatientFilter): Promise<Page<Patient>> {
-    let queryBuilder: SelectQueryBuilder<Patient> = this.patientRepository
-      .createQueryBuilder('patient')
-      .select()
+  async getAll({nameOrId, organizationId, page, perPage}: PatientFilter): Promise<Page<Patient>> {
+    let queryBuilder: SelectQueryBuilder<Patient> = this.patientRepository.createQueryBuilder(
+      'patient',
+    )
+
+    if (organizationId) {
+      queryBuilder = queryBuilder.innerJoinAndSelect(
+        'patient.organizations',
+        'organization',
+        'organization.firebaseOrganizationId = :firebaseOrganizationId',
+        {firebaseOrganizationId: organizationId},
+      )
+    }
 
     if (nameOrId) {
       const lower = nameOrId.toLowerCase()
@@ -97,16 +134,15 @@ export class PatientService {
     }
 
     return queryBuilder
+      .select()
       .limit(perPage)
-      .offset(page * perPage)
+      .offset((page - 1) * perPage)
       .getManyAndCount()
       .then(([data, totalItems]) => Page.of(data, page, perPage, totalItems))
   }
 
-  async createHomePatientProfile(
-    data: HomeTestPatientDto & {phoneNumber: string},
-  ): Promise<Patient> {
-    const firebaseUser = await this.userRepository.add({
+  async createHomePatientProfile(data: HomeTestPatientDto): Promise<Patient> {
+    const userData = {
       firstName: data.firstName,
       lastName: data.lastName,
       phone: {
@@ -116,14 +152,19 @@ export class PatientService {
       authUserId: data.authUserId,
       active: false,
       organizationIds: [],
-    } as AuthUser)
+    } as AuthUser
 
+    if (data.organizationId) {
+      userData.organizationIds.push(data.organizationId)
+    }
+
+    const firebaseUser = await this.userRepository.add(userData)
     data.firebaseKey = firebaseUser.id
 
-    const patient = await this.createPatient(data)
+    const patient = await this.createPatient(data as PatientCreateDto)
     data.idPatient = patient.idPatient
 
-    await Promise.all([this.saveAuth(data), this.saveAddress(data)])
+    await Promise.all([this.saveAuth(data), this.saveAddress(data), this.saveOrganization(data)])
 
     return patient
   }
@@ -132,11 +173,20 @@ export class PatientService {
    * Creates new patient profile with all relations
    * @param data
    */
-  async createProfile(data: PatientCreateDto): Promise<Patient> {
-    data.authUserId = await this.firebaseAuthService.createUser(data.email)
+  async createProfile(
+    data: PatientCreateDto | PatientCreateAdminDto,
+    hasPublicOrg = false,
+  ): Promise<Patient> {
+    const organizationIds = []
+    if (hasPublicOrg) {
+      organizationIds.push(this.configService.get('PUBLIC_ORG_ID'))
+    }
 
-    const firebaseUser = await this.userRepository.add({
-      email: data.email,
+    if (data.organizationId) {
+      organizationIds.push(data.organizationId)
+    }
+
+    const userData = {
       firstName: data.firstName,
       lastName: data.lastName,
       registrationId: data.registrationId ?? null,
@@ -147,9 +197,20 @@ export class PatientService {
       },
       authUserId: data.authUserId,
       active: false,
-      organizationIds: [],
-    } as AuthUser)
+      organizationIds,
+    } as AuthUser
 
+    if (data.email) {
+      userData.email = data.email
+
+      // user is being created by Admin
+      if (!data.authUserId) {
+        userData.authUserId = await this.firebaseAuthService.createUser(data.email)
+        data.authUserId = userData.authUserId
+      }
+    }
+
+    const firebaseUser = await this.userRepository.add(userData)
     data.firebaseKey = firebaseUser.id
 
     const patient = await this.createPatient(data)
@@ -161,6 +222,7 @@ export class PatientService {
       this.saveHealth(data),
       this.saveTravel(data),
       this.saveConsent(data),
+      this.saveOrganization(data),
     ])
 
     return patient
@@ -186,23 +248,30 @@ export class PatientService {
 
     const {travel, health, addresses, digitalConsent, auth} = patient
 
-    if (data.email && auth?.email !== data.email) {
+    if (auth && data.email && auth?.email !== data.email) {
       this.firebaseAuthService.updateUser(auth.authUserId, data.email)
       auth.email = data.email
       await this.patientAuthRepository.save(auth)
     }
 
-    await this.userRepository.updateProperties(patient.firebaseKey, {
+    const userSync = {
       email: data.email,
       firstName: data.firstName,
       lastName: data.lastName,
-      registrationId: data.registrationId,
-      photo: data.photoUrl,
+      ...(data.registrationId && {registrationId: data.registrationId}),
+      ...(data.photoUrl && {photo: data.photoUrl}),
       phone: {
         diallingCode: 0,
-        number: Number(data.phoneNumber),
       },
-    })
+    }
+
+    if (data.phoneNumber) {
+      userSync.phone['number'] = Number(data.phoneNumber)
+    }
+
+    // clear payload from undefined values before update sync
+    Object.keys(userSync).forEach(key => userSync[key] === undefined && delete userSync[key])
+    await this.userRepository.updateProperties(patient.firebaseKey, userSync)
 
     const promises = await Promise.all([
       this.patientRepository.save(patient),
@@ -215,19 +284,18 @@ export class PatientService {
   }
 
   async createPatient(
-    data: PatientCreateDto | DependantCreateDto | HomeTestPatientDto,
+    data: PatientCreateDto | DependantCreateDto | PatientCreateAdminDto,
   ): Promise<Patient> {
     const entity = new Patient()
     entity.firebaseKey = data.firebaseKey
     entity.firstName = data.firstName
     entity.lastName = data.lastName
     entity.phoneNumber = data.phoneNumber
-    if (data instanceof PatientCreateDto || data instanceof DependantCreateDto) {
-      entity.dateOfBirth = data.dateOfBirth
-      entity.photoUrl = data.photoUrl
-      entity.registrationId = data.registrationId
-      entity.consentFileUrl = data.consentFileUrl
-    }
+    entity.dateOfBirth = data.dateOfBirth
+    entity.photoUrl = data.photoUrl
+    entity.registrationId = data.registrationId
+    entity.consentFileUrl = data.consentFileUrl
+
     return this.patientRepository.save(entity)
   }
 
@@ -237,7 +305,24 @@ export class PatientService {
    * @param data child user data
    */
   async createDependant(delegateId: string, data: DependantCreateDto): Promise<Patient> {
-    data.firebaseKey = 'TempKey' + Math.random().toString(36)
+    const firebaseUser = await this.userRepository.add({
+      firstName: data.firstName,
+      lastName: data.lastName,
+      registrationId: data.registrationId ?? null,
+      photo: data.photoUrl ?? null,
+      phone: {
+        diallingCode: 0,
+        number: Number(data.phoneNumber ?? 0),
+      },
+      active: false,
+      organizationIds: [],
+    } as AuthUser)
+
+    data.firebaseKey = firebaseUser.id
+
+    if (data.organizationId) {
+      firebaseUser.organizationIds.push(data.organizationId)
+    }
 
     const dependant = await this.createPatient(data)
     data.idPatient = dependant.idPatient
@@ -247,6 +332,7 @@ export class PatientService {
       this.saveHealth(data),
       this.saveTravel(data),
       this.saveConsent(data),
+      this.saveOrganization(data),
       this.saveDependantOrDelegate(delegateId, dependant.idPatient),
     ])
 
@@ -315,6 +401,15 @@ export class PatientService {
     return this.patientDigitalConsentRepository.save(consent)
   }
 
+  private async saveOrganization(data: PatientUpdateDto, idPatientToOrganization?: string) {
+    const publicOrg = this.configService.get<string>('PUBLIC_ORG_ID')
+    const organization = new PatientToOrganization()
+    organization.idPatientToOrganization = idPatientToOrganization
+    organization.patientId = data.idPatient
+    organization.firebaseOrganizationId = data.organizationId ?? publicOrg
+    return this.patientToOrganizationRepository.save(organization)
+  }
+
   async getDirectDependents(patientId: string): Promise<Patient> {
     return await this.patientRepository.findOne(patientId, {
       relations: ['dependants'],
@@ -342,5 +437,63 @@ export class PatientService {
     })
 
     return patient.auth.authUserId === authUserId
+  }
+
+  /**
+   * Update or insert push token
+   */
+  async upsertPushToken(
+    patientId: string,
+    registrationId: string,
+    registration: Omit<Registration, 'id'>,
+  ): Promise<void> {
+    const {pushToken, osVersion, platform} = registration
+
+    // validate if we get token
+    if (pushToken) {
+      await this.messaging.validatePushToken(pushToken)
+    }
+
+    // create or update token
+    const {id} = await this.registrationService.upsert(registrationId, {
+      osVersion,
+      platform,
+      pushToken,
+    })
+
+    await this.patientRepository.update({idPatient: patientId}, {registrationId: id})
+  }
+
+  async updateProfileWithPubSub(
+    userId: string,
+    data: Partial<PatientUpdatePubSubProfile>,
+  ): Promise<void> {
+    const patient = await this.patientRepository.findOne({firebaseKey: userId})
+
+    if (!patient) {
+      const errorMessage = `Profile with ${userId} not exists`
+      LogError('updateProfileWithPubSub', 'PubSubProfileUpdateFailed', {
+        errorMessage,
+      })
+      throw new BadRequestException(errorMessage)
+    }
+
+    const updateDto = new PatientUpdateDto()
+    updateDto.phoneNumber = data?.phone
+    updateDto.healthCardType = data?.ohipCard
+    updateDto.travelPassport = data?.travelID
+    updateDto.travelCountry = data?.travelIDIssuingCountry
+    updateDto.homeAddress = data?.address
+    updateDto.homeAddressUnit = data?.addressUnit
+    updateDto.city = data?.city
+    updateDto.country = data?.country
+    updateDto.province = data?.province
+    updateDto.agreeToConductFHHealthAssessment = data?.agreeToConductFHHealthAssessment
+    updateDto.readTermsAndConditions = data?.readTermsAndConditions
+    updateDto.receiveNotificationsFromGov = data?.receiveNotificationsFromGov
+    updateDto.receiveResultsViaEmail = data?.receiveResultsViaEmail
+    updateDto.shareTestResultWithEmployer = data?.shareTestResultWithEmployer
+
+    await this.updateProfile(patient.idPatient, updateDto)
   }
 }

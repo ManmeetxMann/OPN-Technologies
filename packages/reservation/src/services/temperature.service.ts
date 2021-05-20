@@ -39,6 +39,10 @@ export class TemperatureService {
       .fetch()
   }
 
+  getAllByUserId(userId: string): Promise<TemperatureDBModel[]> {
+    return this.temperatureRepository.getQueryFindWhereEqual('userId', userId).fetch()
+  }
+
   async getTemperaturesInRange(
     userId: string,
     organizationId: string,

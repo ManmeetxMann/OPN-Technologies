@@ -2,6 +2,7 @@ import * as express from 'express'
 import {Handler, Router} from 'express'
 
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
+import {LogError, LogInfo} from '../../../../common/src/utils/logging-setup'
 import {OPNPubSub} from '../../../../common/src/service/google/pub_sub'
 
 import {RecommendationService} from '../../services/recommendation-service'
@@ -135,6 +136,10 @@ class RecommendationController implements IControllerBase {
   testAppointment: Handler = async (req, res, next): Promise<void> => {
     try {
       const {userId, organizationId, actionType, data} = await this.parseMessage(req.body.message)
+      LogInfo('testAppointment', 'PubSubAddTestAppointment', {
+        message: req.body.message,
+      })
+
       if (data.testType !== TestTypes.PCR) {
         // only care about PCR for now
         res.sendStatus(200)
@@ -153,6 +158,7 @@ class RecommendationController implements IControllerBase {
       }
       res.sendStatus(200)
     } catch (error) {
+      LogError('testAppointment', 'PubSubAddAppointmentFailed', error)
       next(error)
     }
   }
