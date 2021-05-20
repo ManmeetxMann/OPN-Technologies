@@ -1,39 +1,39 @@
-import moment from "moment";
-import { fromPairs, sortBy, union } from "lodash";
+import moment from 'moment'
+import {fromPairs, sortBy, union} from 'lodash'
 
-import DataStore from "../../../common/src/data/datastore";
-import { Config } from "../../../common/src/utils/config";
-import { EmailService } from "../../../common/src/service/messaging/email-service";
-import { BadRequestException } from "../../../common/src/exceptions/bad-request-exception";
-import { ResourceNotFoundException } from "../../../common/src/exceptions/resource-not-found-exception";
-import { DataModelFieldMapOperatorType } from "../../../common/src/data/datamodel.base";
-import { ReservationPushTypes } from "../types/appointment-push";
-import { toDateFormat } from "../../../common/src/utils/times";
-import { OPNPubSub } from "../../../common/src/service/google/pub_sub";
-import { safeTimestamp } from "../../../common/src/utils/datetime-util";
+import DataStore from '../../../common/src/data/datastore'
+import {Config} from '../../../common/src/utils/config'
+import {EmailService} from '../../../common/src/service/messaging/email-service'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
+import {ReservationPushTypes} from '../types/appointment-push'
+import {toDateFormat} from '../../../common/src/utils/times'
+import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {
   dateToDateTime,
   formatDateRFC822Local,
   formatStringDateRFC822Local,
   getFirestoreTimeStampDate,
-  makeDeadlineForFilter
-} from "../utils/datetime.helper";
-import { OPNCloudTasks } from "../../../common/src/service/google/cloud_tasks";
-import { LogError, LogInfo, LogWarning } from "../../../common/src/utils/logging-setup";
+  makeDeadlineForFilter,
+} from '../utils/datetime.helper'
+import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
+import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
 
 //service
-import { AppoinmentService } from "./appoinment.service";
-import { CouponService } from "./coupon.service";
-import { ReservationPushService } from "./reservation-push.service";
+import {AppoinmentService} from './appoinment.service'
+import {CouponService} from './coupon.service'
+import {ReservationPushService} from './reservation-push.service'
 
 //repository
-import { AppointmentsRepository } from "../respository/appointments-repository";
-import { PCRTestResultsRepository } from "../respository/pcr-test-results-repository";
+import {AppointmentsRepository} from '../respository/appointments-repository'
+import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 
 import {
   TestResultsReportingTrackerPCRResultsRepository,
-  TestResultsReportingTrackerRepository
-} from "../respository/test-results-reporting-tracker-repository";
+  TestResultsReportingTrackerRepository,
+} from '../respository/test-results-reporting-tracker-repository'
 
 import {
   AppointmentReasons,
@@ -60,8 +60,8 @@ import {
   Result,
   ResultReportStatus,
   resultToStyle,
-  TestResutsDTO
-} from "../models/pcr-test-results";
+  TestResutsDTO,
+} from '../models/pcr-test-results'
 
 import {
   AppointmentDBModel,
@@ -70,28 +70,28 @@ import {
   Filter,
   filteredAppointmentStatus,
   ResultTypes,
-  TestTypes
-} from "../models/appointment";
-import { PCRResultPDFContent } from "../templates/pcr-test-results";
-import { ResultAlreadySentException } from "../exceptions/result_already_sent";
-import { BulkOperationResponse, BulkOperationStatus } from "../types/bulk-operation.type";
-import { TestRunsService } from "../services/test-runs.service";
-import { TemperatureService } from "./temperature.service";
-import { LabService } from "./lab.service";
-import { mapTemperatureStatusToResultTypes } from "../models/temperature";
+  TestTypes,
+} from '../models/appointment'
+import {PCRResultPDFContent} from '../templates/pcr-test-results'
+import {ResultAlreadySentException} from '../exceptions/result_already_sent'
+import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
+import {TestRunsService} from '../services/test-runs.service'
+import {TemperatureService} from './temperature.service'
+import {LabService} from './lab.service'
+import {mapTemperatureStatusToResultTypes} from '../models/temperature'
 
-import { OrganizationService } from "../../../enterprise/src/services/organization-service";
+import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
-import { UserService } from "../../../common/src/service/user/user-service";
-import { AttestationService } from "../../../passport/src/services/attestation-service";
-import { PassportStatuses } from "../../../passport/src/models/passport";
-import { PulseOxygenService } from "./pulse-oxygen.service";
+import {UserService} from '../../../common/src/service/user/user-service'
+import {AttestationService} from '../../../passport/src/services/attestation-service'
+import {PassportStatuses} from '../../../passport/src/models/passport'
+import {PulseOxygenService} from './pulse-oxygen.service'
 
-import { BulkTestResultRequest, TestResultsMetaData } from "../models/test-results";
-import { AntibodyAllPDFContent } from "../templates/antibody-all";
-import { AntibodyIgmPDFContent } from "../templates/antibody-igm";
-import { normalizeAnalysis } from "../utils/analysis.helper";
-import { CouponEnum } from "../models/coupons";
+import {BulkTestResultRequest, TestResultsMetaData} from '../models/test-results'
+import {AntibodyAllPDFContent} from '../templates/antibody-all'
+import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
+import {normalizeAnalysis} from '../utils/analysis.helper'
+import {CouponEnum} from '../models/coupons'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
