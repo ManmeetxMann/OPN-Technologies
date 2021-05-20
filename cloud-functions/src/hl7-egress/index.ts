@@ -183,26 +183,26 @@ export class AppointmentDataToHL7ORM {
     return this.message
   }
 }
-const requestHandler: EventFunctionWithCallback = async (pubSubMessage, context, callback) => {
-  // tslint:disable: no-console
-  console.log(pubSubMessage)
-  const appointmentDataToHL7ORM = new AppointmentDataToHL7ORM(pubSubMessage as AppointmentData)
+
+const sendMessage = (pubSubMessage:AppointmentData) => {
+  const appointmentDataToHL7ORM = new AppointmentDataToHL7ORM(pubSubMessage)
   const message = appointmentDataToHL7ORM.get()
   // tslint:disable: no-console
-  console.log(message)
+  console.log('HL7 Ready to be Send')
+
   client.send(message)
+
+  // tslint:disable: no-console
+  console.log('Message Sent')
+}
+
+const requestHandler: EventFunctionWithCallback = async (pubSubMessage, context, callback) => {
+  sendMessage(pubSubMessage as AppointmentData)
   callback()
 }
 
 const httpTestHandler: HttpFunction = async (req, res) => {
-  // tslint:disable: no-console
-  //console.log(req.body)
-  const appointmentDataToHL7ORM = new AppointmentDataToHL7ORM(req.body)
-  const message = appointmentDataToHL7ORM.get()
-  // tslint:disable: no-console
-  //console.log(message)
-  client.send(message)
-  console.log('Message Sent')
+  sendMessage(req.body)
   res.send('No function to test!')
 }
 
