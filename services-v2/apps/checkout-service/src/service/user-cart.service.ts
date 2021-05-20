@@ -198,7 +198,7 @@ export class UserCardService {
   }
 
   async getCartItemById(cartItemId: string, userOrgId: string): Promise<CartItemResponse> {
-    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
+    const userCartItemRepository = new UserCartItemRepository(this.dataStore, "3ZnH44vhIbZXS4xeVJfJ0IUtqRf2_null")
     const cartItem = await userCartItemRepository.findWhereEqual('cartItemId', cartItemId)
     const cartItemExist = cartItem[0]
 
@@ -224,6 +224,7 @@ export class UserCardService {
       appointment: {
         id,
         ..._.omit(cartItemExist.appointment, 'slotId'),
+        time: new Date(cartItemExist.appointment.time).toISOString(),
       },
     }
   }
