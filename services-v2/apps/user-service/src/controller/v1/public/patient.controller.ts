@@ -37,7 +37,7 @@ import {UserEvent, UserFunctions} from '@opn-services/common/types/activity-logs
 
 import {Platform} from '@opn-common-v1/types/platform'
 import * as _ from 'lodash'
-import {ActionStatus} from '../../../../../opn-services/src/model/common'
+import {ActionStatus} from '@opn-services/opn/model/common'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
