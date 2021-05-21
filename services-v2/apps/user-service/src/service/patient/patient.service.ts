@@ -1,7 +1,9 @@
+/* eslint-disable max-lines */
 import {Injectable, NotFoundException} from '@nestjs/common'
 import {Page} from '@opn-services/common/dto'
 import {Brackets, SelectQueryBuilder} from 'typeorm'
 import {
+  DependantCreateAdminDto,
   DependantCreateDto,
   Migration,
   migrationActions,
@@ -53,7 +55,7 @@ import {PCRTestResultsRepository} from '@opn-services/user/repository/test-resul
 import {AppointmentsRepository} from '@opn-reservation-v1/respository/appointments-repository'
 import {AppointmentDBModel} from '@opn-reservation-v1/models/appointment'
 import {AppointmentActivityAction} from '@opn-reservation-v1/models/appointment'
-import {ActionStatus} from '../../../../opn-services/src/model/common'
+import {ActionStatus} from '@opn-services/common/model'
 
 @Injectable()
 export class PatientService {
@@ -376,7 +378,10 @@ export class PatientService {
    * @param delegateId parentId
    * @param data child user data
    */
-  async createDependant(delegateId: string, data: DependantCreateDto): Promise<Patient> {
+  async createDependant(
+    delegateId: string,
+    data: DependantCreateDto | DependantCreateAdminDto,
+  ): Promise<Patient> {
     const firebaseUser = await this.userRepository.add({
       firstName: data.firstName,
       lastName: data.lastName,
@@ -660,7 +665,6 @@ export class PatientService {
     }
 
     const updateDto = new PatientUpdateDto()
-    // eslint-disable-next-line max-lines
     updateDto.phoneNumber = data?.phone
     updateDto.healthCardType = data?.ohipCard
     updateDto.travelPassport = data?.travelID
