@@ -1,5 +1,5 @@
 // NestJs
-import {NestFactory} from '@nestjs/core'
+import {APP_GUARD, NestFactory} from '@nestjs/core'
 import {MiddlewareConsumer, Module, RequestMethod} from '@nestjs/common'
 import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 
@@ -11,7 +11,7 @@ if (!isJestTest) {
 }
 
 // Common
-import {AuthMiddleware, CorsMiddleware, CommonModule, createSwagger} from '@opn-services/common'
+import {CorsMiddleware, CommonModule, createSwagger, AuthGlobalGuard} from '@opn-services/common'
 import {AllExceptionsFilter} from '@opn-services/common/exception'
 import {OpnValidationPipe} from '@opn-services/common/pipes'
 
@@ -27,11 +27,20 @@ import {CartInternalController} from './controller/v1/internal/cart.controller'
 @Module({
   imports: [CommonModule, StripeService, AppoinmentService, UserService],
   controllers: [CartController, CartInternalController],
-  providers: [UserCardService, StripeService, AppoinmentService, UserService],
+  providers: [
+    UserCardService,
+    StripeService,
+    AppoinmentService,
+    UserService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGlobalGuard,
+    },
+  ],
 })
 class App {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(CorsMiddleware, AuthMiddleware).forRoutes({
+    consumer.apply(CorsMiddleware).forRoutes({
       path: '(.*)',
       method: RequestMethod.ALL,
     })

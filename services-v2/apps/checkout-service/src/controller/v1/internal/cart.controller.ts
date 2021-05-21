@@ -1,10 +1,10 @@
 import {Controller, Post, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiHeader, ApiTags} from '@nestjs/swagger'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
+import {AuthTypes, InternalAuthTypes} from '@opn-services/common/types/authorization'
 import {UserCardService} from '@opn-services/checkout/service'
-import {InternalAuthTypes} from '@opn-services/common/types/authorization'
 import {InternalGuard} from '@opn-services/common/guard/internal.guard'
-import {ApiCommonHeaders, InternalType} from '@opn-services/common/decorator'
+import {ApiCommonHeaders, InternalType, ApiAuthType} from '@opn-services/common/decorator'
 
 @ApiTags('Cart Internal')
 @ApiBearerAuth()
@@ -15,6 +15,7 @@ export class CartInternalController {
   constructor(private userCardService: UserCardService) {}
 
   @Post('sync-acuity-appointment-types')
+  @ApiAuthType(AuthTypes.Internal)
   async syncAcuityPrices(): Promise<ResponseWrapper<void>> {
     const result = await this.userCardService.syncAppointmentTypes()
 
@@ -29,6 +30,7 @@ export class CartInternalController {
   @ApiHeader({
     name: 'opn-scheduler-key',
   })
+  @ApiAuthType(AuthTypes.Internal)
   @InternalType(InternalAuthTypes.OpnSchedulerKey)
   async cleanUp(): Promise<ResponseWrapper<void>> {
     await this.userCardService.cleanupUserCart()
