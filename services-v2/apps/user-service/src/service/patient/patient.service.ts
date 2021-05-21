@@ -9,7 +9,6 @@ import {
   PatientCreateDto,
   PatientFilter,
   PatientUpdateDto,
-  PatientUpdatePubSubProfile,
 } from '../../dto/patient'
 import {HomeTestPatientDto} from '../../dto/home-patient'
 import {
@@ -37,6 +36,7 @@ import {FirebaseAuthService} from '@opn-services/common/services/firebase/fireba
 import {OpnConfigService} from '@opn-services/common/services'
 import {BadRequestException} from '@opn-services/common/exception'
 import {LogError} from '@opn-services/common/utils/logging'
+import {PubSubEvents, PubSubFunctions} from '@opn-services/common/types/activity-logs'
 
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import {OrganizationModel} from '@opn-enterprise-v1/repository/organization.repository'
@@ -51,6 +51,7 @@ import _ from 'lodash'
 import {ResourceNotFoundException} from '@opn-services/common/exception'
 import {PCRTestResultsRepository} from '@opn-services/user/repository/test-result.repository'
 import {AppointmentsRepository} from '@opn-reservation-v1/respository/appointments-repository'
+import {AppointmentDBModel} from '@opn-reservation-v1/models/appointment'
 import {AppointmentActivityAction} from '@opn-reservation-v1/models/appointment'
 import {ActionStatus} from '../../../../opn-services/src/model/common'
 
@@ -644,23 +645,23 @@ export class PatientService {
     await this.patientRepository.update({idPatient: patientId}, {registrationId: id})
   }
 
-  async updateProfileWithPubSub(
-    userId: string,
-    data: Partial<PatientUpdatePubSubProfile>,
-  ): Promise<void> {
-    const patient = await this.patientRepository.findOne({firebaseKey: userId})
+  async updateProfileWithPubSub(data: AppointmentDBModel): Promise<void> {
+    const {userId} = data
+    const patient = await this.patientRepository.findOne({
+      where: [{idPatient: userId}, {firebaseKey: userId}],
+    })
 
     if (!patient) {
       const errorMessage = `Profile with ${userId} not exists`
-      LogError('updateProfileWithPubSub', 'PubSubProfileUpdateFailed', {
+      LogError(PubSubFunctions.updateProfileWithPubSub, PubSubEvents.profileUpdateFailed, {
         errorMessage,
       })
       throw new BadRequestException(errorMessage)
     }
 
     const updateDto = new PatientUpdateDto()
-    updateDto.phoneNumber = data?.phone
     // eslint-disable-next-line max-lines
+    updateDto.phoneNumber = data?.phone
     updateDto.healthCardType = data?.ohipCard
     updateDto.travelPassport = data?.travelID
     updateDto.travelCountry = data?.travelIDIssuingCountry

@@ -397,25 +397,6 @@ export class PatientUpdatePubSubPayload extends PubSubPayload<PatientUpdatePubSu
   message: PatientUpdatePubSubMessage
 }
 
-export type PatientUpdatePubSubProfile = {
-  phone: string
-  gender: string
-  ohipCard: string
-  travelID: string
-  travelIDIssuingCountry: string
-  address: string
-  addressUnit: string
-  city: string
-  province: string
-  country: string
-  postalCode: string
-  readTermsAndConditions: boolean
-  receiveResultsViaEmail: boolean
-  agreeToConductFHHealthAssessment: boolean
-  receiveNotificationsFromGov: boolean
-  shareTestResultWithEmployer: boolean
-}
-
 export const CreatePatientDTOResponse = (
   patient: Omit<Patient, 'generatePublicId'> & {resultExitsForProvidedEmail?: boolean},
 ): PatientDTO => ({
