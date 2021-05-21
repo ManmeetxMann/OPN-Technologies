@@ -156,8 +156,8 @@ export class PatientController {
 
     const shortCode = await this.patientService.findShortCodeByPatientEmail(patientExists.email)
     await this.patientService.verifyCodeOrThrowError(shortCode.shortCode, code)
-    await this.patientService.connectOrganization(patientId, organizationId)
-    await this.patientService.updateProfile(patientId, {isEmailVerified: true})
+    await this.patientService.connectOrganization(Number(patientId), organizationId)
+    await this.patientService.updateProfile(Number(patientId), {isEmailVerified: true})
     return ResponseWrapper.actionSucceed()
   }
 

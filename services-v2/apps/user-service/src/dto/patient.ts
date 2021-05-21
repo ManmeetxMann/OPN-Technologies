@@ -30,7 +30,7 @@ export type AuthenticateDto = {
 }
 
 export class PatientCreateDto {
-  idPatient: string
+  idPatient: number
   firebaseKey: string // Firestore ID
   authUserId: string // Firestore authUserId
   patientPublicId: string
@@ -153,10 +153,9 @@ export class PatientCreateDto {
 }
 
 export class PatientCreateAdminDto {
-  idPatient: string
+  idPatient: number
   firebaseKey: string // Firestore ID
   authUserId: string // Firestore authUserId
-  patientPublicId: string
 
   @ApiProperty()
   @IsEmail()
@@ -304,7 +303,7 @@ class FCMRegistration {
 
 export class PatientUpdateDto extends PartialType(PatientCreateDto) {
   @IsOptional()
-  id?: string
+  id?: number
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -404,7 +403,7 @@ export const CreatePatientDTOResponse = (
   firstName: patient.firstName,
   lastName: patient.lastName,
   phoneNumber: patient.phoneNumber,
-  patientPublicId: patient.patientPublicId,
+  patientPublicId: `${process.env.PATIENT_ID_PREFIX}${String(patient.idPatient).padStart(6, '0')}`,
   dateOfBirth: patient.dateOfBirth,
   photoUrl: patient.photoUrl,
   lastAppointment: patient.lastAppointment,
@@ -415,7 +414,7 @@ export const CreatePatientDTOResponse = (
 export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   id: patient.idPatient,
   firebaseKey: patient?.firebaseKey,
-  patientPublicId: patient.patientPublicId,
+  patientPublicId: `${process.env.PATIENT_ID_PREFIX}${String(patient.idPatient).padStart(6, '0')}`,
   firstName: patient.firstName,
   lastName: patient.lastName,
   dateOfBirth: patient.dateOfBirth,

@@ -45,7 +45,7 @@ export class TestResultService {
     }
   }
 
-  validateUserData(data: PatientUpdateDto): PatientUpdateDto {
+  validateUserData(data: Omit<PatientUpdateDto, 'id'>): PatientUpdateDto {
     return {
       firstName: data.firstName,
       lastName: data.lastName,

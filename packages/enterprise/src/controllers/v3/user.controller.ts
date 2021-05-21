@@ -127,7 +127,6 @@ const create: Handler = async (req, res, next): Promise<void> => {
         photoUrl: user.photo,
         isEmailVerified: false,
         firebaseKey: user.id,
-        patientPublicId: '', // @TODO Remove this field after merging PR related to this field
         registrationId: user.registrationId || '',
         dateOfBirth: '',
         dependants: [],

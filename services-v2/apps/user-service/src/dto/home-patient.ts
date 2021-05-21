@@ -9,7 +9,7 @@ export type RapidHomeKitToUserAssoc = {
 }
 
 export class HomeTestPatientDto {
-  idPatient: string
+  idPatient: number
   firebaseKey: string // Firestore ID
   authUserId: string // Firestore authUserId
   phoneNumber: string

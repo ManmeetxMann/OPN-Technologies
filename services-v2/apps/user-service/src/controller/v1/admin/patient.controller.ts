@@ -50,7 +50,7 @@ export class AdminPatientController {
   @Get('/:patientId')
   @Roles([RequiredUserPermission.PatientsAdmin])
   async getById(@Param('patientId') id: string): Promise<ResponseWrapper<PatientUpdateDto>> {
-    const patient = await this.patientService.getProfilebyId(id)
+    const patient = await this.patientService.getProfilebyId(Number(id))
 
     if (!patient) {
       throw new ResourceNotFoundException('User with given id not found')
@@ -62,12 +62,12 @@ export class AdminPatientController {
   @Get('/:patientId/dependants')
   @Roles([RequiredUserPermission.PatientsAdmin])
   async getDependents(@Param('patientId') id: string): Promise<ResponseWrapper> {
-    const patientExists = await this.patientService.getProfilebyId(id)
+    const patientExists = await this.patientService.getProfilebyId(Number(id))
     if (!patientExists) {
       throw new ResourceNotFoundException('User with given id not found')
     }
 
-    const patient = await this.patientService.getDirectDependents(id)
+    const patient = await this.patientService.getDirectDependents(Number(id))
 
     const dependantProfiles = await this.patientService.getProfilesByIds(
       patient.dependants.map(dependant => dependant.dependantId),
@@ -106,13 +106,13 @@ export class AdminPatientController {
     @Param('patientId') id: string,
     @Body() patientUpdateDto: PatientUpdateDto,
   ): Promise<ResponseWrapper> {
-    const patientExists = await this.patientService.getbyId(id)
+    const patientExists = await this.patientService.getbyId(Number(id))
 
     if (!patientExists) {
       throw new ResourceNotFoundException('User with given id not found')
     }
 
-    const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
+    const updatedUser = await this.patientService.updateProfile(Number(id), patientUpdateDto)
 
     LogInfo(UserFunctions.update, UserEvent.updateProfile, {
       oldUser: patientExists,
@@ -129,13 +129,13 @@ export class AdminPatientController {
     @Param('patientId') delegateId: string,
     @Body() dependantBody: DependantCreateDto,
   ): Promise<ResponseWrapper<Patient>> {
-    const delegateExists = await this.patientService.getbyId(delegateId)
+    const delegateExists = await this.patientService.getbyId(Number(delegateId))
 
     if (!delegateExists) {
       throw new ResourceNotFoundException('Delegate with given id not found')
     }
 
-    const dependant = await this.patientService.createDependant(delegateId, dependantBody)
+    const dependant = await this.patientService.createDependant(Number(delegateId), dependantBody)
 
     return ResponseWrapper.actionSucceed(dependant)
   }
