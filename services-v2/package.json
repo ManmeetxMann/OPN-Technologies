@@ -12,18 +12,19 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/opn-services/main",
+    "connect-sql-proxy": "cloud_sql_proxy -instances=opn-platform-local:northamerica-northeast1:opn-platform-db-server-local:sql-inst=tcp:3306",
     "lint": "eslint --config ./.eslintrc.js \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest --config jest.json --verbose --forceExit",
     "test:local": "FIRESTORE_EMULATOR_HOST=localhost:8080 FIREBASE_FIRESTORE_EMULATOR_ADDRESS=localhost:8080 jest",
     "test:watch": "jest --config jest.json --watch",
     "test:cov": "jest --config jest.json --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "build:all": "npm run build:user-service && npm run build:cart-service",
+    "build:all": "npm run build:user-service && npm run build:checkout-service",
     "build:user-service": "SERVICE=user-service npm run build:service",
-    "build:cart-service": "SERVICE=cart-service npm run build:service",
+    "build:checkout-service": "SERVICE=checkout-service npm run build:service",
     "build:service": "nest build $SERVICE && cp ./package.json ./dist/apps/$SERVICE/ && cp ./.env ./dist/apps/$SERVICE/ && cp ./.env ./dist/",
     "deploy:user-service": "gcloud app deploy ./dist/apps/user-service",
-    "deploy:cart-service": "gcloud app deploy ./dist/apps/cart-service",
+    "deploy:checkout-service": "gcloud app deploy ./dist/apps/checkout-service",
     "migration:migrate-users-to-mysql": "ts-node --transpile-only ./node_modules/typeorm/cli.js migration:run"
   },
   "dependencies": {
@@ -47,6 +48,7 @@
     "dotenv": "^8.2.0",
     "fastify-swagger": "^4.6.0",
     "firebase-admin": "^9.6.0",
+    "joi": "^17.4.0",
     "lodash": "^4.17.21",
     "mysql": "^2.18.1",
     "nanoid": "^3.1.12",
@@ -81,30 +83,5 @@
     "ts-node": "9.0.0",
     "tsconfig-paths": "^3.9.0",
     "typescript": "^3.7.4"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": ".",
-    "testRegex": ".spec.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "coverageDirectory": "./coverage",
-    "testEnvironment": "node",
-    "roots": [
-      "<rootDir>/apps/",
-      "<rootDir>/libs/"
-    ],
-    "moduleNameMapper": {
-      "@opn-services/common/(.*)": "<rootDir>/libs/common/src/$1",
-      "@opn-services/common": "<rootDir>/libs/common/src",
-      "@opn-common-v1/(.*)": "<rootDir>/../packages/common/src/$1",
-      "@opn-common-v1": "<rootDir>/../packages/common/src",
-      "^@opn-enterprise-v1/(.*)$": "<rootDir>../packages/enterprise/src/$1"
-    }
   }
 }

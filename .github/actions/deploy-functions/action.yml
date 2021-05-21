@@ -4,6 +4,10 @@ inputs:
     description: 'Function Name'
     required: true
     default: ""
+  secret_file_name:
+    description: 'Secret File Nmae'
+    required: true
+    default: ""
 
 runs:
   using: 'composite'
@@ -24,7 +28,7 @@ runs:
       PREPROD_TAG_REF=refs/tags/preprod-
       PROD_TAG_REF=refs/tags/prod-
       echo "::group::Define Deployment Variables"
-      if [[ $GITHUB_REF == 'refs/heads/feature/sms_notification' ]]; then
+      if [[ $GITHUB_REF == 'refs/heads/feature/hl7-egress' ]]; then
         echo "Deploy to DEV"
         echo "PROJECT_ID=opn-platform-dev" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=dev_service_account" >> $GITHUB_ENV
@@ -67,9 +71,20 @@ runs:
       gcloud auth activate-service-account --key-file=./service-account.json --project=${{ env.PROJECT_ID }}
       rm ./service-account.json
       echo "::endgroup::"
-      
+      echo "::group::Add Application Environment Variables"
+      cd ./cloud-functions/src/${{ inputs.function_name }}
+      echo "Writing Environment Variables ${{ inputs.secret_file_name }} to: ./cloud-functions/src/.env"
+      gcloud secrets versions access latest --secret=${{ inputs.secret_file_name }} > ./.env
+      echo "::endgroup::"
       echo "::group::Deploy to GAE"
-      cd ./cloud-functions/sms-notification
-      gcloud functions deploy ${{ inputs.function_name }} --entry-point sendSMS --project ${{ env.PROJECT_ID }}
+      npm install
+      npm run build
+      gcloud functions deploy ${{ inputs.function_name }} \
+        --entry-point=requestHandler \
+        --source=./dist \
+        --runtime=nodejs12 \
+        --memory=128MB \
+        --trigger-topic=pcr-test-topic \
+        --env-vars-file=./.env
       echo "::endgroup::"
     shell: bash

@@ -1,0 +1,35 @@
+{
+  "name": "opn-cloud-functions",
+  "engines": {
+    "node": "=12.20.1"
+  },
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "watch": {
+    "start": "dist/*.js"
+  },
+  "scripts": {
+    "start": "node node_modules/@google-cloud/functions-framework --source dist/index.js --target=httpTestHandler",
+    "watch": "npx tsc-watch --onFirstSuccess 'npm-watch start'",
+    "lint": "eslint '*.ts' --fix",
+    "build": "sh ./build.sh"
+  },
+  "devDependencies": {
+    "@google-cloud/functions-framework": "^1.7.1",
+    "dotenv": "^8.2.0",
+    "npm-watch": "^0.7.0",
+    "prettier": "^2.2.1",
+    "tsc-watch": "^4.2.9",
+    "eslint": "^7.21.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "typescript": "^4.2.3"
+  },
+  "dependencies": {
+    "simple-hl7": "^3.2.2",
+    "@google-cloud/logging-bunyan": "^3.0.2",
+    "bunyan": "^1.8.15",
+    "dayjs": "^1.10.4"
+  }
+}

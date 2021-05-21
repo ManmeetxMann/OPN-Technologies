@@ -966,6 +966,8 @@ components:
               type: string
             dateOfResult:
               type: string
+            couponCode:
+              type: string
             resultMetaData:
               type: object
               additionalProperties: false
@@ -3213,6 +3215,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/TestResultDetailResponse'
 
+  /reservation/admin/api/v1/test-results/{testResultId}/download:
+    get:
+      description: Download test Results PDF for Admin
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: path
+          name: testResultId
+          schema:
+            type: string
+          required: true
+      responses:
+         '200':
+           description: Successfully Return
+           content:
+             application/pdf:
+               schema:
+                  type: string
+                  format: binary
+
   /reservation/api/v1/test-results/{id}/download:
     get:
       description: Download test Results PDF for Regular User
@@ -3685,7 +3709,12 @@ paths:
           name: organizationid
           schema:
             type: string
-          required: true
+          required: false
+        - in: query
+          name: testType
+          schema:
+            type: string
+          required: false
       responses:
         '200':
           description: Successfully Return
@@ -3707,6 +3736,10 @@ paths:
                           enum:
                             - PCR
                         name:
+                          type: string
+                        firstName:
+                          type: string
+                        lastName:
                           type: string
                         testDateTime:
                           type: string
@@ -4153,6 +4186,24 @@ paths:
       description: Triggers push notification reminder before appointment
       tags:
         - Cloud Scheduler triggered
+      responses:
+        '200':
+          description: Success
+
+
+  /reservation/admin/api/v1/test-results/{testResultId}/resend:
+    post:
+      description: resend result
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: path
+          name: testResultId
+          schema:
+            type: string
+          required: true
       responses:
         '200':
           description: Success

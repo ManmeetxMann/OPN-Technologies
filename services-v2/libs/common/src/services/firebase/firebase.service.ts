@@ -1,22 +1,22 @@
 // NestJs
 import {ConfigService} from '@nestjs/config'
+import {OpnConfigService} from '../../services'
 
 // Libs
 import admin, {ServiceAccount} from 'firebase-admin'
 import {FieldValue} from '@google-cloud/firestore'
-import {FirestoreSimple} from '@firestore-simple/admin'
 
 // Services
 // import {Config} from './config'
 
-const configService = new ConfigService()
+const baseConfigService = new ConfigService()
+const configService = new OpnConfigService(baseConfigService)
 
 /**
  * Singleton
  */
 class FirebaseManager {
   // Properties
-  private readonly firestore: admin.firestore.Firestore
   private readonly admin = admin
   private static __instance: FirebaseManager = null
 
@@ -46,20 +46,4 @@ class FirebaseManager {
   }
 }
 
-class DataStore {
-  // Static Constants Properties
-  private static readonly rootPath = '/'
-
-  // Properties
-  readonly firestoreORM: FirestoreSimple
-  readonly firestoreAdmin = FirebaseManager.getInstance().getAdmin()
-  private readonly firestore: admin.firestore.Firestore
-
-  constructor() {
-    // Initialize Firestore
-    this.firestore = this.firestoreAdmin.firestore()
-    this.firestoreORM = new FirestoreSimple(this.firestore)
-  }
-}
-
-export {FirebaseManager, DataStore}
+export {FirebaseManager}

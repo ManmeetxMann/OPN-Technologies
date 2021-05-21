@@ -8,8 +8,8 @@ import fetch from 'node-fetch'
 import moment from 'moment-timezone'
 
 const ACUITY_ENV_NON_PROD = false
-const START_DATE = '2021-02-27' //Starting from OCT 1st
-const END_DATE = '2021-05-01' //new Date()
+const START_DATE = '2021-06-01' //Starting from OCT 1st
+const END_DATE = '2021-12-02' //new Date()
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
@@ -20,7 +20,7 @@ const conn = mysql.createConnection({
   host: 'localhost',
   user: 'root',
   password: 'root',
-  database: 'opn_platform',
+  database: 'finance',
   port: 8889,
 })
 const acuityFormFieldIdsNonProd = {
@@ -79,6 +79,8 @@ const orgToCost = {
   '89BrZwateBqK4PvcBIP0': {default: '197.75'},
   Rtu6h3T93nnv2dn6M2pS: {default: '185.32'},
   jRHDPGGyz890Gp9tVZfV: {default: '175.15'},
+  WpkrTfdrNAo9hGo4j0NL: {default: '175.15'},
+  atLSTCs1EQyDeEfFUydo: {default: '0'},
 }
 
 const acuityFormFieldIds = ACUITY_ENV_NON_PROD ? acuityFormFieldIdsNonProd : acuityFormFieldIdsProd
@@ -122,6 +124,7 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
 }
 
 async function fetchAcuity(): Promise<Result[]> {
+  //const calendars = await getCalendars()
   const results: Result[] = []
 
   const filters = {
@@ -130,18 +133,33 @@ async function fetchAcuity(): Promise<Result[]> {
   }
 
   while (moment(END_DATE).diff(moment(filters.maxDate).format('YYYY-MM-DD')) > 0) {
-    const acuityAppointments = await getAppointments(filters)
-    console.info(
-      `Total Number of Appointments for ${filters.minDate} are ${acuityAppointments.length}`,
-    )
-    await Promise.all(
-      acuityAppointments.map(async (acuityAppointment) => {
-        const promises = []
-        promises.push(createAppointment(acuityAppointment))
-        const result = await promiseAllSettled(promises)
-        results.push(...result)
-      }),
-    )
+    /*let appointments = []
+    await new Promise((resolve, reject) => {
+      if(calendars.length === 0){
+        resolve(`No calendars`)
+      }
+      let processed = 0
+      calendars.forEach(async function(calendar){ 
+        const appointment = await getAppointments({...filters,calendarID:calendar.id})
+        if(appointment.length!==0){
+          appointments = appointments.concat(appointment)
+        }
+        processed++
+        if (processed === calendars.length) {
+          resolve(`Get Appointments`)
+        }
+      })
+    })
+    */
+    const appointments = await getAppointments(filters)
+    console.info(`Total Number of Appointments for ${filters.minDate} are ${appointments.length}`)
+
+    const promises = appointments.map(async (acuityAppointment) => {
+      return createAppointment(acuityAppointment)
+    })
+    const result = await promiseAllSettled(promises)
+    results.push(...result)
+
     const nextDay = moment(filters.maxDate).add(1, 'd').format('YYYY-MM-DD')
     filters.minDate = nextDay
     filters.maxDate = nextDay
@@ -151,6 +169,7 @@ async function fetchAcuity(): Promise<Result[]> {
 }
 
 async function createAppointment(acuityAppointment) {
+  //console.log(acuityAppointment)
   let organizationId = null
   let costForOrg = 0
   try {
@@ -158,7 +177,7 @@ async function createAppointment(acuityAppointment) {
       findByIdForms(acuityAppointment.forms, acuityBarCodeFormId).values,
       acuityFormFieldIds.organizationId,
     )
-    if (organizationIdField) {
+    if (!!organizationIdField) {
       //ORG ID Field is missing for some appointments
       organizationId = organizationIdField.value
       if (organizationId) {
@@ -167,9 +186,7 @@ async function createAppointment(acuityAppointment) {
             orgToCost[organizationId][acuityAppointment.calendarID] ??
             orgToCost[organizationId]['default']
         } else {
-          console.info(
-            `No Cost for organizationId ${organizationId} - AppointmentID: ${acuityAppointment.id}`,
-          )
+          //console.info(`No Cost for organizationId ${organizationId} - AppointmentID: ${acuityAppointment.id}`)
         }
       }
     }
@@ -178,14 +195,23 @@ async function createAppointment(acuityAppointment) {
       `AppointmentID: ${acuityAppointment.id} InvalidORGfor ${acuityAppointment.id}: ${e.message}`,
     )
   }
+  if (acuityAppointment.canceled) {
+    console.log(`===========AppointmentID: ${acuityAppointment.id} is cancelled`)
+  }
 
   try {
-    const sql =
-      'INSERT INTO appointments_finance (acuityId, price, priceSold, paid, amountPaid, certificate, organizationId, date,costForOrg) VALUES ?'
+    const sql = `INSERT INTO appointments (acuityId, appointmentTypeID, calendarID, 
+      appointmentType, calendar,  price, priceSold, paid, amountPaid, packageCode, organizationId, 
+      date, costForOrg, firstName, lastName, email,datetimeCreated, canceled,phone) VALUES ?`
     const data = []
     const date = moment(acuityAppointment.datetime).format('YYYY-MM-DD')
+    const datetimeCreated = moment(acuityAppointment.datetimeCreated).format('YYYY-MM-DD')
     data.push([
       acuityAppointment.id,
+      acuityAppointment.appointmentTypeID,
+      acuityAppointment.calendarID,
+      acuityAppointment.type,
+      acuityAppointment.calendar,
       acuityAppointment.price,
       acuityAppointment.priceSold,
       acuityAppointment.paid,
@@ -194,13 +220,24 @@ async function createAppointment(acuityAppointment) {
       organizationId,
       date,
       costForOrg,
+      acuityAppointment.firstName,
+      acuityAppointment.lastName,
+      acuityAppointment.email,
+      datetimeCreated,
+      acuityAppointment.canceled,
+      acuityAppointment.phone,
     ])
-    conn.query(sql, [data], function (err) {
-      if (err) {
-        return Promise.reject(err.message)
-      }
+    return new Promise((resolve, reject) => {
+      conn
+        .query(sql, [data])
+        .on('error', (err) => {
+          console.log(`${acuityAppointment.id} has error ${err.sqlMessage}`)
+          reject(`${acuityAppointment.id} has error ${err.sqlMessage}`)
+        })
+        .on('end', () => {
+          resolve('Created')
+        })
     })
-    return Promise.resolve('Created')
   } catch (error) {
     return Promise.reject(error.message)
   }
@@ -238,6 +275,15 @@ let totalCount = 0
 
 main().then(() => console.log('Script Complete \n'))
 
-//SELECT certificate FROM `appointments_finance` WHERE organizationId is null and certificate is not null GROUP By certificate
+//Get All Packages with no payment and org cost is also 0
+//SELECT certificate FROM `appointments` WHERE (organizationId is null or organizationId="") AND certificate!="" AND amountPaid=0 AND costForOrg=0 GROUP BY certificate
 
-//SELECT SUM(amountPaid), date FROM `appointments_finance` GROUP BY date
+/*
+//STEPS
+1. Get all appointments using appointments-finance. This add Price for ORGs
+2. Add finalPrice using update-final-cost
+3. Add ORG cost to finalPrice UPDATE appointments SET finalPrice=amountPaid, source='paidByUser' WHERE amountPaid>0
+4. Add Regular cost to final Price UPDATE appointments SET finalPrice=costForOrg, source='paidByOrg' WHERE costForOrg>0
+
+SELECT * FROM `appointments` WHERE DATE(date) < '2021-05-01' AND finalPrice=0
+*/

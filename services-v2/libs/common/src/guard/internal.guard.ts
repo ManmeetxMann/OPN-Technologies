@@ -1,11 +1,11 @@
 import {CanActivate, ExecutionContext, Injectable} from '@nestjs/common'
 import {Reflector} from '@nestjs/core'
 import {InternalAuthTypes} from '@opn-services/common/types/authorization'
-import {ConfigService} from '@nestjs/config'
+import {OpnConfigService} from '@opn-services/common/services'
 
 @Injectable()
 export class InternalGuard implements CanActivate {
-  constructor(private reflector: Reflector, private configService: ConfigService) {}
+  constructor(private reflector: Reflector, private configService: OpnConfigService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const authType: {internalAuthType: InternalAuthTypes} = this.reflector.get(

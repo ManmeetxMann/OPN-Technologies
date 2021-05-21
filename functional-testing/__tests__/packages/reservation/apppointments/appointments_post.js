@@ -32,7 +32,7 @@ describe('post:appointments', () => {
           .post(
               url,
               {
-                'slotId': 'XXXX',
+                'slotId': '',
                 'firstName': 'HSG',
                 'lastName': 'Feb 1 11PM',
                 'email': 'harpreet@stayopn.com',
@@ -43,8 +43,8 @@ describe('post:appointments', () => {
                 'dateOfBirth': '2021-01-27',
                 'address': 'string',
                 'addressUnit': 'string',
-                'addressForTesting': 'string',
-                'additionalAddressNotes': 'string',
+                'gender': 'Male',
+                'postalCode': 'string',
                 'couponCode': 'string',
                 'shareTestResultWithEmployer': true,
                 'agreeToConductFHHealthAssessment': true,

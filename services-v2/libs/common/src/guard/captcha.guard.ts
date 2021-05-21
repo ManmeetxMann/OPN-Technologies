@@ -1,6 +1,6 @@
 import {Injectable, CanActivate, ExecutionContext} from '@nestjs/common'
 import {BadRequestException, ForbiddenException} from '../exception'
-import {CaptchaService} from '../services/auth/captcha.service'
+import {CaptchaService} from '../services/google/captcha.service'
 
 @Injectable()
 export class CaptchaGuard implements CanActivate {

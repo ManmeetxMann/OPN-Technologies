@@ -28,4 +28,8 @@ export class PulseOxygenRepository extends DataModel<PulseOxygenDBModel> {
       .where('organizationId', '==', organizationId)
       .fetch()
   }
+
+  async getAllByUser(userId: string): Promise<PulseOxygenDBModel[]> {
+    return this.getQueryFindWhereEqual('userId', userId).fetch()
+  }
 }

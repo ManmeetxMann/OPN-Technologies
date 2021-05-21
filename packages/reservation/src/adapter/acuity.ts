@@ -6,10 +6,10 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 
 import {AppointmentAcuityResponse, DeadlineLabel, Gender} from '../models/appointment'
 import {Certificate} from '../models/packages'
-import {AcuityCouponCodeResponse} from '../models/coupons'
+import {AcuityCouponCodeResponse, CouponCheckResponse} from '../models/coupons'
 import {AppointmentTypes} from '../models/appointment-types'
 import {Calendar} from '../models/calendar'
-import {AcuityAvailableSlots} from '../models/acuity'
+import {AcuityAvailableSlots, AcuityErrors, AcuityErrorValues} from '../models/acuity'
 import {getDateDefaultHumanReadable} from '../utils/datetime.helper'
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
@@ -29,6 +29,9 @@ abstract class AcuityAdapter {
     organizationId: Config.get('ACUITY_FIELD_ORGANIZATION_ID'),
     address: Config.get('ACUITY_FIELD_ADDRESS'),
     addressUnit: Config.get('ACUITY_FIELD_ADDRESS_UNIT'),
+    city: Config.get('ACUITY_FIELD_CITY'),
+    province: Config.get('ACUITY_FIELD_PROVINCE'),
+    country: Config.get('ACUITY_FIELD_COUNTRY'),
     gender: Config.get('ACUITY_FIELD_GENDER'),
     postalCode: Config.get('ACUITY_FIELD_POSTAL_CODE'),
     shareTestResultWithEmployer: Config.get('ACUITY_FIELD_SHARE_TEST_RESULT_WITH_EMPLOYER'),
@@ -38,6 +41,11 @@ abstract class AcuityAdapter {
       'ACUITY_FIELD_AGREE_TO_CONDUCT_FH_HEALTH_ACCESSMENT',
     ),
     receiveNotificationsFromGov: Config.get('ACUITY_FIELD_RECEIVE_NOTIFICATIONS_FROM_GOV'),
+    agreeCancellationRefund: Config.get('ACUITY_FIELD_AGREE_CANCELLATION_REFUND'),
+    hadCovidConfirmedOrSymptoms: Config.get('ACUITY_FIELD_HAD_COVID_CONFIRMED'),
+    hadCovidConfirmedOrSymptomsDate: Config.get('ACUITY_FIELD_HAD_COVID_CONFIRMED_DATE'),
+    hadCovidExposer: Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE_DATE'),
+    hadCovidExposerDate: Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE'),
   }
 
   private labelsIdMapping = {
@@ -225,6 +233,33 @@ abstract class AcuityAdapter {
     return result
   }
 
+  protected async checkCouponCode(
+    certificate: string,
+    appointmentTypeID: number,
+  ): Promise<CouponCheckResponse> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = encodeURI(
+      APIURL +
+        `/api/v1/certificates/check?certificate=${certificate}&appointmentTypeID=${appointmentTypeID}`,
+    )
+    LogInfo(`AcuityAdapterCheckCouponCode`, 'Request', {})
+    const res = await fetch(apiUrl, {
+      method: 'get',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      this.handleErrors(result.error)
+      throw new BadRequestException(result.message)
+    }
+    return result
+  }
+
   protected async createCouponCodeOnAcuityService(
     couponID: number,
     emailToLockCoupon: string,
@@ -299,22 +334,33 @@ abstract class AcuityAdapter {
         acuityStatusCode: result.status_code,
         errorMessage: result.message,
       })
-      if (result.error === 'not_available') {
-        throw new BadRequestException(
-          `${getDateDefaultHumanReadable(datetime)} is not available for appointments`,
-        )
-      } else if (result.error === 'certificate_uses') {
-        throw new BadRequestException(
-          `You organization has no more appointment credits left on account. Please contact your account manager.`,
-        )
-      }
-      throw new BadRequestException(result.message)
+      this.handleErrors(result.error)
+      throw new BadRequestException(result)
     }
     LogInfo(`AcuityAdapterCreateAppointment`, 'Success', {
       email,
       acuityID: result.id,
     })
     return this.customFieldsToAppoinment(result)
+  }
+
+  handleErrors(error: AcuityErrors, datetime?: Date): void {
+    switch (error) {
+      case 'not_available':
+        throw new BadRequestException(
+          `${datetime ? getDateDefaultHumanReadable(datetime) : 'Current time'} ${
+            AcuityErrorValues.not_available
+          }`,
+        )
+      case 'certificate_uses':
+        throw new BadRequestException(AcuityErrorValues.certificate_uses)
+      case 'invalid_certificate':
+        throw new BadRequestException(AcuityErrorValues.invalid_certificate)
+      case 'expired_certificate':
+        throw new BadRequestException(AcuityErrorValues.expired_certificate)
+      case 'invalid_certificate_type':
+        throw new BadRequestException(AcuityErrorValues.invalid_certificate_type)
+    }
   }
 
   protected async getAvailabilityDatesList(
@@ -425,7 +471,7 @@ abstract class AcuityAdapter {
     appointment: AppointmentAcuityResponse,
   ): AppointmentAcuityResponse {
     //appointment.dateOfBirth = ''//Required
-    appointment.organizationId = null
+    appointment.organizationId = Config.get('PUBLIC_ORG_ID')
     appointment.registeredNursePractitioner = ''
     appointment.address = ''
     appointment.addressUnit = ''
@@ -440,6 +486,9 @@ abstract class AcuityAdapter {
     appointment.travelID = ''
     appointment.gender = null
     appointment.postalCode = ''
+    appointment.city = null
+    appointment.province = null
+    appointment.country = null
 
     if (Array.isArray(appointment.forms)) {
       appointment.forms.forEach((form) => {
@@ -454,7 +503,7 @@ abstract class AcuityAdapter {
             appointment.barCode = field.value
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_ORGANIZATION_ID'))) {
-            appointment.organizationId = field.value
+            appointment.organizationId = field.value ?? Config.get('PUBLIC_ORG_ID')
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS'))) {
             appointment.address = field.value
@@ -499,6 +548,15 @@ abstract class AcuityAdapter {
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_POSTAL_CODE'))) {
             appointment.postalCode = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_CITY'))) {
+            appointment.city = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_PROVINCE'))) {
+            appointment.province = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_COUNTRY'))) {
+            appointment.country = field.value
           }
         })
       })

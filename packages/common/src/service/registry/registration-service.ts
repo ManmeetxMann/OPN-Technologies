@@ -1,3 +1,4 @@
+import {LogInfo} from '../../utils/logging-setup'
 import DataStore from '../../data/datastore'
 import {Registration, RegistrationModel} from '../../data/registration'
 
@@ -32,6 +33,30 @@ export class RegistrationService {
     fieldValue: unknown,
   ): Promise<Registration> {
     return this.repository.updateProperty(registrationId, fieldName, fieldValue)
+  }
+
+  async upsert(
+    registrationId: string,
+    registration: Omit<Registration, 'id'>,
+  ): Promise<Registration> {
+    const {platform, osVersion, pushToken} = registration
+    const registrationExists = pushToken && (await this.findOne(registrationId))
+
+    LogInfo('upsert', 'UpsertPushToken', {
+      registrationExists,
+      registration,
+    })
+
+    if (registrationExists) {
+      return this.updateProperty(registrationId, 'pushToken', pushToken)
+    } else {
+      return this.create({
+        platform,
+        osVersion,
+        pushToken: pushToken ?? null,
+        userIds: [],
+      })
+    }
   }
 
   async linkUser(registrationId: string, userId: string): Promise<void> {

@@ -25,7 +25,7 @@ import {AttestationService} from '../../../passport/src/services/attestation-ser
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {TemperatureService} from '../../../reservation/src/services/temperature.service'
 
-type AugmentedUser = User & {group: OrganizationGroup; status: PassportStatus}
+type AugmentedUser = Omit<User, 'status'> & {group: OrganizationGroup; status: PassportStatus}
 type Lookups = {
   usersLookup: Record<string, AugmentedUser> // users by id (with group and status)
   locationsLookup: Record<string, OrganizationLocation> // lookups by id

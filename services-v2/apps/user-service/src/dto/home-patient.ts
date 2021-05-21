@@ -12,6 +12,7 @@ export class HomeTestPatientDto {
   firebaseKey: string // Firestore ID
   authUserId: string // Firestore authUserId
   phoneNumber: string
+  organizationId?: string
 
   @ApiProperty()
   @IsString()

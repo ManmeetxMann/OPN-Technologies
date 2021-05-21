@@ -1,4 +1,4 @@
-name: 'Deploy to Google App Engine'
+name: 'Run integration tests'
 inputs:
   node_version:
     description: 'Node version'
@@ -15,7 +15,7 @@ runs:
   using: 'composite'
   steps:
   
-  - name: Deploy Modules
+  - name: Deploy Modules For Integration test
     run: |
       echo "Service Name: ${{ inputs.service_name }}"
       echo "::group::Install npm modules"
@@ -26,7 +26,13 @@ runs:
       nvm use ${{ inputs.node_version }}
       npm install
       npm run install-all
-      npm run lint-all
+      pwd
+      ls -al
+      npm run lint-fix-all
+
+      cd services-v2
+      npm install
+      npm run lint
       echo "::endgroup::"
     shell: bash
 
@@ -42,10 +48,29 @@ runs:
       echo "::group::Add Application Environment Variables"
       echo "Writing Environment Variables to: .env"
       gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./packages/common/.env
+      gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./services-v2/.env
       gcloud secrets versions access latest --secret=SERVICE_ACCOUNT > ./packages/common/service_account.json
       export GOOGLE_APPLICATION_CREDENTIALS=../../packages/common/service_account.json
       echo "::endgroup::"
-      echo "::group::Test"
+
+      echo "::group::Test V1"
       npm run test-all
       echo "::endgroup::"
+
+      echo "::group::Test V2"
+      cd services-v2
+      # Copy .env to dist folder
+      npm run build:all
+      # Activate service account with cloud SQL client role
+      gcloud secrets versions access latest --secret=SERVICE_ACCOUNT > ./service_account.json
+      export GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/service_account.json
+      # Install SQL proxy
+      wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+      chmod +x cloud_sql_proxy
+      # TODO change to test all, after user tests update
+      npm run test checkout-service
+      ./cloud_sql_proxy -instances=opn-platform-infra-dev:northamerica-northeast1:opn-platform-db-server-infra-dev:sql-inst=tcp:3306 \
+       & npm run test cors
+      echo "::endgroup::"
+
     shell: bash

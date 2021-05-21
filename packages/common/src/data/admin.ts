@@ -35,6 +35,7 @@ export type AdminProfile = {
   isRapidResultSenderAdmin: boolean
   isRapidResultOrgAdmin: boolean
   isOrganizeAdmin: boolean
+  isPatientsAdmin: boolean
 }
 
 export type AdminApproval = {
