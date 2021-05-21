@@ -8,13 +8,7 @@ import {Config} from '@opn-common-v1/utils/config'
 Config.useRootEnvFile()
 
 // Common
-import {
-  CorsMiddleware,
-  CommonModule,
-  createSwagger,
-  AuthGlobalGuard,
-  SwaggerMiddleware,
-} from '@opn-services/common'
+import {CorsMiddleware, CommonModule, createSwagger, AuthGlobalGuard} from '@opn-services/common'
 import {AllExceptionsFilter} from '@opn-services/common/exception'
 import {OpnValidationPipe} from '@opn-services/common/pipes'
 
@@ -44,7 +38,7 @@ import {CartInternalController} from './controller/v1/internal/cart.controller'
 })
 class App {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(CorsMiddleware, SwaggerMiddleware).forRoutes({
+    consumer.apply(CorsMiddleware).forRoutes({
       path: '(.*)',
       method: RequestMethod.ALL,
     })

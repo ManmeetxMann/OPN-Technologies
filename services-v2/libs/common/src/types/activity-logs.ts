@@ -50,6 +50,17 @@ export enum StripeEvent {
   paymentIntentsError = 'paymentIntentsError',
 }
 
+export enum SwaggerFunctions {
+  createSwagger = 'createSwagger',
+}
+
+export enum SwaggerEvents {
+  attemptWithSwaggerDisabled = 'attemptWithSwaggerDisabled',
+  noAuthCredentials = 'noAuthCredentials',
+  invalidAuthCredentials = 'invalidAuthCredentials',
+  shortAuthCredentials = 'shortAuthCredentials',
+}
+
 export enum ValidatorFunctions {
   validate = 'validate',
 }
