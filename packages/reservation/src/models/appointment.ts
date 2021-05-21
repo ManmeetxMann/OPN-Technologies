@@ -449,6 +449,7 @@ export type ActivityTracking = {
 export enum AppointmentActivityAction {
   RegenerateBarcode = 'regenerateBarcode',
   UpdateFromAcuity = 'updateFromAcuity',
+  MigrationFromUnconfirmed = 'migrationFromUnconfirmed',
 }
 
 export type UpdateAppointmentActionParams = {

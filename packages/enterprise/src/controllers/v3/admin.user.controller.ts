@@ -107,6 +107,7 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
     const user = await userService.create({
       ...profile,
       organizationId,
+      isEmailVerified: false,
     })
 
     await userSyncService.create({
@@ -115,6 +116,7 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
       phoneNumber: (user.phone && user.phone.number && `${user.phone.number}`) || '',
       photoUrl: user.photo,
       firebaseKey: user.id,
+      isEmailVerified: false,
       patientPublicId: '', // @TODO Remove this field after merging PR related to this field
       registrationId: user.registrationId || '',
       dateOfBirth: '',

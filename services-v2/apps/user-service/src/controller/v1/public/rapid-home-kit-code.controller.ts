@@ -1,6 +1,6 @@
 import {Controller, Get, Param, UseGuards} from '@nestjs/common'
 import {ApiHeader, ApiTags} from '@nestjs/swagger'
-import {ConfigService} from '@nestjs/config'
+import {OpnConfigService} from '@opn-services/common/services'
 
 import {CaptchaGuard} from '@opn-services/common/guard'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
@@ -20,7 +20,7 @@ export class RapidHomeKitCodeController {
 
   constructor(
     private homeKitCodeService: RapidHomeKitCodeService,
-    private configService: ConfigService,
+    private configService: OpnConfigService,
   ) {
     this.encryptionService = new EncryptionService(
       this.configService.get('RAPID_HOME_KIT_CODE_ENCRYPTION_KEY'),

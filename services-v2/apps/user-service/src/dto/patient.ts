@@ -1,21 +1,32 @@
 import {ApiProperty, ApiPropertyOptional, OmitType, PartialType} from '@nestjs/swagger'
 import {PageableRequestFilter, PubSubMessage, PubSubPayload} from '@opn-services/common/dto'
 import {
+  IsArray,
   IsBoolean,
   IsDefined,
   IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsNumberString,
   IsOptional,
   IsString,
   Length,
+  ValidateNested,
 } from 'class-validator'
 import {Organization} from '../model/organization/organization.entity'
 import {Patient} from '../model/patient/patient.entity'
+import {Type} from 'class-transformer'
 
 export type PatientDTO = Partial<PatientCreateDto> & {
   lastAppointment: Date
   trainingCompletedOn: Date
+  resultExitsForProvidedEmail?: boolean
+}
+
+export type AuthenticateDto = {
+  patientId: string
+  organizationId: string
+  code: string
 }
 
 export class PatientCreateDto {
@@ -30,6 +41,10 @@ export class PatientCreateDto {
   @IsOptional()
   @IsEmail()
   email: string
+
+  @IsOptional()
+  @IsBoolean()
+  isEmailVerified?: boolean
 
   @ApiProperty()
   @IsString()
@@ -146,6 +161,10 @@ export class PatientCreateAdminDto {
   @ApiProperty()
   @IsEmail()
   email: string
+
+  @IsOptional()
+  @IsBoolean()
+  isEmailVerified?: boolean
 
   @ApiProperty()
   @IsString()
@@ -309,6 +328,37 @@ export class LinkToAccountDto {
   encryptedToken: string
 }
 
+export enum migrationActions {
+  Merge = 'MERGE',
+  New = 'NEW',
+}
+
+export class Migration {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  notConfirmedPatientId: string
+  @ApiProperty({enum: migrationActions})
+  @IsString()
+  @IsNotEmpty()
+  @IsEnum(migrationActions)
+  action: migrationActions
+  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  patientId?: string
+}
+
+export class MigrateDto {
+  @ApiProperty({nullable: false, type: [Migration]})
+  @IsArray()
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => Migration)
+  migrations: Migration[]
+}
+
 export class DependantCreateDto extends OmitType(PatientCreateDto, ['email'] as const) {}
 
 export class PatientFilter extends PageableRequestFilter {
@@ -366,7 +416,9 @@ export type PatientUpdatePubSubProfile = {
   shareTestResultWithEmployer: boolean
 }
 
-export const CreatePatientDTOResponse = (patient: Patient): PatientDTO => ({
+export const CreatePatientDTOResponse = (
+  patient: Omit<Patient, 'generatePublicId'> & {resultExitsForProvidedEmail?: boolean},
+): PatientDTO => ({
   idPatient: patient.idPatient,
   firstName: patient.firstName,
   lastName: patient.lastName,
@@ -376,6 +428,7 @@ export const CreatePatientDTOResponse = (patient: Patient): PatientDTO => ({
   photoUrl: patient.photoUrl,
   lastAppointment: patient.lastAppointment,
   trainingCompletedOn: patient.trainingCompletedOn,
+  resultExitsForProvidedEmail: patient.resultExitsForProvidedEmail,
 })
 
 export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({

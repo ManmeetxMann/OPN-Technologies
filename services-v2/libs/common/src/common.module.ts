@@ -1,5 +1,4 @@
 // NestJs
-import {ConfigModule} from '@nestjs/config'
 import {Global, Module} from '@nestjs/common'
 
 // Service
@@ -13,6 +12,9 @@ import {AuthGuard} from './guard/auth.guard'
 import {CaptchaGuard} from './guard/captcha.guard'
 import {InternalGuard} from './guard/internal.guard'
 import {AuthGlobalGuard} from './guard'
+
+// eslint-disable-next-line no-restricted-imports
+import {ConfigModule} from '@nestjs/config'
 import {Config} from '@opn-common-v1/utils/config'
 
 @Global()

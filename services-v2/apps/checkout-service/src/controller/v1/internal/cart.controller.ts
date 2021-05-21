@@ -1,8 +1,8 @@
 import {Controller, Post, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiHeader, ApiTags} from '@nestjs/swagger'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
-import {UserCardService} from 'apps/checkout-service/src/service/user-cart.service'
 import {AuthTypes, InternalAuthTypes} from '@opn-services/common/types/authorization'
+import {UserCardService} from '@opn-services/checkout/service'
 import {InternalGuard} from '@opn-services/common/guard/internal.guard'
 import {ApiCommonHeaders, InternalType, ApiAuthType} from '@opn-services/common/decorator'
 

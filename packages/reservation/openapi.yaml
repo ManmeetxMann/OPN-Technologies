@@ -968,6 +968,8 @@ components:
               type: string
             couponCode:
               type: string
+            status:
+              type: string
             resultMetaData:
               type: object
               additionalProperties: false

@@ -406,7 +406,7 @@ export type GroupedSpecs = {
   description: string
   groups: {
     label: string
-    value: string | boolean | Date
+    value?: string | boolean | Date
   }[]
 }
 
@@ -444,7 +444,7 @@ export enum GroupLabel {
 
 export type Spec = {
   label: SpecLabel
-  value: string | boolean | Date
+  value?: string | boolean | Date
 }
 
 export type SinglePcrTestResultUi = {
@@ -478,6 +478,7 @@ export type SinglePcrTestResultUi = {
   dateOfResult: string
   resultMetaData: TestResultsMetaData
   couponCode?: string
+  status?: string
 }
 
 export const singlePcrTestResultDTO = (
@@ -487,6 +488,28 @@ export const singlePcrTestResultDTO = (
 ): SinglePcrTestResultUi => {
   let resultSpecs = null
   let resultAnalysis = null
+
+  const getAnalysis = (pcrTestResult: PCRTestResultDBModel): Spec[] => {
+    if (
+      pcrTestResult.testType === TestTypes.Antibody_All &&
+      (pcrTestResult.result === ResultTypes.Positive ||
+        pcrTestResult.result === ResultTypes.Inconclusive)
+    ) {
+      return pcrTestResult.resultAnalysis.map(({label, value}) => {
+        if (label === SpecLabel.IgG || label === SpecLabel.IgM) {
+          return {
+            label,
+          }
+        }
+        return {
+          label,
+          value,
+        }
+      })
+    }
+
+    return pcrTestResult.resultAnalysis
+  }
   if (pcrTestResult.resultSpecs) {
     resultSpecs = Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
       label: resultKey,
@@ -501,7 +524,7 @@ export const singlePcrTestResultDTO = (
       })),
     )
   } else if (pcrTestResult.resultAnalysis) {
-    resultAnalysis = groupByChannel(pcrTestResult.resultAnalysis)
+    resultAnalysis = groupByChannel(getAnalysis(pcrTestResult))
   }
 
   let isBirthDateParsable: boolean
@@ -509,6 +532,20 @@ export const singlePcrTestResultDTO = (
     isBirthDateParsable = moment(appointment.dateOfBirth).isValid()
   } catch (e) {
     isBirthDateParsable = false
+  }
+
+  let status
+
+  if (
+    pcrTestResult?.couponCode &&
+    [AppointmentStatus.ReCollectRequired, AppointmentStatus.ReRunRequired].includes(
+      pcrTestResult.appointmentStatus,
+    )
+  ) {
+    status =
+      pcrTestResult.appointmentStatus === AppointmentStatus.ReRunRequired
+        ? 'Re-Run'
+        : 'Re-Collection'
   }
 
   return {
@@ -548,6 +585,7 @@ export const singlePcrTestResultDTO = (
       : 'N/A',
     resultMetaData: pcrTestResult.resultMetaData,
     couponCode: pcrTestResult?.couponCode,
+    status,
   }
 }
 
