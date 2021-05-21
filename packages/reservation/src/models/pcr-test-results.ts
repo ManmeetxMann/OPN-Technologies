@@ -478,6 +478,7 @@ export type SinglePcrTestResultUi = {
   dateOfResult: string
   resultMetaData: TestResultsMetaData
   couponCode?: string
+  status?: string
 }
 
 export const singlePcrTestResultDTO = (
@@ -533,6 +534,20 @@ export const singlePcrTestResultDTO = (
     isBirthDateParsable = false
   }
 
+  let status
+
+  if (
+    pcrTestResult?.couponCode &&
+    [AppointmentStatus.ReCollectRequired, AppointmentStatus.ReRunRequired].includes(
+      pcrTestResult.appointmentStatus,
+    )
+  ) {
+    status =
+      pcrTestResult.appointmentStatus === AppointmentStatus.ReRunRequired
+        ? 'Re-Run'
+        : 'Re-Collection'
+  }
+
   return {
     email: appointment.email,
     firstName: appointment.firstName,
@@ -570,6 +585,7 @@ export const singlePcrTestResultDTO = (
       : 'N/A',
     resultMetaData: pcrTestResult.resultMetaData,
     couponCode: pcrTestResult?.couponCode,
+    status,
   }
 }
 
