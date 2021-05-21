@@ -73,5 +73,5 @@ export default Joi.object({
   scheduledPushesToSend: Joi.array().items(Joi.number()),
   city: Joi.string(),
   province: Joi.string(),
-  country: Joi.string()
+  country: Joi.string(),
 })
