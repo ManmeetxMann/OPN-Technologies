@@ -1,6 +1,9 @@
+// eslint-disable-next-line no-restricted-imports
 import {ConfigService} from '@nestjs/config'
+import {OpnConfigService} from '@opn-services/common/services'
 
-const configService = new ConfigService()
+const baseConfigService = new ConfigService()
+const configService = new OpnConfigService(baseConfigService)
 
 export const isRunningOnGCP = (): boolean => {
   const isRunningOnGCP = Boolean(configService.get('GOOGLE_CLOUD_PROJECT'))

@@ -64,6 +64,7 @@ class UserController implements IControllerBase {
           lastName,
           email,
           dateOfBirth,
+          isEmailVerified: false,
           admin: null,
           authUserId: firebaseUserId,
           base64Photo: Config.get('DEFAULT_USER_PHOTO') || '',
@@ -84,6 +85,7 @@ class UserController implements IControllerBase {
             phoneNumber: '',
             photoUrl: user.base64Photo ?? null,
             firebaseKey: user.id,
+            isEmailVerified: false,
             patientPublicId: '',
             registrationId: user.registrationId || '', // @TODO Remove this field after merging PR related to this field
             dateOfBirth: '',

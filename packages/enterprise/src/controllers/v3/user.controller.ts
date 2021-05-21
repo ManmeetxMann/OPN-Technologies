@@ -116,6 +116,7 @@ const create: Handler = async (req, res, next): Promise<void> => {
       email: authUser.email,
       authUserId: authUser.uid,
       active: true,
+      isEmailVerified: false,
     })
 
     await userSyncService.create(
@@ -124,6 +125,7 @@ const create: Handler = async (req, res, next): Promise<void> => {
         lastName: user.lastName,
         phoneNumber: (user.phone && user.phone.number && `${user.phone.number}`) || '',
         photoUrl: user.photo,
+        isEmailVerified: false,
         firebaseKey: user.id,
         patientPublicId: '', // @TODO Remove this field after merging PR related to this field
         registrationId: user.registrationId || '',
@@ -164,6 +166,7 @@ const authenticate: Handler = async (req, res, next): Promise<void> => {
       email,
       organizationId,
       userId,
+      true,
     )
 
     await magicLinkService.send({
