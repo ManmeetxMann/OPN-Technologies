@@ -91,6 +91,7 @@ import {BulkTestResultRequest, TestResultsMetaData} from '../models/test-results
 import {AntibodyAllPDFContent} from '../templates/antibody-all'
 import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 import {normalizeAnalysis} from '../utils/analysis.helper'
+import {CouponEnum} from '../models/coupons'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -1260,7 +1261,7 @@ export class PCRTestResultsService {
   }
 
   async generateCouponCode(email: string, resultData: PCRTestResultDBModel): Promise<string> {
-    const couponCode = await this.couponService.createCoupon(email)
+    const couponCode = await this.couponService.createCoupon(email, CouponEnum.forResample)
     await this.couponService.saveCoupon(couponCode, resultData.organizationId, resultData.barCode)
 
     LogInfo('generateCouponCode', 'CouponCodeCreated', {
