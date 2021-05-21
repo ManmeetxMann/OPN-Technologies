@@ -205,7 +205,7 @@ export class PatientService {
       lastName: data.lastName,
       registrationId: data.registrationId ?? null,
       photo: data.photoUrl ?? null,
-      phoneNumber: data.phoneNumber,
+      phoneNumber: data.phoneNumber ?? null,
       authUserId: data.authUserId,
       active: false,
       organizationIds,
