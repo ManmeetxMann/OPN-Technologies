@@ -110,8 +110,11 @@ export class PatientController {
       patient = await this.patientService.createProfile(patientDto, hasPublicOrg)
     }
 
-    const users = await this.patientService.findNewUsersByEmail(patientExists.email)
-    const resultExitsForProvidedEmail = !!users.length
+    let resultExitsForProvidedEmail = false
+    if (patientExists) {
+      const users = await this.patientService.findNewUsersByEmail(patientExists.email)
+      resultExitsForProvidedEmail = !!users.length
+    }
 
     return ResponseWrapper.actionSucceed(
       CreatePatientDTOResponse({resultExitsForProvidedEmail, ...patient}),

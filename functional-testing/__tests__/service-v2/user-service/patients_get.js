@@ -19,14 +19,14 @@ const organizationId = testProfile.get().organizationId;
  */
 describe('get:patient', () => {
   test('get patient successfully', function() {
-    return helpersCommon.runAuthenticatedTest(frisby,'harpreet+v2test1@stayopn.com').then(function(token) {
+    return helpersCommon.runAuthenticatedTest(frisby, 'harpreet+v2test1@stayopn.com').then(function(token) {
       const url = `${userServiceUrl}/api/v1/patients`;
       return frisby
           .setup({
             request: {
               headers: {
                 'Authorization': `Bearer ${token}`,
-                'organizationid':organizationId
+                'organizationid': organizationId,
               },
             },
           })

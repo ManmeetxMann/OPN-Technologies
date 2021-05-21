@@ -76,3 +76,13 @@ export enum OpnHeaderFunctions {
 export enum OpnHeaderEvents {
   ReadOpnHeaders = 'ReadOpnHeaders',
 }
+
+export enum PubSubFunctions {
+  updateProfile = 'updateProfile',
+  updateProfileWithPubSub = 'updateProfileWithPubSub',
+}
+
+export enum PubSubEvents {
+  profileUpdateFailed = 'profileUpdateFailed',
+  profileUpdateStarted = 'profileUpdateStarted',
+}

@@ -19,13 +19,29 @@ const getFontSettings = () => ({
     italics: 'Helvetica-Oblique',
     bolditalics: 'Helvetica-BoldOblique',
   },
+  BrutalType: {
+    normal: path.join(__dirname, '../../static/fonts/BrutalType-Black.otf'),
+    bold: path.join(__dirname, '../../static/fonts/BrutalType-Bold.otf'),
+  },
+  BrutalTypeRegular: {
+    normal: path.join(__dirname, '../../static/fonts/BrutalType-Regular.otf'),
+  },
+  BrutalTypeLight: {
+    normal: path.join(__dirname, '../../static/fonts/BrutalType-Light.otf'),
+  },
 })
 
 export class PdfService {
   printer: PdfPrinter = new PdfPrinter(getFontSettings())
 
-  generatePDFStream(params: Content, tableLayouts: TableLayouts, password?: string): Stream {
-    const generatedParams = this.getPDF(params, password)
+  generatePDFStream(
+    params: Content,
+    tableLayouts: TableLayouts,
+    password?: string,
+    pageSize?: {height: number; width: number},
+    pageMargin?: number,
+  ): Stream {
+    const generatedParams = this.getPDF(params, password, pageSize, pageMargin)
     const stream = new Stream.PassThrough()
     const pdfDoc = this.printer.createPdfKitDocument(generatedParams, {tableLayouts})
     pdfDoc.on('data', (chunk) => stream.push(chunk))
@@ -54,10 +70,15 @@ export class PdfService {
     })
   }
 
-  private getPDF(content: Content, password?: string): TDocumentDefinitions {
+  private getPDF(
+    content: Content,
+    password?: string,
+    PageSize?: {height: number; width: number},
+    pageMargin?: number,
+  ): TDocumentDefinitions {
     const docDefinition: TDocumentDefinitions = {
-      pageSize: 'A4',
-      pageMargins: [72, 34, 72, 30],
+      pageSize: PageSize || 'A4',
+      pageMargins: pageMargin == undefined ? [72, 34, 72, 30] : pageMargin,
       styles: {
         'gray-text': {
           color: '#666666',

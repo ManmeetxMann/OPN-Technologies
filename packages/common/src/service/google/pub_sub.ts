@@ -1,4 +1,5 @@
 import {PubSub, Topic} from '@google-cloud/pubsub'
+import {LogInfo} from '../../utils/logging-setup'
 import {BadRequestException} from '../../exceptions/bad-request-exception'
 //TODO: Add Encryption or security layer
 export class OPNPubSub {
@@ -12,6 +13,12 @@ export class OPNPubSub {
   }
 
   async publish(data: unknown, attributes: Record<string, string> = {}): Promise<void> {
+    LogInfo('publish', 'PubSubPublishTopicData', {
+      topicName: this.topicName,
+      data,
+      attributes,
+    })
+
     this.checkAttributes(attributes)
     this.topic.publish(Buffer.from(JSON.stringify(data)), attributes)
   }

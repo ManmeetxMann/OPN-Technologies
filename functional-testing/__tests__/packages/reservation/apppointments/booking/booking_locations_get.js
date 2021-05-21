@@ -1,6 +1,5 @@
 const frisby = require('frisby');
 const helpersCommon = require('helpers_common');
-const testProfile = require('test_profile');
 
 // Do setup first
 frisby.globalSetup({
