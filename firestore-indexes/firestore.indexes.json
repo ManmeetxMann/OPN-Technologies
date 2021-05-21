@@ -919,6 +919,24 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "displayInResult",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "testType",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [
