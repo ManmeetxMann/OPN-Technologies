@@ -4,6 +4,7 @@ import {ApiBearerAuth, ApiBody, ApiExtraModels, ApiResponse, ApiTags, refs} from
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard} from '@opn-services/common/guard'
 import {
+  AuthTypes,
   OpnCommonHeaders,
   OpnSources,
   RequiredUserPermission,
@@ -14,6 +15,7 @@ import {
   OpnHeaders,
   PublicDecorator,
   ApiCommonHeaders,
+  ApiAuthType,
 } from '@opn-services/common/decorator'
 import {
   BadRequestException,
@@ -84,6 +86,7 @@ export class PatientController {
     },
   })
   @ApiExtraModels(NormalPatientCreateDto, HomeTestPatientDto)
+  @ApiAuthType(AuthTypes.Firebase)
   async add(
     @PublicDecorator() firebaseAuthUser: AuthUser,
     @Body() patientDto: PatientCreateDto,
