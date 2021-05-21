@@ -21,6 +21,7 @@
     },
     "dependencies": {
         "express": "^4.17.1",
+        "moment-es6": "^1.0.0",
         "nanoid": "^3.1.20",
         "pug": "^3.0.0"
     },

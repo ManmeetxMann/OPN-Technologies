@@ -24,6 +24,7 @@ export class UserService implements UserServiceInterface {
         email: cleanStringField(source.email),
         photo: source.photo ?? null,
         phone: source.phone ?? null,
+        isEmailVerified: source.isEmailVerified,
         registrationId: source.registrationId ?? null,
         authUserId: source.authUserId ?? null,
         active: source.active ?? false,

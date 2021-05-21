@@ -62,3 +62,9 @@ export enum OpnRawHeaders {
   OpnLang = 'opn-lang',
   OpnAppVersion = 'opn-app-version',
 }
+
+export enum AuthTypes {
+  Public = 'Public',
+  Internal = 'Internal',
+  Firebase = 'Firebase',
+}

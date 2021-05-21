@@ -91,6 +91,7 @@ import {BulkTestResultRequest, TestResultsMetaData} from '../models/test-results
 import {AntibodyAllPDFContent} from '../templates/antibody-all'
 import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 import {normalizeAnalysis} from '../utils/analysis.helper'
+import {CouponEnum} from '../models/coupons'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -355,7 +356,7 @@ export class PCRTestResultsService {
         map: '/',
         key: 'labId',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: labId,
+        value: labId === 'null' ? null : labId,
       })
     }
 
@@ -1260,7 +1261,7 @@ export class PCRTestResultsService {
   }
 
   async generateCouponCode(email: string, resultData: PCRTestResultDBModel): Promise<string> {
-    const couponCode = await this.couponService.createCoupon(email)
+    const couponCode = await this.couponService.createCoupon(email, CouponEnum.forResample)
     await this.couponService.saveCoupon(couponCode, resultData.organizationId, resultData.barCode)
 
     LogInfo('generateCouponCode', 'CouponCodeCreated', {
@@ -1445,7 +1446,7 @@ export class PCRTestResultsService {
 
     const pcrResultStatsByLabIdArr = Object.entries(pcrResultStatsByLabId).map(
       ([labId, count]) => ({
-        id: labId === 'undefined' ? null : labId,
+        id: labId === 'undefined' ? 'null' : labId,
         name: labId === 'undefined' ? 'None' : labs[labId],
         count,
       }),
@@ -1813,12 +1814,19 @@ export class PCRTestResultsService {
         value: organizationId,
       })
     }
-    if (testType) {
+    if (testType && testType !== TestTypes.RapidAntigenAtHome) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'testType',
         operator: DataModelFieldMapOperatorType.Equals,
         value: testType,
+      })
+    } else {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'testType',
+        operator: DataModelFieldMapOperatorType.NotEquals,
+        value: TestTypes.RapidAntigenAtHome,
       })
     }
 
@@ -1852,6 +1860,8 @@ export class PCRTestResultsService {
         AppointmentStatus.Reported === appointment?.appointmentStatus
       ) {
         result = ResultTypes[appointment?.appointmentStatus] || pcr.result
+      } else if (!appointment) {
+        result = pcr.result
       } else {
         result = AppointmentReasons.InProgress
       }

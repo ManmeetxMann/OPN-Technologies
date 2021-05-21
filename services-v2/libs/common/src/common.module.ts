@@ -1,5 +1,4 @@
 // NestJs
-import {ConfigModule} from '@nestjs/config'
 import {Global, Module} from '@nestjs/common'
 
 // Service
@@ -9,10 +8,10 @@ import {OpnConfigService} from '@opn-services/common/services'
 import {CaptchaService} from './services/google/captcha.service'
 
 // Guards
-import {AuthGuard} from './guard/auth.guard'
-import {CaptchaGuard} from './guard/captcha.guard'
-import {InternalGuard} from './guard/internal.guard'
+import {AuthGuard, AuthGlobalGuard, CaptchaGuard, InternalGuard} from './guard'
 
+// eslint-disable-next-line no-restricted-imports
+import {ConfigModule} from '@nestjs/config'
 import {Config} from '@opn-common-v1/utils/config'
 
 @Global()
@@ -23,6 +22,7 @@ import {Config} from '@opn-common-v1/utils/config'
     }),
     OpnConfigService,
     AuthGuard,
+    AuthGlobalGuard,
     CaptchaGuard,
     InternalGuard,
   ],
@@ -34,6 +34,7 @@ import {Config} from '@opn-common-v1/utils/config'
     FirebaseAuthService,
     CaptchaService,
     AuthGuard,
+    AuthGlobalGuard,
     CaptchaGuard,
     InternalGuard,
   ],

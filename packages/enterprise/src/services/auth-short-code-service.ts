@@ -1,5 +1,5 @@
 import {customAlphabet} from 'nanoid'
-import moment from 'moment'
+import moment from 'moment-es6'
 
 import DataStore from '../../../common/src/data/datastore'
 import {AuthShortCodeRepository} from '../repository/auth-short-code.repository'
@@ -17,14 +17,18 @@ export class AuthShortCodeService {
     email: string,
     organizationId: string,
     userId: string,
+    generateMagicLink: boolean,
   ): Promise<AuthShortCode> {
     const shortCode = nanoid()
+    // @TODO without ts-ignore gives typescript error, because this function used in v2
+    // @ts-ignore
     const expiresAt = moment().add(1, 'hours').toDate()
-    const magicLink = await this.magicLinkService.generateMagicLink({
-      email,
-      meta: {organizationId, userId, shortCode},
-    })
-
+    const magicLink = !generateMagicLink
+      ? null
+      : await this.magicLinkService.generateMagicLink({
+          email,
+          meta: {organizationId, userId, shortCode},
+        })
     const authShortCode = await this.findAuthShortCode(email)
 
     const data = {

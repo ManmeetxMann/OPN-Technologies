@@ -50,10 +50,39 @@ export enum StripeEvent {
   paymentIntentsError = 'paymentIntentsError',
 }
 
+export enum SwaggerFunctions {
+  createSwagger = 'createSwagger',
+}
+
+export enum SwaggerEvents {
+  attemptWithSwaggerDisabled = 'attemptWithSwaggerDisabled',
+  noAuthCredentials = 'noAuthCredentials',
+  invalidAuthCredentials = 'invalidAuthCredentials',
+  shortAuthCredentials = 'shortAuthCredentials',
+}
+
 export enum ValidatorFunctions {
   validate = 'validate',
 }
 
 export enum ValidatorEvents {
   validationFailed = 'validationFailed',
+}
+
+export enum OpnHeaderFunctions {
+  validateHeaders = 'validateHeaders',
+}
+
+export enum OpnHeaderEvents {
+  ReadOpnHeaders = 'ReadOpnHeaders',
+}
+
+export enum PubSubFunctions {
+  updateProfile = 'updateProfile',
+  updateProfileWithPubSub = 'updateProfileWithPubSub',
+}
+
+export enum PubSubEvents {
+  profileUpdateFailed = 'profileUpdateFailed',
+  profileUpdateStarted = 'profileUpdateStarted',
 }

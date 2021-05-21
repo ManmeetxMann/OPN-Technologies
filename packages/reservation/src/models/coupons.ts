@@ -10,6 +10,11 @@ export type AcuityCouponCodeResponse = {
   appointmentTypeIDs: number[]
 }
 
+export enum CouponEnum {
+  forResample = 'forResample',
+  forRapidHome = 'forRapidHome',
+}
+
 export enum DiscountTypes {
   price = 'price',
   percentage = 'percentage',

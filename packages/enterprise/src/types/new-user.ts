@@ -27,6 +27,7 @@ export type NewUser = {
   firstName: string
   lastName: string
   registrationId: string
+  isEmailVerified?: boolean
   photo?: string //url
   phone?: Phone
   authUserId?: string

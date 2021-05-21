@@ -11,6 +11,7 @@ export type User = {
   firstName: string
   lastName: string
   dateOfBirth?: string
+  isEmailVerified?: boolean
   base64Photo: string
   organizationIds?: string[]
   email?: string
@@ -76,6 +77,7 @@ export type AuthUser = Auditable & {
   id: string
   firstName: string
   lastName: string
+  isEmailVerified?: boolean
   active: boolean
   organizationIds: string[]
   authUserId?: string

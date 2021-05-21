@@ -9,7 +9,9 @@ import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {User} from '@opn-common-v1/data/user'
 import {EncryptionService} from '@opn-common-v1/service/encryption/encryption-service'
 import {RapidHomeKitCodeService} from '../../../service/patient/rapid-home-kit-code.service'
-import {ConfigService} from '@nestjs/config'
+import {OpnConfigService} from '@opn-services/common/services'
+import {CouponService} from '@opn-reservation-v1/services/coupon.service'
+import {CouponEnum} from '@opn-reservation-v1/models/coupons'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -17,14 +19,16 @@ import {ConfigService} from '@nestjs/config'
 @Controller('/api/v1')
 export class RapidHomeController {
   private encryptionService: EncryptionService
+  private couponService: CouponService
 
   constructor(
     private homeKitCodeService: RapidHomeKitCodeService,
-    private configService: ConfigService,
+    private configService: OpnConfigService,
   ) {
     this.encryptionService = new EncryptionService(
       this.configService.get('RAPID_HOME_KIT_CODE_ENCRYPTION_KEY'),
     )
+    this.couponService = new CouponService()
   }
 
   @Get('rapid-home-kit-user-codes')
@@ -60,5 +64,17 @@ export class RapidHomeController {
     const decryptedCode = this.encryptionService.decrypt(encryptedToken)
     await this.homeKitCodeService.assocHomeKitToUser(decryptedCode, authUser.id)
     return ResponseWrapper.actionSucceed({})
+  }
+
+  @Post('home-test-patients/coupon')
+  @Roles([RequiredUserPermission.RegUser])
+  @UseGuards(AuthGuard)
+  async createCoupon(@AuthUserDecorator() authUser: User): Promise<ResponseWrapper> {
+    const couponCode = await this.couponService.createCoupon(
+      authUser.email,
+      CouponEnum.forRapidHome,
+    )
+    await this.couponService.saveCoupon(couponCode)
+    return ResponseWrapper.actionSucceed({couponCode: couponCode})
   }
 }

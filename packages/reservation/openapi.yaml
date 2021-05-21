@@ -968,6 +968,8 @@ components:
               type: string
             couponCode:
               type: string
+            status:
+              type: string
             resultMetaData:
               type: object
               additionalProperties: false
@@ -2067,6 +2069,10 @@ paths:
             type: string
         - in: query
           name: userId
+          schema:
+            type: string
+        - in: query
+          name: labId
           schema:
             type: string
         - in: query
