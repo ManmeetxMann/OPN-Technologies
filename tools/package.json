@@ -14,8 +14,9 @@
 				"tool:update-final-cost": "ts-node ./update-final-cost",
 				"tool:create-firebase-token": "ts-node ./create-firebase-token",
 				"tool:get-stripe-payment": "ts-node ./get-stripe-payment-id",
-				"tool:get-rapid-home-kit-code": "ts-node ./get-rapid-home-kit-code",
-				"tool:appointments-check-duplicate-barcode": "ts-node ./appointments-check-duplicate-barcode"
+				"tool:appointments-check-duplicate-barcode": "ts-node ./appointments-check-duplicate-barcode",
+				"tool:create-home-kit-pdfs": "ts-node ./create-pdf-with-qr-for-home-test-kit",
+				"tool:get-rapid-home-kit-code": "ts-node ./get-rapid-home-kit-code"
 		},
 		"author": "",
 		"license": "Appropriate",

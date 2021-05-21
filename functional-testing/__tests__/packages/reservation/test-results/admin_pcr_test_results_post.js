@@ -32,7 +32,7 @@ describe('PCR TestResultsController', () => {
               url,
               {
                 'action': 'SendThisResult',
-                'autoResult': 'Positive',
+                'autoResult': 'PresumptivePositive',
                 'barCode': 'TEST10000548',
                 // 'comment': 'AWESOM',
                 'labId': 'k0qbPDqTwqitKUwlGHye',

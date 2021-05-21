@@ -15,7 +15,7 @@ initializeApp({
 const db = admin.firestore()
 const collection = db.collection('rapid-home-kit-codes')
 
-const countOfCodes = 100
+const countOfCodes = 500
 
 async function main() {
   return db.runTransaction(async (transaction) => {
