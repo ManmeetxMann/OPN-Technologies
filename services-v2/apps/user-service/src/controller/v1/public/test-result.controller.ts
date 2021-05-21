@@ -39,6 +39,7 @@ export class TestResultController {
     )
     const validatedUserData = this.testResultService.validateUserData(testResult)
     await this.testResultService.syncUser(validatedUserData, authUser.id)
+    await this.homeKitCodeService.markAsUsedHomeKitCode(homeKit.id, homeKit.code, authUser.id)
 
     return ResponseWrapper.actionSucceed(result)
   }
