@@ -28,7 +28,7 @@ export class UserCardDiscountService {
     const cardItems = await this.userCardService.fetchUserAllCartItem(userId, organizationId)
     const discountedCartItems = await Promise.all(
       cardItems.map(cartItem => {
-        return this.discountSingleItem(userId, organizationId, coupon, cartItem)
+        return this.discountSingleItem({userId, organizationId, coupon, cartItem})
       }),
     )
     const cartItems = discountedCartItems.map(cartDB => ({
@@ -61,13 +61,13 @@ export class UserCardDiscountService {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types,max-params
-  async discountSingleItem(
-    userId: string,
-    organizationId: string,
-    coupon: string,
-    cartItem: Omit<CardItemDBModel, 'id'>,
-  ): Promise<CardItemDBModel> {
+  async discountSingleItem(data: {
+    userId: string
+    organizationId: string
+    coupon: string
+    cartItem: Omit<CardItemDBModel, 'id'>
+  }): Promise<CardItemDBModel> {
+    const {userId, organizationId, coupon, cartItem} = data
     const userOrgId = `${userId}_${organizationId}`
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
     let discount

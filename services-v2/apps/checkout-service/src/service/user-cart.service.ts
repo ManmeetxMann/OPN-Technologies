@@ -395,12 +395,12 @@ export class UserCardService {
     if (isCouponNameExists) {
       await Promise.all(
         cartItems.map(cartItem => {
-          return this.userCardDiscountService.discountSingleItem(
+          return this.userCardDiscountService.discountSingleItem({
             userId,
             organizationId,
-            couponName,
+            coupon: couponName,
             cartItem,
-          )
+          })
         }),
       )
     }
