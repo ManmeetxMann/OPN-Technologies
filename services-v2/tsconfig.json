@@ -16,6 +16,7 @@
       "@opn-services/common": ["libs/common/src"],
       "@opn-services/common/*": ["libs/common/src/*"],
       "@opn-services/checkout/*": ["apps/checkout-service/src/*"],
+      "@opn-services/opn-services/*": ["apps/opn-services/src/*"],
       "@opn-services/user/*": ["apps/user-service/src/*"],
       "@opn-services/opn/*": ["apps/opn-services/src/*"],
       "@opn-common-v1/*": ["../packages/common/src/*"],
