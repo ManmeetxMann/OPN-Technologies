@@ -12,6 +12,11 @@ import {
   getTestResultPayload,
 } from '@opn-services/test/utils'
 import {TestResultCreateDto} from '@opn-services/user/dto/test-result'
+import {createKit, deleteHomeKitByIdTestDataCreator} from '@opn-services/test/utils/home-kit-code'
+import {
+  createKitAssoc,
+  deleteHomeKitAssocByIdTestDataCreator,
+} from '@opn-services/test/utils/home-kit-code-assoc'
 
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
 jest.setTimeout(10000)
@@ -19,10 +24,18 @@ jest.setTimeout(10000)
 const testDataCreator = __filename.split('/services-v2/')[1]
 
 const userId = 'PATIENT_BASIC'
+const kitCode = 'XXXXXX'
+const kitCodeAssoc = 'XXXXXX_Assoc'
 const organizationId = 'PATIENT_ORG_BASIC'
 const headers = {
   accept: 'application/json',
   authorization: `Bearer userId:${userId}`,
+
+  ['opn-app-version']: '1.0.0',
+  ['opn-device-id']: 'q9ZZO3MsR703fqtEhGRz7',
+  ['opn-lang']: 'en',
+  ['opn-request-id']: 'yV_9j30roWSiCdY-4b5HL',
+  ['opn-source']: 'FH_IOS',
 }
 
 describe('TestResultController (e2e)', () => {
@@ -33,8 +46,8 @@ describe('TestResultController (e2e)', () => {
   const pcrTestResultCreatePayload = {
     firstName: 'PATIENT_E2E',
     lastName: 'PATIENT_E2E',
-    testResult: 'Positive',
     reportAs: 'Individual',
+    kitCode,
   }
 
   beforeAll(async () => {
@@ -42,6 +55,23 @@ describe('TestResultController (e2e)', () => {
       {
         id: userId,
         organizationIds: [organizationId],
+      },
+      testDataCreator,
+    )
+
+    await createKit(
+      {
+        id: kitCode,
+        code: kitCode,
+      },
+      testDataCreator,
+    )
+
+    await createKitAssoc(
+      {
+        id: kitCodeAssoc,
+        code: kitCode,
+        userId,
       },
       testDataCreator,
     )
@@ -63,7 +93,6 @@ describe('TestResultController (e2e)', () => {
       .set(headers)
       .send(payload as TestResultCreateDto)
 
-    console.log(response.text)
     expect(response.status).toBe(201)
     done()
   })
@@ -71,6 +100,8 @@ describe('TestResultController (e2e)', () => {
   afterAll(async () => {
     await Promise.all([
       deleteUserByIdTestDataCreator(userId, testDataCreator),
+      deleteHomeKitByIdTestDataCreator(testDataCreator),
+      deleteHomeKitAssocByIdTestDataCreator(testDataCreator),
       findAndRemoveByFirstName(pcrTestResultCreatePayload.firstName),
     ])
     await app.close()

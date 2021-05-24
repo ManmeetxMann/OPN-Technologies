@@ -13,6 +13,7 @@ export class PatientToOrganization {
   @ManyToOne(
     () => Patient,
     patient => patient.idPatient,
+    {onDelete: 'CASCADE'},
   )
   @JoinColumn({name: 'patientId'})
   @Column({nullable: false})

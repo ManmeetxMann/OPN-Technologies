@@ -14,13 +14,19 @@ import {PatientCreateDto} from '../../src/dto/patient'
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
 jest.setTimeout(10000)
 
-const userId = 'PATIENT_BASIC'
 const organizationId = 'PATIENT_ORG_BASIC'
 const testDataCreator = __filename.split('/services-v2/')[1]
+const userId = 'PATIENT_BASIC' + 1
 const headers = {
   accept: 'application/json',
   organizationid: organizationId,
   authorization: `Bearer userId:${userId}`,
+
+  ['opn-app-version']: '1.0.0',
+  ['opn-device-id']: 'q9ZZO3MsR703fqtEhGRz7',
+  ['opn-lang']: 'en',
+  ['opn-request-id']: 'yV_9j30roWSiCdY-4b5HL',
+  ['opn-source']: 'FH_IOS',
 }
 
 describe('AdminPatientController (e2e)', () => {
