@@ -647,7 +647,7 @@ export class PatientService {
   }
 
   async updateProfileWithPubSub(data: AppointmentDBModel): Promise<void> {
-    if (data?.userId) {
+    if (!data?.userId) {
       const errorMessage = `User/Patient id is missing`
       LogError(PubSubFunctions.updateProfileWithPubSub, PubSubEvents.profileUpdateFailed, {
         errorMessage,
