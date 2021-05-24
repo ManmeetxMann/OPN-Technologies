@@ -594,7 +594,8 @@ export class AppoinmentService {
       email: acuityAppointment.email,
       firstName: acuityAppointment.firstName,
       lastName: acuityAppointment.lastName,
-      organizationId: acuityAppointment.organizationId || organizationId || null,
+      organizationId:
+        acuityAppointment.organizationId || organizationId || Config.get('PUBLIC_ORG_ID'),
       packageCode: acuityAppointment.certificate,
       phone: acuityAppointment.phone,
       registeredNursePractitioner: acuityAppointment.registeredNursePractitioner,
