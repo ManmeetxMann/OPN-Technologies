@@ -46,6 +46,8 @@ abstract class AcuityAdapter {
     hadCovidConfirmedOrSymptomsDate: Config.get('ACUITY_FIELD_HAD_COVID_CONFIRMED_DATE'),
     hadCovidExposer: Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE_DATE'),
     hadCovidExposerDate: Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE'),
+    travelID: Config.get('ACUITY_FIELD_TRAVEL_ID_ISSUEING_COUNTRY'),
+    travelIDIssuingCountry: Config.get('ACUITY_FIELD_TRAVEL_ID'),
   }
 
   private labelsIdMapping = {

@@ -1258,6 +1258,8 @@ export class AppoinmentService {
         hadCovidConfirmedOrSymptomsDate: patient.hadCovidConfirmedOrSymptomsDate,
         hadCovidExposerDate: patient.hadCovidExposerDate,
         hadCovidExposer: patient.hadCovidExposer,
+        travelID: patient.travelID,
+        travelIDIssuingCountry: patient.travelIDIssuingCountry,
         city: patient.city,
         province: patient.province,
         country: patient.country,
