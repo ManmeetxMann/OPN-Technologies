@@ -87,6 +87,7 @@ export class PatientController {
   })
   @ApiExtraModels(NormalPatientCreateDto, HomeTestPatientDto)
   @ApiAuthType(AuthTypes.Firebase)
+  @ApiResponse({type: PatientDTO})
   async add(
     @PublicDecorator() firebaseAuthUser: AuthUser,
     @Body() patientDto: PatientCreateDto,

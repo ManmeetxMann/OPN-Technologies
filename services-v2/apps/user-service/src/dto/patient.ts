@@ -17,12 +17,6 @@ import {Organization} from '../model/organization/organization.entity'
 import {Patient} from '../model/patient/patient.entity'
 import {Type} from 'class-transformer'
 
-export type PatientDTO = Partial<PatientCreateDto> & {
-  lastAppointment: Date
-  trainingCompletedOn: Date
-  resultExitsForProvidedEmail?: boolean
-}
-
 export type AuthenticateDto = {
   patientId: string
   organizationId: string
@@ -431,10 +425,30 @@ export class PatientUpdatePubSubPayload extends PubSubPayload<PatientUpdatePubSu
   message: PatientUpdatePubSubMessage
 }
 
+export class PatientDTO extends PartialType(PatientCreateDto) {
+  @ApiPropertyOptional()
+  id: string
+
+  @ApiPropertyOptional()
+  patientPublicId: string
+
+  @ApiPropertyOptional()
+  phoneNumber: string
+
+  @ApiPropertyOptional()
+  lastAppointment: Date
+
+  @ApiPropertyOptional()
+  trainingCompletedOn: Date
+
+  @ApiPropertyOptional()
+  resultExitsForProvidedEmail?: boolean
+}
+
 export const CreatePatientDTOResponse = (
   patient: Omit<Patient, 'generatePublicId'> & {resultExitsForProvidedEmail?: boolean},
 ): PatientDTO => ({
-  idPatient: patient.idPatient,
+  id: patient.idPatient,
   firstName: patient.firstName,
   lastName: patient.lastName,
   phoneNumber: patient.phoneNumber,
