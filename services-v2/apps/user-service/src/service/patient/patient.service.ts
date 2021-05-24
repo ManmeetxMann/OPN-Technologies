@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import {Injectable, NotFoundException} from '@nestjs/common'
 import {Page} from '@opn-services/common/dto'
 import {Brackets, SelectQueryBuilder} from 'typeorm'
@@ -646,6 +647,14 @@ export class PatientService {
   }
 
   async updateProfileWithPubSub(data: AppointmentDBModel): Promise<void> {
+    if (data?.userId) {
+      const errorMessage = `User/Patient id is missing`
+      LogError(PubSubFunctions.updateProfileWithPubSub, PubSubEvents.profileUpdateFailed, {
+        errorMessage,
+      })
+      throw new BadRequestException(errorMessage)
+    }
+
     const {userId} = data
     const patient = await this.patientRepository.findOne({
       where: [{idPatient: userId}, {firebaseKey: userId}],
@@ -660,7 +669,6 @@ export class PatientService {
     }
 
     const updateDto = new PatientUpdateDto()
-    // eslint-disable-next-line max-lines
     updateDto.phoneNumber = data?.phone
     updateDto.healthCardType = data?.ohipCard
     updateDto.travelPassport = data?.travelID
