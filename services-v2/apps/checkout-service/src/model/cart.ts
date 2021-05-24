@@ -9,6 +9,7 @@ export type PaymentAuthorizationRequest = {
 }
 
 export type UserCartDBModel = {
+  couponName: string
   id: string
   items: CardItemDBModel
   updateOn: firestore.Timestamp

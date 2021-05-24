@@ -15,6 +15,7 @@ import {
   CouponRequestDto,
   CartItemResponse,
 } from '@opn-services/checkout/dto'
+import {UserCardDiscountService} from 'apps/checkout-service/src/service/user-cart-discount.service'
 import {UserCardService, StripeService} from '@opn-services/checkout/service'
 import {CardItemDBModel, CartItemStatus} from '@opn-services/checkout/model/cart'
 
@@ -30,8 +31,10 @@ import {LogInfo, LogWarning, LogError} from '@opn-services/common/utils/logging'
 @UseGuards(AuthGuard)
 export class CartController {
   private maxCartItemsCount = 50
+  // eslint-disable-next-line max-params
   constructor(
     private userCardService: UserCardService,
+    private userCardDiscountService: UserCardDiscountService,
     private stripeService: StripeService,
     private appoinmentService: AppoinmentService,
   ) {}
@@ -77,7 +80,12 @@ export class CartController {
   ): Promise<ResponseWrapper<CartResponseDto>> {
     const userId = authUser.authUserId
     const organizationId = authUser.requestOrganizationId
-    const discountedItems = await this.userCardService.discount(coupon, userId, organizationId)
+
+    const discountedItems = await this.userCardDiscountService.discount(
+      coupon,
+      userId,
+      organizationId,
+    )
 
     return ResponseWrapper.actionSucceed(discountedItems)
   }
