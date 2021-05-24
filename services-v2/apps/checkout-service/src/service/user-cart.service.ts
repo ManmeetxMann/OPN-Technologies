@@ -43,6 +43,7 @@ import {DiscountTypes} from '@opn-reservation-v1/models/coupons'
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
 import {acuityTypesSchema, cartItemSchema} from '@opn-services/common/schemas'
 import {AcuityErrorValues} from '@opn-reservation-v1/models/acuity'
+import {toFormattedIso} from '@opn-services/checkout/utils/times'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -224,7 +225,7 @@ export class UserCardService {
       appointment: {
         id,
         ..._.omit(cartItemExist.appointment, 'slotId'),
-        time: new Date(cartItemExist.appointment.time).toISOString(),
+        time: toFormattedIso(cartItemExist.appointment.time),
       },
     }
   }
@@ -259,7 +260,7 @@ export class UserCardService {
       label: cartDB.appointmentType.name,
       subLabel: cartDB.appointment.calendarName,
       patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
-      date: new Date(cartDB.appointment.time).toISOString(),
+      date: toFormattedIso(cartDB.appointment.time),
       price: parseFloat(cartDB.appointmentType.price),
       userId: cartDB.patient.userId,
       discountedError: cartDB.discountData?.error,
@@ -291,7 +292,7 @@ export class UserCardService {
         label: cartDB.appointmentType.name,
         subLabel: cartDB.appointment.calendarName,
         patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
-        date: new Date(cartDB.appointment.time).toISOString(),
+        date: toFormattedIso(cartDB.appointment.time),
         price: parseFloat(cartDB.appointmentType.price),
         discountedPrice,
         userId: cartDB.patient.userId,
@@ -538,7 +539,7 @@ export class UserCardService {
       label: cartDB.appointmentType.name,
       subLabel: cartDB.appointment.calendarName,
       patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
-      date: new Date(cartDB.appointment.time).toISOString(),
+      date: toFormattedIso(cartDB.appointment.time),
       price: parseFloat(cartDB.appointmentType.price),
       userId: cartDB.patient.userId,
       discountedPrice: this.countDiscount(
