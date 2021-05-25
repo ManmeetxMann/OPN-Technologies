@@ -1814,14 +1814,16 @@ export class PCRTestResultsService {
         value: organizationId,
       })
     }
-    if (testType && testType !== TestTypes.RapidAntigenAtHome) {
+    if (testType) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'testType',
         operator: DataModelFieldMapOperatorType.Equals,
         value: testType,
       })
-    } else {
+    }
+
+    if (testType !== TestTypes.RapidAntigenAtHome) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'testType',
