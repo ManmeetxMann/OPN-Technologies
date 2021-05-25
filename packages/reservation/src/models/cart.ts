@@ -14,4 +14,5 @@ export type CardItemDBModel = {
     CouponCheckResponse,
     'discountType' | 'discountAmount' | 'name' | 'expiration'
   > & {couponId: string; error?: string}
+  error?: string
 }

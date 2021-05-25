@@ -23,12 +23,14 @@ import {UserCardService, StripeService} from '@opn-services/checkout/service'
 // Controllers
 import {CartController} from './controller/v1/public/cart.controller'
 import {CartInternalController} from './controller/v1/internal/cart.controller'
+import {UserCardDiscountService} from 'apps/checkout-service/src/service/user-cart-discount.service'
 
 @Module({
   imports: [CommonModule, StripeService, AppoinmentService, UserService],
   controllers: [CartController, CartInternalController],
   providers: [
     UserCardService,
+    UserCardDiscountService,
     StripeService,
     AppoinmentService,
     UserService,
