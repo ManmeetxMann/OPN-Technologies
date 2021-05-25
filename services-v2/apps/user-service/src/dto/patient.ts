@@ -425,42 +425,12 @@ export class PatientUpdatePubSubPayload extends PubSubPayload<PatientUpdatePubSu
   message: PatientUpdatePubSubMessage
 }
 
-export class PatientDTO extends PartialType(PatientCreateDto) {
-  @ApiPropertyOptional()
-  id: string
-
-  @ApiPropertyOptional()
-  patientPublicId: string
-
-  @ApiPropertyOptional()
-  phoneNumber: string
-
-  @ApiPropertyOptional()
-  lastAppointment: Date
-
-  @ApiPropertyOptional()
-  trainingCompletedOn: Date
-
-  @ApiPropertyOptional()
-  resultExitsForProvidedEmail?: boolean
-}
-
-export const CreatePatientDTOResponse = (
-  patient: Omit<Patient, 'generatePublicId'> & {resultExitsForProvidedEmail?: boolean},
-): PatientDTO => ({
-  id: patient.idPatient,
-  firstName: patient.firstName,
-  lastName: patient.lastName,
-  phoneNumber: patient.phoneNumber,
-  patientPublicId: patient.patientPublicId,
-  dateOfBirth: patient.dateOfBirth,
-  photoUrl: patient.photoUrl,
-  lastAppointment: patient.lastAppointment,
-  trainingCompletedOn: patient.trainingCompletedOn,
-  resultExitsForProvidedEmail: patient.resultExitsForProvidedEmail,
-})
-
-export const patientProfileDto = (patient: Patient): PatientProfile => ({
+export const patientProfileDto = (
+  patient: Patient,
+  metaData?: {
+    resultExitsForProvidedEmail?: boolean
+  },
+): PatientProfile => ({
   id: patient.idPatient,
   firebaseKey: patient?.firebaseKey,
   patientPublicId: patient.patientPublicId,
@@ -489,6 +459,7 @@ export const patientProfileDto = (patient: Patient): PatientProfile => ({
   receiveNotificationsFromGov: patient?.digitalConsent?.receiveNotificationsFromGov,
   trainingCompletedOn: patient?.trainingCompletedOn,
   postalCode: patient.addresses?.postalCode,
+  resultExitsForProvidedEmail: metaData?.resultExitsForProvidedEmail,
 })
 
 export class PatientProfile extends PartialType(PatientCreateAdminDto) {
@@ -500,6 +471,9 @@ export class PatientProfile extends PartialType(PatientCreateAdminDto) {
 
   @ApiPropertyOptional()
   patientPublicId: string
+
+  @ApiPropertyOptional()
+  resultExitsForProvidedEmail?: boolean
 }
 
 export class DependantProfile extends OmitType(PatientProfile, ['email', 'authUserId'] as const) {}

@@ -31,9 +31,7 @@ import {
   patientProfileDto,
   PatientCreateDto,
   MigrateDto,
-  CreatePatientDTOResponse,
   AuthenticateDto,
-  PatientDTO,
   NormalPatientCreateDto,
   PatientProfile,
   DependantProfile,
@@ -87,12 +85,12 @@ export class PatientController {
   })
   @ApiExtraModels(NormalPatientCreateDto, HomeTestPatientDto)
   @ApiAuthType(AuthTypes.Firebase)
-  @ApiResponse({type: PatientDTO})
+  @ApiResponse({type: PatientProfile})
   async add(
     @PublicDecorator() firebaseAuthUser: AuthUser,
     @Body() patientDto: PatientCreateDto,
     @OpnHeaders() opnHeaders: OpnCommonHeaders,
-  ): Promise<ResponseWrapper<PatientDTO>> {
+  ): Promise<ResponseWrapper<PatientProfile>> {
     let patient: Patient
 
     patientDto.authUserId = firebaseAuthUser.authUserId
@@ -123,8 +121,10 @@ export class PatientController {
       resultExitsForProvidedEmail = !!users.length
     }
 
+    const patientProfile = await this.patientService.getProfilebyId(patient.idPatient)
+
     return ResponseWrapper.actionSucceed(
-      CreatePatientDTOResponse({resultExitsForProvidedEmail, ...patient}),
+      patientProfileDto(patientProfile, {resultExitsForProvidedEmail}),
     )
   }
 
