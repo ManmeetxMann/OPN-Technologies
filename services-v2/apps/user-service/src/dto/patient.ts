@@ -129,6 +129,9 @@ export class PatientCreateDto {
   travelCountry?: string
 
   @IsOptional()
+  lastAppointment?: Date
+
+  @IsOptional()
   @IsBoolean()
   agreeToConductFHHealthAssessment?: boolean
 
@@ -254,6 +257,10 @@ export class PatientCreateAdminDto {
   @IsString()
   @IsOptional()
   travelCountry?: string
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  lastAppointment?: Date
 
   @ApiPropertyOptional()
   @IsBoolean()
@@ -441,4 +448,5 @@ export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   receiveNotificationsFromGov: patient?.digitalConsent?.receiveNotificationsFromGov,
   trainingCompletedOn: patient?.trainingCompletedOn,
   postalCode: patient.addresses?.postalCode,
+  lastAppointment: patient?.lastAppointment,
 })

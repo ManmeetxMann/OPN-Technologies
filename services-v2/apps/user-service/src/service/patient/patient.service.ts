@@ -286,6 +286,11 @@ export class PatientService {
     patient.isEmailVerified = data.isEmailVerified
     patient.photoUrl = data.photoUrl
     patient.consentFileUrl = data.consentFileUrl
+
+    if (data?.lastAppointment) {
+      patient.lastAppointment = new Date(data.lastAppointment)
+    }
+
     if (data.trainingCompletedOn) {
       patient.trainingCompletedOn = new Date()
     }
@@ -683,6 +688,10 @@ export class PatientService {
     updateDto.receiveNotificationsFromGov = data?.receiveNotificationsFromGov
     updateDto.receiveResultsViaEmail = data?.receiveResultsViaEmail
     updateDto.shareTestResultWithEmployer = data?.shareTestResultWithEmployer
+
+    if (data?.dateOfAppointment) {
+      updateDto.lastAppointment = new Date(data.dateOfAppointment)
+    }
 
     await this.updateProfile(patient.idPatient, updateDto)
   }
