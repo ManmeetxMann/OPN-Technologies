@@ -18,6 +18,7 @@ jobs:
     - uses: ./.github/actions/deploy-functions
       with:
         function_name: "hl7-egress"
+        trigger_topic: "presumptive-positive-result-topic"
         secret_file_name: "CF_HL7_EGRESS"
       name: Build & Deploy to Cloud Functions
       env:

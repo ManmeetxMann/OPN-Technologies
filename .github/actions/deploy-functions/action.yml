@@ -8,6 +8,15 @@ inputs:
     description: 'Secret File Nmae'
     required: true
     default: ""
+  trigger_topic:
+    description: 'Trigger Topic'
+    required: true
+    default: ""
+  region:
+    description: 'Resource Region'
+    required: true
+    default: "northamerica-northeast1"
+  
 
 runs:
   using: 'composite'
@@ -81,10 +90,13 @@ runs:
       npm run build
       gcloud functions deploy ${{ inputs.function_name }} \
         --entry-point=requestHandler \
+        --egress-settings=private-ranges-only \
+        --region=${{ inputs.region }} \
         --source=./dist \
         --runtime=nodejs12 \
         --memory=128MB \
-        --trigger-topic=pcr-test-topic \
+        --trigger-topic=${{ inputs.trigger_topic }} \
+        --vpc-connector=projects/${{ env.PROJECT_ID }}/locations/${{ inputs.region }}/connectors/connector-subnet1 \
         --env-vars-file=./.env
       echo "::endgroup::"
     shell: bash
