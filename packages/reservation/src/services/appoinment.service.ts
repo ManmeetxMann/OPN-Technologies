@@ -594,7 +594,8 @@ export class AppoinmentService {
       email: acuityAppointment.email,
       firstName: acuityAppointment.firstName,
       lastName: acuityAppointment.lastName,
-      organizationId: acuityAppointment.organizationId || organizationId || null,
+      organizationId:
+        acuityAppointment.organizationId || organizationId || Config.get('PUBLIC_ORG_ID'),
       packageCode: acuityAppointment.certificate,
       phone: acuityAppointment.phone,
       registeredNursePractitioner: acuityAppointment.registeredNursePractitioner,
@@ -1258,6 +1259,8 @@ export class AppoinmentService {
         hadCovidConfirmedOrSymptomsDate: patient.hadCovidConfirmedOrSymptomsDate,
         hadCovidExposerDate: patient.hadCovidExposerDate,
         hadCovidExposer: patient.hadCovidExposer,
+        travelID: patient.travelID,
+        travelIDIssuingCountry: patient.travelIDIssuingCountry,
         city: patient.city,
         province: patient.province,
         country: patient.country,
