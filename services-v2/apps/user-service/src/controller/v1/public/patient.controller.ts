@@ -1,5 +1,5 @@
 import {Body, Controller, Get, NotFoundException, Post, Put, UseGuards} from '@nestjs/common'
-import {ApiBearerAuth, ApiOperation, ApiTags} from '@nestjs/swagger'
+import {ApiBearerAuth, ApiBody, ApiExtraModels, ApiResponse, ApiTags, refs} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard} from '@opn-services/common/guard'
@@ -34,6 +34,9 @@ import {
   CreatePatientDTOResponse,
   AuthenticateDto,
   PatientDTO,
+  NormalPatientCreateDto,
+  PatientProfile,
+  DependantProfile,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
@@ -45,7 +48,7 @@ import {MagicLinkService} from '@opn-common-v1/service/messaging/magiclink-servi
 import {AuthShortCodeService} from '@opn-enterprise-v1/services/auth-short-code-service'
 import {OpnConfigService} from '@opn-services/common/services'
 import * as _ from 'lodash'
-import {ActionStatus} from '@opn-services/opn/model/common'
+import {ActionStatus} from '@opn-services/common/model'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -64,6 +67,7 @@ export class PatientController {
   @Get()
   @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
+  @ApiResponse({type: PatientProfile})
   async getById(
     @AuthUserDecorator() authUser: AuthUser,
   ): Promise<ResponseWrapper<PatientUpdateDto>> {
@@ -76,11 +80,14 @@ export class PatientController {
   }
 
   @Post()
-  @ApiOperation({
-    summary:
-      'Notice: email is required for normal patient, postalCode is required for Home Test Patient',
+  @ApiBody({
+    schema: {
+      oneOf: refs(NormalPatientCreateDto, HomeTestPatientDto),
+    },
   })
+  @ApiExtraModels(NormalPatientCreateDto, HomeTestPatientDto)
   @ApiAuthType(AuthTypes.Firebase)
+  @ApiResponse({type: PatientDTO})
   async add(
     @PublicDecorator() firebaseAuthUser: AuthUser,
     @Body() patientDto: PatientCreateDto,
@@ -167,6 +174,7 @@ export class PatientController {
   @Get('/dependants')
   @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
+  @ApiResponse({type: DependantProfile, isArray: true})
   async getDependents(@AuthUserDecorator() authUser: AuthUser): Promise<ResponseWrapper> {
     const patientExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
     if (!patientExists) {
@@ -186,6 +194,7 @@ export class PatientController {
   @Put()
   @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
+  @ApiResponse({type: PatientProfile})
   async update(
     @Body() patientUpdateDto: PatientUpdateDto,
     @AuthUserDecorator() authUser: AuthUser,
@@ -224,6 +233,7 @@ export class PatientController {
   @Post('/dependants')
   @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
+  @ApiResponse({type: DependantProfile})
   async addDependents(
     @Body() dependantBody: DependantCreateDto,
     @AuthUserDecorator() authUser: AuthUser,
