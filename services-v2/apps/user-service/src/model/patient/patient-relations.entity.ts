@@ -17,7 +17,7 @@ export class PatientToOrganization {
   @JoinColumn({name: 'patientId'})
   @Column({nullable: false})
   @ApiProperty({required: true})
-  patientId: string
+  patientId: number
 
   @Column({nullable: false})
   @ApiProperty({required: true})
@@ -38,7 +38,7 @@ export class PatientToDelegates {
   @JoinColumn({name: 'delegateId', referencedColumnName: 'idPatient'})
   @Column({nullable: false})
   @ApiProperty({required: true})
-  delegateId: string
+  delegateId: number
 
   @ManyToOne(
     () => Patient,
@@ -47,5 +47,5 @@ export class PatientToDelegates {
   @JoinColumn({name: 'dependantId', referencedColumnName: 'idPatient'})
   @Column()
   @ApiProperty()
-  dependantId: string
+  dependantId: number
 }

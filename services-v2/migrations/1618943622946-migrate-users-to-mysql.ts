@@ -203,7 +203,6 @@ function adaptPatientsData(user) {
     registrationId: userData.registrationId || '',
     createdOn: userData.timestamps?.createdAt,
     updatedOn: userData.timestamps?.updatedAt,
-    patientPublicId: '',
     dateOfBirth: '',
   }
 }

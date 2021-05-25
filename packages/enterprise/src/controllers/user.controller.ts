@@ -108,7 +108,6 @@ class UserController implements IControllerBase {
         phoneNumber: user.phoneNumber || '',
         isEmailVerified: false,
         firebaseKey: user.id,
-        patientPublicId: '', // @TODO Remove this field after merging PR related to this field
         registrationId: user.registrationId || '',
         dateOfBirth: '',
         dependants: [],

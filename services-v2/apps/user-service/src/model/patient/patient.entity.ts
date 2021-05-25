@@ -1,5 +1,4 @@
 import {
-  BeforeInsert,
   Column,
   Entity,
   Generated,
@@ -7,6 +6,7 @@ import {
   OneToMany,
   OneToOne,
   PrimaryColumn,
+  PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm'
 import {Auditable} from '../../../../../libs/common/src/model'
@@ -33,7 +33,7 @@ export class PatientAuth {
   @JoinColumn({name: 'patientId'})
   @Column({nullable: false})
   @ApiProperty({required: true})
-  patientId: string
+  patientId: number
 
   @Column()
   @Column({nullable: true, default: null})
@@ -64,7 +64,7 @@ export class PatientAddresses {
   @JoinColumn({name: 'patientId'})
   @Column({nullable: false})
   @ApiProperty({required: true})
-  patientId: string
+  patientId: number
 
   @Column({nullable: true, default: null})
   @ApiProperty({required: true})
@@ -206,20 +206,15 @@ export class PatientAdmin {
   @JoinColumn({name: 'patientId'})
   @Column({nullable: false})
   @ApiProperty({required: true})
-  patientId: string
+  patientId: number
 }
 
 @Entity('patient')
-@Unique(['patientPublicId', 'firebaseKey'])
+@Unique(['firebaseKey'])
 export class Patient extends Auditable {
-  @PrimaryColumn()
-  @Generated('uuid')
+  @PrimaryGeneratedColumn('increment')
   @ApiProperty({readOnly: true})
-  idPatient: string
-
-  @Column({nullable: false})
-  @ApiProperty({required: true})
-  patientPublicId?: string
+  idPatient: number
 
   @Column({nullable: false})
   @ApiProperty({required: true})
@@ -333,12 +328,4 @@ export class Patient extends Auditable {
     patientToOrganization => patientToOrganization.patientId,
   )
   organizations?: Organization[]
-
-  /** Hooks */
-  @BeforeInsert()
-  generatePublicId(): void {
-    this.patientPublicId = Math.random()
-      .toString(36)
-      .substring(2, 10)
-  }
 }

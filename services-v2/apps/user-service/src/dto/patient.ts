@@ -16,18 +16,29 @@ import {
 import {Organization} from '../model/organization/organization.entity'
 import {Patient} from '../model/patient/patient.entity'
 import {Type} from 'class-transformer'
+const publicPatientIdPrefix = process.env.PATIENT_ID_PREFIX || 'FH'
 
-export type AuthenticateDto = {
+export class AuthenticateDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
   patientId: string
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
   organizationId: string
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
   code: string
 }
 
 export class PatientCreateDto {
-  idPatient: string
+  idPatient: number
   firebaseKey: string // Firestore ID
   authUserId: string // Firestore authUserId
-  patientPublicId: string
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -117,6 +128,9 @@ export class PatientCreateDto {
   travelCountry?: string
 
   @IsOptional()
+  lastAppointment?: Date
+
+  @IsOptional()
   @IsBoolean()
   agreeToConductFHHealthAssessment?: boolean
 
@@ -146,10 +160,9 @@ export class PatientCreateDto {
 }
 
 export class PatientCreateAdminDto {
-  idPatient: string
+  idPatient: number
   firebaseKey: string // Firestore ID
   authUserId: string // Firestore authUserId
-  patientPublicId: string
 
   @ApiProperty()
   @IsEmail()
@@ -249,6 +262,10 @@ export class PatientCreateAdminDto {
   travelCountry?: string
 
   @ApiPropertyOptional()
+  @IsOptional()
+  lastAppointment?: Date
+
+  @ApiPropertyOptional()
   @IsBoolean()
   @IsOptional()
   agreeToConductFHHealthAssessment?: boolean
@@ -330,7 +347,7 @@ export class PatientUpdateAdminDto extends PartialType(PatientCreateAdminDto) {}
 
 export class PatientUpdateDto extends PartialType(PatientCreateAdminDto) {
   @IsOptional()
-  id?: string
+  id?: number
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -433,7 +450,7 @@ export const patientProfileDto = (
 ): PatientProfile => ({
   id: patient.idPatient,
   firebaseKey: patient?.firebaseKey,
-  patientPublicId: patient.patientPublicId,
+  patientPublicId: `${publicPatientIdPrefix}${String(patient.idPatient).padStart(6, '0')}`,
   firstName: patient.firstName,
   lastName: patient.lastName,
   dateOfBirth: patient.dateOfBirth,
@@ -459,12 +476,13 @@ export const patientProfileDto = (
   receiveNotificationsFromGov: patient?.digitalConsent?.receiveNotificationsFromGov,
   trainingCompletedOn: patient?.trainingCompletedOn,
   postalCode: patient.addresses?.postalCode,
+  lastAppointment: patient?.lastAppointment,
   resultExitsForProvidedEmail: metaData?.resultExitsForProvidedEmail,
 })
 
 export class PatientProfile extends PartialType(PatientCreateAdminDto) {
   @ApiPropertyOptional()
-  id: string
+  id: number
 
   @ApiPropertyOptional()
   firebaseKey: string

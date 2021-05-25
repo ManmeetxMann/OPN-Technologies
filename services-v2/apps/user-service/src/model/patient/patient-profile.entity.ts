@@ -19,7 +19,7 @@ export class PatientTravel extends Auditable {
   @JoinColumn({name: 'patientId'})
   @Column({nullable: false})
   @ApiProperty({required: true})
-  patientId: string
+  patientId: number
 
   @Column({nullable: true, default: null})
   @ApiProperty()
@@ -46,7 +46,7 @@ export class PatientHealth extends Auditable {
   @JoinColumn({name: 'patientId'})
   @Column({nullable: false})
   @ApiProperty({required: true})
-  patientId: string
+  patientId: number
 
   @Column()
   @ApiProperty()
@@ -73,7 +73,7 @@ export class PatientDigitalConsent extends Auditable {
   @JoinColumn({name: 'patientId'})
   @Column({nullable: false})
   @ApiProperty({required: true})
-  patientId: string
+  patientId: number
 
   @Column({nullable: true, default: null})
   @ApiProperty()

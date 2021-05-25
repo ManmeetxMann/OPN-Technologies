@@ -35,9 +35,6 @@ export class PatientTestUtility {
   createPatient(data: {email: string}): Promise<Patient> {
     return this.patientRepository.save({
       firebaseKey: 'TestFirebaseKey',
-      patientPublicId: `Test${Math.random()
-        .toString(36)
-        .substring(2, 10)}`,
       email: data.email,
       firstName: 'PATIENT_TEST_NAME',
       lastName: 'PATIENT_LNAME',
