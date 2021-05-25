@@ -26,7 +26,11 @@ class InternalConfirmatoryResultReceivedController implements IControllerBase {
     this.router.use('/', innerRouter)
   }
 
-  confirmatoryResultHandler = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  confirmatoryResultHandler = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       const {message} = req.body
       if (!message || !message.data) {

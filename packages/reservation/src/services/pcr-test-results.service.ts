@@ -168,12 +168,16 @@ export class PCRTestResultsService {
     pubsub.publish(data)
   }
 
-  async confirmatoryResult(data: string): Promise<void>{
+  async confirmatoryResult(data: string): Promise<void> {
     const result = await OPNPubSub.getPublishedData(data)
-    LogInfo('confirmatoryResult', 'Received', result as {
-      barCode: string,
-      result: ResultTypes
-    })
+    LogInfo(
+      'confirmatoryResult',
+      'Received',
+      result as {
+        barCode: string
+        result: ResultTypes
+      },
+    )
   }
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
