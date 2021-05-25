@@ -125,7 +125,7 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
     })
 
     LogInfo(functions.createUser, events.createUser, {
-      newUser: user,
+      newUser: user.id,
       createdBy: getUserId(res.locals.authenticatedUser),
     })
 
@@ -145,14 +145,11 @@ const updateUser: Handler = async (req, res, next): Promise<void> => {
   try {
     const {organizationId, groupId, ...source} = req.body as UpdateUserByAdminRequest
     const {userId} = req.params
-    const oldUser = await userService.getById(userId)
     const updatedUser = await userService.updateByAdmin(userId, source)
 
     await userSyncService.updateByAdmin(updatedUser.id, source)
     LogInfo(functions.updateUser, events.updateUser, {
-      oldUser,
-      updatedUser,
-      updatedBy: getUserId(res.locals.authenticatedUser),
+      userId,
     })
 
     // Assert that the group exists

@@ -220,8 +220,7 @@ export class PatientController {
 
     const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
     LogInfo(UserFunctions.update, UserEvent.updateProfile, {
-      oldUser: patientExists,
-      updatedUser,
+      userId: patientExists.idPatient,
       updatedBy: id,
     })
 
@@ -254,7 +253,7 @@ export class PatientController {
 
     const dependant = await this.patientService.createDependant(delegateId, dependantBody)
     LogInfo(UserFunctions.addDependents, UserEvent.createPatient, {
-      newUser: dependant,
+      newUserId: dependant.idPatient,
       createdBy: authUser.id,
     })
 
