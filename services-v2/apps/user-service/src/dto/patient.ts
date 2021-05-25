@@ -18,9 +18,20 @@ import {Patient} from '../model/patient/patient.entity'
 import {Type} from 'class-transformer'
 const publicPatientIdPrefix = process.env.PATIENT_ID_PREFIX || 'FH'
 
-export type AuthenticateDto = {
+export class AuthenticateDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
   patientId: string
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
   organizationId: string
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
   code: string
 }
 
