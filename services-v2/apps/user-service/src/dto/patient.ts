@@ -28,7 +28,6 @@ export class PatientCreateDto {
   idPatient: number
   firebaseKey: string // Firestore ID
   authUserId: string // Firestore authUserId
-  patientPublicId: string
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -427,7 +426,7 @@ export class PatientUpdatePubSubPayload extends PubSubPayload<PatientUpdatePubSu
 
 export class PatientDTO extends PartialType(PatientCreateDto) {
   @ApiPropertyOptional()
-  id: string
+  id: number
 
   @ApiPropertyOptional()
   patientPublicId: string
@@ -493,7 +492,7 @@ export const patientProfileDto = (patient: Patient): PatientProfile => ({
 
 export class PatientProfile extends PartialType(PatientCreateAdminDto) {
   @ApiPropertyOptional()
-  id: string
+  id: number
 
   @ApiPropertyOptional()
   firebaseKey: string
