@@ -168,6 +168,14 @@ export class PCRTestResultsService {
     pubsub.publish(data)
   }
 
+  async confirmatoryResult(data: string): Promise<void>{
+    const result = await OPNPubSub.getPublishedData(data)
+    LogInfo('confirmatoryResult', 'Received', result as {
+      barCode: string,
+      result: ResultTypes
+    })
+  }
+
   async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
     //Validate Result Exists for barCode and throws exception
     const pcrResultHistory = await this.getPCRResultsByBarCode(data.barCode)

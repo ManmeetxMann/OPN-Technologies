@@ -56,7 +56,6 @@ export const commonConfig: Record<string, string | string[] | number | boolean> 
   PUBSUB_TRACE_TOPIC: 'tracing',
   PUBSUB_TRACE_SUBSCRIPTION: 'executeTrace',
   PRESUMPTIVE_POSITIVE_RESULTS_TOPIC: 'presumptive-positive-result-topic',
-  SAMPLE_TO_MOUNT_SINAI_LAB_TOPIC: 'sample-to-mount-sinai-lab-topic',
   PATIENT_UPDATE_TOPIC: 'patient-update-topic',
 
   PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS: 12,
