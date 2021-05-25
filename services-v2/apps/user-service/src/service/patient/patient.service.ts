@@ -50,7 +50,7 @@ import {MessagingFactory} from '@opn-common-v1/service/messaging/messaging-servi
 import {safeTimestamp} from '@opn-common-v1/utils/datetime-util'
 import {AuthShortCodeRepository} from '@opn-enterprise-v1/repository/auth-short-code.repository'
 import {AuthShortCode} from '@opn-enterprise-v1/models/auth'
-import _ from 'lodash'
+import * as _ from 'lodash'
 import {ResourceNotFoundException} from '@opn-services/common/exception'
 import {PCRTestResultsRepository} from '@opn-services/user/repository/test-result.repository'
 import {AppointmentsRepository} from '@opn-reservation-v1/respository/appointments-repository'
