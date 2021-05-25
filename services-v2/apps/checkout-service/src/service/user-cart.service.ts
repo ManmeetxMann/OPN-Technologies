@@ -71,7 +71,7 @@ export class UserCardService {
     )
     const tax = round(discountedSum * this.hstTax)
     const total = round(discountedSum + tax)
-    const discountedPrice = Number((discountedSum - total).toFixed(2))
+    const discountedPrice = Math.round((discountedSum - total + Number.EPSILON) * 100) / 100
     if (total == 0) {
       return []
     }
