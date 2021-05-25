@@ -23,9 +23,20 @@ export type PatientDTO = Partial<PatientCreateDto> & {
   resultExitsForProvidedEmail?: boolean
 }
 
-export type AuthenticateDto = {
+export class AuthenticateDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
   patientId: string
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
   organizationId: string
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
   code: string
 }
 
