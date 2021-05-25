@@ -85,7 +85,7 @@ export class PatientService {
   /**
    * Get patient record by id
    */
-  async getbyId(patientId: string): Promise<Patient> {
+  async getbyId(patientId: number): Promise<Patient> {
     return this.patientRepository.findOne(patientId)
   }
 
@@ -93,7 +93,7 @@ export class PatientService {
    * Get patient profile with relations by id
    * @param patientId
    */
-  async getProfilebyId(patientId: string): Promise<Patient> {
+  async getProfilebyId(patientId: number): Promise<Patient> {
     return this.patientRepository.findOne(patientId, {
       relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth', 'organizations'],
     })
@@ -116,7 +116,7 @@ export class PatientService {
     )
   }
 
-  async getProfilesByIds(patientIds: string[]): Promise<Patient[]> {
+  async getProfilesByIds(patientIds: number[]): Promise<Patient[]> {
     return this.patientRepository.findByIds(patientIds, {
       relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth', 'organizations'],
     })
@@ -140,13 +140,13 @@ export class PatientService {
 
     if (nameOrId) {
       const lower = nameOrId.toLowerCase()
-      const matches = (property: Partial<keyof Patient>) =>
-        `LOWER(patient.${property}) like '%${lower}%'`
+      const matches = (property: Partial<keyof Patient>, value: string | number) =>
+        `LOWER(patient.${property}) like '%${value}%'`
       queryBuilder = queryBuilder.andWhere(
         new Brackets(sqb => {
-          sqb.where(matches('firstName'))
-          sqb.orWhere(matches('lastName'))
-          sqb.orWhere(matches('patientPublicId'))
+          sqb.where(matches('firstName', lower))
+          sqb.orWhere(matches('lastName', lower))
+          sqb.orWhere(matches('idPatient', Number(lower.slice(2))))
         }),
       )
     }
@@ -277,7 +277,7 @@ export class PatientService {
    * @param id
    * @param data
    */
-  async updateProfile(patientId: string, data: PatientUpdateDto): Promise<Patient> {
+  async updateProfile(patientId: number, data: PatientUpdateDto): Promise<Patient> {
     const patient = await this.getProfilebyId(patientId)
     data.idPatient = patientId
     patient.firstName = data.firstName
@@ -329,7 +329,7 @@ export class PatientService {
     return promises[0]
   }
 
-  async connectOrganization(patientId: string, firebaseOrganizationId: string): Promise<void> {
+  async connectOrganization(patientId: number, firebaseOrganizationId: string): Promise<void> {
     const patient = await this.getProfilebyId(patientId)
     if (!patient) {
       throw new NotFoundException('User with given id not found')
@@ -379,7 +379,7 @@ export class PatientService {
    * @param data child user data
    */
   async createDependant(
-    delegateId: string,
+    delegateId: number,
     data: DependantCreateDto | DependantCreateAdminDto,
   ): Promise<Patient> {
     const firebaseUser = await this.userRepository.add({
@@ -596,15 +596,15 @@ export class PatientService {
     }
   }
 
-  async getDirectDependents(patientId: string): Promise<Patient> {
+  async getDirectDependents(patientId: number): Promise<Patient> {
     return await this.patientRepository.findOne(patientId, {
       relations: ['dependants'],
     })
   }
 
   private async saveDependantOrDelegate(
-    delegateId: string,
-    dependantId: string,
+    delegateId: number,
+    dependantId: number,
     idPatientToDelegates?: string,
   ) {
     const patientToDelegates = new PatientToDelegates()
@@ -617,7 +617,7 @@ export class PatientService {
   /**
    * Validate ownership on patientId sent by client
    */
-  async isResourceOwner(patientId: string, authUserId: string): Promise<boolean> {
+  async isResourceOwner(patientId: number, authUserId: string): Promise<boolean> {
     const patient = await this.patientRepository.findOne(patientId, {
       relations: ['auth'],
     })
@@ -629,7 +629,7 @@ export class PatientService {
    * Update or insert push token
    */
   async upsertPushToken(
-    patientId: string,
+    patientId: number,
     registrationId: string,
     registration: Omit<Registration, 'id'>,
   ): Promise<void> {

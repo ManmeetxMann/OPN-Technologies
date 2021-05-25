@@ -86,7 +86,6 @@ class UserController implements IControllerBase {
             photoUrl: user.base64Photo ?? null,
             firebaseKey: user.id,
             isEmailVerified: false,
-            patientPublicId: '',
             registrationId: user.registrationId || '', // @TODO Remove this field after merging PR related to this field
             dateOfBirth: '',
             dependants: [],

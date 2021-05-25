@@ -16,6 +16,7 @@ import {
 import {Organization} from '../model/organization/organization.entity'
 import {Patient} from '../model/patient/patient.entity'
 import {Type} from 'class-transformer'
+const publicPatientIdPrefix = process.env.PATIENT_ID_PREFIX || 'FH'
 
 export type AuthenticateDto = {
   patientId: string
@@ -24,10 +25,9 @@ export type AuthenticateDto = {
 }
 
 export class PatientCreateDto {
-  idPatient: string
+  idPatient: number
   firebaseKey: string // Firestore ID
   authUserId: string // Firestore authUserId
-  patientPublicId: string
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -146,10 +146,9 @@ export class PatientCreateDto {
 }
 
 export class PatientCreateAdminDto {
-  idPatient: string
+  idPatient: number
   firebaseKey: string // Firestore ID
   authUserId: string // Firestore authUserId
-  patientPublicId: string
 
   @ApiProperty()
   @IsEmail()
@@ -330,7 +329,7 @@ export class PatientUpdateAdminDto extends PartialType(PatientCreateAdminDto) {}
 
 export class PatientUpdateDto extends PartialType(PatientCreateAdminDto) {
   @IsOptional()
-  id?: string
+  id?: number
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -427,7 +426,7 @@ export class PatientUpdatePubSubPayload extends PubSubPayload<PatientUpdatePubSu
 
 export class PatientDTO extends PartialType(PatientCreateDto) {
   @ApiPropertyOptional()
-  id: string
+  id: number
 
   @ApiPropertyOptional()
   patientPublicId: string
@@ -452,7 +451,7 @@ export const CreatePatientDTOResponse = (
   firstName: patient.firstName,
   lastName: patient.lastName,
   phoneNumber: patient.phoneNumber,
-  patientPublicId: patient.patientPublicId,
+  patientPublicId: `${publicPatientIdPrefix}${String(patient.idPatient).padStart(6, '0')}`,
   dateOfBirth: patient.dateOfBirth,
   photoUrl: patient.photoUrl,
   lastAppointment: patient.lastAppointment,
@@ -463,7 +462,7 @@ export const CreatePatientDTOResponse = (
 export const patientProfileDto = (patient: Patient): PatientProfile => ({
   id: patient.idPatient,
   firebaseKey: patient?.firebaseKey,
-  patientPublicId: patient.patientPublicId,
+  patientPublicId: `${publicPatientIdPrefix}${String(patient.idPatient).padStart(6, '0')}`,
   firstName: patient.firstName,
   lastName: patient.lastName,
   dateOfBirth: patient.dateOfBirth,
@@ -493,7 +492,7 @@ export const patientProfileDto = (patient: Patient): PatientProfile => ({
 
 export class PatientProfile extends PartialType(PatientCreateAdminDto) {
   @ApiPropertyOptional()
-  id: string
+  id: number
 
   @ApiPropertyOptional()
   firebaseKey: string
