@@ -115,7 +115,7 @@ class UserController implements IControllerBase {
       })
 
       LogInfo(functions.connect, events.createUser, {
-        newUser: user,
+        newUser: user.id,
         createdBy: user.id,
       })
 
@@ -144,7 +144,6 @@ class UserController implements IControllerBase {
       return
     }
 
-    console.log(req.body.key)
     const response = {
       // data : {
 
@@ -214,7 +213,6 @@ class UserController implements IControllerBase {
     try {
       const {userId} = req.params
       const {registrationId} = req.body
-      const user = this.userService.findOne(userId)
 
       // Add to user
       await this.userService.updateProperties(userId, {registrationId})
@@ -222,10 +220,8 @@ class UserController implements IControllerBase {
       // Add to registry
       await this.registrationService.linkUser(registrationId, userId)
 
-      const updatedUser = this.userService.findOne(userId)
       LogInfo(functions.userEdit, events.updateUser, {
-        user,
-        updatedUser,
+        userId,
         updatedBy: getUserId(res.locals.authenticatedUser),
       })
       res.json(actionSucceed())
@@ -238,7 +234,6 @@ class UserController implements IControllerBase {
   userEdit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {userId} = req.params
-      const user = this.userService.findOne(userId)
       const userEditDetails = req.body as UserEdit
 
       let propertiesToUpdate = {
@@ -261,10 +256,8 @@ class UserController implements IControllerBase {
         await this.userService.updateProperties(userId, propertiesToUpdate)
       }
 
-      const updatedUser = this.userService.findOne(userId)
       LogInfo(functions.userEdit, events.updateUser, {
-        user,
-        updatedUser,
+        userId,
         updatedBy: getUserId(res.locals.authenticatedUser),
       })
 

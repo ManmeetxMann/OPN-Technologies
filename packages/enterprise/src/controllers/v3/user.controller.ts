@@ -139,7 +139,7 @@ const create: Handler = async (req, res, next): Promise<void> => {
     )
 
     LogInfo(functions.create, events.createUser, {
-      newUser: user,
+      userId: user.id,
       createdBy: 'API',
     })
 
@@ -237,14 +237,12 @@ const update: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as AuthUser
     const source = req.body as UpdateUserRequest
-    const oldUser = await userService.getById(authenticatedUser.id)
     const updatedUser = await userService.update(authenticatedUser.id, source)
 
     await userSyncService.update(updatedUser.id, source)
 
     LogInfo(functions.update, events.updateUser, {
-      oldUser,
-      updatedUser,
+      userId: authenticatedUser.id,
       updatedBy: getUserId(res.locals.authenticatedUser),
     })
 

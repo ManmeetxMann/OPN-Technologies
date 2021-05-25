@@ -1,4 +1,4 @@
-import {Injectable} from '@nestjs/common'
+import {forwardRef, Inject, Injectable} from '@nestjs/common'
 
 // Common
 import DataStore from '@opn-common-v1/data/datastore'
@@ -22,7 +22,7 @@ import {UserOrderRepository} from '../repository/user-order.repository'
 import {AcuityTypesRepository} from '../repository/acuity-types.repository'
 
 // Models
-import {CardItemDBModel, CartItemStatus, CouponErrorsEnum} from '../model/cart'
+import {CardItemDBModel, CartItemStatus} from '../model/cart'
 import {
   CartAddDto,
   CartItemDto,
@@ -38,12 +38,11 @@ import {OpnConfigService} from '@opn-services/common/services'
 
 import {CartEvent, CartFunctions} from '@opn-services/common/types/activity-logs'
 import {LogError} from '@opn-services/common/utils/logging'
-import {DiscountTypes} from '@opn-reservation-v1/models/coupons'
 
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
 import {acuityTypesSchema, cartItemSchema} from '@opn-services/common/schemas'
-import {AcuityErrorValues} from '@opn-reservation-v1/models/acuity'
 import {toFormattedIso} from '@opn-services/checkout/utils/times'
+import {UserCardDiscountService} from './user-cart-discount.service'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -61,9 +60,13 @@ export class UserCardService {
   public timeSlotNotAvailMsg = 'Time Slot Unavailable: Book Another Slot'
   private cartChunkSize = 20
 
-  constructor(private configService: OpnConfigService) {}
+  constructor(
+    @Inject(forwardRef(() => UserCardDiscountService))
+    private userCardDiscountService: UserCardDiscountService,
+    private configService: OpnConfigService,
+  ) {}
 
-  private buildPaymentSummary(cartItems: CartItemDto[]): CartSummaryDto[] {
+  buildPaymentSummary(cartItems: CartItemDto[]): CartSummaryDto[] {
     const round = num => Math.round(num * 100) / 100
     const discountedSum = cartItems.reduce(
       (sum, item) => sum + (item.discountedPrice || item.price || 0),
@@ -100,10 +103,7 @@ export class UserCardService {
     return paymentSummary
   }
 
-  private async fetchUserAllCartItem(
-    userId: string,
-    organizationId: string,
-  ): Promise<CardItemDBModel[]> {
+  async fetchUserAllCartItem(userId: string, organizationId: string): Promise<CardItemDBModel[]> {
     const userOrgId = `${userId}_${organizationId}`
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
     const cartDBItems = await userCartItemRepository.fetchAll()
@@ -281,7 +281,7 @@ export class UserCardService {
     const cartItems = cartDBItems.map(cartDB => {
       let cartItem = new CartItemDto()
 
-      const discountedPrice = this.countDiscount(
+      const discountedPrice = this.userCardDiscountService.countDiscount(
         parseFloat(cartDB.appointmentType.price),
         cartDB.discountData?.discountType,
         cartDB.discountData?.discountAmount,
@@ -389,8 +389,35 @@ export class UserCardService {
     })
 
     const cartItems = await Promise.all(cardItemDdModel)
+    const couponName = await this.getCouponName(userOrgId)
+    await this.userCartRepository.addBatch(userOrgId, cartItems, couponName)
+    const isCouponNameExists = await this.checkCouponName(userOrgId)
+    if (isCouponNameExists) {
+      await Promise.all(
+        cartItems.map(cartItem => {
+          return this.userCardDiscountService.discountSingleItem({
+            userId,
+            organizationId,
+            coupon: couponName,
+            cartItem,
+          })
+        }),
+      )
+    }
+  }
 
-    await this.userCartRepository.addBatch(userOrgId, cartItems)
+  async checkCouponName(userOrgId: string): Promise<boolean> {
+    const userCartRepository = new UserCartRepository(this.dataStore)
+    const userCartData = await userCartRepository.findOneById(userOrgId)
+
+    return !!userCartData?.couponName
+  }
+
+  async getCouponName(userOrgId: string): Promise<string> {
+    const userCartRepository = new UserCartRepository(this.dataStore)
+    const userCartData = await userCartRepository.findOneById(userOrgId)
+
+    return userCartData?.couponName
   }
 
   async updateItem(userOrgId: string, cartItems: CartUpdateRequestDto): Promise<void> {
@@ -478,96 +505,6 @@ export class UserCardService {
     const cartDdItems = await this.fetchUserAllCartItem(userId, organizationId)
     const cardValidation = await this.validateCart(cartDdItems)
     return {cartDdItems, cardValidation}
-  }
-
-  async discount(coupon: string, userId: string, organizationId: string): Promise<CartResponseDto> {
-    const userOrgId = `${userId}_${organizationId}`
-    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
-
-    const cardItems = await this.fetchUserAllCartItem(userId, organizationId)
-    const discountedCartItems = await Promise.all(
-      cardItems.map(async cartItem => {
-        let discount
-        let err
-        try {
-          discount = await this.acuityRepository.checkCoupon(
-            coupon,
-            cartItem.appointment.appointmentTypeId,
-          )
-        } catch (e) {
-          for (const acuityErrorsKey in AcuityErrorValues) {
-            if (e.message === AcuityErrorValues[acuityErrorsKey]) {
-              err = e.message
-            }
-          }
-        }
-        if (discount?.discountAmount <= 0) {
-          err = CouponErrorsEnum.exceed_count
-        }
-        const [cartItemDataDb] = await userCartItemRepository.findWhereEqual(
-          'cartItemId',
-          cartItem.cartItemId,
-        )
-        return userCartItemRepository.updateProperties(
-          cartItemDataDb.id,
-          err
-            ? {
-                appointmentType: {
-                  ...cartItem.appointmentType,
-                },
-                discountData: {
-                  error: err,
-                },
-              }
-            : {
-                appointmentType: {
-                  ...cartItem.appointmentType,
-                },
-                discountData: {
-                  discountType: discount.discountType,
-                  discountAmount: discount.discountAmount,
-                  name: discount.name,
-                  couponId: discount.couponID,
-                  expiration: discount.expiration,
-                },
-              },
-        )
-      }),
-    )
-    const cartItems = discountedCartItems.map(cartDB => ({
-      cartItemId: cartDB.cartItemId,
-      label: cartDB.appointmentType.name,
-      subLabel: cartDB.appointment.calendarName,
-      patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
-      date: toFormattedIso(cartDB.appointment.time),
-      price: parseFloat(cartDB.appointmentType.price),
-      userId: cartDB.patient.userId,
-      discountedPrice: this.countDiscount(
-        parseFloat(cartDB.appointmentType.price),
-        cartDB.discountData.discountType,
-        cartDB.discountData.discountAmount,
-      ),
-      discountedError: cartDB.discountData.error,
-    }))
-
-    const couponCode = discountedCartItems.find(cartItem => cartItem?.discountData?.name)
-    return {
-      cartItems: cartItems,
-      paymentSummary: this.buildPaymentSummary(cartItems),
-      cart: {
-        couponCode: couponCode?.discountData ? couponCode.discountData.name : null,
-      },
-    }
-  }
-  private countDiscount(
-    initialPrice: number,
-    discountType: DiscountTypes,
-    discountAmount: number,
-  ): number {
-    // eslint-disable-next-line max-lines
-    return discountType === DiscountTypes.percentage
-      ? initialPrice - (initialPrice * discountAmount) / 100
-      : initialPrice - discountAmount
   }
 
   /**

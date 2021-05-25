@@ -22,7 +22,11 @@ export class UserCartRepository extends DataModel<UserCartDBModel> {
     super(dataStore)
   }
 
-  async addBatch(userOrgId: string, items: Omit<CardItemDBModel, 'id'>[]): Promise<unknown> {
+  async addBatch(
+    userOrgId: string,
+    items: Omit<CardItemDBModel, 'id'>[],
+    couponName: string,
+  ): Promise<unknown> {
     const cartCollection = this.datastore.firestoreORM.collection({path: this.rootPath})
     const batch = this.datastore.firestoreAdmin.firestore().batch()
 
@@ -34,11 +38,23 @@ export class UserCartRepository extends DataModel<UserCartDBModel> {
       const newItem = userItems.doc()
       batch.set(newItem, item)
     })
+    const props = !!couponName ? {updateOn: now(), couponName} : {updateOn: now()}
 
     // Update cart time
-    batch.set(userDoc, {updateOn: now()})
+    batch.set(userDoc, props)
 
     return batch.commit()
+  }
+
+  async addOrUpdateCouponName(userOrgId: string, couponName: string): Promise<void> {
+    const repo = this.datastore.firestoreAdmin
+      .firestore()
+      .collection(this.rootPath)
+      .doc(userOrgId)
+    repo.update({
+      couponName,
+      updateOn: now(),
+    })
   }
 }
 

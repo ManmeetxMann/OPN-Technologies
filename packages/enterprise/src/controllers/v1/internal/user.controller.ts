@@ -97,7 +97,7 @@ class UserController implements IControllerBase {
           },
         )
         LogInfo(functions.findOrCreateUser, events.createUser, {
-          newUser: user,
+          newUser: user.id,
           createdBy: 'WEBHOOK',
         })
 
