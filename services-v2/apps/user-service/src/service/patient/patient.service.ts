@@ -47,6 +47,7 @@ import {AuthUser, UserStatus} from '@opn-common-v1/data/user'
 import {Registration} from '@opn-common-v1/data/registration'
 import {RegistrationService} from '@opn-common-v1/service/registry/registration-service'
 import {MessagingFactory} from '@opn-common-v1/service/messaging/messaging-service'
+import {safeTimestamp} from '@opn-common-v1/utils/datetime-util'
 import {AuthShortCodeRepository} from '@opn-enterprise-v1/repository/auth-short-code.repository'
 import {AuthShortCode} from '@opn-enterprise-v1/models/auth'
 import _ from 'lodash'
@@ -287,6 +288,11 @@ export class PatientService {
     patient.isEmailVerified = data.isEmailVerified
     patient.photoUrl = data.photoUrl
     patient.consentFileUrl = data.consentFileUrl
+
+    if (data?.lastAppointment) {
+      patient.lastAppointment = safeTimestamp(data.lastAppointment)
+    }
+
     if (data.trainingCompletedOn) {
       patient.trainingCompletedOn = new Date()
     }
@@ -687,6 +693,10 @@ export class PatientService {
     updateDto.receiveNotificationsFromGov = data?.receiveNotificationsFromGov
     updateDto.receiveResultsViaEmail = data?.receiveResultsViaEmail
     updateDto.shareTestResultWithEmployer = data?.shareTestResultWithEmployer
+
+    if (data?.dateOfAppointment) {
+      updateDto.lastAppointment = safeTimestamp(data.dateOfAppointment)
+    }
 
     await this.updateProfile(patient.idPatient, updateDto)
   }
