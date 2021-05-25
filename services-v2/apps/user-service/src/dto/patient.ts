@@ -16,6 +16,7 @@ import {
 import {Organization} from '../model/organization/organization.entity'
 import {Patient} from '../model/patient/patient.entity'
 import {Type} from 'class-transformer'
+const publicPatientIdPrefix = process.env.PATIENT_ID_PREFIX || 'FH'
 
 export type PatientDTO = Partial<PatientCreateDto> & {
   lastAppointment: Date
@@ -403,7 +404,7 @@ export const CreatePatientDTOResponse = (
   firstName: patient.firstName,
   lastName: patient.lastName,
   phoneNumber: patient.phoneNumber,
-  patientPublicId: `${process.env.PATIENT_ID_PREFIX}${String(patient.idPatient).padStart(6, '0')}`,
+  patientPublicId: `${publicPatientIdPrefix}${String(patient.idPatient).padStart(6, '0')}`,
   dateOfBirth: patient.dateOfBirth,
   photoUrl: patient.photoUrl,
   lastAppointment: patient.lastAppointment,
@@ -414,7 +415,7 @@ export const CreatePatientDTOResponse = (
 export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   id: patient.idPatient,
   firebaseKey: patient?.firebaseKey,
-  patientPublicId: `${process.env.PATIENT_ID_PREFIX}${String(patient.idPatient).padStart(6, '0')}`,
+  patientPublicId: `${publicPatientIdPrefix}${String(patient.idPatient).padStart(6, '0')}`,
   firstName: patient.firstName,
   lastName: patient.lastName,
   dateOfBirth: patient.dateOfBirth,
