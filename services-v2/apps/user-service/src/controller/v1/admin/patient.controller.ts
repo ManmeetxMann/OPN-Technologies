@@ -1,5 +1,5 @@
 import {Body, Controller, Get, Param, Post, Put, Query, UseGuards} from '@nestjs/common'
-import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
+import {ApiBearerAuth, ApiResponse, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard} from '@opn-services/common/guard'
@@ -12,11 +12,14 @@ import {assignWithoutUndefined, ResponseStatusCodes} from '@opn-services/common/
 import {AuthUserDecorator} from '@opn-services/common/decorator'
 import {Patient} from '../../../model/patient/patient.entity'
 import {
-  DependantCreateDto,
   PatientCreateAdminDto,
   PatientFilter,
   PatientUpdateDto,
   patientProfileDto,
+  DependantCreateAdminDto,
+  PatientUpdateAdminDto,
+  PatientProfile,
+  DependantProfile,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
@@ -32,7 +35,8 @@ export class AdminPatientController {
 
   @Get()
   @Roles([RequiredUserPermission.PatientsAdmin])
-  async getAll(@Query() filter: PatientFilter): Promise<ResponseWrapper<PatientUpdateDto[]>> {
+  @ApiResponse({type: PatientProfile, isArray: true})
+  async getAll(@Query() filter: PatientFilter): Promise<ResponseWrapper<PatientProfile[]>> {
     const {data, page, totalItems, totalPages} = await this.patientService.getAll(
       assignWithoutUndefined(filter, new PatientFilter()),
     )
@@ -49,6 +53,7 @@ export class AdminPatientController {
 
   @Get('/:patientId')
   @Roles([RequiredUserPermission.PatientsAdmin])
+  @ApiResponse({type: PatientProfile})
   async getById(@Param('patientId') id: string): Promise<ResponseWrapper<PatientUpdateDto>> {
     const patient = await this.patientService.getProfilebyId(id)
 
@@ -61,7 +66,10 @@ export class AdminPatientController {
 
   @Get('/:patientId/dependants')
   @Roles([RequiredUserPermission.PatientsAdmin])
-  async getDependents(@Param('patientId') id: string): Promise<ResponseWrapper> {
+  @ApiResponse({type: DependantProfile, isArray: true})
+  async getDependents(
+    @Param('patientId') id: string,
+  ): Promise<ResponseWrapper<DependantProfile[]>> {
     const patientExists = await this.patientService.getProfilebyId(id)
     if (!patientExists) {
       throw new ResourceNotFoundException('User with given id not found')
@@ -79,6 +87,7 @@ export class AdminPatientController {
 
   @Post()
   @Roles([RequiredUserPermission.PatientsAdmin])
+  @ApiResponse({type: Patient})
   async add(
     @Body() patientDto: PatientCreateAdminDto,
     @AuthUserDecorator() authUser: AuthUser,
@@ -104,7 +113,7 @@ export class AdminPatientController {
   async update(
     @AuthUserDecorator() authUser: AuthUser,
     @Param('patientId') id: string,
-    @Body() patientUpdateDto: PatientUpdateDto,
+    @Body() patientUpdateDto: PatientUpdateAdminDto,
   ): Promise<ResponseWrapper> {
     const patientExists = await this.patientService.getbyId(id)
 
@@ -127,7 +136,7 @@ export class AdminPatientController {
   @Roles([RequiredUserPermission.PatientsAdmin])
   async addDependents(
     @Param('patientId') delegateId: string,
-    @Body() dependantBody: DependantCreateDto,
+    @Body() dependantBody: DependantCreateAdminDto,
   ): Promise<ResponseWrapper<Patient>> {
     const delegateExists = await this.patientService.getbyId(delegateId)
 
