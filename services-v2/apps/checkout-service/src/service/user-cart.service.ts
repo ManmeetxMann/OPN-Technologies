@@ -42,7 +42,7 @@ import {LogError} from '@opn-services/common/utils/logging'
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
 import {acuityTypesSchema, cartItemSchema} from '@opn-services/common/schemas'
 import {toFormattedIso} from '@opn-services/checkout/utils/times'
-import {UserCardDiscountService} from './user-cart-discount.service'
+import {UserCardDiscountService} from '@opn-services/checkout/service'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
