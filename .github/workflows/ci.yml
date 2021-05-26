@@ -8,6 +8,7 @@ on:
       - '.github/workflows/ci_cloud_function_sms_notification.yml'
     branches:
       - master
+      - develop
 jobs:
   build:
     runs-on: ubuntu-18.04

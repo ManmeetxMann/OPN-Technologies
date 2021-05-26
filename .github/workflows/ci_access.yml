@@ -9,6 +9,7 @@ on:
       - ".github/actions/**"
     branches: 
       - master
+      - develop
     tags:
       - infra-dev-access-*
       - infra-dev-all-*
