@@ -371,6 +371,12 @@ export class LinkToAccountDto {
   encryptedToken: string
 }
 
+export class CouponDto {
+  @ApiProperty()
+  @IsString()
+  email: string
+}
+
 export enum migrationActions {
   Merge = 'MERGE',
   New = 'NEW',
