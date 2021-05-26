@@ -42,7 +42,6 @@ export class TestResultController {
       throw new ResourceNotFoundException('Home kit not found')
     }
 
-    // TODO userId te authUser.id
     const isOrgIdValid = organizationId
       ? await this.testResultService.validateOrganization(organizationId, userId)
       : null

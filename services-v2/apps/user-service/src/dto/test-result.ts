@@ -1,5 +1,5 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsDateString, IsNotEmpty, IsOptional, IsString, IsUrl} from 'class-validator'
+import {IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl} from 'class-validator'
 
 enum TestTypes {
   Positive = 'Positive',
@@ -33,7 +33,7 @@ export class TestResultCreateDto {
   photoUrl: string
 
   @ApiProperty()
-  @IsString()
+  @IsNumber()
   @IsOptional()
   dependantId?: number
 
