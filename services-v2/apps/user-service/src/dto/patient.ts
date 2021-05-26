@@ -484,6 +484,7 @@ export const patientProfileDto = (
   postalCode: patient.addresses?.postalCode,
   lastAppointment: patient?.lastAppointment,
   resultExitsForProvidedEmail: metaData?.resultExitsForProvidedEmail,
+  isEmailVerified: patient.isEmailVerified ?? false,
 })
 
 export class PatientProfile extends PartialType(PatientCreateAdminDto) {
