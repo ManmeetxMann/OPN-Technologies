@@ -5,7 +5,7 @@ on:
     paths:
       - "packages/tools-pages/**"
       - ".github/workflows/ci_tools-pages.yml"
-    branches: [ master ]
+    branches: [ develop ]
 
 jobs:
   build:

@@ -62,7 +62,7 @@
         "@types/pdfmake": "^0.1.16",
         "copyfiles": "^2.3.0",
         "eslint": "^7.3.1",
-        "jest": "^26.1.0",
+        "jest": "^27.0.1",
         "rimraf": "^3.0.2",
         "ts-jest": "^26.1.1",
         "ts-node": "^10.0.0",
