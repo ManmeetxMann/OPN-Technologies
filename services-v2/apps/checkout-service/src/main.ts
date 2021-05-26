@@ -23,7 +23,7 @@ import {UserCardService, StripeService} from '@opn-services/checkout/service'
 // Controllers
 import {CartController} from './controller/v1/public/cart.controller'
 import {CartInternalController} from './controller/v1/internal/cart.controller'
-import {UserCardDiscountService} from 'apps/checkout-service/src/service/user-cart-discount.service'
+import {UserCardDiscountService} from '@opn-services/checkout/service'
 
 @Module({
   imports: [CommonModule, StripeService, AppoinmentService, UserService],

@@ -15,7 +15,7 @@ import {
   CouponRequestDto,
   CartItemResponse,
 } from '@opn-services/checkout/dto'
-import {UserCardDiscountService} from 'apps/checkout-service/src/service/user-cart-discount.service'
+import {UserCardDiscountService} from '@opn-services/checkout/service'
 import {UserCardService, StripeService} from '@opn-services/checkout/service'
 import {CardItemDBModel, CartItemStatus} from '@opn-services/checkout/model/cart'
 
