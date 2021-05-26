@@ -442,43 +442,13 @@ export class PatientUpdatePubSubPayload extends PubSubPayload<PatientUpdatePubSu
   message: PatientUpdatePubSubMessage
 }
 
-export class PatientDTO extends PartialType(PatientCreateDto) {
-  @ApiPropertyOptional()
-  id: number
-
-  @ApiPropertyOptional()
-  patientPublicId: string
-
-  @ApiPropertyOptional()
-  phoneNumber: string
-
-  @ApiPropertyOptional()
-  lastAppointment: Date
-
-  @ApiPropertyOptional()
-  trainingCompletedOn: Date
-
-  @ApiPropertyOptional()
-  resultExitsForProvidedEmail?: boolean
-}
-
-export const CreatePatientDTOResponse = (
-  patient: Omit<Patient, 'generatePublicId'> & {resultExitsForProvidedEmail?: boolean},
-): PatientDTO => ({
-  id: patient.idPatient,
-  firstName: patient.firstName,
-  lastName: patient.lastName,
-  phoneNumber: patient.phoneNumber,
-  patientPublicId: `${publicPatientIdPrefix}${String(patient.idPatient).padStart(6, '0')}`,
-  dateOfBirth: patient.dateOfBirth,
-  photoUrl: patient.photoUrl,
-  lastAppointment: patient.lastAppointment,
-  trainingCompletedOn: patient.trainingCompletedOn,
-  resultExitsForProvidedEmail: patient.resultExitsForProvidedEmail,
-})
-
-export const patientProfileDto = (patient: Patient): PatientProfile => ({
-  id: patient.idPatient,
+export const patientProfileDto = (
+  patient: Patient,
+  metaData?: {
+    resultExitsForProvidedEmail?: boolean
+  },
+): PatientProfile => ({
+  id: patient.idPatient.toString(),
   firebaseKey: patient?.firebaseKey,
   patientPublicId: `${publicPatientIdPrefix}${String(patient.idPatient).padStart(6, '0')}`,
   firstName: patient.firstName,
@@ -507,17 +477,21 @@ export const patientProfileDto = (patient: Patient): PatientProfile => ({
   trainingCompletedOn: patient?.trainingCompletedOn,
   postalCode: patient.addresses?.postalCode,
   lastAppointment: patient?.lastAppointment,
+  resultExitsForProvidedEmail: metaData?.resultExitsForProvidedEmail,
 })
 
 export class PatientProfile extends PartialType(PatientCreateAdminDto) {
   @ApiPropertyOptional()
-  id: number
+  id: string
 
   @ApiPropertyOptional()
   firebaseKey: string
 
   @ApiPropertyOptional()
   patientPublicId: string
+
+  @ApiPropertyOptional()
+  resultExitsForProvidedEmail?: boolean
 }
 
 export class DependantProfile extends OmitType(PatientProfile, ['email', 'authUserId'] as const) {}
