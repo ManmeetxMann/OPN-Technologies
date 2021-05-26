@@ -29,7 +29,7 @@ type AppointmentData = {
 
 const sendMessage = async (appointment:AppointmentData) => {
   console.log('Message Sending')
-  fetch('http://192.168.68.18:6011', {
+  fetch('http://192.168.68.34:6011', {
     method: 'post',
     body: JSON.stringify(appointment),
     headers: { 'Content-Type': 'application/json' },
