@@ -132,9 +132,13 @@ describe('AdminPatientController (e2e)', () => {
   afterAll(async () => {
     await Promise.all([
       deleteUserByIdTestDataCreator(userId, testDataCreator),
+      patientTestUtility.findAndRemoveProfile({idPatient: mockedUser.idPatient}),
       patientTestUtility.findAndRemoveProfile({firstName: userCreatePayload.firstName}),
     ])
-    await patientTestUtility.patientRepository.delete(mockedUser.idPatient)
+    await Promise.all([
+      patientTestUtility.patientRepository.delete({firstName: userCreatePayload.firstName}),
+      patientTestUtility.patientRepository.delete(mockedUser.idPatient),
+    ])
     await app.close()
   })
 })
