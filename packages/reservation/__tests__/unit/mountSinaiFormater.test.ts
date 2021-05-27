@@ -5,7 +5,6 @@ import {Gender, TestTypes} from '../../src/models/appointment'
 import {firestore} from 'firebase-admin'
 
 describe('Mount Sinai', () => {
-  console.log('test')
   test('mount sinai formatter', (done) => {
     const data = {
       patientCode: 'FH000001', //FA...
@@ -27,7 +26,6 @@ describe('Mount Sinai', () => {
 
     const mountSinaiFormater = new MountSinaiFormater(data)
     const formatedORMData = mountSinaiFormater.get()
-    console.log(formatedORMData)
     MountSinaiSchema.validateAsync(formatedORMData)
       .then(() => {
         done()
