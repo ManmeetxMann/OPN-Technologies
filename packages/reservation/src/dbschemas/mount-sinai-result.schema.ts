@@ -1,0 +1,32 @@
+import * as Joi from 'joi'
+
+export default Joi.object({
+  patientCode: Joi.string().required(),
+  barCode: Joi.string().required(),
+  dateTime: Joi.string().required(),
+  firstName: Joi.string().required(),
+  lastName: Joi.string().required(),
+  healthCard: Joi.string().allow(''),
+  dateOfBirth: Joi.string().required(),
+  gender: Joi.number().required().valid(0, 1, 2, 3, 4, 5),
+  address1: Joi.string().required(),
+  address2: Joi.string().allow(''),
+  city: Joi.string().allow(''),
+  province: Joi.string().allow(''),
+  postalCode: Joi.string().allow(''),
+  country: Joi.string().allow(''),
+  clinicCode: Joi.string().required(),
+  testType: Joi.string()
+    .required()
+    .valid(
+      'PCR',
+      'RapidAntigen',
+      'Temperature',
+      'Attestation',
+      'EmergencyRapidAntigen',
+      'Antibody_All',
+      'Antibody_IgM',
+      'ExpressPCR',
+    ),
+  specimenSource: Joi.number().required().valid(0, 1, 2, 3, 4, 5, 6),
+})

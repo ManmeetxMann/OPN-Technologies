@@ -43,4 +43,9 @@ export class UserSyncService implements UserSyncServiceInterface {
     const usersRepositoryV2 = this.returnConnection(patientEntries.Patient)
     await usersRepositoryV2.update({firebaseKey: firebaseKey}, {...source})
   }
+
+  async getByFirebaseKey(firebaseKey: string): Promise<unknown> {
+    const usersRepositoryV2 = this.returnConnection(patientEntries.Patient)
+    return usersRepositoryV2.findOne({where: {firebaseKey}})
+  }
 }
