@@ -101,13 +101,10 @@ export class PatientService {
   }
 
   async getPatientByDependantId(dependantId: number): Promise<Patient> {
-    const users = await this.patientToDelegatesRepository
-      .createQueryBuilder('patientToDelegates')
-      .select('patient.*')
-      .innerJoin('patient', 'patient', 'patientToDelegates.dependantId = patient.idPatient')
-      .where('patientToDelegates.dependantId = :dependantId', {dependantId})
-      .getRawMany()
-    return users[0]
+    return this.patientRepository.findOne({
+      where: {idPatient: dependantId},
+      relations: ['dependants'],
+    })
   }
 
   async getAuthByEmail(email: string): Promise<PatientAuth> {

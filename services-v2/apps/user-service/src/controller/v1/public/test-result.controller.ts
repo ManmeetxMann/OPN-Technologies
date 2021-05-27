@@ -1,4 +1,4 @@
-import {Body, Controller, NotFoundException, Post, UseGuards} from '@nestjs/common'
+import {Body, Controller, Post, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 import {ApiCommonHeaders, AuthGuard, AuthUserDecorator, Roles} from '@opn-services/common'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
@@ -33,7 +33,7 @@ export class TestResultController {
       : null
 
     if (dependantId && !patientExists) {
-      throw new NotFoundException('patient with given dependantId not found')
+      throw new ResourceNotFoundException('patient with given dependantId not found')
     }
 
     const userId = dependantId ? patientExists.firebaseKey : authUser.id
