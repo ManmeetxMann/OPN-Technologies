@@ -92,7 +92,7 @@ export type PCRTestResultConfirmRequest = {
   barCode: string
   action: PCRResultActionsForConfirmation
   labId?: string
-  byPassValidation: boolean,
+  byPassValidation: boolean
   adminId: string
 }
 
@@ -216,7 +216,7 @@ export type PCRTestResultEmailDTO = Omit<
   | 'userId'
   | 'sortOrder'
 > &
-  AppointmentDBModel & {labAssay: string;}
+  AppointmentDBModel & {labAssay: string}
 
 export type ProcessPCRResultRequest = {
   reportTrackerId: string

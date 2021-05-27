@@ -6,7 +6,7 @@ import {BadRequestException} from '../../../../../common/src/exceptions/bad-requ
 import {OPNPubSub} from '../../../../../common/src/service/google/pub_sub'
 
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
-import { PCRTestResultConfirmRequest } from '../../../models/pcr-test-results'
+import {PCRTestResultConfirmRequest} from '../../../models/pcr-test-results'
 
 class InternalConfirmatoryResultReceivedController implements IControllerBase {
   public path = '/reservation/internal'
@@ -38,15 +38,14 @@ class InternalConfirmatoryResultReceivedController implements IControllerBase {
       if (!message || !message.data) {
         throw new BadRequestException(`data is missing from pub sub post`)
       }
-      const result = await OPNPubSub.getPublishedData(message.data) as PCRTestResultConfirmRequest
-      await this.pcrTestResultsService.confirmPCRResults(
-        {
-          barCode:result.barCode,
-          action:result.action,
-          labId: null,
-          adminId: 'MOUNT_SINAI',
-          byPassValidation: true
-        })
+      const result = (await OPNPubSub.getPublishedData(message.data)) as PCRTestResultConfirmRequest
+      await this.pcrTestResultsService.confirmPCRResults({
+        barCode: result.barCode,
+        action: result.action,
+        labId: null,
+        adminId: 'MOUNT_SINAI',
+        byPassValidation: true,
+      })
       res.json(actionSucceed())
     } catch (error) {
       next(error)

@@ -92,6 +92,7 @@ import {AntibodyAllPDFContent} from '../templates/antibody-all'
 import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 import {normalizeAnalysis} from '../utils/analysis.helper'
 import {CouponEnum} from '../models/coupons'
+import {MountSinaiFormater} from '../utils/mount-sinai-formater'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -145,27 +146,31 @@ export class PCRTestResultsService {
       LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
       return
     }*/
-    const data: Record<string, string> = {
-      patientCode: 'FH00001',
+    const data = {
+      patientCode: 'FH000001', //FA...
       barCode: testResult.barCode,
-      dateTimeForAppointment: '202104301310', //safeTimestamp(testResult.dateTime).toISOString()
+      dateTime: testResult.dateTime,
       firstName: testResult.firstName,
       lastName: testResult.lastName,
-      healthCard: 'TestUser2',
-      dateOfBirth: 'TestUser2',
-      gender: 'TestUser2',
-      address1: 'TestUser2',
-      address2: 'TestUser2',
-      city: 'TestUser2',
-      province: 'TestUser2',
-      postalCode: 'TestUser2',
-      country: 'TestUser2',
-      testType: 'TestUser2',
-      clinicCode: 'MS112',
+      healthCard: testResult.ohipCard,
+      dateOfBirth: testResult.dateOfBirth, //YYYYMMDD
+      gender: testResult.gender, //GenderHL7
+      address1: testResult.address,
+      address2: testResult.addressUnit,
+      city: testResult.city,
+      province: testResult.province, //ON
+      postalCode: testResult.postalCode, //A1A1A1
+      country: testResult.country,
+      testType: testResult.testType,
+      clinicCode: Config.get('CLINIC_CODE_MOUNT_SINAI_CONFIRMATORY'),
     }
 
+    //Utility to Format for MountSinai
+    const mountSinaiFormater = new MountSinaiFormater(data)
+    const formatedORMData = mountSinaiFormater.get()
+
     const pubsub = new OPNPubSub(Config.get('PRESUMPTIVE_POSITIVE_RESULTS_TOPIC'))
-    pubsub.publish(data)
+    pubsub.publish(formatedORMData)
   }
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest): Promise<string> {
@@ -180,7 +185,7 @@ export class PCRTestResultsService {
       })
       throw new BadRequestException('Not Allowed to Confirm results')
     }
-    const labId = (latestPCRResult.labId)?latestPCRResult.labId:null
+    const labId = latestPCRResult.labId ? latestPCRResult.labId : null
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
@@ -207,7 +212,7 @@ export class PCRTestResultsService {
     }
     const newPCRResult = await this.pcrTestResultsRepository.createNewTestResults({
       appointment,
-      adminId:data.adminId,
+      adminId: data.adminId,
       runNumber,
       reCollectNumber,
       result: finalResult,
