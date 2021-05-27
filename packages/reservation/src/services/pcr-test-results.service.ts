@@ -92,6 +92,7 @@ import {AntibodyAllPDFContent} from '../templates/antibody-all'
 import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 import {normalizeAnalysis} from '../utils/analysis.helper'
 import {CouponEnum} from '../models/coupons'
+import {MountSinaiFormater} from '../utils/mount-sinai-formater'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -145,54 +146,46 @@ export class PCRTestResultsService {
       LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
       return
     }*/
-    const data: Record<string, string> = {
-      patientCode: 'FH00001',
+    const data = {
+      patientCode: 'FH000001', //FA...
       barCode: testResult.barCode,
-      dateTimeForAppointment: '202104301310', //safeTimestamp(testResult.dateTime).toISOString()
+      dateTime: testResult.dateTime,
       firstName: testResult.firstName,
       lastName: testResult.lastName,
-      healthCard: 'TestUser2',
-      dateOfBirth: 'TestUser2',
-      gender: 'TestUser2',
-      address1: 'TestUser2',
-      address2: 'TestUser2',
-      city: 'TestUser2',
-      province: 'TestUser2',
-      postalCode: 'TestUser2',
-      country: 'TestUser2',
-      testType: 'TestUser2',
-      clinicCode: 'MS112',
+      healthCard: testResult.ohipCard,
+      dateOfBirth: testResult.dateOfBirth, //YYYYMMDD
+      gender: testResult.gender, //GenderHL7
+      address1: testResult.address,
+      address2: testResult.addressUnit,
+      city: testResult.city,
+      province: testResult.province, //ON
+      postalCode: testResult.postalCode, //A1A1A1
+      country: testResult.country,
+      testType: testResult.testType,
+      clinicCode: Config.get('CLINIC_CODE_MOUNT_SINAI_CONFIRMATORY'),
     }
 
+    //Utility to Format for MountSinai
+    const mountSinaiFormater = new MountSinaiFormater(data)
+    const formatedORMData = mountSinaiFormater.get()
+
     const pubsub = new OPNPubSub(Config.get('PRESUMPTIVE_POSITIVE_RESULTS_TOPIC'))
-    pubsub.publish(data)
+    pubsub.publish(formatedORMData)
   }
 
-  async confirmatoryResult(data: string): Promise<void> {
-    const result = await OPNPubSub.getPublishedData(data)
-    LogInfo(
-      'confirmatoryResult',
-      'Received',
-      result as {
-        barCode: string
-        result: ResultTypes
-      },
-    )
-  }
-
-  async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
+  async confirmPCRResults(data: PCRTestResultConfirmRequest): Promise<string> {
     //Validate Result Exists for barCode and throws exception
     const pcrResultHistory = await this.getPCRResultsByBarCode(data.barCode)
     const latestPCRResult = pcrResultHistory[0]
     const appointment = await this.appointmentService.getAppointmentByBarCode(data.barCode)
-    if (latestPCRResult.labId !== data.labId) {
+    if (latestPCRResult.labId !== data.labId && !data.byPassValidation) {
       LogWarning('PCRTestResultsService:confirmPCRResults', 'IncorrectLabId', {
         labIdInDB: latestPCRResult.labId,
         labIdInRequest: data.labId,
       })
       throw new BadRequestException('Not Allowed to Confirm results')
     }
-
+    const labId = latestPCRResult.labId ? latestPCRResult.labId : null
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
@@ -219,18 +212,18 @@ export class PCRTestResultsService {
     }
     const newPCRResult = await this.pcrTestResultsRepository.createNewTestResults({
       appointment,
-      adminId,
+      adminId: data.adminId,
       runNumber,
       reCollectNumber,
       result: finalResult,
       waitingResult: false,
       confirmed: true,
       previousResult: latestPCRResult.result,
-      labId: latestPCRResult.labId,
+      labId: labId,
       recollected,
     })
 
-    const lab = await this.labService.findOneById(latestPCRResult.labId)
+    const lab = await this.labService.findOneById(labId)
 
     await this.sendNotification(
       {...newPCRResult, ...appointment, labAssay: lab.assay},
@@ -1051,15 +1044,15 @@ export class PCRTestResultsService {
         break
       }
       case PCRResultActions.RecollectAsInconclusive: {
-        await this.sendReCollectNotification(resultData)
+        await this.sendReCollectNotification(resultData, pcrId)
         break
       }
       case PCRResultActions.RecollectAsInvalid: {
-        await this.sendReCollectNotification(resultData)
+        await this.sendReCollectNotification(resultData, pcrId)
         break
       }
       case EmailNotficationTypes.Indeterminate: {
-        await this.sendReCollectNotification(resultData)
+        await this.sendReCollectNotification(resultData, pcrId)
         break
       }
       case EmailNotficationTypes.MarkAsConfirmedNegative: {
@@ -1221,7 +1214,7 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendReCollectNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+  async sendReCollectNotification(resultData: PCRTestResultEmailDTO, pcrId: string): Promise<void> {
     const getTemplateId = (): number => {
       if (!!resultData.organizationId) {
         return Config.getInt('TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 6
@@ -1234,7 +1227,7 @@ export class PCRTestResultsService {
       }
     }
 
-    const pcrResultDbRecord = await this.pcrTestResultsRepository.findOneById(resultData.resultId)
+    const pcrResultDbRecord = await this.pcrTestResultsRepository.findOneById(pcrId)
 
     const couponCode = pcrResultDbRecord?.couponCode ?? null
     const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')
