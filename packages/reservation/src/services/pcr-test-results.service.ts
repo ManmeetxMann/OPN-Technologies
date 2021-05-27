@@ -168,31 +168,19 @@ export class PCRTestResultsService {
     pubsub.publish(data)
   }
 
-  async confirmatoryResult(data: string): Promise<void> {
-    const result = await OPNPubSub.getPublishedData(data)
-    LogInfo(
-      'confirmatoryResult',
-      'Received',
-      result as {
-        barCode: string
-        result: ResultTypes
-      },
-    )
-  }
-
-  async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
+  async confirmPCRResults(data: PCRTestResultConfirmRequest): Promise<string> {
     //Validate Result Exists for barCode and throws exception
     const pcrResultHistory = await this.getPCRResultsByBarCode(data.barCode)
     const latestPCRResult = pcrResultHistory[0]
     const appointment = await this.appointmentService.getAppointmentByBarCode(data.barCode)
-    if (latestPCRResult.labId !== data.labId) {
+    if (latestPCRResult.labId !== data.labId && !data.byPassValidation) {
       LogWarning('PCRTestResultsService:confirmPCRResults', 'IncorrectLabId', {
         labIdInDB: latestPCRResult.labId,
         labIdInRequest: data.labId,
       })
       throw new BadRequestException('Not Allowed to Confirm results')
     }
-
+    const labId = (latestPCRResult.labId)?latestPCRResult.labId:null
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
@@ -219,18 +207,18 @@ export class PCRTestResultsService {
     }
     const newPCRResult = await this.pcrTestResultsRepository.createNewTestResults({
       appointment,
-      adminId,
+      adminId:data.adminId,
       runNumber,
       reCollectNumber,
       result: finalResult,
       waitingResult: false,
       confirmed: true,
       previousResult: latestPCRResult.result,
-      labId: latestPCRResult.labId,
+      labId: labId,
       recollected,
     })
 
-    const lab = await this.labService.findOneById(latestPCRResult.labId)
+    const lab = await this.labService.findOneById(labId)
 
     await this.sendNotification(
       {...newPCRResult, ...appointment, labAssay: lab.assay},
@@ -1051,15 +1039,15 @@ export class PCRTestResultsService {
         break
       }
       case PCRResultActions.RecollectAsInconclusive: {
-        await this.sendReCollectNotification(resultData)
+        await this.sendReCollectNotification(resultData, pcrId)
         break
       }
       case PCRResultActions.RecollectAsInvalid: {
-        await this.sendReCollectNotification(resultData)
+        await this.sendReCollectNotification(resultData, pcrId)
         break
       }
       case EmailNotficationTypes.Indeterminate: {
-        await this.sendReCollectNotification(resultData)
+        await this.sendReCollectNotification(resultData, pcrId)
         break
       }
       case EmailNotficationTypes.MarkAsConfirmedNegative: {
@@ -1221,7 +1209,7 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendReCollectNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+  async sendReCollectNotification(resultData: PCRTestResultEmailDTO, pcrId: string): Promise<void> {
     const getTemplateId = (): number => {
       if (!!resultData.organizationId) {
         return Config.getInt('TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 6
@@ -1234,7 +1222,7 @@ export class PCRTestResultsService {
       }
     }
 
-    const pcrResultDbRecord = await this.pcrTestResultsRepository.findOneById(resultData.resultId)
+    const pcrResultDbRecord = await this.pcrTestResultsRepository.findOneById(pcrId)
 
     const couponCode = pcrResultDbRecord?.couponCode ?? null
     const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')

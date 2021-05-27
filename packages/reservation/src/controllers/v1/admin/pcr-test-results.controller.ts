@@ -246,8 +246,10 @@ class AdminPCRTestResultController implements IControllerBase {
           barCode,
           action,
           labId,
+          adminId,
+          byPassValidation: false
         },
-        adminId,
+        
       )
       const successMessage = `For ${barCode}, action "${action}" has been recorded and sent to the client`
       res.json(actionSuccess({id: pcrResultRecordedId}, successMessage))
