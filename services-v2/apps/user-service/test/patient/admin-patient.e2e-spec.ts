@@ -12,7 +12,7 @@ import {PatientTestUtility} from '../utils/patient'
 import {PatientCreateDto} from '../../src/dto/patient'
 
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
-jest.setTimeout(10000)
+jest.setTimeout(20000)
 
 const userId = 'PATIENT_BASIC'
 const organizationId = 'PATIENT_ORG_BASIC'
@@ -133,8 +133,8 @@ describe('AdminPatientController (e2e)', () => {
     await Promise.all([
       deleteUserByIdTestDataCreator(userId, testDataCreator),
       patientTestUtility.findAndRemoveProfile({firstName: userCreatePayload.firstName}),
-      patientTestUtility.patientRepository.delete(mockedUser.idPatient),
     ])
+    await patientTestUtility.patientRepository.delete(mockedUser.idPatient)
     await app.close()
   })
 })

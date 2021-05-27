@@ -10,7 +10,6 @@ import {commonHeaders, createUser, deleteUserByIdTestDataCreator} from '@opn-ser
 import {PatientTestUtility} from '../utils/patient'
 
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
-jest.setTimeout(10000)
 
 const userId = 'PATIENT_BASIC'
 const organizationId = 'PATIENT_ORG_BASIC'
@@ -51,14 +50,16 @@ describe('PatientController (e2e)', () => {
 
     server = app.getHttpServer()
     await new Promise(resolve => app.listen(81, resolve))
+
+    patientTestUtility = new PatientTestUtility()
   })
 
-  test('try to create normal patient without incomplete args - / (POST)', async done => {
+  test('Create patient - / (POST)', async done => {
     const response = await request(server)
       .post(url)
       .set(headers)
       .send(userCreatePayload)
-    expect(response.status).toBe(400)
+    expect(response.status).toBe(201)
     done()
   })
 
@@ -67,6 +68,7 @@ describe('PatientController (e2e)', () => {
       deleteUserByIdTestDataCreator(userId, testDataCreator),
       patientTestUtility.findAndRemoveProfile({firstName: userCreatePayload.firstName}),
     ])
+    await patientTestUtility.patientRepository.delete({firstName: userCreatePayload.firstName})
     await app.close()
   })
 })
