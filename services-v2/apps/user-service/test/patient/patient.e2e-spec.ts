@@ -5,7 +5,7 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 import * as request from 'supertest'
 import {App} from '../../src/main'
 
-import {createUser, deleteUserByIdTestDataCreator} from '@opn-services/test/utils'
+import {createUser, deleteUserByIdTestDataCreator, commonHeaders} from '@opn-services/test/utils'
 
 import {Patient} from '../../src/model/patient/patient.entity'
 import {PatientTestUtility} from '../utils/patient'
@@ -21,12 +21,7 @@ const headers = {
   accept: 'application/json',
   organizationid: organizationId,
   authorization: `Bearer userId:${userId}`,
-
-  ['opn-app-version']: '1.0.0',
-  ['opn-device-id']: 'q9ZZO3MsR703fqtEhGRz7',
-  ['opn-lang']: 'en',
-  ['opn-request-id']: 'yV_9j30roWSiCdY-4b5HL',
-  ['opn-source']: 'FH_IOS',
+  ...commonHeaders,
 }
 
 describe('AdminPatientController (e2e)', () => {

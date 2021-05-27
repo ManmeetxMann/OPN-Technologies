@@ -6,6 +6,7 @@ import * as request from 'supertest'
 import {App} from '../../src/main'
 
 import {
+  commonHeaders,
   createUser,
   deleteUserByIdTestDataCreator,
   findAndRemoveByFirstName,
@@ -30,12 +31,7 @@ const organizationId = 'PATIENT_ORG_BASIC'
 const headers = {
   accept: 'application/json',
   authorization: `Bearer userId:${userId}`,
-
-  ['opn-app-version']: '1.0.0',
-  ['opn-device-id']: 'q9ZZO3MsR703fqtEhGRz7',
-  ['opn-lang']: 'en',
-  ['opn-request-id']: 'yV_9j30roWSiCdY-4b5HL',
-  ['opn-source']: 'FH_IOS',
+  ...commonHeaders,
 }
 
 describe('TestResultController (e2e)', () => {
