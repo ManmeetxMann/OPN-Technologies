@@ -64,7 +64,7 @@ async function promiseAllSettled(promises: Promise<unknown>[]): Promise<Result[]
 }
 
 async function insertAllUsers(): Promise<Result[]> {
-  let offset = 0
+  let offset = 4770
   let hasMore = true
 
   const results: Result[] = []
@@ -82,37 +82,28 @@ async function insertAllUsers(): Promise<Result[]> {
     const patientPromises = []
     const othersPromises = []
 
-    // First step is to create Patient
-    const patient = adaptPatientsData(userSnapshot.docs[0])
-    patientPromises.push(insertData(patient, 'patient'))
-    const patientResult = await promiseAllSettled(patientPromises)
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const patientId = patientResult[0].value.identifiers[0].idPatient
+    for (const user of userSnapshot.docs) {
+      // First step is to create Patient
+      const patient = adaptPatientsData(user)
+      patientPromises.push(insertData(patient, 'patient'))
+      const patientResult = await promiseAllSettled(patientPromises)
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const patientId = patientResult[0].value.identifiers[0].idPatient
 
-    if (userSnapshot.docs[0].data().admin) {
-      const admin = adaptAdminsData(patientId, userSnapshot.docs[0])
-      othersPromises.push(insertData(admin, 'patientAdmin'))
+      if (user.data().admin) {
+        const admin = adaptAdminsData(patientId, user)
+        othersPromises.push(insertData(admin, 'patientAdmin'))
+      }
+
+      if (user.data().organizationIds && user.data().organizationIds.length) {
+        const patientOrganizations = adaptPatientsOrganizationsData(patientId, user.data())
+        othersPromises.push(insertData(patientOrganizations, 'patientToOrganization'))
+      }
+
+      const othersResults = await promiseAllSettled(othersPromises)
+      results.push(...patientResult, ...othersResults)
     }
-
-    if (
-      userSnapshot.docs[0].data().organizationIds &&
-      userSnapshot.docs[0].data().organizationIds.length
-    ) {
-      const patientOrganizations = adaptPatientsOrganizationsData(
-        patientId,
-        userSnapshot.docs[0].data(),
-      )
-      othersPromises.push(insertData(patientOrganizations, 'patientToOrganization'))
-    }
-
-    if (userSnapshot.docs[0].data().delegates && userSnapshot.docs[0].data().delegates.length) {
-      const patientDelegates = adaptPatientsDelegatesData(patientId, userSnapshot.docs[0].data())
-      othersPromises.push(insertData(patientDelegates, 'patientToDelegates'))
-    }
-
-    const othersResults = await promiseAllSettled(othersPromises)
-    results.push(...patientResult, ...othersResults)
   }
   return results
 }
@@ -194,17 +185,35 @@ function adaptAdminsData(patientId: string, userSnapshot) {
 
 function adaptPatientsData(user) {
   const userData = user.data()
-  return {
-    firstName: userData.firstName,
-    lastName: userData.lastName,
-    phoneNumber: userData.phone && userData.phone.number && `${userData.phone.number}`,
+  const profileData: {
+    firstName: string
+    lastName: string
+    photoUrl: string
+    firebaseKey: string
+    registrationId: string
+    createdOn: string
+    updatedOn: string
+    dateOfBirth: string
+    isEmailVerified: boolean
+    phoneNumber?: string
+  } = {
+    firstName: userData.firstName || '',
+    lastName: userData.lastName || '',
     photoUrl: '', // userData.base64Photo ||  @TODO Upload image to server and put image link here
     firebaseKey: user.id,
     registrationId: userData.registrationId || '',
     createdOn: userData.timestamps?.createdAt,
     updatedOn: userData.timestamps?.updatedAt,
     dateOfBirth: '',
+    isEmailVerified: true,
   }
+  if (userData.phone && userData.phone.number) {
+    profileData.phoneNumber = `${userData.phone.number}`
+  }
+  if (userData.phoneNumber) {
+    profileData.phoneNumber = userData.phoneNumber
+  }
+  return profileData
 }
 
 let successCount = 0
