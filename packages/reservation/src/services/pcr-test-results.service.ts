@@ -155,7 +155,7 @@ export class PCRTestResultsService {
     const patient = await this.userSyncService.getByFirebaseKey(adminId)
 
     const data = {
-      patientCode: (patient as {patientPublicId: string}).patientPublicId,
+      patientCode: (patient as Patient).patientPublicId,
       barCode: testResult.barCode,
       dateTime: testResult.dateTime,
       firstName: testResult.firstName,
