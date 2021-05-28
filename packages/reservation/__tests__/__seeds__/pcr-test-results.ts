@@ -9,20 +9,25 @@ export const createPCRTestResult = async (
   dataOverwrite: {
     id?: string
     appointmentId?: string
+    appointmentStatus?: string
     dateTime: string
     deadline: string
+    firstName?: string
     organizationId?: string
     result?: string
     displayInResult?: boolean
     testType?: string
     labId?: string
+    userId?: string
   },
   testDataCreator: string,
 ): Promise<void> => {
   //console.log(new Date(dataOverwrite.dateTime))
   const data = {
+    userId: dataOverwrite.userId ?? 'TESTUSER',
     adminId: 'TEST',
-    appointmentId: 'A1',
+    appointmentId: dataOverwrite.appointmentId ?? 'A1',
+    appointmentStatus: dataOverwrite.appointmentStatus ?? 'Pending',
     barCode: 'BAR1',
     confirmed: false,
     dateTime: firestore.Timestamp.fromDate(new Date(dataOverwrite.dateTime)),
@@ -33,27 +38,22 @@ export const createPCRTestResult = async (
     deadlineDate: getFirestoreTimeStampDate(
       firestore.Timestamp.fromDate(new Date(dataOverwrite.deadline)),
     ),
-    displayInResult: true,
-    firstName: 'HSG',
+    displayInResult: dataOverwrite.displayInResult ?? true,
+    firstName: dataOverwrite.firstName ?? 'HSG',
     lastName: 'GILL',
     linkedBarCodes: [],
-    organizationId: null,
+    organizationId: dataOverwrite.organizationId ?? null,
     previousResult: null,
-    result: 'Pending',
+    result: dataOverwrite.result ?? 'Pending',
     runNumber: 1,
     reCollectNumber: 1,
     waitingResult: true,
     recollected: false,
-    testType: 'PCR',
+    testType: dataOverwrite.testType ?? 'PCR',
     labId: dataOverwrite.labId ?? 'DEFAULT',
     sortOrder: 1,
     testDataCreator,
   }
-  data.organizationId = dataOverwrite.organizationId ?? null
-  data.appointmentId = dataOverwrite.appointmentId ?? 'A1'
-  data.result = dataOverwrite.result ?? 'Pending'
-  data.displayInResult = dataOverwrite.displayInResult ?? true
-  data.testType = dataOverwrite.testType ?? 'PCR'
 
   //console.log(data)
   if (dataOverwrite.id) {
