@@ -73,5 +73,8 @@ module.exports = {
 								}
 						)
 				return response.json.idToken  
-		}
+	},
+	getDB:function(){
+		return admin.firestore()
+	}
 }
