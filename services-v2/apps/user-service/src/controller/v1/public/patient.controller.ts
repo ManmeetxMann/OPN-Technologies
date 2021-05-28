@@ -281,7 +281,7 @@ export class PatientController {
   @Roles([RequiredUserPermission.RegUser])
   async getUnconfirmedPatients(
     @AuthUserDecorator() authUser: AuthUser,
-  ): Promise<ResponseWrapper<Omit<Patient, 'generatePublicId'>[]>> {
+  ): Promise<ResponseWrapper<Patient[]>> {
     const patients = await this.patientService.getUnconfirmedPatients(
       authUser.phoneNumber,
       authUser.email,

@@ -3,22 +3,22 @@ import {Gender} from '../models/appointment'
 import {Config} from '../../../common/src/utils/config'
 
 enum GenderHL7 {
-  A, //Ambiguous
-  F, //Female
-  M, //Male
-  N, //Not applicable
-  O, //Other
-  U, //Unknown
+  A = 'A', //Ambiguous
+  F = 'F', //Female
+  M = 'M', //Male
+  N = 'N', //Not applicable
+  O = 'O', //Other
+  U = 'U', //Unknown
 }
 
 enum SpecimenSource {
-  NASOP, //Nasopharyngeal Swab
-  NASD, //Nasal Swab-Deep
-  NARES, //Nares
-  NTS, //Nasal and Throat Swab
-  TS, //Throat Swab
-  VSALV, //Saliva
-  NMT, //Nasal Mid-Turbinate
+  NASOP = 'NASOP', //Nasopharyngeal Swab
+  NASD = 'NASD', //Nasal Swab-Deep
+  NARES = 'NARES', //Nares
+  NTS = 'NTS', //Nasal and Throat Swab
+  TS = 'TS', //Throat Swab
+  VSALV = 'VSALV', //Saliva
+  NMT = 'NMT', //Nasal Mid-Turbinate
 }
 
 type ORMDataRequest = {
@@ -59,9 +59,6 @@ export class MountSinaiFormater {
       }
       case Gender.Other: {
         return GenderHL7.O
-      }
-      case Gender.PreferNotToSay: {
-        return GenderHL7.U
       }
       default: {
         return GenderHL7.U

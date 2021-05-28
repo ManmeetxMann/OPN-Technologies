@@ -8,7 +8,7 @@ export default Joi.object({
   lastName: Joi.string().required(),
   healthCard: Joi.string().allow(''),
   dateOfBirth: Joi.string().required(),
-  gender: Joi.number().required().valid(0, 1, 2, 3, 4, 5),
+  gender: Joi.string().required().valid('A', 'F', 'M', 'N', 'O', 'U'),
   address1: Joi.string().required(),
   address2: Joi.string().allow(''),
   city: Joi.string().allow(''),
@@ -28,5 +28,5 @@ export default Joi.object({
       'Antibody_IgM',
       'ExpressPCR',
     ),
-  specimenSource: Joi.number().required().valid(0, 1, 2, 3, 4, 5, 6),
+  specimenSource: Joi.string().required().valid('NASOP', 'NASD', 'NARES', 'NTS', 'TS', 'VSALV', 'NMT'),
 })

@@ -152,14 +152,10 @@ export class PCRTestResultsService {
       LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
       return
     }*/
-    const publicPatientIdPrefix = Config.get('PATIENT_ID_PREFIX') || 'FH'
     const patient = await this.userSyncService.getByFirebaseKey(adminId)
 
     const data = {
-      patientCode: `${publicPatientIdPrefix}${String((patient as Patient).idPatient).padStart(
-        6,
-        '0',
-      )}`, //FA...
+      patientCode: (patient as {patientPublicId: string}).patientPublicId,
       barCode: testResult.barCode,
       dateTime: testResult.dateTime,
       firstName: testResult.firstName,
