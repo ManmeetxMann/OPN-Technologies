@@ -30,6 +30,7 @@ import AppointmentToTestTypeAssociationController from './controllers/v1/admin/a
 import InternalSendAppointmentPushController from './controllers/v1/internal/send-appointment-push.controller'
 import InternalSyncAppointmentController from './controllers/v1/internal/sync-appoinments.controller'
 import InternalConfirmatoryResultReceivedController from './controllers/v1/internal/confirmatory-results-received.controller'
+import PubsubController from './controllers/v1/pubsub.controller'
 
 const PORT = Number(process.env.PORT) || 5008
 
@@ -65,6 +66,7 @@ export const app = new App({
     new InternalSendAppointmentPushController(),
     new InternalSyncAppointmentController(),
     new InternalConfirmatoryResultReceivedController(),
+    new PubsubController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })

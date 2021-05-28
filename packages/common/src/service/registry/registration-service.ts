@@ -23,6 +23,14 @@ export class RegistrationService {
     return this.repository.findWhereArrayContainsAny('userIds', userIds)
   }
 
+  findLastForUserId(userId: string): Promise<Registration> {
+    return this.repository
+      .getQueryFindWhereArrayContains('userIds', userId)
+      .orderBy('timestamps', 'desc')
+      .limit(1)
+      .fetch()[0]
+  }
+
   update(registration: Registration): Promise<Registration> {
     return this.repository.update(registration)
   }

@@ -92,6 +92,9 @@ import {AntibodyAllPDFContent} from '../templates/antibody-all'
 import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 import {normalizeAnalysis} from '../utils/analysis.helper'
 import {CouponEnum} from '../models/coupons'
+import {RegistrationService} from '../../../common/src/service/registry/registration-service'
+import {Platform, Platforms} from '../../../common/src/types/platform'
+import {FirebaseMessagingService} from '../../../common/src/service/messaging/firebase-messaging-service'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -116,25 +119,32 @@ export class PCRTestResultsService {
   private temperatureService = new TemperatureService()
   private pulseOxygenService = new PulseOxygenService()
   private labService = new LabService()
+  private readonly firebaseMessagingService = new FirebaseMessagingService()
+  private registrationService = new RegistrationService()
 
   private isAppointmentPushEnable = Config.get('APPOINTMENTS_PUSH_NOTIFY') === 'enabled'
 
-  private postPubSubForResultSend(testResult: PCRTestResultEmailDTO, action: string): void {
+  private postPubSubForResultSend(
+    resultData: PCRTestResultEmailDTO,
+    pcrId: string,
+    action: string,
+  ): void {
     if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
       LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
       return
     }
     const data: Record<string, string> = {
-      id: testResult.id,
-      result: testResult.result,
-      date: safeTimestamp(testResult.dateTime).toISOString(),
+      id: pcrId,
+      result: resultData.result,
+      date: safeTimestamp(resultData.dateTime).toISOString(),
     }
     const attributes: Record<string, string> = {
-      userId: testResult.userId,
-      organizationId: testResult.organizationId,
+      notficationType: action,
+      userId: resultData.userId,
+      organizationId: resultData.organizationId,
       actionType: action,
-      phone: testResult.phone.toString(),
-      firstName: testResult.firstName,
+      phone: resultData.phone.toString(),
+      firstName: resultData.firstName,
     }
     const pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
     pubsub.publish(data, attributes)
@@ -232,11 +242,17 @@ export class PCRTestResultsService {
 
     const lab = await this.labService.findOneById(latestPCRResult.labId)
 
-    await this.sendNotification(
+    this.postPubSubForResultSend(
       {...newPCRResult, ...appointment, labAssay: lab.assay},
       notificationType,
       newPCRResult.id,
     )
+
+    // await this.sendNotification(
+    //   {...newPCRResult, ...appointment, labAssay: lab.assay},
+    //   notificationType,
+    //   newPCRResult.id,
+    // )
     return newPCRResult.id
   }
 
@@ -906,7 +922,9 @@ export class PCRTestResultsService {
         ...appointment,
         ...pcrResultDataForDbUpdate,
       }
-      await this.sendNotification(pcrResultDataForEmail, metaData.action, pcrResultRecorded.id)
+
+      this.postPubSubForResultSend(pcrResultDataForEmail, metaData.action, pcrResultRecorded.id)
+      // await this.sendNotification(pcrResultDataForEmail, metaData.action, pcrResultRecorded.id)
     } else {
       console.log(
         `handlePCRResultSaveAndSend: Not Notification is sent for ${barCode}. Notify is off.`,
@@ -1095,14 +1113,99 @@ export class PCRTestResultsService {
       }
     }
 
-    if (addSuccessLog) {
-      this.postPubSubForResultSend({...resultData, id: pcrId}, 'result')
-      LogInfo('sendNotification', 'SuccessfullEmailSent', {
-        barCode: resultData.barCode,
-        notficationType,
-        resultSent: resultData.result,
-      })
+    // if (addSuccessLog) {
+
+    //   this.postPubSubForResultSend({...resultData, id: pcrId}, 'result')
+    //   LogInfo('sendNotification', 'SuccessfullEmailSent', {
+    //     barCode: resultData.barCode,
+    //     notficationType,
+    //     resultSent: resultData.result,
+    //   })
+    // }
+  }
+
+  async sendPushNotification(
+    result: PCRTestResultEmailDTO,
+    testOptions?: {userId?: string; token?: string; platform?: Platform},
+  ): Promise<void> {
+    let token: string
+    let platform: Platform
+    if (testOptions.userId) {
+      const registration = await this.registrationService.findLastForUserId(testOptions.userId)
+
+      token = registration.pushToken
+      platform = registration.platform
+    } else {
+      token = testOptions.token
+      platform = testOptions.platform
     }
+
+    if (!token || !platform) {
+      throw new BadRequestException(`Registration information for this app not found`)
+    }
+
+    const message = {
+      data: {
+        resultId: result.id,
+      },
+      token,
+      notification: {
+        title: 'Title',
+      },
+      // android?: AndroidConfig;
+      webpush: {
+        fcmOptions: {
+          link: null,
+        },
+      },
+    }
+
+    let resultDetailLink: string
+    let resultListLink: string
+
+    switch (platform) {
+      case Platforms.Android:
+        resultDetailLink = Config.get('DEEPLINK_ANDROID_RESULT_DETAILS')
+        resultListLink = Config.get('DEEPLINK_ANDROID_RESULT_VIEW')
+        break
+
+      case Platforms.IOS:
+        resultDetailLink = Config.get('DEEPLINK_IOS_RESULT_DETAILS')
+        resultListLink = Config.get('DEEPLINK_IOS_RESULT_VIEW')
+        break
+      default:
+        throw new BadRequestException(`${platform} - unsupported platform`)
+    }
+
+    switch (result.appointmentStatus) {
+      case AppointmentStatus.Canceled:
+        message.notification.title = 'Canceled'
+        message.webpush.fcmOptions.link = resultListLink
+        break
+
+      case AppointmentStatus.Pending:
+        message.notification.title = 'Pending'
+        message.webpush.fcmOptions.link = resultListLink
+        break
+
+      case AppointmentStatus.InProgress:
+        message.notification.title = 'InProgress'
+        message.webpush.fcmOptions.link = resultDetailLink
+        break
+
+      case AppointmentStatus.Reported:
+        message.notification.title = 'Reported'
+        message.webpush.fcmOptions.link = resultDetailLink
+        break
+
+      case AppointmentStatus.ReCollectRequired:
+        message.notification.title = 'ReCollectRequired'
+        message.webpush.fcmOptions.link = resultDetailLink
+        break
+    }
+
+    const responce = await this.firebaseMessagingService.send(message)
+    console.log(responce)
   }
 
   async resendReport(testResultId: string, userId: string): Promise<void> {
