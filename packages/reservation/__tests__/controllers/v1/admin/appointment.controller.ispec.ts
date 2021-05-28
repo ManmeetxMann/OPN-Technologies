@@ -1,7 +1,10 @@
 import request from 'supertest'
 
 import {app as server} from '../../../../src/app'
-import {create, deleteAppointmentByTestDataCreator} from '../../../__seeds__/appointments'
+import {
+  createAppointment,
+  deleteAppointmentByTestDataCreator,
+} from '../../../__seeds__/appointments'
 
 jest.spyOn(global.console, 'error').mockImplementation()
 jest.spyOn(global.console, 'info').mockImplementation()
@@ -19,7 +22,7 @@ const barCode = 'BAR1'
 describe('AdminAppointmentController', () => {
   beforeAll(async () => {
     await deleteAppointmentByTestDataCreator(testDataCreator)
-    await create(
+    await createAppointment(
       {
         id: 'APT1',
         dateTime: dateTimeForAppointment1,
@@ -29,7 +32,7 @@ describe('AdminAppointmentController', () => {
       },
       testDataCreator,
     )
-    await create(
+    await createAppointment(
       {
         id: 'APT2',
         dateTime: dateTimeForAppointment1,
@@ -39,7 +42,7 @@ describe('AdminAppointmentController', () => {
       },
       testDataCreator,
     )
-    await create(
+    await createAppointment(
       {
         id: 'APT3',
         dateTime: dateTimeForAppointment1,
@@ -50,7 +53,7 @@ describe('AdminAppointmentController', () => {
       },
       testDataCreator,
     )
-    await create(
+    await createAppointment(
       {
         id: 'APT4',
         dateTime: dateTimeForAppointment1,
@@ -59,7 +62,7 @@ describe('AdminAppointmentController', () => {
       },
       testDataCreator,
     )
-    await create(
+    await createAppointment(
       {
         id: 'APT5',
         dateTime: dateTimeForAppointment1,
@@ -67,7 +70,7 @@ describe('AdminAppointmentController', () => {
       },
       testDataCreator,
     )
-    await create(
+    await createAppointment(
       {
         id: 'APT6',
         dateTime: `2020-02-01T07:00:00`,
@@ -75,7 +78,7 @@ describe('AdminAppointmentController', () => {
       },
       testDataCreator,
     )
-    await create(
+    await createAppointment(
       {
         id: 'APT7',
         dateTime: `2020-02-01T08:00:00`,
@@ -83,7 +86,7 @@ describe('AdminAppointmentController', () => {
       },
       testDataCreator,
     )
-    await create(
+    await createAppointment(
       {
         id: 'APT8',
         dateTime: `2020-02-01T08:00:00`,
