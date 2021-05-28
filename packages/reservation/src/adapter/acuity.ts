@@ -472,7 +472,7 @@ abstract class AcuityAdapter {
   private customFieldsToAppoinment(
     appointment: AppointmentAcuityResponse,
   ): AppointmentAcuityResponse {
-    //appointment.dateOfBirth = ''//Required
+    appointment.dateOfBirth = ''
     appointment.organizationId = Config.get('PUBLIC_ORG_ID')
     appointment.registeredNursePractitioner = ''
     appointment.address = ''
