@@ -2,7 +2,7 @@ import {firestore} from 'firebase-admin'
 
 const database = firestore()
 
-export const create = async (
+export const createAppointment = async (
   dataOverwrite: {
     id: string
     dateTime: string
@@ -11,6 +11,7 @@ export const create = async (
     appointmentStatus?: string
     labId?: string
     testType?: string
+    userId?: string
   },
   testDataCreator: string,
 ): Promise<void> => {
@@ -43,7 +44,7 @@ export const create = async (
     shareTestResultWithEmployer: true,
     timeOfAppointment: '8:00am',
     labId: dataOverwrite.labId ?? 'DEFAULT',
-    userId: 'TestUser',
+    userId: dataOverwrite.userId ?? 'TestUser',
     testType: dataOverwrite.testType ?? 'PCR',
     testDataCreator,
   }
