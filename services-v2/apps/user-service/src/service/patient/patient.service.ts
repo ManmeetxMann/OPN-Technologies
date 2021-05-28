@@ -680,6 +680,7 @@ export class PatientService {
 
     const updateDto = new PatientUpdateDto()
     updateDto.phoneNumber = data?.phone
+    updateDto.dateOfBirth = data?.dateOfBirth
     updateDto.healthCardType = data?.ohipCard
     updateDto.travelPassport = data?.travelID
     updateDto.travelCountry = data?.travelIDIssuingCountry
