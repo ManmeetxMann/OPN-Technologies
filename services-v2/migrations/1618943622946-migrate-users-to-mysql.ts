@@ -38,6 +38,7 @@ export class migrateUsersToMysql1618943622946 implements MigrationInterface {
       console.log(`Successfully inserted ${successCount} `)
     } catch (error) {
       console.error('Error running migration', error)
+      throw error
     } finally {
       console.warn(`Inserting Failed ${failureCount} `)
       console.log(`Total Results Processed: ${totalCount} `)
@@ -64,7 +65,7 @@ async function promiseAllSettled(promises: Promise<unknown>[]): Promise<Result[]
 }
 
 async function insertAllUsers(): Promise<Result[]> {
-  let offset = 4770
+  let offset = 0
   let hasMore = true
 
   const results: Result[] = []
@@ -79,17 +80,15 @@ async function insertAllUsers(): Promise<Result[]> {
     hasMore = !userSnapshot.empty
     //hasMore = false
 
-    const patientPromises = []
     const othersPromises = []
 
     for (const user of userSnapshot.docs) {
       // First step is to create Patient
       const patient = adaptPatientsData(user)
-      patientPromises.push(insertData(patient, 'patient'))
-      const patientResult = await promiseAllSettled(patientPromises)
+      const patientResult = await insertData(patient, 'patient')
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      const patientId = patientResult[0].value.identifiers[0].idPatient
+      const patientId = patientResult.identifiers[0].idPatient
 
       if (user.data().admin) {
         const admin = adaptAdminsData(patientId, user)
@@ -102,7 +101,7 @@ async function insertAllUsers(): Promise<Result[]> {
       }
 
       const othersResults = await promiseAllSettled(othersPromises)
-      results.push(...patientResult, ...othersResults)
+      results.push(...othersResults)
     }
   }
   return results
@@ -132,19 +131,6 @@ function adaptPatientsOrganizationsData(patientId: string, userSnapshot) {
         return {
           patientId,
           firebaseOrganizationId,
-        }
-      }
-    })
-    .filter(row => !!row)
-}
-
-function adaptPatientsDelegatesData(dependantId: string, userSnapshot) {
-  return userSnapshot.delegates
-    .map(delegateId => {
-      if (delegateId) {
-        return {
-          dependantId,
-          delegateId,
         }
       }
     })
@@ -197,8 +183,8 @@ function adaptPatientsData(user) {
     isEmailVerified: boolean
     phoneNumber?: string
   } = {
-    firstName: userData.firstName || '',
-    lastName: userData.lastName || '',
+    firstName: userData.firstName ? userData.firstName.slice(0, 255) : '',
+    lastName: userData.lastName ? userData.lastName.slice(0, 255) : '',
     photoUrl: '', // userData.base64Photo ||  @TODO Upload image to server and put image link here
     firebaseKey: user.id,
     registrationId: userData.registrationId || '',
@@ -219,4 +205,4 @@ function adaptPatientsData(user) {
 let successCount = 0
 let failureCount = 0
 let totalCount = 0
-const limit = 1
+const limit = 1000

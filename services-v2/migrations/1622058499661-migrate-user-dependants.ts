@@ -34,6 +34,7 @@ export class migrateUsersDependants1622058499661 implements MigrationInterface {
       console.log(`Successfully inserted ${successCount} `)
     } catch (error) {
       console.error('Error running migration', error)
+      throw error
     } finally {
       console.warn(`Inserting Failed ${failureCount} `)
       console.log(`Total Results Processed: ${totalCount} `)

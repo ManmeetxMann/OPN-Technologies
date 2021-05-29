@@ -216,6 +216,11 @@ export class Patient extends Auditable {
   @ApiProperty({readOnly: true})
   idPatient: number
 
+  @Column({nullable: true})
+  @ApiProperty({readOnly: true})
+  @IsString()
+  publicId?: number
+
   @Column({nullable: false})
   @ApiProperty({required: true})
   firebaseKey: string

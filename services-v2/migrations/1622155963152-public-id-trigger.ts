@@ -1,37 +1,28 @@
-import {MigrationInterface, QueryRunner, getManager} from 'typeorm'
+import {MigrationInterface, QueryRunner, getManager, getRepository} from 'typeorm'
+import {Patient} from '../apps/user-service/src/model/patient/patient.entity'
+
+async function updateOldPatients() {
+  const patientsCount = await getPatientsCount()
+  for (let offset = 0; offset < patientsCount; offset += limit) {
+    const currentPatients = await getPatient(offset)
+    await Promise.all(currentPatients.map(({idPatient}) => updatePatient(idPatient)))
+  }
+}
 
 export class publicIdTrigger1622155963152 implements MigrationInterface {
   public async up(): Promise<void> {
     try {
       console.log(`Migration Starting Time: ${new Date()}`)
-      const query =
-        `
-DROP TRIGGER IF EXISTS \`opn\`.\`patient_BEFORE_INSERT\`;
-
-DELIMITER $$
-USE \`opn\`$$
-CREATE DEFINER=\`root\`@\`localhost\` TRIGGER \`opn\`.\`patient_BEFORE_INSERT\` BEFORE INSERT ON \`patient\` FOR EACH ROW
-BEGIN
-\tdeclare fk_parent_user_id int default 0;
-
-\t  select auto_increment into fk_parent_user_id
-\t\tfrom information_schema.tables
-\t   where table_name = 'patient'
-\t\t and table_schema = database();
-
-\tIF NEW.publicId IS NULL THEN
-\t\tSET NEW.publicId = fk_parent_user_id+10;
-\tEND IF;
-END$$
-DELIMITER ;
-      `.replace('\n', ' ')
-
-      console.log({ query })
+      await updateOldPatients()
+      const query = `CREATE DEFINER = CURRENT_USER TRIGGER \`opn\`.\`patient_BEFORE_INSERT\` BEFORE INSERT ON \`patient\` FOR EACH ROW SET NEW.publicId = (
+SELECT auto_increment FROM information_schema.tables WHERE table_name = 'patient' AND table_schema = DATABASE()
+)+10;`
       const manager = getManager()
-      const rawData = await manager.query(query)
-      console.log(`Successfully inserted ${rawData}`)
+      await manager.query(query)
+      console.log(`Successfully created`)
     } catch (error) {
       console.error('Error running migration', error)
+      throw error
     }
   }
 
@@ -40,3 +31,43 @@ DELIMITER ;
     await manager.query(`DROP TRIGGER IF EXISTS \`opn\`.\`patient_BEFORE_INSERT\`;`)
   }
 }
+
+async function getPatientsCount() {
+  try {
+    return await getRepository(Patient)
+      .createQueryBuilder('patient')
+      .getCount()
+  } catch (error) {
+    console.warn(error)
+    throw error
+  }
+}
+
+async function getPatient(offset) {
+  try {
+    return await getRepository(Patient)
+      .createQueryBuilder('patient')
+      .offset(offset)
+      .limit(limit)
+      .getMany()
+  } catch (error) {
+    console.warn(error)
+    throw error
+  }
+}
+
+async function updatePatient(idPatient: number) {
+  try {
+    return await getRepository(Patient)
+      .createQueryBuilder('patient')
+      .update()
+      .set({publicId: idPatient + 10})
+      .where('idPatient = :idPatient', {idPatient})
+      .execute()
+  } catch (error) {
+    console.warn(error)
+    throw error
+  }
+}
+
+const limit = 10
