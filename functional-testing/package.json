@@ -9,10 +9,12 @@
   "scripts": {
     "lint-test-scripts": "eslint --no-eslintrc --config  ./.eslintrc.js  --fix __tests__",
     "create_test_data": "FIRESTORE_EMULATOR_HOST=localhost:8080 node tools/create_test_data.js",
+    "test":"npm run test_lab && npm run test_clinic && npm run test_admin && npm run test_reguser",
     "test_lab": "USER_ROLE=lab jest",
     "test_clinic": "USER_ROLE=clinic jest",
     "test_admin": "USER_ROLE=admin jest",
-    "test_reguser": "USER_ROLE=reguser jest"
+    "test_reguser": "USER_ROLE=reguser jest '--group=reg-user'",
+    "public-call": "USER_ROLE=reguser jest '--group=public-call'"
   },
   "devDependencies": {
     "@types/jest": "^26.0.23",
