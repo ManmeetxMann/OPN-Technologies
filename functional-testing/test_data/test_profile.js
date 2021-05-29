@@ -4,7 +4,7 @@
 let profiles = {
     "harpreetplus6_dev_lab":{
         "email":"harpreet@stayopn.com",
-        "organizationId":"TEST1",
+        "organizationId":"PUBLIC_ORG",
         "firstName":"Harpreet 6",
         "lastName":"Gill 6",
         "groupId":"GRP1",

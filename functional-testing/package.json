@@ -15,6 +15,7 @@
     "test_reguser": "USER_ROLE=reguser jest"
   },
   "devDependencies": {
+    "@types/jest": "^26.0.23",
     "dotenv": "^8.2.0",
     "eslint": "^7.20.0",
     "eslint-config-google": "^0.14.0",

@@ -1,8 +1,7 @@
 module.exports = {
     globals: {
-      userRole:'ClinicUser'
     },
-    globalSetup:"./helpers/global_setup",
+    globalSetup:"./global_setup",
     moduleDirectories: [
       "node_modules",
       "helpers",
@@ -13,7 +12,7 @@ module.exports = {
     testPathIgnorePatterns: [
       "/node_modules/"
     ],
-    //transform: {'^.+\\.ts?$': 'ts-jest'},
+    transform: {'^.+\\.ts?$': 'ts-jest'},
     testEnvironment: 'node',
     //testRegex: './__tests__/.*\\.(spec)?\\.(js|tsx)$',
     testRunner: "jest-circus/runner",

@@ -7,7 +7,7 @@ admin.initializeApp({
 	credential: admin.credential.cert(serviceAccount),
 })
 */
-module.exports = {
+const helperCommon = {
 	headers: function(){		
 		let headers = { 
       'Authorization': 'Bearer ',
@@ -16,9 +16,9 @@ module.exports = {
 		}	
 		return headers;
 	},
-	runAuthenticatedTest: async function(frisby, email){
+	runAuthenticatedTest: async function(frisby, email?:string){
 		return process.env.FIREBASE_AUTH_TOKEN 
-	},
+	},/*
 	getAuthToken: async function(frisby, email, displayName){
 			let authUID;
 			try {
@@ -65,5 +65,7 @@ module.exports = {
 	},
 	getDB:function(){
 		return admin.firestore()
-	}
+	}*/
 }
+
+export default helperCommon
