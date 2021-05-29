@@ -1,5 +1,6 @@
 module.exports = {
     globals: {
+      userRole:'ClinicUser'
     },
     globalSetup:"./helpers/global_setup",
     moduleDirectories: [

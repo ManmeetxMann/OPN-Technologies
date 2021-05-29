@@ -7,17 +7,17 @@ frisby.globalSetup({
     headers: helpersCommon.headers(),
   },
 });
-const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
+
+const enterpriseServiceUrl = process.env.ENTERPRISE_SERVICE_URL;
 
 /**
- * @group reservation-service
- * @group /reservation/admin/api/v1/test-kit-batch
- * @group test-kit-batch-get
+ * @group enterprise-service
+ * @group get-user-account-test
  */
-describe('Get test-kit-batch', () => {
-  test('able to successfully get test-kit-batch', () => {
+describe('create:user', () => {
+  test('successfully create user?', () => {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${reservationServiceUrl}/reservation/admin/api/v1/test-kit-batch`;
+      const url = `${enterpriseServiceUrl}/enterprise/api/v3/users/self/dependents`;
       return frisby
           .setup({
             request: {
@@ -26,9 +26,11 @@ describe('Get test-kit-batch', () => {
               },
             },
           })
-          .get(url)
-          // .inspectBody()
-          .expect('status', 200);
+          .get(
+              url,
+          )
+          .expect('status', 200)
+          .inspectBody();
     });
   });
 });
