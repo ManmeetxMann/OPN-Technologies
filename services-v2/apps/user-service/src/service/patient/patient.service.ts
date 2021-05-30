@@ -43,7 +43,7 @@ import {PubSubEvents, PubSubFunctions} from '@opn-services/common/types/activity
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import {OrganizationModel} from '@opn-enterprise-v1/repository/organization.repository'
 import DataStore from '@opn-common-v1/data/datastore'
-import {AuthUser, UserStatus} from '@opn-common-v1/data/user'
+import {AuthUser, User, UserStatus} from '@opn-common-v1/data/user'
 import {Registration} from '@opn-common-v1/data/registration'
 import {RegistrationService} from '@opn-common-v1/service/registry/registration-service'
 import {MessagingFactory} from '@opn-common-v1/service/messaging/messaging-service'
@@ -57,6 +57,8 @@ import {AppointmentsRepository} from '@opn-reservation-v1/respository/appointmen
 import {AppointmentDBModel} from '@opn-reservation-v1/models/appointment'
 import {AppointmentActivityAction} from '@opn-reservation-v1/models/appointment'
 import {ActionStatus} from '@opn-services/common/model'
+import {OrganizationService} from '@opn-enterprise-v1/services/organization-service'
+import {Organization} from '@opn-enterprise-v1/models/organization'
 
 @Injectable()
 export class PatientService {
@@ -82,7 +84,7 @@ export class PatientService {
   private testResultRepository = new PCRTestResultsRepository(this.dataStore)
   private messaging = MessagingFactory.getPushableMessagingService()
   private registrationService = new RegistrationService()
-
+  private organizationService = new OrganizationService()
   /**
    * Get patient record by id
    */
@@ -341,15 +343,22 @@ export class PatientService {
       throw new NotFoundException('User with given id not found')
     }
 
-    await this.patientToOrganizationRepository.save({
-      patientId,
-      firebaseOrganizationId,
-    })
-
-    const organization = this.organizationModel.findOneById(firebaseOrganizationId)
+    const organization = await this.organizationModel.findOneById(firebaseOrganizationId)
     if (!organization) {
       throw new NotFoundException('Organization with given id not found')
     }
+    await this.connectOrganizationWithInstances(patient, organization)
+  }
+
+  private async connectOrganizationWithInstances(
+    patient: Patient,
+    organization: Organization,
+  ): Promise<void> {
+    await this.patientToOrganizationRepository.save({
+      patientId: patient.idPatient,
+      firebaseOrganizationId: organization.id,
+    })
+
     const firebaseUser = await this.userRepository.findOneById(patient.firebaseKey)
     if (!firebaseUser) {
       throw new NotFoundException('User with given id not found')
@@ -358,7 +367,7 @@ export class PatientService {
     await this.userRepository.updateProperty(
       firebaseUser.id,
       'organizationIds',
-      _.uniq([...(firebaseUser.organizationIds ?? []), firebaseOrganizationId]),
+      _.uniq([...(firebaseUser.organizationIds ?? []), organization.id]),
     )
   }
 
@@ -531,6 +540,20 @@ export class PatientService {
         return previousValue
       }, 0),
     }))
+  }
+
+  async attachOrganization(organizationCode: string, authUserId: string): Promise<void> {
+    const organization = await this.organizationService.findOrganizationByKey(
+      parseInt(organizationCode),
+    )
+
+    const currentPatient = await this.patientRepository.findOne({
+      where: {
+        firebaseKey: authUserId,
+      },
+    })
+
+    await this.connectOrganizationWithInstances(currentPatient, organization)
   }
 
   async migratePatient(currentUserId: string, migration: Migration): Promise<ActionStatus> {
