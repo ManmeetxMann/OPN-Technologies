@@ -1,5 +1,5 @@
-const frisby = require('frisby');
-const testProfile = require('test_profile');
+import frisby from 'frisby';
+import testProfile from '../../../../test_data/test_profile';
 //import helpersCommon from '../../../../helpers/helpers_common'
 
 const enterpriseServiceUrl = process.env.ENTERPRISE_SERVICE_URL

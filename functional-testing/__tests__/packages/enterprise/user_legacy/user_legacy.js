@@ -16,46 +16,6 @@ const userId = testProfile.get().userId
 const email = testProfile.get().email
 describe('UserController', () => {
     
-    describe('user:create', () => {
-        /*
-        test('Create Anonymous User',  () => {
-            const url = `${enterpriseServiceUrl}/user/connect/v2/add`
-            return frisby
-                .post(
-                    url,
-                    {
-                        organizationId: organizationId,
-                        registrationId: '',
-                        firstName: testProfile.get().firstName,
-                        lastName: testProfile.get().lastName,
-                        base64Photo: `https://picsum.photos/200?${Date.now()}`,
-                        groupId: testProfile.get().groupId,
-                    }
-                )
-                .expect('status', 200)
-                .inspectBody()
-        })
-        test('should create new user and associate to auth',  () => {
-            return helpers_common.runAuthenticatedTest(frisby).then(function(token){
-                const url = `${enterpriseServiceUrl}/user/connect/v2/add`
-                return frisby
-                    .post(
-                        url,
-                        {
-                            idToken: token,
-                            organizationId: organizationId,
-                            registrationId: '',
-                            firstName: testProfile.get().firstName,
-                            lastName: testProfile.get().lastName,
-                            base64Photo: `https://picsum.photos/200?${Date.now()}`,
-                            groupId: testProfile.get().groupId,
-                        }
-                    )
-                    .expect('status', 200);  
-            })
-        })
-        */
-    })
     /*
     describe('auth:confirmation', () => {
         test('should return success for auth confirmation',  () => {

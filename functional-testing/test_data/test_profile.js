@@ -24,6 +24,17 @@ let profiles = {
         "locationTitle":"TEST1_LOC1",
         "locationId":"9uJKtSmFAC1WuN4aNuZk"
     },
+    "harpreet_test_lab":{
+        "email":"harpreet+test1@stayopn.com",
+        "organizationId":"TESTPROD1",
+        "firstName":"Harpreet 1",
+        "lastName":"Gill 1",
+        "groupId":"GRP1",
+        "groupName":"TEST1_GRP1",
+        "userId":"iVK1tRyuU5znFGptWP6s",
+        "locationTitle":"TEST1_LOC1",
+        "locationId":"9uJKtSmFAC1WuN4aNuZk"
+    },
 }
 
 module.exports = {
