@@ -1,0 +1,20 @@
+module.exports = {
+  port: process.env.DB_SQL_LOCAL_PORT,
+  host: process.env.DB_SQL_LOCAL_HOST,
+  type: 'mysql',
+  database: process.env.DB_SQL_NAME,
+  username: process.env.DB_SQL_USERNAME,
+  password: process.env.DB_SQL_PASSWORD,
+  synchronize: process.env.DB_SQL_AUTO_SYNC_SCHEMA,
+  migrationsRun: process.env.DB_SQL_RUN_MIGRATION,
+  entities: ['../**/*.entity.ts'],
+  logging: ['warn', 'error', 'query'],
+  migrations: ['./**/*.ts'],
+  cli: {
+    migrationsDir: '../dist/src/migration',
+  },
+  autoLoadEntities: true,
+  retryAttempts: 1,
+  retryDelay: 3000,
+  keepConnectionAlive: false,
+}

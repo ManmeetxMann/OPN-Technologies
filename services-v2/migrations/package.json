@@ -1,0 +1,11 @@
+{
+  "name": "migrations",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "migration:migrate": "ts-node --transpile-only ../node_modules/typeorm/cli.js migration:run",
+    "migration:rollback": "ts-node --transpile-only ../node_modules/typeorm/cli.js migration:revert"
+  },
+  "author": "",
+  "license": "ISC"
+}
