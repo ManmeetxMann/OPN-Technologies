@@ -11,7 +11,7 @@ let profiles = {
         "groupName":"TEST1_GRP1",
         "userId":"iVK1tRyuU5znFGptWP6s",
         "locationTitle":"TEST1_LOC1",
-        "locationId":"9uJKtSmFAC1WuN4aNuZk"
+        "locationId":"TEST_LOC1"
     },
     "harpreetplus6_dev_lab":{
         "email":"harpreet@stayopn.com",
@@ -22,7 +22,7 @@ let profiles = {
         "groupName":"TEST1_GRP1",
         "userId":"iVK1tRyuU5znFGptWP6s",
         "locationTitle":"TEST1_LOC1",
-        "locationId":"9uJKtSmFAC1WuN4aNuZk"
+        "locationId":"TEST_LOC1"
     },
     "harpreet_test_lab":{
         "email":"harpreet+test1@stayopn.com",
@@ -33,7 +33,7 @@ let profiles = {
         "groupName":"TEST1_GRP1",
         "userId":"iVK1tRyuU5znFGptWP6s",
         "locationTitle":"TEST1_LOC1",
-        "locationId":"9uJKtSmFAC1WuN4aNuZk"
+        "locationId":"TEST_LOC1"
     },
 }
 
