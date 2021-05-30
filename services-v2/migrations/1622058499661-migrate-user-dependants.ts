@@ -61,7 +61,7 @@ async function promiseAllSettled(promises: Promise<unknown>[]): Promise<Result[]
 }
 
 async function insertAllUsers(): Promise<Result[]> {
-  let offset = 4770
+  let offset = 0
   let hasMore = true
 
   const results: Result[] = []
