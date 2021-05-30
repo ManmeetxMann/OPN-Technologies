@@ -3,6 +3,7 @@ import {AdminProfile} from './admin'
 import {FieldValue} from '../utils/firebase'
 import {Auditable} from '../types/auditable'
 import {Phone} from '../types/phone'
+import {UserStatus} from './user-status'
 
 // TODO: DEPRECATE
 export type User = {
@@ -113,8 +114,4 @@ export const userDTO = (user: AuthUser | User, forceAdminEnabled?: boolean): Use
   delegates: (user as User).delegates ?? [],
 })
 
-export enum UserStatus {
-  NEW = 'NEW',
-  CONFIRMED = 'CONFIRMED',
-  MERGED = 'MERGED',
-}
+export {UserStatus}
