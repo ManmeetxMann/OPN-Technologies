@@ -1,6 +1,6 @@
 const frisby = require('frisby');
 import helpersCommon from '../../../../../helpers/helpers_common';
-
+import testProfile from '../../../../../test_data/test_profile';
 // Do setup first
 frisby.globalSetup({
   request: {
@@ -8,8 +8,8 @@ frisby.globalSetup({
   },
 });
 
-const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
-const organizationId = 'PUBLIC_ORG';
+const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL
+const organizationId = testProfile.get().organizationId
 
 const getLocations = (token:string) => {
   const url = `${reservationServiceUrl}/reservation/api/v1/booking-locations?organizationId=${organizationId}`;
