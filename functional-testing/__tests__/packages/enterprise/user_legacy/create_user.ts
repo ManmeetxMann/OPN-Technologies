@@ -12,7 +12,7 @@ frisby.globalSetup({
 
 const enterpriseServiceUrl = process.env.ENTERPRISE_SERVICE_URL
 const organizationId = testProfile.get().organizationId
-const userId = testProfile.get().userId
+//const userId = testProfile.get().userId
 //const email = testProfile.get().email
 
 const firstName = faker.name.firstName()
@@ -27,9 +27,9 @@ const email = faker.internet.email()
 
 describe('user:create', () => {
 
-    test('Create Anonymous User', () => {
+    test('Create Anonymous User V2', async () => {
         const url = `${enterpriseServiceUrl}/user/connect/v2/add`
-        return frisby
+        await frisby
             .post(
                 url,
                 {
@@ -45,6 +45,23 @@ describe('user:create', () => {
         //.inspectBody()
     })
 
+    test('Create Anonymous User', async () => {
+        const url = `${enterpriseServiceUrl}/user/connect/add`
+        await frisby
+            .post(
+                url,
+                {
+                    organizationId: organizationId,
+                    registrationId: '',
+                    firstName: firstName,
+                    lastName: firstName,
+                    base64Photo: `https://picsum.photos/200?${Date.now()}`,
+                    groupId: testProfile.get().groupId,
+                }
+            )
+            .expect('status', 200)
+        //.inspectBody()
+    })
 
     test('should create new user and associate to auth', async () => {
         const token = await helpersCommon.getAuthToken(frisby, email, `${firstName} ${lastName}`)
