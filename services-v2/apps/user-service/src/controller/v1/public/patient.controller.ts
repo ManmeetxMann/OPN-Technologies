@@ -35,6 +35,8 @@ import {
   NormalPatientCreateDto,
   PatientProfile,
   DependantProfile,
+  unconfirmedPatientDto,
+  UnconfirmedPatient,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
@@ -282,15 +284,17 @@ export class PatientController {
   @Get('/unconfirmed')
   @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
+  @ApiResponse({type: UnconfirmedPatient})
   async getUnconfirmedPatients(
     @AuthUserDecorator() authUser: AuthUser,
-  ): Promise<ResponseWrapper<Omit<Patient, 'generatePublicId'>[]>> {
+  ): Promise<ResponseWrapper<UnconfirmedPatient[]>> {
+    console.log({authUser})
     const patients = await this.patientService.getUnconfirmedPatients(
       authUser.phoneNumber,
       authUser.email,
       authUser.id,
     )
 
-    return ResponseWrapper.actionSucceed(patients)
+    return ResponseWrapper.actionSucceed(patients.map(unconfirmedPatientDto))
   }
 }

@@ -513,7 +513,10 @@ export class PatientService {
     }
 
     if (email && patient.isEmailVerified) {
-      patientQuery.orWhere('auth.email = :email AND status = :status', {email})
+      patientQuery.orWhere('auth.email = :email AND status = :status', {
+        email,
+        status: UserStatus.NEW,
+      })
     }
 
     const patients = await patientQuery.getMany()
