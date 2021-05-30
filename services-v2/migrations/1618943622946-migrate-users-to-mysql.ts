@@ -95,6 +95,9 @@ async function insertAllUsers(): Promise<Result[]> {
         othersPromises.push(insertData(admin, 'patientAdmin'))
       }
 
+      const authData = adaptAuthData(patientId, user)
+      othersPromises.push(insertData(authData, 'patientAuth'))
+
       if (user.data().organizationIds && user.data().organizationIds.length) {
         const patientOrganizations = adaptPatientsOrganizationsData(patientId, user.data())
         othersPromises.push(insertData(patientOrganizations, 'patientToOrganization'))
@@ -192,6 +195,27 @@ function adaptPatientsData(user) {
     updatedOn: userData.timestamps?.updatedAt,
     dateOfBirth: '',
     isEmailVerified: true,
+  }
+  if (userData.phone && userData.phone.number) {
+    profileData.phoneNumber = `${userData.phone.number}`
+  }
+  if (userData.phoneNumber) {
+    profileData.phoneNumber = userData.phoneNumber
+  }
+  return profileData
+}
+
+function adaptAuthData(patientId: string, user) {
+  const userData = user.data()
+  const profileData: {
+    email?: string
+    phoneNumber?: string
+    authUserId: string
+    patientId: string
+  } = {
+    email: userData.email || null,
+    authUserId: userData.authUserId,
+    patientId,
   }
   if (userData.phone && userData.phone.number) {
     profileData.phoneNumber = `${userData.phone.number}`
