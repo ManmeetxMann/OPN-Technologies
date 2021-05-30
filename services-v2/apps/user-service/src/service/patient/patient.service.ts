@@ -636,7 +636,6 @@ export class PatientService {
    */
   async upsertPushToken(
     patientId: number,
-    registrationId: string,
     registration: Omit<Registration, 'id'>,
   ): Promise<void> {
     const {pushToken, osVersion, platform} = registration
@@ -647,7 +646,7 @@ export class PatientService {
     }
 
     // create or update token
-    const {id} = await this.registrationService.upsert(registrationId, {
+    const {id} = await this.registrationService.upsert({
       osVersion,
       platform,
       pushToken,

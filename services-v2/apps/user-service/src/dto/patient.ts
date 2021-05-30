@@ -336,11 +336,6 @@ class FCMRegistration {
   @ApiPropertyOptional()
   @IsOptional()
   platform?: string
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  registrationId?: string
 }
 
 export class PatientUpdateAdminDto extends PartialType(PatientCreateAdminDto) {}

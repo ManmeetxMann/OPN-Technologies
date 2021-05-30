@@ -4306,19 +4306,13 @@ paths:
               type: object
               additionalProperties: false
               properties:
-                token:
+                userId:
                   type: string
                 pcrId:
                   type: string
-                platform:
-                  type: string
-                  enum:
-                    - ios
-                    - android
               required:
-                - token
+                - userId
                 - pcrId
-                - platform
       responses:
         '200':
           description: Success

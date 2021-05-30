@@ -93,8 +93,10 @@ import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 import {normalizeAnalysis} from '../utils/analysis.helper'
 import {CouponEnum} from '../models/coupons'
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
-import {Platform, Platforms} from '../../../common/src/types/platform'
 import {FirebaseMessagingService} from '../../../common/src/service/messaging/firebase-messaging-service'
+import {PushNotificationType} from '../types/push-notification.type'
+import admin from 'firebase-admin'
+import {getNotificationBody, getNotificationTitle} from '../utils/push-notification.helper'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -1054,7 +1056,6 @@ export class PCRTestResultsService {
     notficationType: PCRResultActions | EmailNotficationTypes,
     pcrId: string,
   ): Promise<void> {
-    let addSuccessLog = true
     switch (notficationType) {
       case PCRResultActions.SendPreliminaryPositive: {
         await this.sendEmailNotification(resultData)
@@ -1103,7 +1104,6 @@ export class PCRTestResultsService {
         ) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Intermediate)
         } else {
-          addSuccessLog = false
           LogWarning('sendNotification', 'FailedEmailSent BlockedBySystem', {
             barCode: resultData.barCode,
             notficationType,
@@ -1124,85 +1124,57 @@ export class PCRTestResultsService {
     // }
   }
 
-  async sendPushNotification(
-    result: PCRTestResultEmailDTO,
-    testOptions?: {userId?: string; token?: string; platform?: Platform},
-  ): Promise<void> {
-    let token: string
-    let platform: Platform
-    if (testOptions.userId) {
-      const registration = await this.registrationService.findLastForUserId(testOptions.userId)
+  async sendPushNotification(result: PCRTestResultEmailDTO, userId: string): Promise<void> {
+    const {pushToken} = await this.registrationService.findLastForUserId(userId)
 
-      token = registration.pushToken
-      platform = registration.platform
-    } else {
-      token = testOptions.token
-      platform = testOptions.platform
-    }
-
-    if (!token || !platform) {
+    if (!pushToken) {
       throw new BadRequestException(`Registration information for this app not found`)
     }
 
-    const message = {
+    const message: admin.messaging.Message = {
       data: {
-        resultId: result.id,
+        resultId: null,
+        notificationType: null as PushNotificationType,
       },
-      token,
+      token: pushToken,
       notification: {
-        title: 'Title',
+        title: null,
+        body: null,
       },
-      // android?: AndroidConfig;
-      webpush: {
-        fcmOptions: {
-          link: null,
-        },
-      },
-    }
-
-    let resultDetailLink: string
-    let resultListLink: string
-
-    switch (platform) {
-      case Platforms.Android:
-        resultDetailLink = Config.get('DEEPLINK_ANDROID_RESULT_DETAILS')
-        resultListLink = Config.get('DEEPLINK_ANDROID_RESULT_VIEW')
-        break
-
-      case Platforms.IOS:
-        resultDetailLink = Config.get('DEEPLINK_IOS_RESULT_DETAILS')
-        resultListLink = Config.get('DEEPLINK_IOS_RESULT_VIEW')
-        break
-      default:
-        throw new BadRequestException(`${platform} - unsupported platform`)
     }
 
     switch (result.appointmentStatus) {
       case AppointmentStatus.Canceled:
-        message.notification.title = 'Canceled'
-        message.webpush.fcmOptions.link = resultListLink
+        message.data.notificationType = PushNotificationType.LISTING
         break
 
       case AppointmentStatus.Pending:
-        message.notification.title = 'Pending'
-        message.webpush.fcmOptions.link = resultListLink
+        message.data.notificationType = PushNotificationType.LISTING
         break
 
       case AppointmentStatus.InProgress:
-        message.notification.title = 'InProgress'
-        message.webpush.fcmOptions.link = resultDetailLink
+        message.data.notificationType = PushNotificationType.VIEW
+        message.data.resultId = result.resultId
         break
 
       case AppointmentStatus.Reported:
-        message.notification.title = 'Reported'
-        message.webpush.fcmOptions.link = resultDetailLink
+        message.data.notificationType = PushNotificationType.VIEW
+        message.data.resultId = result.resultId
         break
 
       case AppointmentStatus.ReCollectRequired:
-        message.notification.title = 'ReCollectRequired'
-        message.webpush.fcmOptions.link = resultDetailLink
+        message.data.notificationType = PushNotificationType.VIEW
+        message.data.resultId = result.resultId
+        break
+
+      case AppointmentStatus.ReCollectRequired:
+        message.data.notificationType = PushNotificationType.VIEW
+        message.data.resultId = result.resultId
         break
     }
+
+    message.notification.title = getNotificationTitle(result)
+    message.notification.body = getNotificationBody(result)
 
     const responce = await this.firebaseMessagingService.send(message)
     console.log(responce)

@@ -43,12 +43,13 @@ export class RegistrationService {
     return this.repository.updateProperty(registrationId, fieldName, fieldValue)
   }
 
-  async upsert(
-    registrationId: string,
-    registration: Omit<Registration, 'id'>,
-  ): Promise<Registration> {
+  async upsert(registration: Omit<Registration, 'id'>): Promise<Registration> {
     const {platform, osVersion, pushToken} = registration
-    const registrationExists = pushToken && (await this.findOne(registrationId))
+    const [registrationExists] = await this.repository
+      .getQueryFindWhereEqual('pushToken', pushToken)
+      .where('platform', '==', platform)
+      .where('osVersion', '==', osVersion)
+      .fetch()
 
     LogInfo('upsert', 'UpsertPushToken', {
       registrationExists,
@@ -56,7 +57,7 @@ export class RegistrationService {
     })
 
     if (registrationExists) {
-      return this.updateProperty(registrationId, 'pushToken', pushToken)
+      return
     } else {
       return this.create({
         platform,

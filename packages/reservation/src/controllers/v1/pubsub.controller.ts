@@ -8,7 +8,6 @@ import {PCRTestResultsService} from '../../services/pcr-test-results.service'
 import {EmailNotficationTypes, PCRResultActions} from '../../models/pcr-test-results'
 import {AppoinmentService} from '../../services/appoinment.service'
 import {LabService} from '../../services/lab.service'
-import {Platforms} from '../../../../common/src/types/platform'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 
 class PubsubController implements IControllerBase {
@@ -62,7 +61,7 @@ class PubsubController implements IControllerBase {
       ])
 
       await this.pcrTestResultsService.sendNotification(
-        {...testResult, ...appointment, labAssay: ''},
+        {...testResult, ...appointment, labAssay: lab.assay},
         data.notficationType as PCRResultActions | EmailNotficationTypes,
         testResult.id,
       )
@@ -75,11 +74,7 @@ class PubsubController implements IControllerBase {
 
   test: Handler = async (req, res, next): Promise<void> => {
     try {
-      const {token, pcrId, platform} = req.body as {
-        token: string
-        pcrId: string
-        platform: Platforms
-      }
+      const {pcrId, userId} = req.body as {userId: string; pcrId: string}
       const testResult = await this.pcrTestResultsService.getPCRResultsById(pcrId as string)
 
       if (!testResult) {
@@ -96,7 +91,7 @@ class PubsubController implements IControllerBase {
 
       await this.pcrTestResultsService.sendPushNotification(
         {...testResult, ...appointment, labAssay: lab?.assay},
-        {token, platform},
+        userId,
       )
 
       res.sendStatus(200)
