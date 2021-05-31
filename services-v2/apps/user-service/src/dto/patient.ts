@@ -407,6 +407,12 @@ export class MigrateDto {
   migrations: Migration[]
 }
 
+export class AttachOrganization {
+  @ApiProperty()
+  @IsString()
+  organizationCode?: string
+}
+
 export class DependantCreateDto extends OmitType(PatientCreateDto, ['email'] as const) {}
 
 export class DependantCreateAdminDto extends OmitType(PatientCreateAdminDto, ['email'] as const) {}

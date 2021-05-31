@@ -35,6 +35,7 @@ import {
   NormalPatientCreateDto,
   PatientProfile,
   DependantProfile,
+  AttachOrganization,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
@@ -295,5 +296,17 @@ export class PatientController {
     )
 
     return ResponseWrapper.actionSucceed(patients)
+  }
+
+  @Put('/patient/organization')
+  @UseGuards(AuthGuard)
+  @Roles([RequiredUserPermission.RegUser])
+  async attachOrganization(
+    @AuthUserDecorator() authUser: AuthUser,
+    @Body() {organizationCode}: AttachOrganization,
+  ): Promise<ResponseWrapper<void>> {
+    await this.patientService.attachOrganization(organizationCode, authUser.id)
+
+    return ResponseWrapper.actionSucceed()
   }
 }
