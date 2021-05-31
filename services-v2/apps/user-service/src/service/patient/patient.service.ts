@@ -100,6 +100,13 @@ export class PatientService {
     })
   }
 
+  async getPatientByDependantId(dependantId: number): Promise<Patient> {
+    return this.patientRepository.findOne({
+      where: {idPatient: dependantId},
+      relations: ['dependants'],
+    })
+  }
+
   async getAuthByEmail(email: string): Promise<PatientAuth> {
     return this.patientAuthRepository.findOne({where: {email}})
   }
@@ -497,7 +504,7 @@ export class PatientService {
     phoneNumber: string,
     email: string,
     authUserId: string,
-  ): Promise<(Omit<Patient, 'generatePublicId'> & {resultsCount: number})[]> {
+  ): Promise<(Patient & {resultsCount: number})[]> {
     const patientQuery = this.patientRepository
       .createQueryBuilder('patient')
       .innerJoinAndSelect('patient.auth', 'auth')
@@ -680,6 +687,7 @@ export class PatientService {
 
     const updateDto = new PatientUpdateDto()
     updateDto.phoneNumber = data?.phone
+    updateDto.dateOfBirth = data?.dateOfBirth
     updateDto.healthCardType = data?.ohipCard
     updateDto.travelPassport = data?.travelID
     updateDto.travelCountry = data?.travelIDIssuingCountry

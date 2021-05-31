@@ -4,6 +4,7 @@ import {DynamicModule} from '@nestjs/common'
 import {ConfigModule} from '@nestjs/config'
 import {OpnConfigService} from '@opn-services/common/services'
 import {isRunningOnGCP} from '@opn-services/common/utils'
+import {PatientSubscriber} from '@opn-services/user/subscriber/patient.subscribe'
 
 export const DefaultDatabaseConfiguration = (): DynamicModule => {
   return TypeOrmModule.forRootAsync({
@@ -36,6 +37,7 @@ export const DefaultDatabaseConfiguration = (): DynamicModule => {
         synchronize: false,
         migrationsRun: false,
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        subscribers: [PatientSubscriber],
         logging: ['warn', 'error', 'query'],
         autoLoadEntities: true,
         retryAttempts: 1,

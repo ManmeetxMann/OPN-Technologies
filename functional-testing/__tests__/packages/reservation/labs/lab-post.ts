@@ -1,5 +1,6 @@
-const frisby = require('frisby');
-const helpersCommon = require('helpers_common');
+import frisby from 'frisby';
+import helpersCommon from '../../../../helpers/helpers_common';
+
 
 // Do setup first
 frisby.globalSetup({
@@ -13,24 +14,27 @@ const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
  * @group reservation-service
  * @group /reservation/admin/api/v1/labs
  * @group create-lab
+ * @group admin-user
  */
-describe('post:temperature', () => {
-  test('should be successfull to create lab', () => {
+describe('post:labs', () => {
+  test('should be successfull to create lab', async () => {
     const url = `${reservationServiceUrl}/reservation/admin/api/v1/labs`;
-    return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      return frisby
-          .setup({
-            request: {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
+    const token = await helpersCommon.runAuthenticatedTest(frisby);
+
+    return frisby
+        .setup({
+          request: {
+            headers: {
+              Authorization: `Bearer ${token}`,
             },
-          })
-          .post(url, {
-            name: 'FRISBY_1',
-          })
-          .expect('status', 200);
-    });
+          },
+        })
+        .post(url, {
+          name: 'FRISBY_1',
+          templateId: '1',
+          assay: 'test',
+        })
+        .expect('status', 200);
   });
 
   test('should fail to create lab: empty name', () => {
@@ -67,3 +71,4 @@ describe('post:temperature', () => {
     });
   });
 });
+// afterAll(() => setTimeout(() => process.exit(), 1000))

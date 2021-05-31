@@ -12,7 +12,7 @@ describe('AppointmentWebhookController', () => {
   //beforeAll(async () => {})
 
   describe('Sync Fail because of Bad ID', () => {
-    test('get appointments by dateOfAppointment successfully.', async (done) => {
+    test('get appointments by dateOfAppointment successfully.', async () => {
       const url = `/reservation/acuity_webhook/api/v1/appointment/sync`
       const result = await request(server.app)
         .post(url)
@@ -28,7 +28,6 @@ describe('AppointmentWebhookController', () => {
       //Safely Ignored
       expect(result.status).toBe(200)
       expect(result.body.data.state).toBe('InvalidAcuityIDPosted')
-      done()
     })
   })
 

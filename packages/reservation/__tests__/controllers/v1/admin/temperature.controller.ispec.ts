@@ -2,7 +2,10 @@ import request from 'supertest'
 
 import {app as server} from '../../../../src/app'
 
+jest.spyOn(global.console, 'error').mockImplementation()
+jest.spyOn(global.console, 'info').mockImplementation()
 jest.mock('../../../../../common/src/middlewares/authorization')
+jest.mock('../../../../../common/src/adapters/passport')
 jest.mock('../../../../../passport/src/services/attestation-service')
 
 import {deleteAllPulseOxygenByUserId} from '../../../__seeds__/pulse-oxygen'
@@ -68,7 +71,7 @@ describe('Test temperature check request and update passport. Assume user has PR
     jest.setTimeout(7500)
   })
 
-  test('should add new temperature & update passport status to PROCEED on normal oxygen & temperature', async (done) => {
+  test('should add new temperature & update passport status to PROCEED on normal oxygen & temperature', async () => {
     const url = '/reservation/admin/api/v1/temperature'
     const result = await request(server.app).post(url).set(headers).send({
       organizationId: orgIdWithTempCheckEnabled,
@@ -79,10 +82,9 @@ describe('Test temperature check request and update passport. Assume user has PR
     })
 
     expect(result.body.data.status).toBe('proceed')
-    done()
   })
 
-  test('should add new temperature & update passport status to STOP on LOW (92) oxygen', async (done) => {
+  test('should add new temperature & update passport status to STOP on LOW (92) oxygen', async () => {
     const url = '/reservation/admin/api/v1/temperature'
     const result = await request(server.app).post(url).set(headers).send({
       organizationId: orgIdWithTempCheckEnabled,
@@ -93,10 +95,9 @@ describe('Test temperature check request and update passport. Assume user has PR
     })
 
     expect(result.body.data.status).toBe('stop')
-    done()
   })
 
-  test('should add new temperature & update passport status to STOP on HIGH temperature', async (done) => {
+  test('should add new temperature & update passport status to STOP on HIGH temperature', async () => {
     const url = '/reservation/admin/api/v1/temperature'
     const result = await request(server.app).post(url).set(headers).send({
       organizationId: orgIdWithTempCheckEnabled,
@@ -107,10 +108,9 @@ describe('Test temperature check request and update passport. Assume user has PR
     })
 
     expect(result.body.data.status).toBe('stop')
-    done()
   })
 
-  test('should add new temperature & update passport status to STOP LOW (92) oxygen & HIGH temperature', async (done) => {
+  test('should add new temperature & update passport status to STOP LOW (92) oxygen & HIGH temperature', async () => {
     const url = '/reservation/admin/api/v1/temperature'
     const result = await request(server.app).post(url).set(headers).send({
       organizationId: orgIdWithTempCheckEnabled,
@@ -121,10 +121,9 @@ describe('Test temperature check request and update passport. Assume user has PR
     })
 
     expect(result.body.data.status).toBe('stop')
-    done()
   })
 
-  test('should return bad request status: TestOrg2 has disabled temperature check', async (done) => {
+  test('should return bad request status: TestOrg2 has disabled temperature check', async () => {
     const url = '/reservation/admin/api/v1/temperature'
     const result = await request(server.app).post(url).set(headers).send({
       organizationId: orgIdWithTempDisabled,
@@ -135,7 +134,6 @@ describe('Test temperature check request and update passport. Assume user has PR
     })
 
     expect(result.status).toBe(400)
-    done()
   })
 
   afterAll(async () => {

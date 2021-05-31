@@ -10,7 +10,7 @@ describe('Appointment to test type association controller test', () => {
     Authorization: 'Bearer OPNAdmin',
   }
 
-  test('should create appointment type to test type association', async (done) => {
+  test('should create appointment type to test type association', async () => {
     const url = `/reservation/admin/api/v1/appointment-type-to-test-type-assoc`
     const response = await request(server.app).post(url).set(headers).send({
       appointmentType: 0,
@@ -19,6 +19,5 @@ describe('Appointment to test type association controller test', () => {
 
     expect(response.status).toBe(200)
     expect(response.body.data.id)
-    done()
   })
 })

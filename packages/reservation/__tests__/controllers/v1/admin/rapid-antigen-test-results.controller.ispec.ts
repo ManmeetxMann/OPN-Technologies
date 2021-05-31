@@ -48,7 +48,7 @@ describe('AdminScanHistoryController', () => {
   })
 
   describe('create scan history record', () => {
-    test('create new scan history record successfully', async (done) => {
+    test('create new scan history record successfully', async () => {
       const url = `/reservation/admin/api/v1/rapid-antigen-test-results`
       const result = await request(server.app)
         .post(url)
@@ -67,7 +67,6 @@ describe('AdminScanHistoryController', () => {
         ])
 
       expect(result.status).toBe(200)
-      done()
     })
   })
 

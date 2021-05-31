@@ -10,7 +10,7 @@ describe('Clinics controller test', () => {
     Authorization: 'Bearer CorporateUserForTEST1',
   }
 
-  test('should create clinic', async (done) => {
+  test('should create clinic', async () => {
     const url = `/reservation/admin/api/v1/clinics`
     const response = await request(server.app).post(url).set(headers).send({
       name: 'ClinicName',
@@ -21,14 +21,12 @@ describe('Clinics controller test', () => {
 
     expect(response.status).toBe(200)
     expect(response.body.data.id.length).toBeGreaterThan(0)
-    done()
   })
 
-  test('should return list of clinics', async (done) => {
+  test('should return list of clinics', async () => {
     const url = `/reservation/admin/api/v1/clinics`
     const response = await request(server.app).get(url).set(headers)
 
     expect(response.status).toBe(200)
-    done()
   })
 })
