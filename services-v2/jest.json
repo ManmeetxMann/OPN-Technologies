@@ -20,6 +20,12 @@
     "^@opn-enterprise-v1/(.*)$": "<rootDir>../packages/enterprise/src/$1"
   },
   "coverageThreshold": {
+    "./apps/checkout-service/src": {
+      "branches": 50,
+      "functions": 50,
+      "lines": 50,
+      "statements": 50
+    },
     "libs/common/src/guard": {
       "branches": 50,
       "functions": 50,
