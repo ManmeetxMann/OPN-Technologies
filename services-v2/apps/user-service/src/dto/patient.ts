@@ -455,7 +455,7 @@ export const patientProfileDto = (
 ): PatientProfile => ({
   id: patient.idPatient.toString(),
   firebaseKey: patient?.firebaseKey,
-  patientPublicId: String(patient.patientPublicId) as string,
+  patientPublicId: patient.patientPublicId,
   firstName: patient.firstName,
   lastName: patient.lastName,
   dateOfBirth: patient.dateOfBirth,
