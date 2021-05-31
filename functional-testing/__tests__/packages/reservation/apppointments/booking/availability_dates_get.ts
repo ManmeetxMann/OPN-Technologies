@@ -1,4 +1,4 @@
-const frisby = require('frisby');
+import frisby from 'frisby';
 import helpersCommon from '../../../../../helpers/helpers_common';
 import { getLocations } from './booking_locations_get';
 
