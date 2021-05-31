@@ -2,6 +2,9 @@ import request from 'supertest'
 
 import {app as server} from '../../../src/app'
 
+jest.spyOn(global.console, 'error').mockImplementation()
+jest.spyOn(global.console, 'info').mockImplementation()
+jest.mock('../../../../common/src/utils/logging-setup')
 jest.mock('../../../../common/src/middlewares/authorization')
 
 import {createPulseOxygen, deleteAllPulseOxygenByUserId} from '../../__seeds__/pulse-oxygen'
@@ -26,20 +29,18 @@ describe('test getPulseOxygenDetails controller function', () => {
     await createPulseOxygen(id, userId, organizationId, testDataCreator)
   })
 
-  test('should return pulse oxygen details', async (done) => {
+  test('should return pulse oxygen details', async () => {
     const url = `/reservation/api/v1/pulse-oxygen/${id}?organizationId=${organizationId}`
     const result = await request(server.app).get(url).set(headers)
 
     expect(result.status).toBe(200)
-    done()
   })
 
-  test('should return not authorised for other organization user', async (done) => {
+  test('should return not authorised for other organization user', async () => {
     const url = `/reservation/api/v1/pulse-oxygen/${id}?organizationId=${organizationIdOther}`
     const result = await request(server.app).get(url).set(headers)
 
     expect(result.status).toBe(400)
-    done()
   })
 
   afterAll(async () => {

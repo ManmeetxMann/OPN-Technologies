@@ -3,5 +3,6 @@ module.exports = {
     testEnvironment: 'node',
     testRegex: './__tests__/.*\\.(test|spec|ispec)?\\.(ts|tsx)$',
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-    roots: ['<rootDir>']
+    roots: ['<rootDir>'],
+    testRunner: "jest-circus/runner"
 };

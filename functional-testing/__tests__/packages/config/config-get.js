@@ -26,7 +26,7 @@ describe('Get content-result-get', () => {
             },
           })
           .get(url)
-          .inspectBody()
+          // .inspectBody()
           .expect('status', 200);
     });
   });

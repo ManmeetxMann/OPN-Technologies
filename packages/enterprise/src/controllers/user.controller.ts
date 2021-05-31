@@ -20,7 +20,6 @@ import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/res
 import {LogError, LogInfo} from '../../../common/src/utils/logging-setup'
 import {UserLogsEvents as events, UserLogsFunctions as functions} from '../types/new-user'
 import {getUserId} from '../../../common/src/utils/auth'
-import {UserSyncService} from '../services/user-sync-service'
 
 class UserController implements IControllerBase {
   public path = '/user'
@@ -31,7 +30,6 @@ class UserController implements IControllerBase {
   private registrationService = new RegistrationService()
   private authService = new AuthService()
   private adminApprovalService = new AdminApprovalService()
-  private userSyncService = new UserSyncService()
 
   constructor() {
     this.initRoutes()
@@ -99,18 +97,6 @@ class UserController implements IControllerBase {
         lastName,
         base64Photo,
         organizationIds: [organization.id],
-        delegates: [],
-      })
-
-      await this.userSyncService.create({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phoneNumber: user.phoneNumber || '',
-        isEmailVerified: false,
-        firebaseKey: user.id,
-        registrationId: user.registrationId || '',
-        dateOfBirth: '',
-        dependants: [],
         delegates: [],
       })
 

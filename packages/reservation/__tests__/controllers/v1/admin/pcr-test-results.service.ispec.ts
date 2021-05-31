@@ -10,8 +10,8 @@ import {createUser} from '../../../__seeds__/user'
 
 //jest.spyOn(global.console, 'error').mockImplementation()
 //jest.spyOn(global.console, 'info').mockImplementation()
-jest.mock('../../../../../common/src/middlewares/authorization')
 //jest.mock('../../../../../common/src/utils/logging-setup')
+jest.mock('../../../../../common/src/middlewares/authorization')
 
 const testDataCreator = __filename.split('/packages/')[1]
 const dateForAppointments = '2020-01-05'
@@ -93,25 +93,23 @@ describe('PCRTestResultController', () => {
   })
 
   describe('get result list', () => {
-    test('get results for lab successfully. date filter', async (done) => {
+    test('get results for lab successfully. date filter', async () => {
       const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}`
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBe(5)
-      done()
     })
 
-    test('get results for non lab successfully. date and organizationId filter', async (done) => {
+    test('get results for non lab successfully. date and organizationId filter', async () => {
       const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}&organizationId=${organizationId}`
       const result = await request(server.app)
         .get(url)
         .set('authorization', 'Bearer CorporateUserForTEST1')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBe(2)
-      done()
     })
 
-    test('get results for lab successfully. date & lab filter', async (done) => {
+    test('get results for lab successfully. date & lab filter', async () => {
       const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}`
       const result = await request(server.app)
         .get(url)
@@ -119,57 +117,51 @@ describe('PCRTestResultController', () => {
         .set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBe(2)
-      done()
     })
 
-    test('get results for non lab successfully. date filter', async (done) => {
+    test('get results for non lab successfully. date filter', async () => {
       const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}&organizationId=${organizationId}`
       const result = await request(server.app)
         .get(url)
         .set('authorization', 'Bearer CorporateUserForTEST1')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBe(2)
-      done()
     })
 
-    test('get results for lab successfully. date & testType filter', async (done) => {
+    test('get results for lab successfully. date & testType filter', async () => {
       const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}&testType=PCR`
       const result = await request(server.app)
         .get(url)
         .set('authorization', 'Bearer CorporateUserForTEST1')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBe(4)
-      done()
     })
 
-    test('get results for non lab successfully. date & testType:PCR filter', async (done) => {
+    test('get results for non lab successfully. date & testType:PCR filter', async () => {
       const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}&organizationId=${organizationId}&testType=PCR`
       const result = await request(server.app)
         .get(url)
         .set('authorization', 'Bearer CorporateUserForTEST1')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBe(1)
-      done()
     })
 
-    test('get results for non lab successfully. date & testType:RapidAntigen filter', async (done) => {
+    test('get results for non lab successfully. date & testType:RapidAntigen filter', async () => {
       const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}&organizationId=${organizationId}&testType=RapidAntigen`
       const result = await request(server.app)
         .get(url)
         .set('authorization', 'Bearer CorporateUserForTEST1')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBe(1)
-      done()
     })
 
-    test('get result list stats for lab successfully', async (done) => {
+    test('get result list stats for lab successfully', async () => {
       const url = `/reservation/admin/api/v1/pcr-test-results/list/stats?barCode=${barCode}`
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
-      done()
     })
 
-    test('get pcr results due deadline successfully, every result should have waitingResult true', async (done) => {
+    test('get pcr results due deadline successfully, every result should have waitingResult true', async () => {
       const url = `/reservation/admin/api/v1/pcr-test-results/due-deadline?barCode=${barCode}`
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
 
@@ -179,10 +171,9 @@ describe('PCRTestResultController', () => {
       }
 
       expect(result.status).toBe(200)
-      done()
     })
 
-    test('get pcr results history by barcode successfully', async (done) => {
+    test('get pcr results history by barcode successfully', async () => {
       const url = `/reservation/admin/api/v1/pcr-test-results/history`
       const result = await request(server.app)
         .post(url)
@@ -191,10 +182,9 @@ describe('PCRTestResultController', () => {
           barcode: ['BAR1'],
         })
       expect(result.status).toBe(200)
-      done()
     })
 
-    test('comment to pcr results successfully', async (done) => {
+    test('comment to pcr results successfully', async () => {
       const url = `/reservation/admin/api/v1/test-results/${pcrTestId}/comment`
       const result = await request(server.app)
         .post(url)
@@ -206,9 +196,8 @@ describe('PCRTestResultController', () => {
         })
       expect(result.status).toBe(200)
       expect(typeof result.body.data.id).toBe('string')
-      done()
     })
-    test('reply to a comment successfully', async (done) => {
+    test('reply to a comment successfully', async () => {
       const url = `/reservation/admin/api/v1/test-results/${pcrTestId}/comment/${commentTestId}/reply`
       const result = await request(server.app)
         .post(url)
@@ -218,17 +207,14 @@ describe('PCRTestResultController', () => {
           attachmentUrls: ['https://via.placeholder.com/210'],
         })
       expect(result.status).toBe(200)
-      done()
     })
-    test('list comments successfully', async (done) => {
+    test('list comments successfully', async () => {
       const url = `/reservation/admin/api/v1/test-results/${pcrTestId}/comment`
       const result = await request(server.app)
         .get(url)
         .set('authorization', 'Bearer LabUser')
         .send()
-      console.log(result)
       expect(result.status).toBe(200)
-      done()
     })
   })
 

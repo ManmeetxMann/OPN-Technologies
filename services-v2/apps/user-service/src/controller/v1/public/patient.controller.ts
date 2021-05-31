@@ -35,6 +35,9 @@ import {
   NormalPatientCreateDto,
   PatientProfile,
   DependantProfile,
+  unconfirmedPatientDto,
+  UnconfirmedPatient,
+  AttachOrganization,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
@@ -72,7 +75,10 @@ export class PatientController {
       throw new ResourceNotFoundException('User with given id not found')
     }
 
-    return ResponseWrapper.actionSucceed(patientProfileDto(patient))
+    const users = await this.patientService.findNewUsersByEmail(patient?.auth?.email)
+    const resultExitsForProvidedEmail = !!users.length
+
+    return ResponseWrapper.actionSucceed(patientProfileDto(patient, {resultExitsForProvidedEmail}))
   }
 
   @Post()
@@ -110,6 +116,9 @@ export class PatientController {
       const hasPublicOrg = [OpnSources.FH_Android, OpnSources.FH_IOS].includes(
         opnHeaders.opnSourceHeader,
       )
+      if (!patientDto.phoneNumber) {
+        patientDto.phoneNumber = firebaseAuthUser.phoneNumber
+      }
       patient = await this.patientService.createProfile(patientDto, hasPublicOrg)
     }
 
@@ -279,15 +288,28 @@ export class PatientController {
   @Get('/unconfirmed')
   @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
+  @ApiResponse({type: UnconfirmedPatient})
   async getUnconfirmedPatients(
     @AuthUserDecorator() authUser: AuthUser,
-  ): Promise<ResponseWrapper<Omit<Patient, 'generatePublicId'>[]>> {
+  ): Promise<ResponseWrapper<UnconfirmedPatient[]>> {
     const patients = await this.patientService.getUnconfirmedPatients(
       authUser.phoneNumber,
       authUser.email,
       authUser.id,
     )
 
-    return ResponseWrapper.actionSucceed(patients)
+    return ResponseWrapper.actionSucceed(patients.map(unconfirmedPatientDto))
+  }
+
+  @Put('/patient/organization')
+  @UseGuards(AuthGuard)
+  @Roles([RequiredUserPermission.RegUser])
+  async attachOrganization(
+    @AuthUserDecorator() authUser: AuthUser,
+    @Body() {organizationCode}: AttachOrganization,
+  ): Promise<ResponseWrapper<void>> {
+    await this.patientService.attachOrganization(organizationCode, authUser.id)
+
+    return ResponseWrapper.actionSucceed()
   }
 }

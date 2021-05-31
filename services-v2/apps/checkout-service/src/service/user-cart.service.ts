@@ -68,22 +68,27 @@ export class UserCardService {
 
   buildPaymentSummary(cartItems: CartItemDto[]): CartSummaryDto[] {
     const round = num => Math.round(num * 100) / 100
-    const discountedSum = cartItems.reduce(
-      (sum, item) => sum + (item.discountedPrice || item.price || 0),
-      0,
-    )
+    const discountedSum = cartItems.reduce((sum, item) => {
+      return (
+        sum +
+        (item.discountedPrice || item.discountedPrice === 0
+          ? item.discountedPrice
+          : item.price || 0)
+      )
+    }, 0)
+
+    const realSum = cartItems.reduce((sum, item) => {
+      return sum + (item.price || 0)
+    }, 0)
+
     const tax = round(discountedSum * this.hstTax)
     const total = round(discountedSum + tax)
-    const discountedPrice = round(discountedSum - total)
-    if (total == 0) {
-      return []
-    }
 
     const paymentSummary = [
       {
         uid: 'subTotal',
         label: 'SUBTOTAL',
-        amount: discountedSum,
+        amount: realSum,
         currency: 'CAD',
       },
       {
@@ -98,14 +103,16 @@ export class UserCardService {
         amount: total,
         currency: 'CAD',
       },
-      {
-        uid: 'discountedPrice',
-        label: 'Discounted Price',
-        amount: discountedPrice,
-        currency: 'CAD',
-      },
     ]
 
+    if (discountedSum - realSum !== 0) {
+      paymentSummary.push({
+        uid: 'promoDiscount',
+        label: 'PROMO DISCOUNT',
+        amount: round(discountedSum - realSum),
+        currency: 'CAD',
+      })
+    }
     return paymentSummary
   }
 
@@ -428,6 +435,7 @@ export class UserCardService {
 
   async updateItem(userOrgId: string, cartItems: CartUpdateRequestDto): Promise<void> {
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
+    const appointmentTypes = await this.acuityTypesRepository.fetchAll()
     const cartItemsData = await userCartItemRepository.findWhereEqual(
       'cartItemId',
       cartItems.cartItemId,
@@ -440,14 +448,19 @@ export class UserCardService {
 
     const appointment = decodeAvailableTimeId(cartItems.slotId)
 
+    // Update price based on appointment type
+    const appointmentType = appointmentTypes.find(
+      appointmentType => Number(appointmentType.id) === appointment.appointmentTypeId,
+    )
+
     const cartItem = {
       id: cartItemExist.id,
       cartItemId: cartItems.cartItemId,
       patient: _.omit(cartItems, ['slotId']),
       appointment,
       appointmentType: {
-        price: cartItemExist.appointmentType.price,
-        name: cartItemExist.appointmentType.name,
+        price: appointmentType.price,
+        name: appointmentType.name,
       },
     }
     const cartItemValidator = new JoiValidator(cartItemSchema)

@@ -8,7 +8,7 @@ import {
 } from '@opn-services/checkout/repository/user-cart.repository'
 import {AcuityErrorValues} from '@opn-reservation-v1/models/acuity'
 import {CouponErrorsEnum} from '@opn-services/checkout/model'
-import {DiscountTypes} from '@opn-reservation-v1/models/coupons'
+import {CouponCheckResponse, DiscountTypes} from '@opn-reservation-v1/models/coupons'
 import DataStore from '@opn-common-v1/data/datastore'
 import {AcuityRepository} from '@opn-reservation-v1/respository/acuity.repository'
 
@@ -70,7 +70,7 @@ export class UserCardDiscountService {
     const {userId, organizationId, coupon, cartItem} = data
     const userOrgId = `${userId}_${organizationId}`
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
-    let discount
+    let discount: CouponCheckResponse
     let error
     try {
       discount = await this.acuityRepository.checkCoupon(

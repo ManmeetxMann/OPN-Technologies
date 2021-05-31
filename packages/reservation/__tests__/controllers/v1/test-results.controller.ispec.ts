@@ -91,7 +91,7 @@ describe('listTestResults', () => {
     )
   })
 
-  test('should return all test results', async (done) => {
+  test('should return all test results', async () => {
     const url = `/reservation/api/v1/test-results`
     const result = await request(server.app).get(url).set(headers)
     expect(result.status).toBe(200)
@@ -107,7 +107,6 @@ describe('listTestResults', () => {
         }),
       ]),
     )
-    done()
   })
 
   afterAll(async () => {

@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "sourceMap": true,
+        "target": "es2019",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "resolveJsonModule": true,
+        "esModuleInterop": true,
+        "baseUrl": ".",
+        "paths" : {
+            "@helpers/*": ["./helpers/*"]
+        }
+    },
+
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}

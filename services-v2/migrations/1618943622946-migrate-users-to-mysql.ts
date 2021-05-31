@@ -38,6 +38,7 @@ export class migrateUsersToMysql1618943622946 implements MigrationInterface {
       console.log(`Successfully inserted ${successCount} `)
     } catch (error) {
       console.error('Error running migration', error)
+      throw error
     } finally {
       console.warn(`Inserting Failed ${failureCount} `)
       console.log(`Total Results Processed: ${totalCount} `)
@@ -79,40 +80,32 @@ async function insertAllUsers(): Promise<Result[]> {
     hasMore = !userSnapshot.empty
     //hasMore = false
 
-    const patientPromises = []
     const othersPromises = []
 
-    // First step is to create Patient
-    const patient = adaptPatientsData(userSnapshot.docs[0])
-    patientPromises.push(insertData(patient, 'patient'))
-    const patientResult = await promiseAllSettled(patientPromises)
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const patientId = patientResult[0].value.identifiers[0].idPatient
+    for (const user of userSnapshot.docs) {
+      // First step is to create Patient
+      const patient = adaptPatientsData(user)
+      const patientResult = await insertData(patient, 'patient')
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const patientId = patientResult.identifiers[0].idPatient
 
-    if (userSnapshot.docs[0].data().admin) {
-      const admin = adaptAdminsData(patientId, userSnapshot.docs[0])
-      othersPromises.push(insertData(admin, 'patientAdmin'))
+      if (user.data().admin) {
+        const admin = adaptAdminsData(patientId, user)
+        othersPromises.push(insertData(admin, 'patientAdmin'))
+      }
+
+      const authData = adaptAuthData(patientId, user)
+      othersPromises.push(insertData(authData, 'patientAuth'))
+
+      if (user.data().organizationIds && user.data().organizationIds.length) {
+        const patientOrganizations = adaptPatientsOrganizationsData(patientId, user.data())
+        othersPromises.push(insertData(patientOrganizations, 'patientToOrganization'))
+      }
+
+      const othersResults = await promiseAllSettled(othersPromises)
+      results.push(...othersResults)
     }
-
-    if (
-      userSnapshot.docs[0].data().organizationIds &&
-      userSnapshot.docs[0].data().organizationIds.length
-    ) {
-      const patientOrganizations = adaptPatientsOrganizationsData(
-        patientId,
-        userSnapshot.docs[0].data(),
-      )
-      othersPromises.push(insertData(patientOrganizations, 'patientToOrganization'))
-    }
-
-    if (userSnapshot.docs[0].data().delegates && userSnapshot.docs[0].data().delegates.length) {
-      const patientDelegates = adaptPatientsDelegatesData(patientId, userSnapshot.docs[0].data())
-      othersPromises.push(insertData(patientDelegates, 'patientToDelegates'))
-    }
-
-    const othersResults = await promiseAllSettled(othersPromises)
-    results.push(...patientResult, ...othersResults)
   }
   return results
 }
@@ -141,19 +134,6 @@ function adaptPatientsOrganizationsData(patientId: string, userSnapshot) {
         return {
           patientId,
           firebaseOrganizationId,
-        }
-      }
-    })
-    .filter(row => !!row)
-}
-
-function adaptPatientsDelegatesData(dependantId: string, userSnapshot) {
-  return userSnapshot.delegates
-    .map(delegateId => {
-      if (delegateId) {
-        return {
-          dependantId,
-          delegateId,
         }
       }
     })
@@ -194,20 +174,59 @@ function adaptAdminsData(patientId: string, userSnapshot) {
 
 function adaptPatientsData(user) {
   const userData = user.data()
-  return {
-    firstName: userData.firstName,
-    lastName: userData.lastName,
-    phoneNumber: userData.phone && userData.phone.number && `${userData.phone.number}`,
+  const profileData: {
+    firstName: string
+    lastName: string
+    photoUrl: string
+    firebaseKey: string
+    registrationId: string
+    createdOn: string
+    updatedOn: string
+    dateOfBirth: string
+    isEmailVerified: boolean
+    phoneNumber?: string
+  } = {
+    firstName: userData.firstName ? userData.firstName.slice(0, 255) : '',
+    lastName: userData.lastName ? userData.lastName.slice(0, 255) : '',
     photoUrl: '', // userData.base64Photo ||  @TODO Upload image to server and put image link here
     firebaseKey: user.id,
     registrationId: userData.registrationId || '',
     createdOn: userData.timestamps?.createdAt,
     updatedOn: userData.timestamps?.updatedAt,
     dateOfBirth: '',
+    isEmailVerified: true,
   }
+  if (userData.phone && userData.phone.number) {
+    profileData.phoneNumber = `${userData.phone.number}`
+  }
+  if (userData.phoneNumber) {
+    profileData.phoneNumber = userData.phoneNumber
+  }
+  return profileData
+}
+
+function adaptAuthData(patientId: string, user) {
+  const userData = user.data()
+  const profileData: {
+    email?: string
+    phoneNumber?: string
+    authUserId: string
+    patientId: string
+  } = {
+    email: userData.email || null,
+    authUserId: userData.authUserId,
+    patientId,
+  }
+  if (userData.phone && userData.phone.number) {
+    profileData.phoneNumber = `${userData.phone.number}`
+  }
+  if (userData.phoneNumber) {
+    profileData.phoneNumber = userData.phoneNumber
+  }
+  return profileData
 }
 
 let successCount = 0
 let failureCount = 0
 let totalCount = 0
-const limit = 1
+const limit = 1000

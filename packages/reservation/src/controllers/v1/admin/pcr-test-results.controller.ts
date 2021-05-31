@@ -241,14 +241,13 @@ class AdminPCRTestResultController implements IControllerBase {
       const adminId = getUserId(res.locals.authenticatedUser)
       const {barCode, action, labId} = req.body as PCRTestResultConfirmRequest
 
-      const pcrResultRecordedId = await this.pcrTestResultsService.confirmPCRResults(
-        {
-          barCode,
-          action,
-          labId,
-        },
+      const pcrResultRecordedId = await this.pcrTestResultsService.confirmPCRResults({
+        barCode,
+        action,
+        labId,
         adminId,
-      )
+        byPassValidation: false,
+      })
       const successMessage = `For ${barCode}, action "${action}" has been recorded and sent to the client`
       res.json(actionSuccess({id: pcrResultRecordedId}, successMessage))
     } catch (error) {

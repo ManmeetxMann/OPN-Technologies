@@ -1,9 +1,6 @@
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {LogInfo} from '../../../common/src/utils/logging-setup'
 import DataStore from '../../../common/src/data/datastore'
-// import {Config} from '../../../common/src/utils/config'
-// import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
-import PassportAdapter from '../../../common/src/adapters/passport'
 import {Temperature, TemperatureDBModel} from '../models/temperature'
 import {TemperatureRepository} from '../respository/temperature.repository'
 import {Enterprise} from '../adapter/enterprise'
@@ -14,7 +11,6 @@ export class TemperatureService {
   private dataStore = new DataStore()
   private temperatureRepository = new TemperatureRepository(this.dataStore)
   // private pubsub = new OPNPubSub(Config.get('TEMPERATURE_TOPIC'))
-  private adapter = new PassportAdapter()
   private enterpriseAdapter = new Enterprise()
   private userService = new UserService()
 

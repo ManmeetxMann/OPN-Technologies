@@ -15,8 +15,11 @@ import {
   CouponRequestDto,
   CartItemResponse,
 } from '@opn-services/checkout/dto'
-import {UserCardDiscountService} from '@opn-services/checkout/service'
-import {UserCardService, StripeService} from '@opn-services/checkout/service'
+import {
+  UserCardService,
+  UserCardDiscountService,
+  StripeService,
+} from '@opn-services/checkout/service'
 import {CardItemDBModel, CartItemStatus} from '@opn-services/checkout/model/cart'
 
 import {AppoinmentService} from '@opn-reservation-v1/services/appoinment.service'
@@ -116,7 +119,10 @@ export class CartController {
     return ResponseWrapper.actionSucceed(null)
   }
 
-  @Put('')
+  @Put()
+  @ApiHeader({
+    name: 'organizationid',
+  })
   @Roles([RequiredUserPermission.RegUser], true)
   async updateCart(
     @AuthUserDecorator() authUser: AuthUser,
@@ -129,6 +135,9 @@ export class CartController {
   }
 
   @Delete('/coupons')
+  @ApiHeader({
+    name: 'organizationid',
+  })
   @Roles([RequiredUserPermission.RegUser], true)
   async deleteCartCoupons(
     @AuthUserDecorator() authUser: AuthUser,

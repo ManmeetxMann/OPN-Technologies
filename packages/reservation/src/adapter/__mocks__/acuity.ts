@@ -2,12 +2,13 @@ import {BadRequestException} from '../../../../common/src/exceptions/bad-request
 import {Config} from '../../../../common/src/utils/config'
 
 //import {AcuityAvailableSlots} from '../../models/acuity'
-import {AppointmentAcuityResponse} from '../../models/appointment'
+import {AppointmentAcuityResponse, DeadlineLabel, Gender} from '../../models/appointment'
 import {AppointmentTypes} from '../../models/appointment-types'
 import {Calendar} from '../../models/calendar'
 import {AcuityAvailableSlots} from '../../models/acuity'
 //import {AcuityCouponCodeResponse} from '../../models/coupons'
 import {Certificate} from '../../models/packages'
+import {CouponCheckResponse, DiscountTypes} from '../../models/coupons'
 
 type AppointmentAcuityFormField = {
   fieldID: number
@@ -283,20 +284,6 @@ abstract class AcuityAdapter {
     return
   }
 
-  protected async createAppointmentOnAcuityService(
-    datetime: string,
-    appointmentTypeID: number,
-    firstName: string,
-    lastName: string,
-    email: string,
-    phone: string,
-    certificate: string,
-    calendarID: number,
-    fields: Record<string, string | boolean>,
-  ): Promise<AppointmentAcuityResponse> {
-    return
-  }
-
   protected async getAvailabilityDatesList(
     appointmentTypeID: number,
     month: string,
@@ -306,6 +293,84 @@ abstract class AcuityAdapter {
     return
   }
   */
+
+  protected async createAppointmentOnAcuityService(
+    datetime: string,
+    appointmentTypeID: number,
+    firstName: string,
+    lastName: string,
+    email: string,
+    phone: string,
+    certificate: string,
+    calendarID: number,
+    // fields: Record<string, string | boolean>,
+  ): Promise<AppointmentAcuityResponse> {
+    return {
+      address: 'string',
+      addressUnit: 'string',
+      agreeToConductFHHealthAssessment: true,
+      appointmentTypeID,
+      barCode: 'string',
+      calendar: 'string',
+      calendarID: calendarID,
+      canceled: false,
+      canClientCancel: true,
+      canClientReschedule: true,
+      certificate,
+      date: 'string',
+      dateOfBirth: 'string',
+      datetime,
+      email,
+      firstName,
+      lastName,
+      gender: Gender.PreferNotToSay,
+      id: Math.floor(100000 + Math.random() * 90000),
+      labels: [
+        {
+          id: 1,
+          name: DeadlineLabel.NextDay,
+          color: 'green',
+        },
+      ],
+      ohipCard: 'string',
+      organizationId: 'PUBLIC_ORG_ID',
+      location: 'string',
+      phone: '111222333',
+      postalCode: '1112223',
+      readTermsAndConditions: true,
+      receiveNotificationsFromGov: true,
+      receiveResultsViaEmail: true,
+      shareTestResultWithEmployer: true,
+      forms: [],
+      time: '2021-05-02T08:10:00-0400',
+      swabMethod: 'string',
+      registeredNursePractitioner: '',
+      travelID: 'string',
+      travelIDIssuingCountry: 'string',
+      city: 'string',
+      province: 'string',
+      country: 'string',
+    }
+  }
+
+  protected async checkCouponCode(
+    certificate: string,
+    appointmentTypeID: number,
+  ): Promise<CouponCheckResponse> {
+    return {
+      id: 1,
+      certificate,
+      couponID: 'string',
+      appointmentTypeIDs: [appointmentTypeID],
+      productIDs: ['ProductIds'],
+      name: 'Appointments Coupon - 10$',
+      type: 'appointments',
+      expiration: null,
+      discountType: DiscountTypes.price,
+      discountAmount: 10,
+    }
+  }
+
   protected async getAvailableSlotsList(
     _: number,
     __: string,

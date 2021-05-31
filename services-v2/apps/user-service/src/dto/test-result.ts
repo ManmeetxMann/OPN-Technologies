@@ -1,5 +1,5 @@
 import {ApiProperty} from '@nestjs/swagger'
-import {IsDateString, IsNotEmpty, IsString, IsUrl} from 'class-validator'
+import {IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl} from 'class-validator'
 import {firestore} from 'firebase-admin'
 
 enum TestTypes {
@@ -33,6 +33,16 @@ export class TestResultCreateDto {
   @IsUrl()
   @IsNotEmpty()
   photoUrl: string
+
+  @ApiProperty()
+  @IsNumber()
+  @IsOptional()
+  dependantId?: number
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  organizationId?: string
 
   @ApiProperty({enum: TestTypes})
   @IsString()
