@@ -153,10 +153,15 @@ export class PCRTestResultsService {
     }*/
 
     // TODO: Don't use userSyncService for getting a that, user sync service should be removed
-    const patient = await this.userSyncService.getByFirebaseKey(adminId)
+    let patient = null
+    try {
+      patient = await this.userSyncService.getByFirebaseKey(adminId)
+    } catch (e) {
+      console.error(e)
+    }
 
     const data = {
-      patientCode: (patient as {publicId: string}).publicId,
+      patientCode: patient ?? (patient as {publicId: string}).publicId,
       barCode: testResult.barCode,
       dateTime: testResult.dateTime,
       firstName: testResult.firstName,
