@@ -19,11 +19,11 @@ import {OpnValidationPipe} from '@opn-services/common/pipes'
 import {AppoinmentService} from '@opn-reservation-v1/services/appoinment.service'
 import {UserService} from '@opn-common-v1/service/user/user-service'
 import {UserCardService, StripeService} from '@opn-services/checkout/service'
+import {UserCardDiscountService} from '@opn-services/checkout/service'
 
 // Controllers
 import {CartController} from './controller/v1/public/cart.controller'
 import {CartInternalController} from './controller/v1/internal/cart.controller'
-import {UserCardDiscountService} from 'apps/checkout-service/src/service/user-cart-discount.service'
 
 @Module({
   imports: [CommonModule, StripeService, AppoinmentService, UserService],
@@ -36,8 +36,9 @@ import {UserCardDiscountService} from 'apps/checkout-service/src/service/user-ca
     UserService,
     {
       provide: APP_GUARD,
-      useClass: AuthGlobalGuard,
+      useExisting: AuthGlobalGuard,
     },
+    AuthGlobalGuard,
   ],
 })
 class App {

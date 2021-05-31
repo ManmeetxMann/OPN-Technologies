@@ -15,6 +15,7 @@ import {LabService} from '../../services/lab.service'
 import {singlePcrTestResultDTO, SingleTestResultsRequest} from '../../models/pcr-test-results'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {TestTypes} from '../../models/appointment'
+import {OpnSourceType} from '../../types/opn-source.type'
 
 class TestResultsController implements IControllerBase {
   public path = '/reservation/api/v1'
@@ -41,7 +42,11 @@ class TestResultsController implements IControllerBase {
   listTestResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationid} = req.headers as {organizationid?: string}
-      const {testType} = req.query as {testType?: TestTypes}
+      const opnSource = req.headers?.['opn-source']
+      const testType =
+        opnSource === OpnSourceType.FHRapidHomeWeb
+          ? TestTypes.RapidAntigenAtHome
+          : (req.query?.testType as TestTypes)
 
       const userId = getUserId(res.locals.authenticatedUser)
       const pcrResults = await this.pcrTestResultsService.getAllResultsByUserAndChildren(

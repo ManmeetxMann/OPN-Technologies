@@ -8,7 +8,6 @@ import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 
-import {AlertService} from '../../../../../passport/src/services/alert-service'
 import {AttestationService} from '../../../../../passport/src/services/attestation-service'
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
 import {PassportService} from '../../../../../passport/src/services/passport-service'
@@ -31,7 +30,6 @@ class AdminTemperatureController implements IControllerBase {
   public temperatureService = new TemperatureService()
   public pulseOxygenService = new PulseOxygenService()
   public passportService = new PassportService()
-  private alertService = new AlertService()
   private attestationService = new AttestationService()
   public organizationService = new OrganizationService()
   private passportAdapter = new PassportAdapter()

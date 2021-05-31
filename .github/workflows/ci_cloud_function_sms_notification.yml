@@ -7,6 +7,7 @@ on:
       - ".github/workflows/ci_cloud_function_sms_notification.yml"
     branches: 
       - master
+      - develop
       - feature/sms_notification
 
 jobs:

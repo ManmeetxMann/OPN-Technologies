@@ -31,9 +31,7 @@ import {
   patientProfileDto,
   PatientCreateDto,
   MigrateDto,
-  CreatePatientDTOResponse,
   AuthenticateDto,
-  PatientDTO,
   NormalPatientCreateDto,
   PatientProfile,
   DependantProfile,
@@ -68,15 +66,16 @@ export class PatientController {
   @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
   @ApiResponse({type: PatientProfile})
-  async getById(
-    @AuthUserDecorator() authUser: AuthUser,
-  ): Promise<ResponseWrapper<PatientUpdateDto>> {
+  async getById(@AuthUserDecorator() authUser: AuthUser): Promise<ResponseWrapper<PatientProfile>> {
     const patient = await this.patientService.getProfileByFirebaseKey(authUser.id)
     if (!patient) {
       throw new ResourceNotFoundException('User with given id not found')
     }
 
-    return ResponseWrapper.actionSucceed(patientProfileDto(patient))
+    const users = await this.patientService.findNewUsersByEmail(patient?.auth?.email)
+    const resultExitsForProvidedEmail = !!users.length
+
+    return ResponseWrapper.actionSucceed(patientProfileDto(patient, {resultExitsForProvidedEmail}))
   }
 
   @Post()
@@ -87,12 +86,12 @@ export class PatientController {
   })
   @ApiExtraModels(NormalPatientCreateDto, HomeTestPatientDto)
   @ApiAuthType(AuthTypes.Firebase)
-  @ApiResponse({type: PatientDTO})
+  @ApiResponse({type: PatientProfile})
   async add(
     @PublicDecorator() firebaseAuthUser: AuthUser,
     @Body() patientDto: PatientCreateDto,
     @OpnHeaders() opnHeaders: OpnCommonHeaders,
-  ): Promise<ResponseWrapper<PatientDTO>> {
+  ): Promise<ResponseWrapper<PatientProfile>> {
     let patient: Patient
 
     patientDto.authUserId = firebaseAuthUser.authUserId
@@ -114,6 +113,9 @@ export class PatientController {
       const hasPublicOrg = [OpnSources.FH_Android, OpnSources.FH_IOS].includes(
         opnHeaders.opnSourceHeader,
       )
+      if (!patientDto.phoneNumber) {
+        patientDto.phoneNumber = firebaseAuthUser.phoneNumber
+      }
       patient = await this.patientService.createProfile(patientDto, hasPublicOrg)
     }
 
@@ -123,8 +125,10 @@ export class PatientController {
       resultExitsForProvidedEmail = !!users.length
     }
 
+    const patientProfile = await this.patientService.getProfilebyId(patient.idPatient)
+
     return ResponseWrapper.actionSucceed(
-      CreatePatientDTOResponse({resultExitsForProvidedEmail, ...patient}),
+      patientProfileDto(patientProfile, {resultExitsForProvidedEmail}),
     )
   }
 
@@ -283,7 +287,7 @@ export class PatientController {
   @Roles([RequiredUserPermission.RegUser])
   async getUnconfirmedPatients(
     @AuthUserDecorator() authUser: AuthUser,
-  ): Promise<ResponseWrapper<Omit<Patient, 'generatePublicId'>[]>> {
+  ): Promise<ResponseWrapper<Patient[]>> {
     const patients = await this.patientService.getUnconfirmedPatients(
       authUser.phoneNumber,
       authUser.email,

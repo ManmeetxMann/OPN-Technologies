@@ -3716,6 +3716,20 @@ paths:
           schema:
             type: string
           required: false
+        - in: header
+          name: opn-source
+          schema:
+            type: string
+            enum:
+              [
+                  FH_IOS,
+                  FH_Android,
+                  OPN_IOS,
+                  OPN_Android,
+                  Admin_Dashboard,
+                  FH_RapidHome_Web
+              ]
+          required: false
         - in: query
           name: testType
           schema:

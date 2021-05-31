@@ -42,7 +42,7 @@ import {LogError} from '@opn-services/common/utils/logging'
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
 import {acuityTypesSchema, cartItemSchema} from '@opn-services/common/schemas'
 import {toFormattedIso} from '@opn-services/checkout/utils/times'
-import {UserCardDiscountService} from './user-cart-discount.service'
+import {UserCardDiscountService} from '@opn-services/checkout/service'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -68,22 +68,27 @@ export class UserCardService {
 
   buildPaymentSummary(cartItems: CartItemDto[]): CartSummaryDto[] {
     const round = num => Math.round(num * 100) / 100
-    const discountedSum = cartItems.reduce(
-      (sum, item) => sum + (item.discountedPrice || item.price || 0),
-      0,
-    )
+    const discountedSum = cartItems.reduce((sum, item) => {
+      return (
+        sum +
+        (item.discountedPrice || item.discountedPrice === 0
+          ? item.discountedPrice
+          : item.price || 0)
+      )
+    }, 0)
+
+    const realSum = cartItems.reduce((sum, item) => {
+      return sum + (item.price || 0)
+    }, 0)
+
     const tax = round(discountedSum * this.hstTax)
     const total = round(discountedSum + tax)
-
-    if (total == 0) {
-      return []
-    }
 
     const paymentSummary = [
       {
         uid: 'subTotal',
         label: 'SUBTOTAL',
-        amount: discountedSum,
+        amount: realSum,
         currency: 'CAD',
       },
       {
@@ -100,6 +105,14 @@ export class UserCardService {
       },
     ]
 
+    if (discountedSum - realSum !== 0) {
+      paymentSummary.push({
+        uid: 'promoDiscount',
+        label: 'PROMO DISCOUNT',
+        amount: round(discountedSum - realSum),
+        currency: 'CAD',
+      })
+    }
     return paymentSummary
   }
 

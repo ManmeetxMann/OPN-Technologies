@@ -14,7 +14,6 @@ import {Patient} from '../../../model/patient/patient.entity'
 import {
   PatientCreateAdminDto,
   PatientFilter,
-  PatientUpdateDto,
   patientProfileDto,
   DependantCreateAdminDto,
   PatientUpdateAdminDto,
@@ -54,7 +53,7 @@ export class AdminPatientController {
   @Get('/:patientId')
   @Roles([RequiredUserPermission.PatientsAdmin])
   @ApiResponse({type: PatientProfile})
-  async getById(@Param('patientId') id: string): Promise<ResponseWrapper<PatientUpdateDto>> {
+  async getById(@Param('patientId') id: string): Promise<ResponseWrapper<PatientProfile>> {
     const patient = await this.patientService.getProfilebyId(Number(id))
 
     if (!patient) {

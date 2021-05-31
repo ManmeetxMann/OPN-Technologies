@@ -5,22 +5,23 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 import * as request from 'supertest'
 import {App} from '../../src/main'
 
-import {createUser, deleteUserByIdTestDataCreator} from '@opn-services/test/utils'
+import {createUser, deleteUserByIdTestDataCreator, commonHeaders} from '@opn-services/test/utils'
 
 import {Patient} from '../../src/model/patient/patient.entity'
 import {PatientTestUtility} from '../utils/patient'
 import {PatientCreateDto} from '../../src/dto/patient'
 
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
-jest.setTimeout(10000)
+jest.setTimeout(20000)
 
-const userId = 'PATIENT_BASIC'
 const organizationId = 'PATIENT_ORG_BASIC'
 const testDataCreator = __filename.split('/services-v2/')[1]
+const userId = 'PATIENT_BASIC' + 1
 const headers = {
   accept: 'application/json',
   organizationid: organizationId,
   authorization: `Bearer userId:${userId}`,
+  ...commonHeaders,
 }
 
 describe('AdminPatientController (e2e)', () => {
@@ -60,6 +61,33 @@ describe('AdminPatientController (e2e)', () => {
     mockedUser = await patientTestUtility.createPatient({email: userMockedMail})
   })
 
+  test('fail to get all patients without bearer - / (GET)', async done => {
+    const response = await request(server)
+      .get(url)
+      .set({
+        accept: 'application/json',
+        organizationid: organizationId,
+        ...commonHeaders,
+      })
+      .send()
+
+    expect(response.status).toBe(401)
+    done()
+  })
+
+  test('fail to get all patients with bad bearer - / (GET)', async done => {
+    const response = await request(server)
+      .get(url)
+      .set({
+        ...headers,
+        authorization: `userId:${userId}`,
+      })
+      .send()
+
+    expect(response.status).toBe(401)
+    done()
+  })
+
   test('should create patient - / (POST)', async done => {
     const payload = patientTestUtility.getProfilePayload(userCreatePayload)
     const response = await request(server)
@@ -67,7 +95,6 @@ describe('AdminPatientController (e2e)', () => {
       .set(headers)
       .send(payload as PatientCreateDto)
 
-    console.log(response.text)
     expect(response.status).toBe(201)
     done()
   })
@@ -105,7 +132,11 @@ describe('AdminPatientController (e2e)', () => {
   afterAll(async () => {
     await Promise.all([
       deleteUserByIdTestDataCreator(userId, testDataCreator),
+      patientTestUtility.findAndRemoveProfile({idPatient: mockedUser.idPatient}),
       patientTestUtility.findAndRemoveProfile({firstName: userCreatePayload.firstName}),
+    ])
+    await Promise.all([
+      patientTestUtility.patientRepository.delete({firstName: userCreatePayload.firstName}),
       patientTestUtility.patientRepository.delete(mockedUser.idPatient),
     ])
     await app.close()
