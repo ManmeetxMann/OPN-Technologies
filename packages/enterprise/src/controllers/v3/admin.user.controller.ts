@@ -14,14 +14,12 @@ import {UsersByOrganizationRequest} from '../../types/user-organization-request'
 import {OrganizationGroup} from '../../models/organization'
 import {flatten} from 'lodash'
 import {AuthUser} from '../../../../common/src/data/user'
-import {UserSyncService} from '../../services/user-sync-service'
 import {LogInfo, LogError} from '../../../../common/src/utils/logging-setup'
 import {getUserId} from '../../../../common/src/utils/auth'
 import {UserLogsEvents as events, UserLogsFunctions as functions} from '../../types/new-user'
 
 const userService = new UserService()
 const organizationService = new OrganizationService()
-const userSyncService = new UserSyncService()
 
 /**
  * Get all users for a given org-id
@@ -110,19 +108,6 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
       isEmailVerified: false,
     })
 
-    await userSyncService.create({
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phoneNumber: (user.phone && user.phone.number && `${user.phone.number}`) || '',
-      photoUrl: user.photo,
-      firebaseKey: user.id,
-      isEmailVerified: false,
-      registrationId: user.registrationId || '',
-      dateOfBirth: '',
-      dependants: [],
-      delegates: [],
-    })
-
     LogInfo(functions.createUser, events.createUser, {
       newUser: user.id,
       createdBy: getUserId(res.locals.authenticatedUser),
@@ -146,7 +131,6 @@ const updateUser: Handler = async (req, res, next): Promise<void> => {
     const {userId} = req.params
     const updatedUser = await userService.updateByAdmin(userId, source)
 
-    await userSyncService.updateByAdmin(updatedUser.id, source)
     LogInfo(functions.updateUser, events.updateUser, {
       userId,
     })

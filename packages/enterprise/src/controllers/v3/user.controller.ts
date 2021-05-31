@@ -6,7 +6,6 @@ import IControllerBase from '../../../../common/src/interfaces/IControllerBase.i
 import {AuthService} from '../../../../common/src/service/auth/auth-service'
 import {AdminApprovalService} from '../../../../common/src/service/user/admin-service'
 import {UserService} from '../../services/user-service'
-import {UserSyncService} from '../../services/user-sync-service'
 import {OrganizationService} from '../../services/organization-service'
 import {MagicLinkService} from '../../../../common/src/service/messaging/magiclink-service'
 import {CreateUserRequest} from '../../types/new-user'
@@ -35,7 +34,6 @@ import {UserLogsEvents as events, UserLogsFunctions as functions} from '../../ty
 const authService = new AuthService()
 const adminApprovalService = new AdminApprovalService()
 const userService = new UserService()
-const userSyncService = new UserSyncService()
 const organizationService = new OrganizationService()
 const magicLinkService = new MagicLinkService()
 const authShortCodeService = new AuthShortCodeService()
@@ -118,25 +116,6 @@ const create: Handler = async (req, res, next): Promise<void> => {
       active: true,
       isEmailVerified: false,
     })
-
-    await userSyncService.create(
-      {
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phoneNumber: (user.phone && user.phone.number && `${user.phone.number}`) || '',
-        photoUrl: user.photo,
-        isEmailVerified: false,
-        firebaseKey: user.id,
-        registrationId: user.registrationId || '',
-        dateOfBirth: '',
-        dependants: [],
-        delegates: [],
-      },
-      {
-        authUserId: user.authUserId as string,
-        email: user.email,
-      },
-    )
 
     LogInfo(functions.create, events.createUser, {
       userId: user.id,
@@ -238,8 +217,6 @@ const update: Handler = async (req, res, next): Promise<void> => {
     const authenticatedUser = res.locals.authenticatedUser as AuthUser
     const source = req.body as UpdateUserRequest
     const updatedUser = await userService.update(authenticatedUser.id, source)
-
-    await userSyncService.update(updatedUser.id, source)
 
     LogInfo(functions.update, events.updateUser, {
       userId: authenticatedUser.id,
