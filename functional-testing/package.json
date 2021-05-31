@@ -16,7 +16,8 @@
     "test_reguser_group": "USER_ROLE=reguser jest '--group=reg-user'",
     "test_public_call_group": "USER_ROLE=reguser jest '--group=public-call'",
     "test_reguser": "USER_ROLE=reguser jest",
-    "test_admin": "USER_ROLE=admin jest"
+    "test_admin": "USER_ROLE=admin jest",
+    "test_lab": "USER_ROLE=lab jest"
   },
   "devDependencies": {
     "@types/faker": "^5.5.5",
