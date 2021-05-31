@@ -113,6 +113,9 @@ export class PatientController {
       const hasPublicOrg = [OpnSources.FH_Android, OpnSources.FH_IOS].includes(
         opnHeaders.opnSourceHeader,
       )
+      if (!patientDto.phoneNumber) {
+        patientDto.phoneNumber = firebaseAuthUser.phoneNumber
+      }
       patient = await this.patientService.createProfile(patientDto, hasPublicOrg)
     }
 
