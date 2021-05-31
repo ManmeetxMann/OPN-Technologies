@@ -2,7 +2,10 @@ import DataStore from '@opn-common-v1/data/datastore'
 import {TestResultCreateDto} from '../../dto/test-result'
 import {PCRTestResultsRepository} from '../../repository/test-result.repository'
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
-import {PatientRepository} from '../../repository/patient.repository'
+import {
+  PatientRepository,
+  PatientToOrganizationRepository,
+} from '../../repository/patient.repository'
 import {PatientUpdateDto} from '../../dto/patient'
 import {Injectable} from '@nestjs/common'
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
@@ -12,22 +15,42 @@ import {firestore} from 'firebase-admin'
 
 @Injectable()
 export class TestResultService {
-  constructor(private patientRepository: PatientRepository) {}
+  constructor(
+    private patientRepository: PatientRepository,
+    private patientToOrganizationRepository: PatientToOrganizationRepository,
+  ) {}
   private dataStore = new DataStore()
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private userRepository = new UserRepository(this.dataStore)
 
   async createPCRResults(data: TestResultCreateDto, userId: string): Promise<TestResultCreateDto> {
     const pcrTestResultTypesValidator = new JoiValidator(pcrTestResultSchema)
+    const isRunByJest = process.env.JEST_WORKER_ID
     const pcrTestResultTypes = await pcrTestResultTypesValidator.validate({
       testType: TestTypes.RapidAntigenAtHome,
       userId,
       displayInResult: true,
-      dateTime: firestore.Timestamp.fromDate(new Date()),
+      dateTime: isRunByJest ? new Date() : firestore.Timestamp.fromDate(new Date()),
       ...data,
     })
 
     return this.pcrTestResultsRepository.add(pcrTestResultTypes)
+  }
+
+  async validateOrganization(
+    firebaseOrganizationId: string,
+    firebaseKey: string,
+  ): Promise<boolean> {
+    const patient = await this.patientRepository.findOne({firebaseKey})
+    if (!patient) {
+      return false
+    }
+
+    const patientToOrg = await this.patientToOrganizationRepository.findOne({
+      patientId: patient.idPatient,
+      firebaseOrganizationId,
+    })
+    return !!patientToOrg
   }
 
   async syncUser(data: PatientUpdateDto, id: string): Promise<void> {

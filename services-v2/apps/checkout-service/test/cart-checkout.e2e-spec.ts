@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import * as request from 'supertest'
 import {Test, TestingModule} from '@nestjs/testing'
 import {HttpService} from '@nestjs/common'
@@ -9,6 +10,7 @@ import {cartItem} from './cart-seed'
 import {
   createUser,
   deleteUserByIdTestDataCreator,
+  deleteAppointmentsById,
   createUpdateAcuityTypes,
   commonHeaders,
 } from '@opn-services/test/utils'
@@ -18,7 +20,9 @@ import {
  */
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
 jest.mock('@opn-reservation-v1/adapter/acuity')
-jest.mock('@opn-services/checkout/service/stripe.service')
+jest.mock('stripe')
+
+jest.setTimeout(15000)
 
 /**
  * TODO:
@@ -77,7 +81,7 @@ describe('Cart checkout', () => {
     done()
   })
 
-  test('add item and process payment canceled_intent', async done => {
+  test('add item, use invalid payment method and process payment canceled_intent', async done => {
     // remove all cart items
     const cart = await request(server)
       .get(url)
@@ -88,6 +92,7 @@ describe('Cart checkout', () => {
         .set(headers)
     }
 
+    // add item in cart
     await request(server)
       .post(url)
       .set({
@@ -96,23 +101,63 @@ describe('Cart checkout', () => {
       })
       .send({items: [cartItem]})
 
+    // checkout with payment
     const paymentUrl = `${url}/checkout-payment`
     const paymentResult = await request(server)
       .post(paymentUrl)
       .set(headers)
       .send({
-        paymentMethodId: 'pm_invalid-stripe-payment-method',
+        paymentMethodId: 'invalid-stripe-payment-method',
       })
 
     expect(paymentResult.body.data.payment.isValid).toBe(false)
     expect(paymentResult.body.data.payment.status).toBe('canceled_intent')
-    expect(paymentResult.body.data.cart.isValid).toBe(false)
-    expect(paymentResult.body.data.cart.items.length).toBeGreaterThanOrEqual(1)
+    expect(paymentResult.body.data.cart.isValid).toBe(true)
+    expect(paymentResult.body.data.cart.items.length).toEqual(0)
 
     done()
   })
 
+  test('add item and checkout successfully', async done => {
+    // remove all cart items
+    const cart = await request(server)
+      .get(url)
+      .set(headers)
+    for (const item of cart.body.data.cartItems) {
+      await request(server)
+        .delete(`${url}/${item.cartItemId}`)
+        .set(headers)
+    }
+
+    // add item in cart
+    await request(server)
+      .post(url)
+      .set({
+        ...headers,
+        'Content-Type': 'application/json',
+      })
+      .send({items: [cartItem]})
+
+    // checkout with payment
+    const paymentUrl = `${url}/checkout-payment`
+    const paymentResult = await request(server)
+      .post(paymentUrl)
+      .set(headers)
+      .send({
+        paymentMethodId: 'valid_payment_method',
+      })
+
+    expect(paymentResult.body.data.payment.isValid).toBe(true)
+    expect(paymentResult.body.data.payment.status).toBe('succeeded')
+    expect(paymentResult.body.data.cart.isValid).toBe(true)
+    done()
+  })
+
   afterAll(async () => {
-    await Promise.all([await app.close(), deleteUserByIdTestDataCreator(userId, testDataCreator)])
+    await Promise.all([
+      await app.close(),
+      deleteUserByIdTestDataCreator(userId, testDataCreator),
+      deleteAppointmentsById(userId),
+    ])
   })
 })

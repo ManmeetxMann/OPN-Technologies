@@ -216,6 +216,11 @@ export class Patient extends Auditable {
   @ApiProperty({readOnly: true})
   idPatient: number
 
+  @Column({nullable: true})
+  @ApiProperty()
+  @IsString()
+  patientPublicId: string
+
   @Column({nullable: false})
   @ApiProperty({required: true})
   firebaseKey: string
@@ -326,6 +331,7 @@ export class Patient extends Auditable {
   @OneToMany(
     () => PatientToOrganization,
     patientToOrganization => patientToOrganization.patientId,
+    {eager: true, onDelete: 'CASCADE'},
   )
   organizations?: Organization[]
 }

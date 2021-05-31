@@ -2,7 +2,6 @@ import request from 'supertest'
 
 import {app as server} from '../../../src/app'
 
-
 jest.spyOn(global.console, 'error').mockImplementation()
 jest.spyOn(global.console, 'info').mockImplementation()
 jest.mock('../../../../common/src/utils/logging-setup')

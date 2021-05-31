@@ -68,9 +68,8 @@ runs:
       wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
       chmod +x cloud_sql_proxy
       # TODO change to test all, after user tests update
-      npm run test checkout-service
       ./cloud_sql_proxy -instances=opn-platform-infra-dev:northamerica-northeast1:opn-platform-db-server-infra-dev:sql-inst=tcp:3306 \
-       & npm run test cors
+       & npm run test
       echo "::endgroup::"
 
     shell: bash
