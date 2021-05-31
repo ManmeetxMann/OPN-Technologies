@@ -93,6 +93,8 @@ import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 import {normalizeAnalysis} from '../utils/analysis.helper'
 import {CouponEnum} from '../models/coupons'
 import {MountSinaiFormater} from '../utils/mount-sinai-formater'
+import {UserSyncService} from '../../../enterprise/src/services/user-sync-service'
+import {Patient} from '../../../../services-v2/apps/user-service/src/model/patient/patient.entity'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -117,6 +119,7 @@ export class PCRTestResultsService {
   private temperatureService = new TemperatureService()
   private pulseOxygenService = new PulseOxygenService()
   private labService = new LabService()
+  private userSyncService = new UserSyncService()
 
   private isAppointmentPushEnable = Config.get('APPOINTMENTS_PUSH_NOTIFY') === 'enabled'
 
@@ -141,13 +144,18 @@ export class PCRTestResultsService {
     pubsub.publish(data, attributes)
   }
 
-  private postPubSubForPresumptivePositiveResultSend(testResult: PCRTestResultEmailDTO): void {
+  private async postPubSubForPresumptivePositiveResultSend(
+    testResult: PCRTestResultEmailDTO,
+    adminId: string,
+  ): Promise<void> {
     /*if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
       LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
       return
     }*/
+    const patient = await this.userSyncService.getByFirebaseKey(adminId)
+
     const data = {
-      patientCode: 'FH000001', //FA...
+      patientCode: (patient as Patient).patientPublicId,
       barCode: testResult.barCode,
       dateTime: testResult.dateTime,
       firstName: testResult.firstName,
@@ -162,7 +170,6 @@ export class PCRTestResultsService {
       postalCode: testResult.postalCode, //A1A1A1
       country: testResult.country,
       testType: testResult.testType,
-      clinicCode: Config.get('CLINIC_CODE_MOUNT_SINAI_CONFIRMATORY'),
     }
 
     //Utility to Format for MountSinai
@@ -229,6 +236,7 @@ export class PCRTestResultsService {
       {...newPCRResult, ...appointment, labAssay: lab.assay},
       notificationType,
       newPCRResult.id,
+      data.adminId,
     )
     return newPCRResult.id
   }
@@ -899,7 +907,12 @@ export class PCRTestResultsService {
         ...appointment,
         ...pcrResultDataForDbUpdate,
       }
-      await this.sendNotification(pcrResultDataForEmail, metaData.action, pcrResultRecorded.id)
+      await this.sendNotification(
+        pcrResultDataForEmail,
+        metaData.action,
+        pcrResultRecorded.id,
+        adminId,
+      )
     } else {
       console.log(
         `handlePCRResultSaveAndSend: Not Notification is sent for ${barCode}. Notify is off.`,
@@ -1028,6 +1041,7 @@ export class PCRTestResultsService {
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
     pcrId: string,
+    adminId: string,
   ): Promise<void> {
     let addSuccessLog = true
     switch (notficationType) {
@@ -1070,7 +1084,7 @@ export class PCRTestResultsService {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
         } else if (resultData.result === ResultTypes.PresumptivePositive) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
-          this.postPubSubForPresumptivePositiveResultSend({...resultData, id: pcrId})
+          await this.postPubSubForPresumptivePositiveResultSend({...resultData, id: pcrId}, adminId)
         } else if (
           resultData.result === ResultTypes.Indeterminate &&
           (resultData.testType === TestTypes.Antibody_All ||

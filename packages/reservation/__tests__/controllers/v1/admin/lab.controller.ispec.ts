@@ -43,8 +43,8 @@ describe('AdminLabController', () => {
         .set('Content-Type', 'application/json')
         .send({
           name: labName,
-          templateId:'1',
-          assay:'TEST'
+          templateId: '1',
+          assay: 'TEST',
         })
         .then(async function () {
           const url = `/reservation/admin/api/v1/labs`

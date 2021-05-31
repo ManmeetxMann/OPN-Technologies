@@ -21,6 +21,7 @@ export const pcrTestResultSchema = Joi.object({
       'ExpressPCR',
     ),
   userId: Joi.string().required(),
+  organizationId: Joi.string(),
   displayInResult: Joi.boolean().required(),
   dateTime: FirestoreTimestamp.isValid().required(),
   homeKitId: Joi.string().required(),

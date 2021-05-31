@@ -6,14 +6,20 @@ const collectionName = 'pcr-test-results'
 FirebaseManager.getInstance()
 const database = firestore()
 
-export const getTestResultPayload = (data: {firstName?: string; lastName?: string}): unknown => {
+export const getTestResultPayload = (data: {
+  firstName?: string
+  lastName?: string
+  kitCode?: string
+}): unknown => {
   return {
     firstName: data.firstName ?? 'TestFirstName',
     lastName: data.lastName ?? 'TestLastName',
     dateOfBirth: '2021-01-01',
     postalCode: '10200',
-    testResult: 'Positive',
     reportAs: 'Individual',
+    homeKitCode: data.kitCode ?? 'TestCode',
+    photoUrl: 'https://via.placeholder.com/40',
+    result: 'Positive',
   }
 }
 

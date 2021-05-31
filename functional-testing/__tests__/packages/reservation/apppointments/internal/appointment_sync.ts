@@ -1,5 +1,5 @@
 const frisby = require('frisby');
-const helpersCommon = require('helpers_common');
+import helpersCommon from '../../../../../helpers/helpers_common'
 
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 
@@ -14,6 +14,7 @@ frisby.globalSetup({
  * @group reservation-service
  * @group /reservation/internal/api/v1/appointments/sync-from-acuity
  * @group sync-internal-appointment
+ * @group public-call
  */
 describe('POST: /reservation/internal/api/v1/appointments/sync-from-acuity', () => {
   test('Post Data from Acuity to OPN successfully', function() {

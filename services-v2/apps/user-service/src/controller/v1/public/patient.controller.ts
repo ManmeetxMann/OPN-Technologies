@@ -115,6 +115,9 @@ export class PatientController {
       const hasPublicOrg = [OpnSources.FH_Android, OpnSources.FH_IOS].includes(
         opnHeaders.opnSourceHeader,
       )
+      if (!patientDto.phoneNumber) {
+        patientDto.phoneNumber = firebaseAuthUser.phoneNumber
+      }
       patient = await this.patientService.createProfile(patientDto, hasPublicOrg)
     }
 
@@ -288,7 +291,6 @@ export class PatientController {
   async getUnconfirmedPatients(
     @AuthUserDecorator() authUser: AuthUser,
   ): Promise<ResponseWrapper<UnconfirmedPatient[]>> {
-    console.log({authUser})
     const patients = await this.patientService.getUnconfirmedPatients(
       authUser.phoneNumber,
       authUser.email,

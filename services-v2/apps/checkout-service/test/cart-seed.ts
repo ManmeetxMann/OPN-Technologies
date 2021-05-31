@@ -19,3 +19,21 @@ export const cartItem = {
   receiveResultsViaEmail: true,
   receiveNotificationsFromGov: true,
 }
+
+export const slotId = (data: {date: string; time: string}): unknown => ({
+  appointmentTypeId: 19422018,
+  calendarTimezone: 'America/Toronto',
+  calendarId: 4571103,
+  calendarName: 'Brampton: Mount Pleasant Village',
+  date: data.date,
+  time: `${data.date}T${data.time}-0400`,
+  organizationId: 'vGvqJULfwIC0CDwVyADI',
+  packageCode: '0F7E4DB5',
+})
+
+export const cartItemWithCustomSlot = (date: string, time: string): unknown => {
+  const slotData = slotId({date, time})
+  const buffer = Buffer.from(JSON.stringify(slotData), 'utf-8')
+
+  return {...cartItem, slotId: buffer.toString('base64')}
+}

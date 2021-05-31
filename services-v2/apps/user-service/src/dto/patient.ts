@@ -18,7 +18,6 @@ import {Organization} from '../model/organization/organization.entity'
 import {Patient} from '../model/patient/patient.entity'
 import {Type} from 'class-transformer'
 import {UserStatus} from '@opn-common-v1/data/user'
-const publicPatientIdPrefix = process.env.PATIENT_ID_PREFIX || 'FH'
 
 export class AuthenticateDto {
   @ApiProperty()
@@ -477,7 +476,7 @@ export const patientProfileDto = (
 ): PatientProfile => ({
   id: patient.idPatient.toString(),
   firebaseKey: patient?.firebaseKey,
-  patientPublicId: `${publicPatientIdPrefix}${String(patient.idPatient).padStart(6, '0')}`,
+  patientPublicId: patient.patientPublicId,
   firstName: patient.firstName,
   lastName: patient.lastName,
   dateOfBirth: patient.dateOfBirth,

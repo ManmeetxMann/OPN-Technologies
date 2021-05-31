@@ -8,7 +8,7 @@ export interface UserSyncServiceInterface {
   create(
     source: Omit<
       Patient,
-      'idPatient' | 'createdAt' | 'updatedAt' | 'updatedBy' | 'generatePublicId'
+      'patientPublicId' | 'idPatient' | 'createdAt' | 'updatedAt' | 'updatedBy'
     >,
     auth?: Omit<PatientAuth, 'patientId' | 'idPatientAuth'>,
   ): Promise<void>
