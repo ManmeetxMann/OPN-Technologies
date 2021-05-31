@@ -8,6 +8,7 @@ on:
       - ".github/actions/deploy-functions/**"
     branches: 
       - master
+      - develop
       - feature/hl7-egress
 
 jobs:

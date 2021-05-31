@@ -1901,14 +1901,16 @@ export class PCRTestResultsService {
         value: organizationId,
       })
     }
-    if (testType && testType !== TestTypes.RapidAntigenAtHome) {
+    if (testType) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'testType',
         operator: DataModelFieldMapOperatorType.Equals,
         value: testType,
       })
-    } else {
+    }
+
+    if (testType !== TestTypes.RapidAntigenAtHome) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'testType',
@@ -1918,11 +1920,7 @@ export class PCRTestResultsService {
     }
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
-    const appoinmentIds = pcrResults
-      .filter(({result}) => result === ResultTypes.Pending)
-      .map(({appointmentId}) => appointmentId)
-    const [appoinments, attestations, temperatures, pulseOxygens] = await Promise.all([
-      this.appointmentsRepository.getAppointmentsDBByIds(appoinmentIds),
+    const [attestations, temperatures, pulseOxygens] = await Promise.all([
       organizationId
         ? this.attestationService.getAllAttestationByUserId(userId, organizationId)
         : this.attestationService.getAllAttestationByOnlyUserId(userId),
@@ -1937,17 +1935,13 @@ export class PCRTestResultsService {
     const testResult = []
 
     pcrResults.map((pcr) => {
-      const appointment = appoinments.find(({id}) => id === pcr.appointmentId)
       let result: Result
-
-      if (appointment?.appointmentStatus === AppointmentStatus.Pending) {
+      const appointmentClosed =
+        AppointmentStatus.ReCollectRequired === pcr.appointmentStatus ||
+        AppointmentStatus.Reported === pcr.appointmentStatus
+      if (pcr.appointmentStatus === AppointmentStatus.Pending) {
         result = ResultTypes.Pending
-      } else if (
-        AppointmentStatus.ReCollectRequired === appointment?.appointmentStatus ||
-        AppointmentStatus.Reported === appointment?.appointmentStatus
-      ) {
-        result = ResultTypes[appointment?.appointmentStatus] || pcr.result
-      } else if (!appointment) {
+      } else if (appointmentClosed) {
         result = pcr.result
       } else {
         result = AppointmentReasons.InProgress
@@ -1962,7 +1956,7 @@ export class PCRTestResultsService {
         testDateTime: formatDateRFC822Local(pcr.dateTime),
         style: resultToStyle(result),
         result: result,
-        detailsAvailable: result !== ResultTypes.Invalid && result !== ResultTypes.Pending,
+        detailsAvailable: appointmentClosed,
       })
     })
 

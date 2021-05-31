@@ -123,12 +123,16 @@ describe('Cart basic', () => {
       .set(headers)
     expect(cart.body.data.paymentSummary.length).toBeGreaterThanOrEqual(3)
 
+    const promises = []
     // remove all cart items
     for (const item of cart.body.data.cartItems) {
-      await request(server)
-        .delete(`${url}/${item.cartItemId}`)
-        .set(headers)
+      promises.push(
+        request(server)
+          .delete(`${url}/${item.cartItemId}`)
+          .set(headers),
+      )
     }
+    await Promise.all(promises)
 
     // should have not items
     const cartAfter = await request(server)

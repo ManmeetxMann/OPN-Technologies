@@ -1,5 +1,5 @@
 import {customAlphabet} from 'nanoid'
-import moment from 'moment'
+import moment from 'moment-es6'
 
 import DataStore from '../../../common/src/data/datastore'
 import {AuthShortCodeRepository} from '../repository/auth-short-code.repository'

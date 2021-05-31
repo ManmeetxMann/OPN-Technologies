@@ -3,7 +3,7 @@ import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 
-import {LinkCodeToAccountDto, LinkToAccountDto} from '../../../dto/patient'
+import {CouponDto, LinkCodeToAccountDto, LinkToAccountDto} from '../../../dto/patient'
 import {ApiCommonHeaders, AuthGuard, AuthUserDecorator, Roles} from '@opn-services/common'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {User} from '@opn-common-v1/data/user'
@@ -12,6 +12,7 @@ import {RapidHomeKitCodeService} from '../../../service/patient/rapid-home-kit-c
 import {OpnConfigService} from '@opn-services/common/services'
 import {CouponService} from '@opn-reservation-v1/services/coupon.service'
 import {CouponEnum} from '@opn-reservation-v1/models/coupons'
+import {ResourceNotFoundException} from '@opn-services/common/exception'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -69,7 +70,16 @@ export class RapidHomeController {
   @Post('home-test-patients/coupon')
   @Roles([RequiredUserPermission.RegUser])
   @UseGuards(AuthGuard)
-  async createCoupon(@AuthUserDecorator() authUser: User): Promise<ResponseWrapper> {
+  async createCoupon(
+    @Body() couponBody: CouponDto,
+    @AuthUserDecorator() authUser: User,
+  ): Promise<ResponseWrapper> {
+    const {email} = couponBody
+
+    if (authUser.email && authUser.email !== email) {
+      throw new ResourceNotFoundException('email does not belong to user')
+    }
+
     const couponCode = await this.couponService.createCoupon(
       authUser.email,
       CouponEnum.forRapidHome,

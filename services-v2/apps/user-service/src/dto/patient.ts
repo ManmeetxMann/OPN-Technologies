@@ -366,6 +366,12 @@ export class LinkToAccountDto {
   encryptedToken: string
 }
 
+export class CouponDto {
+  @ApiProperty()
+  @IsString()
+  email: string
+}
+
 export enum migrationActions {
   Merge = 'MERGE',
   New = 'NEW',
@@ -443,7 +449,7 @@ export const patientProfileDto = (
     resultExitsForProvidedEmail?: boolean
   },
 ): PatientProfile => ({
-  id: patient.idPatient,
+  id: patient.idPatient.toString(),
   firebaseKey: patient?.firebaseKey,
   patientPublicId: `${publicPatientIdPrefix}${String(patient.idPatient).padStart(6, '0')}`,
   firstName: patient.firstName,
@@ -477,7 +483,7 @@ export const patientProfileDto = (
 
 export class PatientProfile extends PartialType(PatientCreateAdminDto) {
   @ApiPropertyOptional()
-  id: number
+  id: string
 
   @ApiPropertyOptional()
   firebaseKey: string

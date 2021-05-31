@@ -1,7 +1,10 @@
 import request from 'supertest'
 
 import {app as server} from '../../../../src/app'
-import {create, deleteAppointmentByTestDataCreator} from '../../../__seeds__/appointments'
+import {
+  createAppointment,
+  deleteAppointmentByTestDataCreator,
+} from '../../../__seeds__/appointments'
 import {deleteAll} from '../../../__seeds__/admin-scan-history'
 import {
   createPCRTestResult,
@@ -24,7 +27,7 @@ describe('AdminScanHistoryController', () => {
   beforeAll(async () => {
     await deletePCRTestResultByTestDataCreator(testDataCreator)
     await deleteAppointmentByTestDataCreator(testDataCreator)
-    await create(
+    await createAppointment(
       {
         id: aptID1,
         dateTime: dateTimeForAppointment1,

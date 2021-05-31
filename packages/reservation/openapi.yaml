@@ -3738,6 +3738,13 @@ paths:
           schema:
             type: string
           required: false
+        - in: header
+          name: opn-source
+          schema:
+            type: string
+            enum:
+              - FH_RapidHome_Web
+          required: false
         - in: query
           name: testType
           schema:

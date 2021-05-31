@@ -9,6 +9,7 @@ on:
       - ".github/actions/**"
     branches: 
       - master
+      - develop
     tags:
       - infra-dev-apidocs-*
       - infra-dev-all-*

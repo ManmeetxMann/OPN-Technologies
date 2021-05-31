@@ -1,6 +1,6 @@
 import {forwardRef, Inject, Injectable} from '@nestjs/common'
 import {CartResponseDto} from '@opn-services/checkout/dto'
-import {UserCardService} from './user-cart.service'
+import {UserCardService} from '@opn-services/checkout/service'
 import {CardItemDBModel} from '@opn-reservation-v1/models/cart'
 import {
   UserCartItemRepository,

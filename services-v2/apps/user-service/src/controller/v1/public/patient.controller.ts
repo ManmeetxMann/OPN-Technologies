@@ -66,9 +66,7 @@ export class PatientController {
   @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
   @ApiResponse({type: PatientProfile})
-  async getById(
-    @AuthUserDecorator() authUser: AuthUser,
-  ): Promise<ResponseWrapper<PatientUpdateDto>> {
+  async getById(@AuthUserDecorator() authUser: AuthUser): Promise<ResponseWrapper<PatientProfile>> {
     const patient = await this.patientService.getProfileByFirebaseKey(authUser.id)
     if (!patient) {
       throw new ResourceNotFoundException('User with given id not found')
