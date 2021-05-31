@@ -1125,9 +1125,9 @@ export class PCRTestResultsService {
   }
 
   async sendPushNotification(result: PCRTestResultEmailDTO, userId: string): Promise<void> {
-    const {pushToken} = await this.registrationService.findLastForUserId(userId)
+    const registration = await this.registrationService.findLastForUserId(userId)
 
-    if (!pushToken) {
+    if (!registration?.pushToken) {
       throw new BadRequestException(`Registration information for this app not found`)
     }
 
@@ -1136,7 +1136,7 @@ export class PCRTestResultsService {
         resultId: null,
         notificationType: null as PushNotificationType,
       },
-      token: pushToken,
+      token: registration.pushToken,
       notification: {
         title: null,
         body: null,
