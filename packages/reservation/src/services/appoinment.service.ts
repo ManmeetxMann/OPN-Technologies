@@ -82,7 +82,6 @@ import {PackageService} from './package.service'
 import {firestore} from 'firebase-admin'
 import {UserServiceInterface} from '../../../common/src/interfaces/user-service-interface'
 import {UserStatus} from '../../../common/src/data/user'
-import {UserSyncServiceInterface} from '../../../enterprise/src/interfaces/user-sync-service-interface'
 
 // Must to be require otherwise import to V2 fails
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -92,7 +91,6 @@ const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 export class AppoinmentService {
   private userService: UserServiceInterface
-  private userSyncService: UserSyncServiceInterface
 
   private dataStore = new DataStore()
   private acuityRepository = new AcuityRepository()
@@ -140,12 +138,10 @@ export class AppoinmentService {
   constructor(
     diServices: {
       userService?: UserServiceInterface
-      userSyncService?: UserSyncServiceInterface
     } = {},
   ) {
-    const {userService, userSyncService} = diServices
+    const {userService} = diServices
     this.userService = userService
-    this.userSyncService = userSyncService
   }
 
   async makeDeadlineRapidMinutes(
@@ -1818,24 +1814,7 @@ export class AppoinmentService {
       phoneNumber: acuityAppointment.phone,
       status: UserStatus.NEW,
     })
-    await this.userSyncService.create(
-      {
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phoneNumber: user.phoneNumber,
-        photoUrl: user.base64Photo ?? null,
-        firebaseKey: user.id,
-        registrationId: user.registrationId || '',
-        dateOfBirth: user.dateOfBirth,
-        dependants: [],
-        delegates: [],
-        status: UserStatus.NEW,
-      },
-      {
-        phoneNumber: user.phoneNumber,
-        email: user.email,
-      },
-    )
+
     return user.id
   }
   private async checkWithEmail(acuityAppointment: AppointmentAcuityResponse): Promise<string> {

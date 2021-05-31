@@ -152,6 +152,8 @@ export class PCRTestResultsService {
       LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
       return
     }*/
+
+    // TODO: Don't use userSyncService for getting a that, user sync service should be removed
     const patient = await this.userSyncService.getByFirebaseKey(adminId)
 
     const data = {
