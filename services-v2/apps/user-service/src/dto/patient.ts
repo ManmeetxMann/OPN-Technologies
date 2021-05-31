@@ -18,6 +18,7 @@ import {Organization} from '../model/organization/organization.entity'
 import {Patient} from '../model/patient/patient.entity'
 import {Type} from 'class-transformer'
 import {UserStatus} from '@opn-common-v1/data/user'
+import {Gender} from '@opn-reservation-v1/models/appointment'
 
 export class AuthenticateDto {
   @ApiProperty()
@@ -59,6 +60,10 @@ export class PatientCreateDto {
   @IsString()
   @IsNotEmpty()
   lastName: string
+
+  @IsString()
+  @IsOptional()
+  gender: Gender
 
   @IsOptional()
   @IsString()
@@ -182,6 +187,11 @@ export class PatientCreateAdminDto {
   @IsString()
   @IsNotEmpty()
   lastName: string
+
+  @ApiProperty({enum: Gender})
+  @IsString()
+  @IsOptional()
+  gender: Gender
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -462,6 +472,7 @@ export const unconfirmedPatientDto = (
   firebaseKey: patient.firebaseKey,
   firstName: patient.firstName,
   lastName: patient.lastName,
+  gender: patient.gender,
   isEmailVerified: patient.isEmailVerified,
   dateOfBirth: patient.dateOfBirth,
   registrationId: patient.registrationId,
@@ -485,6 +496,7 @@ export const patientProfileDto = (
   patientPublicId: patient.publicId,
   firstName: patient.firstName,
   lastName: patient.lastName,
+  gender: patient?.gender,
   dateOfBirth: patient.dateOfBirth,
   email: patient.auth?.email,
   registrationId: patient?.registrationId,
@@ -540,6 +552,9 @@ export class UnconfirmedPatient {
   @ApiProperty({readOnly: true})
   @IsString()
   lastName: string
+  @ApiProperty({readOnly: true})
+  @IsEnum(Gender)
+  gender: Gender
   @ApiProperty({readOnly: true})
   @IsBoolean()
   isEmailVerified: boolean

@@ -292,6 +292,7 @@ export class PatientService {
     data.idPatient = patientId
     patient.firstName = data.firstName
     patient.lastName = data.lastName
+    patient.gender = data.gender
     patient.dateOfBirth = data.dateOfBirth
     patient.phoneNumber = data.phoneNumber
     patient.isEmailVerified = data.isEmailVerified
@@ -385,6 +386,7 @@ export class PatientService {
     entity.firebaseKey = data.firebaseKey
     entity.firstName = data.firstName
     entity.lastName = data.lastName
+    entity.gender = data.gender
     entity.phoneNumber = data.phoneNumber
     entity.dateOfBirth = data.dateOfBirth
     entity.photoUrl = data.photoUrl
@@ -712,6 +714,7 @@ export class PatientService {
     }
 
     const updateDto = new PatientUpdateDto()
+    updateDto.gender = data?.gender
     updateDto.phoneNumber = data?.phone
     updateDto.dateOfBirth = data?.dateOfBirth
     updateDto.healthCardType = data?.ohipCard
@@ -719,6 +722,7 @@ export class PatientService {
     updateDto.travelCountry = data?.travelIDIssuingCountry
     updateDto.homeAddress = data?.address
     updateDto.homeAddressUnit = data?.addressUnit
+    updateDto.postalCode = data?.postalCode
     updateDto.city = data?.city
     updateDto.country = data?.country
     updateDto.province = data?.province
