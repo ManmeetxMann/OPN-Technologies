@@ -435,6 +435,7 @@ export class UserCardService {
 
   async updateItem(userOrgId: string, cartItems: CartUpdateRequestDto): Promise<void> {
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
+    const appointmentTypes = await this.acuityTypesRepository.fetchAll()
     const cartItemsData = await userCartItemRepository.findWhereEqual(
       'cartItemId',
       cartItems.cartItemId,
@@ -447,14 +448,19 @@ export class UserCardService {
 
     const appointment = decodeAvailableTimeId(cartItems.slotId)
 
+    // Update price based on appointment type
+    const appointmentType = appointmentTypes.find(
+      appointmentType => Number(appointmentType.id) === appointment.appointmentTypeId,
+    )
+
     const cartItem = {
       id: cartItemExist.id,
       cartItemId: cartItems.cartItemId,
       patient: _.omit(cartItems, ['slotId']),
       appointment,
       appointmentType: {
-        price: cartItemExist.appointmentType.price,
-        name: cartItemExist.appointmentType.name,
+        price: appointmentType.price,
+        name: appointmentType.name,
       },
     }
     const cartItemValidator = new JoiValidator(cartItemSchema)

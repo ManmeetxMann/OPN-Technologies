@@ -119,7 +119,10 @@ export class CartController {
     return ResponseWrapper.actionSucceed(null)
   }
 
-  @Put('')
+  @Put()
+  @ApiHeader({
+    name: 'organizationid',
+  })
   @Roles([RequiredUserPermission.RegUser], true)
   async updateCart(
     @AuthUserDecorator() authUser: AuthUser,
@@ -132,6 +135,9 @@ export class CartController {
   }
 
   @Delete('/coupons')
+  @ApiHeader({
+    name: 'organizationid',
+  })
   @Roles([RequiredUserPermission.RegUser], true)
   async deleteCartCoupons(
     @AuthUserDecorator() authUser: AuthUser,
