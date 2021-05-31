@@ -219,7 +219,7 @@ export class Patient extends Auditable {
   @Column({nullable: true})
   @ApiProperty({readOnly: true})
   @IsString()
-  publicId?: number
+  publicId?: string
 
   @Column({nullable: false})
   @ApiProperty({required: true})

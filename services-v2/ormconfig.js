@@ -8,7 +8,6 @@ module.exports = {
   synchronize: process.env.DB_SQL_AUTO_SYNC_SCHEMA,
   migrationsRun: process.env.DB_SQL_RUN_MIGRATION,
   entities: [__dirname + '/**/*.entity{.ts,.js}'],
-  subscribers: [__dirname + '/*.subscriber{.ts,.js}'],
   logging: ['warn', 'error', 'query'],
   migrations: ['migrations/**/*.ts'],
   cli: {

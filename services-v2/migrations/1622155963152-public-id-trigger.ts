@@ -1,5 +1,6 @@
 import {MigrationInterface, QueryRunner, getManager, getRepository} from 'typeorm'
 import {Patient} from '../apps/user-service/src/model/patient/patient.entity'
+const publicPatientIdPrefix = process.env.PATIENT_ID_PREFIX || 'FH'
 
 async function updateOldPatients() {
   const patientsCount = await getPatientsCount()
@@ -14,9 +15,8 @@ export class publicIdTrigger1622155963152 implements MigrationInterface {
     try {
       console.log(`Migration Starting Time: ${new Date()}`)
       await updateOldPatients()
-      const query = `CREATE DEFINER = CURRENT_USER TRIGGER \`opn\`.\`patient_BEFORE_INSERT\` BEFORE INSERT ON \`patient\` FOR EACH ROW SET NEW.publicId = (
-SELECT auto_increment FROM information_schema.tables WHERE table_name = 'patient' AND table_schema = DATABASE()
-)+10;`
+      const query = `CREATE DEFINER = CURRENT_USER TRIGGER \`${process.env.DB_SQL_NAME}\`.\`patient_BEFORE_INSERT\` BEFORE INSERT ON \`patient\` FOR EACH ROW SET NEW.publicId = CONCAT('${publicPatientIdPrefix}',
+    LPAD((SELECT auto_increment FROM information_schema.tables WHERE table_name = 'patient' AND table_schema = DATABASE())+10,6,0));`
       const manager = getManager()
       await manager.query(query)
       console.log(`Successfully created`)
@@ -61,7 +61,7 @@ async function updatePatient(idPatient: number) {
     return await getRepository(Patient)
       .createQueryBuilder('patient')
       .update()
-      .set({publicId: idPatient + 10})
+      .set({publicId: `${publicPatientIdPrefix}${String(idPatient + 10).padStart(6, '0')}`})
       .where('idPatient = :idPatient', {idPatient})
       .execute()
   } catch (error) {
