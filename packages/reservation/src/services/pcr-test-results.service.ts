@@ -161,7 +161,7 @@ export class PCRTestResultsService {
     }
 
     const data = {
-      patientCode: patient ?? (patient as {publicId: string}).publicId,
+      patientCode: 'FA000006',
       barCode: testResult.barCode,
       dateTime: testResult.dateTime,
       firstName: testResult.firstName,
