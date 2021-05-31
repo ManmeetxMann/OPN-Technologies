@@ -15,7 +15,7 @@ export class UserSyncService implements UserSyncServiceInterface {
   async create(
     source: Omit<
       Patient,
-      'generatePublicId' | 'organizations' | 'idPatient' | 'createdAt' | 'updatedAt' | 'updatedBy'
+      'organizations' | 'idPatient' | 'createdAt' | 'updatedAt' | 'updatedBy' | 'patientPublicId'
     >,
     auth?: Omit<PatientAuth, 'patientId' | 'idPatientAuth'>,
   ): Promise<void> {
@@ -42,5 +42,10 @@ export class UserSyncService implements UserSyncServiceInterface {
   async updateByAdmin(firebaseKey: string, source: UpdateUserByAdminRequest): Promise<void> {
     const usersRepositoryV2 = this.returnConnection(patientEntries.Patient)
     await usersRepositoryV2.update({firebaseKey: firebaseKey}, {...source})
+  }
+
+  async getByFirebaseKey(firebaseKey: string): Promise<unknown> {
+    const usersRepositoryV2 = this.returnConnection(patientEntries.Patient)
+    return usersRepositoryV2.findOne({where: {firebaseKey}})
   }
 }
