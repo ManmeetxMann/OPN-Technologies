@@ -16,6 +16,7 @@ import {PatientDigitalConsent, PatientHealth, PatientTravel} from './patient-pro
 import {UserStatus} from '../../../../../../packages/common/src/data/user-status'
 import {PatientToDelegates, PatientToOrganization} from './patient-relations.entity'
 import {Organization} from '../organization/organization.entity'
+import {Gender} from '../../../../../../packages/reservation/src/models/appointment'
 
 @Entity('patientAuth')
 @Unique(['authUserId', 'email'])
@@ -249,6 +250,11 @@ export class Patient extends Auditable {
   @ApiProperty()
   @IsString()
   phoneNumber?: string
+
+  @Column({type: 'enum', nullable: true, enum: Gender, default: null})
+  @ApiProperty({enum: Gender})
+  @IsString()
+  gender?: Gender
 
   @Column({nullable: true, default: null})
   @ApiProperty()
