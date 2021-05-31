@@ -79,7 +79,7 @@ export const commonConfig: Record<string, string | string[] | number | boolean> 
   TEST_RESULT_RAPID_ANTIGEN_TEMPLATE_ID: 10,
   TEST_RESULT_INVALID_RAPID_ANTIGEN_TEMPLATE_ID: 11,
   TEST_KIT_BATCH_ID: 'BPAIxOFguBQp8ADW2OKW',
-
+  TEST_KIT_BATCH_MULTIPLEX_ID:'0sjTy7GMJabtQZSXg0hq',
   LINK_PRIVACYPOLICY: 'https://dev.pages.opnte.ch/privacy-policy.html',
   LINK_TERMSOFSERVICE: 'https://dev.pages.opnte.ch/terms-of-service.html',
 
