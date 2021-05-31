@@ -100,6 +100,13 @@ export class PatientService {
     })
   }
 
+  async getPatientByDependantId(dependantId: number): Promise<Patient> {
+    return this.patientRepository.findOne({
+      where: {idPatient: dependantId},
+      relations: ['dependants'],
+    })
+  }
+
   async getAuthByEmail(email: string): Promise<PatientAuth> {
     return this.patientAuthRepository.findOne({where: {email}})
   }
