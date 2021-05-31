@@ -1,7 +1,10 @@
 import request from 'supertest'
 
 import {app as server} from '../../../../src/app'
-import {create, deleteAppointmentByTestDataCreator} from '../../../__seeds__/appointments'
+import {
+  createAppointment,
+  deleteAppointmentByTestDataCreator,
+} from '../../../__seeds__/appointments'
 import {deleteAll} from '../../../__seeds__/admin-scan-history'
 import {
   createPCRTestResult,
@@ -24,7 +27,7 @@ describe('AdminScanHistoryController', () => {
   beforeAll(async () => {
     await deletePCRTestResultByTestDataCreator(testDataCreator)
     await deleteAppointmentByTestDataCreator(testDataCreator)
-    await create(
+    await createAppointment(
       {
         id: aptID1,
         dateTime: dateTimeForAppointment1,
@@ -45,7 +48,7 @@ describe('AdminScanHistoryController', () => {
   })
 
   describe('create scan history record', () => {
-    test('create new scan history record successfully', async (done) => {
+    test('create new scan history record successfully', async () => {
       const url = `/reservation/admin/api/v1/rapid-antigen-test-results`
       const result = await request(server.app)
         .post(url)
@@ -64,7 +67,6 @@ describe('AdminScanHistoryController', () => {
         ])
 
       expect(result.status).toBe(200)
-      done()
     })
   })
 

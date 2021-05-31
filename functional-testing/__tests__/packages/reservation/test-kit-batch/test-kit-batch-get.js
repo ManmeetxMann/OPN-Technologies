@@ -27,7 +27,7 @@ describe('Get test-kit-batch', () => {
             },
           })
           .get(url)
-          .inspectBody()
+          // .inspectBody()
           .expect('status', 200);
     });
   });

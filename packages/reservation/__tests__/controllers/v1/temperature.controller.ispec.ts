@@ -39,26 +39,23 @@ describe('TemperatureController', () => {
   }
 
   describe('get appointment list', () => {
-    test('get temperature by ID successfully', async (done) => {
+    test('get temperature by ID successfully', async () => {
       const url = `/reservation/api/v1/temperature/${temperatureID1}?organizationId=${organizationID1}`
       const result = await request(server.app).get(url).set(headers)
       expect(result.status).toBe(200)
       expect(result.body.data.temperatureInCelsius).toBe(37.1)
-      done()
     })
 
-    test('get temperature by ID failed for wrong ORG', async (done) => {
+    test('get temperature by ID failed for wrong ORG', async () => {
       const url = `/reservation/api/v1/temperature/${temperatureID1}?organizationId=BAD_ORG`
       const result = await request(server.app).get(url).set(headers)
       expect(result.status).toBe(400)
-      done()
     })
 
-    test('get temperature by ID failed for wrong ORG', async (done) => {
+    test('get temperature by ID failed for wrong ORG', async () => {
       const url = `/reservation/api/v1/temperature/${temperatureID1}?organizationId=${organizationID2}`
       const result = await request(server.app).get(url).set(headers)
       expect(result.status).toBe(400)
-      done()
     })
   })
 

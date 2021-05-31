@@ -25,17 +25,16 @@ describe('AdminLabController', () => {
   })
 
   describe('get lab list', () => {
-    test('get lab list successfully', async (done) => {
+    test('get lab list successfully', async () => {
       const url = `/reservation/admin/api/v1/labs`
       const result = await request(server.app).get(url).set('authorization', 'bearer 10000')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBeGreaterThanOrEqual(1)
-      done()
     })
   })
 
   describe('create New Lab', () => {
-    test('create new lab successfully', async (done) => {
+    test('create new lab successfully', async () => {
       const labName = 'UNIT_TEST_LAB'
       const url = `/reservation/admin/api/v1/labs`
       await request(server.app)
@@ -44,6 +43,8 @@ describe('AdminLabController', () => {
         .set('Content-Type', 'application/json')
         .send({
           name: labName,
+          templateId:'1',
+          assay:'TEST'
         })
         .then(async function () {
           const url = `/reservation/admin/api/v1/labs`
@@ -52,14 +53,10 @@ describe('AdminLabController', () => {
           expect(result.body.data).toEqual(
             expect.arrayContaining([expect.objectContaining({name: labName})]),
           )
-          done()
-        })
-        .catch(() => {
-          done()
         })
     })
 
-    test('should fail to creating label with empty name', async (done) => {
+    test('should fail to creating label with empty name', async () => {
       const labName = ''
       const url = `/reservation/admin/api/v1/labs`
       const result = await request(server.app)
@@ -70,7 +67,6 @@ describe('AdminLabController', () => {
           name: labName,
         })
       expect(result.status).toBe(400)
-      done()
     })
   })
 

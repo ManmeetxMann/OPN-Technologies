@@ -72,7 +72,10 @@ export class PatientController {
       throw new ResourceNotFoundException('User with given id not found')
     }
 
-    return ResponseWrapper.actionSucceed(patientProfileDto(patient))
+    const users = await this.patientService.findNewUsersByEmail(patient?.auth?.email)
+    const resultExitsForProvidedEmail = !!users.length
+
+    return ResponseWrapper.actionSucceed(patientProfileDto(patient, {resultExitsForProvidedEmail}))
   }
 
   @Post()
