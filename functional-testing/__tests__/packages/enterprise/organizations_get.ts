@@ -1,7 +1,7 @@
 import frisby from 'frisby';
-import helpersCommon from '../../../../helpers/helpers_common'
+import helpersCommon from '../../../helpers/helpers_common'
 
-import testProfile from '../../../../test_data/test_profile';
+import testProfile from '../../../test_data/test_profile';
 // Do setup first
 frisby.globalSetup({
     request: {
@@ -15,7 +15,7 @@ const enterpriseServiceUrl = process.env.ENTERPRISE_SERVICE_URL;
  * @group enterprise-service
  * @group /organizations/one      
  * @group get-organizations-locations      
- * @group admin
+ * @group public-call
  */
  describe('admin:organizations', () => {
     test('get organizations', async () => {
