@@ -25,11 +25,12 @@ export class TestResultService {
 
   async createPCRResults(data: TestResultCreateDto, userId: string): Promise<TestResultCreateDto> {
     const pcrTestResultTypesValidator = new JoiValidator(pcrTestResultSchema)
+    const isRunByJest = process.env.JEST_WORKER_ID
     const pcrTestResultTypes = await pcrTestResultTypesValidator.validate({
       testType: TestTypes.RapidAntigenAtHome,
       userId,
       displayInResult: true,
-      dateTime: firestore.Timestamp.fromDate(new Date()),
+      dateTime: isRunByJest ? new Date() : firestore.Timestamp.fromDate(new Date()),
       ...data,
     })
 

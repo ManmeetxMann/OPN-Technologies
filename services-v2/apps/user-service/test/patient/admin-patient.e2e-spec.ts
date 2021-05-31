@@ -5,7 +5,7 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 import * as request from 'supertest'
 import {App} from '../../src/main'
 
-import {commonHeaders, createUser, deleteUserByIdTestDataCreator} from '@opn-services/test/utils'
+import {createUser, deleteUserByIdTestDataCreator, commonHeaders} from '@opn-services/test/utils'
 
 import {Patient} from '../../src/model/patient/patient.entity'
 import {PatientTestUtility} from '../utils/patient'
@@ -14,9 +14,9 @@ import {PatientCreateDto} from '../../src/dto/patient'
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
 jest.setTimeout(20000)
 
-const userId = 'PATIENT_BASIC'
 const organizationId = 'PATIENT_ORG_BASIC'
 const testDataCreator = __filename.split('/services-v2/')[1]
+const userId = 'PATIENT_BASIC' + 1
 const headers = {
   accept: 'application/json',
   organizationid: organizationId,
