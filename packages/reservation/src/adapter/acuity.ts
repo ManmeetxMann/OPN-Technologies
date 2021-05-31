@@ -34,6 +34,7 @@ abstract class AcuityAdapter {
     country: Config.get('ACUITY_FIELD_COUNTRY'),
     gender: Config.get('ACUITY_FIELD_GENDER'),
     postalCode: Config.get('ACUITY_FIELD_POSTAL_CODE'),
+    ohipCard: Config.get('ACUITY_FIELD_OHIP_CARD'),
     shareTestResultWithEmployer: Config.get('ACUITY_FIELD_SHARE_TEST_RESULT_WITH_EMPLOYER'),
     readTermsAndConditions: Config.get('ACUITY_FIELD_READ_TERMS_AND_CONDITIONS'),
     receiveResultsViaEmail: Config.get('ACUITY_FIELD_RECEIVE_RESULTS_VIA_EMAIL'),

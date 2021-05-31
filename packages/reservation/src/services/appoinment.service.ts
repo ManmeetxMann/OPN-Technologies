@@ -1264,6 +1264,7 @@ export class AppoinmentService {
         city: patient.city,
         province: patient.province,
         country: patient.country,
+        ohipCard: patient.ohipCard,
         barCodeNumber,
       },
     })
