@@ -150,7 +150,7 @@ export class PCRTestResultsService {
     /*if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
       LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
       return
-    }*/
+    }
 
     // TODO: Don't use userSyncService for getting a that, user sync service should be removed
     let patient = null
@@ -158,7 +158,8 @@ export class PCRTestResultsService {
       patient = await this.userSyncService.getByFirebaseKey(adminId)
     } catch (e) {
       console.error(e)
-    }
+    }*/
+    console.log(adminId)
 
     const data = {
       patientCode: 'FA000006',
