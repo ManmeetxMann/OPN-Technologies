@@ -94,7 +94,6 @@ import {normalizeAnalysis} from '../utils/analysis.helper'
 import {CouponEnum} from '../models/coupons'
 import {MountSinaiFormater} from '../utils/mount-sinai-formater'
 import {UserSyncService} from '../../../enterprise/src/services/user-sync-service'
-import {Patient} from '../../../../services-v2/apps/user-service/src/model/patient/patient.entity'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -157,7 +156,7 @@ export class PCRTestResultsService {
     const patient = await this.userSyncService.getByFirebaseKey(adminId)
 
     const data = {
-      patientCode: (patient as Patient).patientPublicId,
+      patientCode: (patient as {publicId: string}).publicId,
       barCode: testResult.barCode,
       dateTime: testResult.dateTime,
       firstName: testResult.firstName,
