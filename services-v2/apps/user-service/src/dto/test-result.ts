@@ -1,5 +1,6 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {IsDateString, IsNotEmpty, IsString, IsUrl} from 'class-validator'
+import {firestore} from 'firebase-admin'
 
 enum TestTypes {
   Positive = 'Positive',
@@ -20,6 +21,7 @@ export class TestResultCreateDto {
   displayInResult: string
   homeKitId: string
   resultExitsForProvidedEmail: boolean
+  dateTime: firestore.Timestamp
 
   @ApiProperty()
   @IsString()

@@ -39,6 +39,7 @@ export class PatientTestUtility {
       firstName: 'PATIENT_TEST_NAME',
       lastName: 'PATIENT_LNAME',
       phoneNumber: '111222333',
+      isEmailVerified: true,
     })
   }
 

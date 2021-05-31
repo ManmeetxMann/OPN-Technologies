@@ -326,6 +326,7 @@ export class Patient extends Auditable {
   @OneToMany(
     () => PatientToOrganization,
     patientToOrganization => patientToOrganization.patientId,
+    {eager: true, onDelete: 'CASCADE'},
   )
   organizations?: Organization[]
 }
