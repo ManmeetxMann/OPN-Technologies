@@ -1880,7 +1880,7 @@ export class PCRTestResultsService {
         AppointmentStatus.Reported === pcr.appointmentStatus
       if (pcr.appointmentStatus === AppointmentStatus.Pending) {
         result = ResultTypes.Pending
-      } else if (appointmentClosed) {
+      } else if (appointmentClosed || pcr.testType === TestTypes.RapidAntigenAtHome) {
         result = pcr.result
       } else {
         result = AppointmentReasons.InProgress
