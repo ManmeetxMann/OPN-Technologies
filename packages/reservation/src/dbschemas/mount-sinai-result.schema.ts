@@ -28,5 +28,7 @@ export default Joi.object({
       'Antibody_IgM',
       'ExpressPCR',
     ),
-  specimenSource: Joi.string().required().valid('NASOP', 'NASD', 'NARES', 'NTS', 'TS', 'VSALV', 'NMT'),
+  specimenSource: Joi.string()
+    .required()
+    .valid('NASOP', 'NASD', 'NARES', 'NTS', 'TS', 'VSALV', 'NMT'),
 })
