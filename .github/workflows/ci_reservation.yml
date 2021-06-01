@@ -7,9 +7,7 @@ on:
       - ".github/workflows/ci_reservation.yml"
       - ".github/actions/**"
     branches: 
-      - master
       - develop
-      - feature/hl7-egress
     tags:
       - infra-dev-reservation-*
       - infra-dev-all-*
