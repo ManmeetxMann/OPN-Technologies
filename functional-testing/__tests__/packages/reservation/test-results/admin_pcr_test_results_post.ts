@@ -34,7 +34,7 @@ describe('PCR TestResultsController', () => {
               {
                 'action': 'SendThisResult',
                 'autoResult': 'PresumptivePositive',
-                'barCode': 'TEST10000548',
+                'barCode': 'DEV1000003191',
                 // 'comment': 'AWESOM',
                 'labId': 'k0qbPDqTwqitKUwlGHye',
                 'templateId': 'template2',

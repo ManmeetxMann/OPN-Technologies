@@ -6,10 +6,7 @@ import {
 
 export interface UserSyncServiceInterface {
   create(
-    source: Omit<
-      Patient,
-      'publicId' | 'idPatient' | 'createdAt' | 'updatedAt' | 'updatedBy'
-    >,
+    source: Omit<Patient, 'publicId' | 'idPatient' | 'createdAt' | 'updatedAt' | 'updatedBy'>,
     auth?: Omit<PatientAuth, 'patientId' | 'idPatientAuth'>,
   ): Promise<void>
   update(firebaseKey: string, source: UpdateUserRequest): Promise<void>
