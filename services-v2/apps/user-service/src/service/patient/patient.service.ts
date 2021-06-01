@@ -392,7 +392,7 @@ export class PatientService {
     entity.photoUrl = data.photoUrl
     entity.registrationId = data.registrationId
     entity.consentFileUrl = data.consentFileUrl
-    entity.isEmailVerified = true
+    entity.isEmailVerified = data.isEmailVerified === undefined ? true : data.isEmailVerified
 
     return this.patientRepository.save(entity)
   }
