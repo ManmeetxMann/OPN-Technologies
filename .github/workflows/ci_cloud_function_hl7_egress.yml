@@ -1,4 +1,4 @@
-name: CloudFunctionHL7Egress
+name: CloudFunction HL7Egress
 
 on:
   push: 
@@ -9,7 +9,7 @@ on:
     branches: 
       - master
       - develop
-      - feature/hl7-egress
+      - feature-hl7-egress
 
 jobs:
   build:
