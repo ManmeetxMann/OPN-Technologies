@@ -4,6 +4,7 @@
 export const commonConfig: Record<string, string | string[] | number | boolean> = {
   ACUITY_CALENDAR_URL: 'https://app.acuityscheduling.com/schedule.php',
   ACUITY_APPOINTMENT_TYPE_ID: 20791574,
+  ACUITY_APPOINTMENT_TYPE_MULTIPLEX: 21081115,
   ACUITY_COUPON_ID_FOR_RESAMPLE: 1073154,
   ACUITY_COUPON_ID_FOR_RAPIDHOME: 1073154,
   ACUITY_FIELD_ADDITIONAL_ADDRESS_NOTES: 9112814,
@@ -35,6 +36,7 @@ export const commonConfig: Record<string, string | string[] | number | boolean> 
   ACUITY_FIELD_HAD_COVID_CONFIRMED_DATE: 9717480,
   ACUITY_FIELD_HAD_COVID_EXPOSURE: 9717484,
   ACUITY_FIELD_HAD_COVID_EXPOSURE_DATE: 9717489,
+
   ACUITY_SCHEDULER_API_URL: 'https://acuityscheduling.com',
 
   CAPTCHA_VERIFY_URL: 'https://www.google.com/recaptcha/api/siteverify',
