@@ -1,4 +1,4 @@
-name: CloudFunctionSMSNotification
+name: CloudFunctionHL7Egress
 
 on:
   push: 
