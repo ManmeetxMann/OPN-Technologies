@@ -95,12 +95,18 @@ import {CouponEnum} from '../models/coupons'
 import {MountSinaiFormater} from '../utils/mount-sinai-formater'
 import {UserSyncService} from '../../../enterprise/src/services/user-sync-service'
 import {Patient} from '../../../../services-v2/apps/user-service/src/model/patient/patient.entity'
+import MountSinaiSchema from '../dbschemas/mount-sinai-result.schema'
+import {FailedResultConfirmatoryRequestRepository} from '../respository/failed-result-confirmatory-request.repository'
+import {FailedResultConfirmatoryRequest} from '../models/failed-result-confirmatory-request'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
   private testResultsReportingTracker = new TestResultsReportingTrackerRepository(this.datastore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.datastore)
   private appointmentsRepository = new AppointmentsRepository(this.datastore)
+  private failedResultConfirmatoryRequestRepository = new FailedResultConfirmatoryRequestRepository(
+    this.datastore,
+  )
 
   private appointmentService = new AppoinmentService()
   private organizationService = new OrganizationService()
@@ -181,6 +187,18 @@ export class PCRTestResultsService {
     //Utility to Format for MountSinai
     const mountSinaiFormater = new MountSinaiFormater(data)
     const formatedORMData = mountSinaiFormater.get()
+
+    try {
+      await MountSinaiSchema.validateAsync(formatedORMData)
+    } catch (errors) {
+      const reasons = errors.details.map((err) => err.message)
+      await this.failedResultConfirmatoryRequestRepository.save({
+        resultId: testResult.id,
+        appointmentId: testResult.appointmentId,
+        reasons,
+      })
+      throw new ResourceNotFoundException(`Patient data is invalid. Data could not be sent`)
+    }
 
     const pubsub = new OPNPubSub(Config.get('PRESUMPTIVE_POSITIVE_RESULTS_TOPIC'))
     pubsub.publish(formatedORMData)
@@ -2112,5 +2130,9 @@ export class PCRTestResultsService {
         },
       )
     }
+  }
+
+  async getAllFailedResultConfirmatory(): Promise<FailedResultConfirmatoryRequest[]> {
+    return await this.failedResultConfirmatoryRequestRepository.getAll()
   }
 }
