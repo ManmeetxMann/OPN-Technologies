@@ -456,7 +456,6 @@ export const patientProfileDto = (
   lastName: patient.lastName,
   dateOfBirth: patient.dateOfBirth,
   email: patient.auth?.email,
-  registrationId: patient?.registrationId,
   phoneNumber: patient.phoneNumber,
   photoUrl: patient.photoUrl,
   organizations: patient.organizations,

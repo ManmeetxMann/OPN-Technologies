@@ -644,9 +644,10 @@ export class PatientService {
     if (pushToken) {
       await this.messaging.validatePushToken(pushToken)
     }
-
+    const patient = await this.patientRepository.findOne(patientId)
     // create or update token
-    const {id} = await this.registrationService.upsert({
+    const {id} = await this.registrationService.upsert(patient.registrationId,
+      {
       osVersion,
       platform,
       pushToken,

@@ -1112,19 +1112,10 @@ export class PCRTestResultsService {
         }
       }
     }
-
-    // if (addSuccessLog) {
-
-    //   this.postPubSubForResultSend({...resultData, id: pcrId}, 'result')
-    //   LogInfo('sendNotification', 'SuccessfullEmailSent', {
-    //     barCode: resultData.barCode,
-    //     notficationType,
-    //     resultSent: resultData.result,
-    //   })
-    // }
   }
 
   async sendPushNotification(result: PCRTestResultEmailDTO, userId: string): Promise<void> {
+    // await this.userService.updateProperties('5hp8wMZ3AAObLuVZoMHU', {authUserId: null})
     const registration = await this.registrationService.findLastForUserId(userId)
 
     if (!registration?.pushToken) {

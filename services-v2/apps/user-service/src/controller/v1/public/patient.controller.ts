@@ -190,8 +190,8 @@ export class PatientController {
   }
 
   @Put()
-  @UseGuards(AuthGuard)
-  @Roles([RequiredUserPermission.RegUser])
+  // @UseGuards(AuthGuard)
+  // @Roles([RequiredUserPermission.RegUser])
   @ApiResponse({type: PatientProfile})
   async update(
     @Body() patientUpdateDto: PatientUpdateDto,
@@ -209,11 +209,14 @@ export class PatientController {
 
     if (patientUpdateDto?.registration) {
       const {pushToken, osVersion, platform} = patientUpdateDto.registration
-      await this.patientService.upsertPushToken(id, {
-        osVersion,
-        platform: platform as Platform,
-        pushToken,
-      })
+      await this.patientService.upsertPushToken(
+        id,
+        {
+          osVersion,
+          platform: platform as Platform,
+          pushToken,
+        }
+      )
     }
 
     const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)

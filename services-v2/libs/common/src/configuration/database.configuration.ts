@@ -26,7 +26,7 @@ export const DefaultDatabaseConfiguration = (): DynamicModule => {
           port: configService.get<number>('DB_SQL_LOCAL_PORT'),
         }
       }
-
+      console.log(connection)
       return {
         ...connection,
         type: 'mysql',
