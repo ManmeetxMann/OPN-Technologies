@@ -7,9 +7,7 @@ on:
       - ".github/workflows/ci_cloud_function_hl7_egress.yml"
       - ".github/actions/deploy-functions/**"
     branches: 
-      - master
       - develop
-      - feature-hl7-egress
 
 jobs:
   build:

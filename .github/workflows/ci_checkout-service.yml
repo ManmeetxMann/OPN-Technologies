@@ -6,7 +6,6 @@ on:
       - ".github/workflows/ci_checkout-service.yml"
       - ".github/actions/**"
     branches: 
-      - master
       - develop
     tags:
       - infra-dev-v2-cart-*

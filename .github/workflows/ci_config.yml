@@ -8,7 +8,6 @@ on:
       - ".github/workflows/ci_config.yml"
       - ".github/actions/**"
     branches: 
-      - master
       - develop
     tags:
       - infra-dev-config-*

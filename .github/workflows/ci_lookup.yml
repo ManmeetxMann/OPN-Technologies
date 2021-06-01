@@ -8,7 +8,6 @@ on:
       - ".github/workflows/ci_lookup.yml"
       - ".github/actions/**"
     branches: 
-      - master
       - develop
     tags:
       - infra-dev-lookup-*
