@@ -1,0 +1,12 @@
+{
+  "preset": "ts-jest",
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testMatch": ["**/*.e2e-spec.ts", "!**/node_modules/**"],
+  "moduleDirectories": ["node_modules"],
+  "collectCoverageFrom": ["**/*.ts"],
+  "globalSetup": "./jest-global-setup.ts",
+  "transform": {
+    "^.+\\.ts?$": "ts-jest"
+  }
+}

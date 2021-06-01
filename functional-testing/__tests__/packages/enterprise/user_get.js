@@ -7,17 +7,17 @@ frisby.globalSetup({
     headers: helpersCommon.headers(),
   },
 });
-const serviceUrl = process.env.ENTERPRISE_SERVICE_URL;
+
+const enterpriseServiceUrl = process.env.ENTERPRISE_SERVICE_URL;
 
 /**
- * @group reservation-service
- * @group /access/api/v1/admin/stats/v2
- * @group enterprise-admin-stats-health
+ * @group enterprise-service
+ * @group get-user-account-test
  */
-describe('Get admin-stats-v2', () => {
-  test('able to successfully get admin-stats-v2', () => {
+describe('create:user', () => {
+  test('successfully create user?', () => {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${serviceUrl}/organizations/89BrZwateBqK4PvcBIP0/stats/health`;
+      const url = `${enterpriseServiceUrl}/enterprise/api/v3/users/self/dependents`;
       return frisby
           .setup({
             request: {
@@ -26,9 +26,11 @@ describe('Get admin-stats-v2', () => {
               },
             },
           })
-          .get(url)
-          .inspectBody()
-          .expect('status', 200);
+          .get(
+              url,
+          )
+          .expect('status', 200)
+          .inspectBody();
     });
   });
 });

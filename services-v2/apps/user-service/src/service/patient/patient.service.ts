@@ -57,6 +57,8 @@ import {AppointmentsRepository} from '@opn-reservation-v1/respository/appointmen
 import {AppointmentDBModel} from '@opn-reservation-v1/models/appointment'
 import {AppointmentActivityAction} from '@opn-reservation-v1/models/appointment'
 import {ActionStatus} from '@opn-services/common/model'
+import {OrganizationService} from '@opn-enterprise-v1/services/organization-service'
+import {Organization} from '@opn-enterprise-v1/models/organization'
 
 @Injectable()
 export class PatientService {
@@ -82,7 +84,7 @@ export class PatientService {
   private testResultRepository = new PCRTestResultsRepository(this.dataStore)
   private messaging = MessagingFactory.getPushableMessagingService()
   private registrationService = new RegistrationService()
-
+  private organizationService = new OrganizationService()
   /**
    * Get patient record by id
    */
@@ -97,6 +99,13 @@ export class PatientService {
   async getProfilebyId(patientId: number): Promise<Patient> {
     return this.patientRepository.findOne(patientId, {
       relations: ['travel', 'health', 'addresses', 'digitalConsent', 'auth', 'organizations'],
+    })
+  }
+
+  async getPatientByDependantId(dependantId: number): Promise<Patient> {
+    return this.patientRepository.findOne({
+      where: {idPatient: dependantId},
+      relations: ['dependants'],
     })
   }
 
@@ -283,6 +292,7 @@ export class PatientService {
     data.idPatient = patientId
     patient.firstName = data.firstName
     patient.lastName = data.lastName
+    patient.gender = data.gender
     patient.dateOfBirth = data.dateOfBirth
     patient.phoneNumber = data.phoneNumber
     patient.isEmailVerified = data.isEmailVerified
@@ -341,15 +351,22 @@ export class PatientService {
       throw new NotFoundException('User with given id not found')
     }
 
-    await this.patientToOrganizationRepository.save({
-      patientId,
-      firebaseOrganizationId,
-    })
-
-    const organization = this.organizationModel.findOneById(firebaseOrganizationId)
+    const organization = await this.organizationModel.findOneById(firebaseOrganizationId)
     if (!organization) {
       throw new NotFoundException('Organization with given id not found')
     }
+    await this.connectOrganizationWithInstances(patient, organization)
+  }
+
+  private async connectOrganizationWithInstances(
+    patient: Patient,
+    organization: Organization,
+  ): Promise<void> {
+    await this.patientToOrganizationRepository.save({
+      patientId: patient.idPatient,
+      firebaseOrganizationId: organization.id,
+    })
+
     const firebaseUser = await this.userRepository.findOneById(patient.firebaseKey)
     if (!firebaseUser) {
       throw new NotFoundException('User with given id not found')
@@ -358,7 +375,7 @@ export class PatientService {
     await this.userRepository.updateProperty(
       firebaseUser.id,
       'organizationIds',
-      _.uniq([...(firebaseUser.organizationIds ?? []), firebaseOrganizationId]),
+      _.uniq([...(firebaseUser.organizationIds ?? []), organization.id]),
     )
   }
 
@@ -369,6 +386,7 @@ export class PatientService {
     entity.firebaseKey = data.firebaseKey
     entity.firstName = data.firstName
     entity.lastName = data.lastName
+    entity.gender = data.gender
     entity.phoneNumber = data.phoneNumber
     entity.dateOfBirth = data.dateOfBirth
     entity.photoUrl = data.photoUrl
@@ -497,7 +515,7 @@ export class PatientService {
     phoneNumber: string,
     email: string,
     authUserId: string,
-  ): Promise<(Omit<Patient, 'generatePublicId'> & {resultsCount: number})[]> {
+  ): Promise<(Patient & {resultsCount: number})[]> {
     const patientQuery = this.patientRepository
       .createQueryBuilder('patient')
       .innerJoinAndSelect('patient.auth', 'auth')
@@ -513,7 +531,10 @@ export class PatientService {
     }
 
     if (email && patient.isEmailVerified) {
-      patientQuery.orWhere('auth.email = :email AND status = :status', {email})
+      patientQuery.orWhere('auth.email = :email AND status = :status', {
+        email,
+        status: UserStatus.NEW,
+      })
     }
 
     const patients = await patientQuery.getMany()
@@ -531,6 +552,20 @@ export class PatientService {
         return previousValue
       }, 0),
     }))
+  }
+
+  async attachOrganization(organizationCode: string, authUserId: string): Promise<void> {
+    const organization = await this.organizationService.findOrganizationByKey(
+      parseInt(organizationCode),
+    )
+
+    const currentPatient = await this.patientRepository.findOne({
+      where: {
+        firebaseKey: authUserId,
+      },
+    })
+
+    await this.connectOrganizationWithInstances(currentPatient, organization)
   }
 
   async migratePatient(currentUserId: string, migration: Migration): Promise<ActionStatus> {
@@ -679,12 +714,15 @@ export class PatientService {
     }
 
     const updateDto = new PatientUpdateDto()
+    updateDto.gender = data?.gender
     updateDto.phoneNumber = data?.phone
+    updateDto.dateOfBirth = data?.dateOfBirth
     updateDto.healthCardType = data?.ohipCard
     updateDto.travelPassport = data?.travelID
     updateDto.travelCountry = data?.travelIDIssuingCountry
     updateDto.homeAddress = data?.address
     updateDto.homeAddressUnit = data?.addressUnit
+    updateDto.postalCode = data?.postalCode
     updateDto.city = data?.city
     updateDto.country = data?.country
     updateDto.province = data?.province

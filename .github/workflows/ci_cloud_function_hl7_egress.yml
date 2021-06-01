@@ -1,4 +1,4 @@
-name: CloudFunctionSMSNotification
+name: CloudFunction HL7Egress
 
 on:
   push: 
@@ -9,13 +9,15 @@ on:
     branches: 
       - master
       - develop
-      - feature/hl7-egress
+      - feature-hl7-egress
 
 jobs:
   build:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: develop
     - uses: ./.github/actions/deploy-functions
       with:
         function_name: "hl7-egress"

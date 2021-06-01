@@ -1,6 +1,7 @@
-const frisby = require('frisby');
-const moment = require('moment');
-const helpersCommon = require('helpers_common');
+import frisby from 'frisby';
+import helpersCommon from '../../../../helpers/helpers_common';
+import moment from 'moment';
+
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 
 const todaysDate = moment(new Date()).format('YYYY-MM-DD');
@@ -33,7 +34,7 @@ describe('PCR TestResultsController', () => {
               {
                 'action': 'SendThisResult',
                 'autoResult': 'PresumptivePositive',
-                'barCode': 'TEST10000548',
+                'barCode': 'DEV1000003191',
                 // 'comment': 'AWESOM',
                 'labId': 'k0qbPDqTwqitKUwlGHye',
                 'templateId': 'template2',

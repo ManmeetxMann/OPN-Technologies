@@ -7,7 +7,7 @@ describe('Apply status mask based on appointment status and user permissions', (
     isClinicUser: false,
   }
 
-  test('should apply Submitted if appointment status is InTransit and user has no Lab or Clinic permission', (done) => {
+  test('should apply Submitted if appointment status is InTransit and user has no Lab or Clinic permission', () => {
     params.status = AppointmentStatus.InTransit
     params.isLabUser = false
     params.isClinicUser = false
@@ -15,10 +15,9 @@ describe('Apply status mask based on appointment status and user permissions', (
     const status = filteredAppointmentStatus(params.status, params.isLabUser, params.isClinicUser)
 
     expect(status).toBe(AppointmentStatus.Submitted)
-    done()
   })
 
-  test('should not apply mask if appointment status is InTransit and user has Lab permission', (done) => {
+  test('should not apply mask if appointment status is InTransit and user has Lab permission', () => {
     params.status = AppointmentStatus.InTransit
     params.isLabUser = true
     params.isClinicUser = false
@@ -26,10 +25,9 @@ describe('Apply status mask based on appointment status and user permissions', (
     const status = filteredAppointmentStatus(params.status, params.isLabUser, params.isClinicUser)
 
     expect(status).toBe(AppointmentStatus.InTransit)
-    done()
   })
 
-  test('should not apply mask if appointment status is Received and user has Clinic permission', (done) => {
+  test('should not apply mask if appointment status is Received and user has Clinic permission', () => {
     params.status = AppointmentStatus.Received
     params.isLabUser = false
     params.isClinicUser = true
@@ -37,10 +35,9 @@ describe('Apply status mask based on appointment status and user permissions', (
     const status = filteredAppointmentStatus(params.status, params.isLabUser, params.isClinicUser)
 
     expect(status).toBe(AppointmentStatus.Received)
-    done()
   })
 
-  test('should apply InProgress if appointment status is ReRunRequired and user no Lab or Clinic permission', (done) => {
+  test('should apply InProgress if appointment status is ReRunRequired and user no Lab or Clinic permission', () => {
     params.status = AppointmentStatus.ReRunRequired
     params.isLabUser = false
     params.isClinicUser = false
@@ -48,6 +45,5 @@ describe('Apply status mask based on appointment status and user permissions', (
     const status = filteredAppointmentStatus(params.status, params.isLabUser, params.isClinicUser)
 
     expect(status).toBe(AppointmentStatus.InProgress)
-    done()
   })
 })

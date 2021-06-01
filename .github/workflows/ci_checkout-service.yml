@@ -12,7 +12,7 @@ on:
       - infra-dev-v2-cart-*
       - infra-dev-v2-all-*
       - preprod-v2-cart-*
-      - preprod-v2-all-*
+      - preprod-all-*
       - prod-v2-cart-*
 
 jobs:

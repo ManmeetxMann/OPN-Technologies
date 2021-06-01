@@ -56,8 +56,9 @@ import {RapidHomeController} from './controller/v1/public/rapid-home.controller'
     AuthShortCodeService,
     {
       provide: APP_GUARD,
-      useClass: AuthGlobalGuard,
+      useExisting: AuthGlobalGuard,
     },
+    AuthGlobalGuard,
   ],
 })
 class App {

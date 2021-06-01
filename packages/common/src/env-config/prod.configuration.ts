@@ -24,5 +24,6 @@ export const prodConfig: Record<string, string | string[] | number | boolean> = 
   // FEATURE_CREATE_USER_ON_ENTERPRISE: 1,
   LOG_VALIDATION_ERRORS: 'enabled',
 
-  REPORT_BUCKET_NAME: '1',
+  REPORT_BUCKET_NAME: '',
+  RAPID_ALERGEN_DEADLINE_MIN: 15,
 }

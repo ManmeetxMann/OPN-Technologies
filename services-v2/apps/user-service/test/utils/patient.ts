@@ -7,8 +7,10 @@ import {
   PatientDigitalConsentRepository,
   PatientHealthRepository,
   PatientRepository,
+  PatientToOrganizationRepository,
   PatientTravelRepository,
 } from '../../src/repository/patient.repository'
+import {PatientToOrganization} from '@opn-services/user/model/patient/patient-relations.entity'
 import {
   PatientDigitalConsent,
   PatientHealth,
@@ -22,6 +24,7 @@ export class PatientTestUtility {
   healthRepository: PatientHealthRepository
   travelRepository: PatientTravelRepository
   consentRepository: PatientDigitalConsentRepository
+  patientToOrgRepository: PatientToOrganizationRepository
 
   constructor() {
     this.patientRepository = getRepository(Patient)
@@ -30,33 +33,40 @@ export class PatientTestUtility {
     this.healthRepository = getRepository(PatientHealth)
     this.travelRepository = getRepository(PatientTravel)
     this.consentRepository = getRepository(PatientDigitalConsent)
+    this.patientToOrgRepository = getRepository(PatientToOrganization)
   }
 
   createPatient(data: {email: string}): Promise<Patient> {
     return this.patientRepository.save({
-      firebaseKey: 'TestFirebaseKey',
+      firebaseKey:
+        'TestFirebaseKey' +
+        Math.random()
+          .toString(36)
+          .substring(7),
       email: data.email,
       firstName: 'PATIENT_TEST_NAME',
       lastName: 'PATIENT_LNAME',
       phoneNumber: '111222333',
+      isEmailVerified: true,
     })
   }
 
   async findAndRemoveProfile(criteria: unknown): Promise<void> {
     const patient = await this.patientRepository.findOne(criteria)
-    console.log('Profile found', patient)
-    await deleteUserById(patient.firebaseKey)
 
-    const deleteCriteria = {patientId: patient.idPatient}
+    if (patient?.firebaseKey) {
+      await deleteUserById(patient?.firebaseKey)
+    }
+
+    const deleteCriteria = {patientId: patient?.idPatient}
     await Promise.all([
       this.authRepository.delete(deleteCriteria),
       this.addressesRepository.delete(deleteCriteria),
       this.healthRepository.delete(deleteCriteria),
       this.travelRepository.delete(deleteCriteria),
       this.consentRepository.delete(deleteCriteria),
+      this.patientToOrgRepository.delete(deleteCriteria),
     ])
-
-    await this.patientRepository.delete(patient.idPatient)
   }
 
   getProfilePayload(data: {email: string; firstName?: string; lastName?: string}): unknown {
@@ -84,6 +94,7 @@ export class PatientTestUtility {
       readTermsAndConditions: true,
       receiveResultsViaEmail: true,
       receiveNotificationsFromGov: true,
+      isEmailVerified: true,
     }
   }
 }

@@ -3,7 +3,7 @@ import {AppoinmentService} from '../../src/services/appoinment.service'
 const appoinmentService = new AppoinmentService()
 
 describe('barcode number generation', () => {
-  test('parallel calls should return unique barcodes', async (done) => {
+  test('parallel calls should return unique barcodes', async () => {
     const result = await Promise.all([
       appoinmentService.getNextBarCodeNumber(),
       appoinmentService.getNextBarCodeNumber(),
@@ -14,6 +14,5 @@ describe('barcode number generation', () => {
 
     const uniqueBarcodes = new Set(result)
     expect(uniqueBarcodes.size).toBe(5)
-    done()
   })
 })

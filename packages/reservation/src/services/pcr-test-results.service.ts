@@ -97,6 +97,8 @@ import {FirebaseMessagingService} from '../../../common/src/service/messaging/fi
 import {PushNotificationType} from '../types/push-notification.type'
 import admin from 'firebase-admin'
 import {getNotificationBody, getNotificationTitle} from '../utils/push-notification.helper'
+import {MountSinaiFormater} from '../utils/mount-sinai-formater'
+import {UserSyncService} from '../../../enterprise/src/services/user-sync-service'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -123,6 +125,7 @@ export class PCRTestResultsService {
   private labService = new LabService()
   private readonly firebaseMessagingService = new FirebaseMessagingService()
   private registrationService = new RegistrationService()
+  private userSyncService = new UserSyncService()
 
   private isAppointmentPushEnable = Config.get('APPOINTMENTS_PUSH_NOTIFY') === 'enabled'
 
@@ -152,59 +155,63 @@ export class PCRTestResultsService {
     pubsub.publish(data, attributes)
   }
 
-  private postPubSubForPresumptivePositiveResultSend(testResult: PCRTestResultEmailDTO): void {
+  private async postPubSubForPresumptivePositiveResultSend(
+    testResult: PCRTestResultEmailDTO,
+    adminId: string,
+  ): Promise<void> {
     /*if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
       LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
       return
-    }*/
-    const data: Record<string, string> = {
-      patientCode: 'FH00001',
-      barCode: testResult.barCode,
-      dateTimeForAppointment: '202104301310', //safeTimestamp(testResult.dateTime).toISOString()
-      firstName: testResult.firstName,
-      lastName: testResult.lastName,
-      healthCard: 'TestUser2',
-      dateOfBirth: 'TestUser2',
-      gender: 'TestUser2',
-      address1: 'TestUser2',
-      address2: 'TestUser2',
-      city: 'TestUser2',
-      province: 'TestUser2',
-      postalCode: 'TestUser2',
-      country: 'TestUser2',
-      testType: 'TestUser2',
-      clinicCode: 'MS112',
     }
 
+    // TODO: Don't use userSyncService for getting a that, user sync service should be removed
+    let patient = null
+    try {
+      patient = await this.userSyncService.getByFirebaseKey(adminId)
+    } catch (e) {
+      console.error(e)
+    }*/
+    console.log(adminId)
+
+    const data = {
+      patientCode: 'FA000006',
+      barCode: testResult.barCode,
+      dateTime: testResult.dateTime,
+      firstName: testResult.firstName,
+      lastName: testResult.lastName,
+      healthCard: testResult.ohipCard,
+      dateOfBirth: testResult.dateOfBirth, //YYYYMMDD
+      gender: testResult.gender, //GenderHL7
+      address1: testResult.address,
+      address2: testResult.addressUnit,
+      city: testResult.city,
+      province: testResult.province, //ON
+      postalCode: testResult.postalCode, //A1A1A1
+      country: testResult.country,
+      testType: testResult.testType,
+    }
+
+    //Utility to Format for MountSinai
+    const mountSinaiFormater = new MountSinaiFormater(data)
+    const formatedORMData = mountSinaiFormater.get()
+
     const pubsub = new OPNPubSub(Config.get('PRESUMPTIVE_POSITIVE_RESULTS_TOPIC'))
-    pubsub.publish(data)
+    pubsub.publish(formatedORMData)
   }
 
-  async confirmatoryResult(data: string): Promise<void> {
-    const result = await OPNPubSub.getPublishedData(data)
-    LogInfo(
-      'confirmatoryResult',
-      'Received',
-      result as {
-        barCode: string
-        result: ResultTypes
-      },
-    )
-  }
-
-  async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
+  async confirmPCRResults(data: PCRTestResultConfirmRequest): Promise<string> {
     //Validate Result Exists for barCode and throws exception
     const pcrResultHistory = await this.getPCRResultsByBarCode(data.barCode)
     const latestPCRResult = pcrResultHistory[0]
     const appointment = await this.appointmentService.getAppointmentByBarCode(data.barCode)
-    if (latestPCRResult.labId !== data.labId) {
+    if (latestPCRResult.labId !== data.labId && !data.byPassValidation) {
       LogWarning('PCRTestResultsService:confirmPCRResults', 'IncorrectLabId', {
         labIdInDB: latestPCRResult.labId,
         labIdInRequest: data.labId,
       })
       throw new BadRequestException('Not Allowed to Confirm results')
     }
-
+    const labId = latestPCRResult.labId ? latestPCRResult.labId : null
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
@@ -231,23 +238,24 @@ export class PCRTestResultsService {
     }
     const newPCRResult = await this.pcrTestResultsRepository.createNewTestResults({
       appointment,
-      adminId,
+      adminId: data.adminId,
       runNumber,
       reCollectNumber,
       result: finalResult,
       waitingResult: false,
       confirmed: true,
       previousResult: latestPCRResult.result,
-      labId: latestPCRResult.labId,
+      labId: labId,
       recollected,
     })
 
-    const lab = await this.labService.findOneById(latestPCRResult.labId)
+    const lab = await this.labService.findOneById(labId)
 
     this.postPubSubForResultSend(
       {...newPCRResult, ...appointment, labAssay: lab.assay},
       notificationType,
       newPCRResult.id,
+      data.adminId,
     )
 
     // await this.sendNotification(
@@ -927,6 +935,12 @@ export class PCRTestResultsService {
 
       this.postPubSubForResultSend(pcrResultDataForEmail, metaData.action, pcrResultRecorded.id)
       // await this.sendNotification(pcrResultDataForEmail, metaData.action, pcrResultRecorded.id)
+      // await this.sendNotification(
+      //   pcrResultDataForEmail,
+      //   metaData.action,
+      //   pcrResultRecorded.id,
+      //   adminId,
+      // )
     } else {
       console.log(
         `handlePCRResultSaveAndSend: Not Notification is sent for ${barCode}. Notify is off.`,
@@ -1055,6 +1069,7 @@ export class PCRTestResultsService {
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
     pcrId: string,
+    adminId: string,
   ): Promise<void> {
     switch (notficationType) {
       case PCRResultActions.SendPreliminaryPositive: {
@@ -1070,15 +1085,15 @@ export class PCRTestResultsService {
         break
       }
       case PCRResultActions.RecollectAsInconclusive: {
-        await this.sendReCollectNotification(resultData)
+        await this.sendReCollectNotification(resultData, pcrId)
         break
       }
       case PCRResultActions.RecollectAsInvalid: {
-        await this.sendReCollectNotification(resultData)
+        await this.sendReCollectNotification(resultData, pcrId)
         break
       }
       case EmailNotficationTypes.Indeterminate: {
-        await this.sendReCollectNotification(resultData)
+        await this.sendReCollectNotification(resultData, pcrId)
         break
       }
       case EmailNotficationTypes.MarkAsConfirmedNegative: {
@@ -1096,7 +1111,7 @@ export class PCRTestResultsService {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
         } else if (resultData.result === ResultTypes.PresumptivePositive) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
-          this.postPubSubForPresumptivePositiveResultSend({...resultData, id: pcrId})
+          await this.postPubSubForPresumptivePositiveResultSend({...resultData, id: pcrId}, adminId)
         } else if (
           resultData.result === ResultTypes.Indeterminate &&
           (resultData.testType === TestTypes.Antibody_All ||
@@ -1287,7 +1302,7 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendReCollectNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+  async sendReCollectNotification(resultData: PCRTestResultEmailDTO, pcrId: string): Promise<void> {
     const getTemplateId = (): number => {
       if (!!resultData.organizationId) {
         return Config.getInt('TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 6
@@ -1300,7 +1315,7 @@ export class PCRTestResultsService {
       }
     }
 
-    const pcrResultDbRecord = await this.pcrTestResultsRepository.findOneById(resultData.resultId)
+    const pcrResultDbRecord = await this.pcrTestResultsRepository.findOneById(pcrId)
 
     const couponCode = pcrResultDbRecord?.couponCode ?? null
     const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')

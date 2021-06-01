@@ -18,5 +18,19 @@
     "^@opn-common-v1/(.*)$": "<rootDir>../packages/common/src/$1",
     "^@opn-reservation-v1/(.*)$": "<rootDir>../packages/reservation/src/$1",
     "^@opn-enterprise-v1/(.*)$": "<rootDir>../packages/enterprise/src/$1"
+  },
+  "coverageThreshold": {
+    "./apps/checkout-service/src": {
+      "branches": 50,
+      "functions": 50,
+      "lines": 50,
+      "statements": 50
+    },
+    "libs/common/src/guard": {
+      "branches": 50,
+      "functions": 50,
+      "lines": 50,
+      "statements": 50
+    }
   }
 }

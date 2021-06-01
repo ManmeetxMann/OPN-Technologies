@@ -3743,7 +3743,14 @@ paths:
           schema:
             type: string
             enum:
-              - FH_RapidHome_Web
+              [
+                  FH_IOS,
+                  FH_Android,
+                  OPN_IOS,
+                  OPN_Android,
+                  Admin_Dashboard,
+                  FH_RapidHome_Web
+              ]
           required: false
         - in: query
           name: testType

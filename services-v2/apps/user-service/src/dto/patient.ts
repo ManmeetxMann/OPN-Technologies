@@ -7,6 +7,7 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsNumber,
   IsNumberString,
   IsOptional,
   IsString,
@@ -16,7 +17,8 @@ import {
 import {Organization} from '../model/organization/organization.entity'
 import {Patient} from '../model/patient/patient.entity'
 import {Type} from 'class-transformer'
-const publicPatientIdPrefix = process.env.PATIENT_ID_PREFIX || 'FH'
+import {UserStatus} from '@opn-common-v1/data/user'
+import {Gender} from '@opn-reservation-v1/models/appointment'
 
 export class AuthenticateDto {
   @ApiProperty()
@@ -58,6 +60,10 @@ export class PatientCreateDto {
   @IsString()
   @IsNotEmpty()
   lastName: string
+
+  @IsString()
+  @IsOptional()
+  gender: Gender
 
   @IsOptional()
   @IsString()
@@ -181,6 +187,11 @@ export class PatientCreateAdminDto {
   @IsString()
   @IsNotEmpty()
   lastName: string
+
+  @ApiProperty({enum: Gender})
+  @IsString()
+  @IsOptional()
+  gender: Gender
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -403,6 +414,12 @@ export class MigrateDto {
   migrations: Migration[]
 }
 
+export class AttachOrganization {
+  @ApiProperty()
+  @IsString()
+  organizationCode?: string
+}
+
 export class DependantCreateDto extends OmitType(PatientCreateDto, ['email'] as const) {}
 
 export class DependantCreateAdminDto extends OmitType(PatientCreateAdminDto, ['email'] as const) {}
@@ -443,6 +460,26 @@ export class PatientUpdatePubSubPayload extends PubSubPayload<PatientUpdatePubSu
   message: PatientUpdatePubSubMessage
 }
 
+export const unconfirmedPatientDto = (
+  patient: Omit<Patient, 'generatePublicId'> & {resultsCount: number},
+): UnconfirmedPatient => ({
+  idPatient: patient.idPatient,
+  firebaseKey: patient.firebaseKey,
+  firstName: patient.firstName,
+  lastName: patient.lastName,
+  gender: patient.gender,
+  isEmailVerified: patient.isEmailVerified,
+  dateOfBirth: patient.dateOfBirth,
+  registrationId: patient.registrationId,
+  photoUrl: patient.photoUrl,
+  consentFileUrl: patient.consentFileUrl,
+  status: patient.status,
+  lastAppointment: patient.lastAppointment,
+  email: patient.auth.email,
+  phoneNumber: patient.auth.phoneNumber,
+  resultsCount: patient.resultsCount,
+})
+
 export const patientProfileDto = (
   patient: Patient,
   metaData?: {
@@ -451,9 +488,10 @@ export const patientProfileDto = (
 ): PatientProfile => ({
   id: patient.idPatient.toString(),
   firebaseKey: patient?.firebaseKey,
-  patientPublicId: `${publicPatientIdPrefix}${String(patient.idPatient).padStart(6, '0')}`,
+  patientPublicId: patient.publicId,
   firstName: patient.firstName,
   lastName: patient.lastName,
+  gender: patient?.gender,
   dateOfBirth: patient.dateOfBirth,
   email: patient.auth?.email,
   phoneNumber: patient.phoneNumber,
@@ -478,6 +516,7 @@ export const patientProfileDto = (
   postalCode: patient.addresses?.postalCode,
   lastAppointment: patient?.lastAppointment,
   resultExitsForProvidedEmail: metaData?.resultExitsForProvidedEmail,
+  isEmailVerified: patient.isEmailVerified ?? false,
 })
 
 export class PatientProfile extends PartialType(PatientCreateAdminDto) {
@@ -492,6 +531,55 @@ export class PatientProfile extends PartialType(PatientCreateAdminDto) {
 
   @ApiPropertyOptional()
   resultExitsForProvidedEmail?: boolean
+}
+
+export class UnconfirmedPatient {
+  @ApiProperty({readOnly: true})
+  @IsNumber()
+  idPatient: number
+  @ApiProperty({readOnly: true})
+  @IsString()
+  firebaseKey: string
+  @ApiProperty({readOnly: true})
+  @IsString()
+  firstName: string
+  @ApiProperty({readOnly: true})
+  @IsString()
+  lastName: string
+  @ApiProperty({readOnly: true})
+  @IsEnum(Gender)
+  gender: Gender
+  @ApiProperty({readOnly: true})
+  @IsBoolean()
+  isEmailVerified: boolean
+  @ApiProperty({readOnly: true})
+  @IsString()
+  dateOfBirth: string
+  @ApiProperty({readOnly: true})
+  @IsString()
+  registrationId: string
+  @ApiProperty({readOnly: true})
+  @IsString()
+  photoUrl: string
+  @ApiProperty({readOnly: true})
+  @IsString()
+  consentFileUrl: string
+  @ApiProperty({readOnly: true, enum: UserStatus})
+  @IsString()
+  @IsEnum(UserStatus)
+  status: UserStatus
+  @ApiProperty({readOnly: true})
+  @IsString()
+  lastAppointment: Date
+  @ApiProperty({readOnly: true})
+  @IsString()
+  email: string
+  @ApiProperty({readOnly: true})
+  @IsString()
+  phoneNumber: string
+  @ApiProperty({readOnly: true})
+  @IsNumber()
+  resultsCount: number
 }
 
 export class DependantProfile extends OmitType(PatientProfile, ['email', 'authUserId'] as const) {}

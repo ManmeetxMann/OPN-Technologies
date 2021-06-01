@@ -1,6 +1,6 @@
 const frisby = require('frisby');
-const helpersCommon = require('helpers_common');
-
+import helpersCommon from '../../../../../helpers/helpers_common';
+import testProfile from '../../../../../test_data/test_profile';
 // Do setup first
 frisby.globalSetup({
   request: {
@@ -8,10 +8,10 @@ frisby.globalSetup({
   },
 });
 
-const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
-const organizationId = 'PUBLIC_ORG';
+const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL
+const organizationId = testProfile.get().organizationId
 
-const getLocations = (token) => {
+const getLocations = (token:string) => {
   const url = `${reservationServiceUrl}/reservation/api/v1/booking-locations?organizationId=${organizationId}`;
   return frisby
       .setup({
@@ -26,18 +26,19 @@ const getLocations = (token) => {
       )
       .expect('status', 200);
 };
+
 if (!module.parent) {
   /**
      * @group reservation-service
      * @group /reservation/admin/api/v1/booking-locations
      * @group get-booking-locations
+     * @group reg-user
      */
   describe('get:booking locations', () => {
-    test('should get list of booking locations successfully?', function() {
-      return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-        getLocations(token)
-            .inspectBody();
-      });
+    test('should get list of booking locations successfully?', async () => {
+      const token = await helpersCommon.runAuthenticatedTest(frisby)
+      await getLocations(token)
+            //.inspectBody();
     });
 
     test('should fail to get locations for missing OrganiationID?', function() {
@@ -72,7 +73,7 @@ if (!module.parent) {
               url,
           )
           .expect('status', 401)
-          .inspectBody();
+          //.inspectBody();
     });
 
     test('should fail to get locations for invalid ORG.', function() {
@@ -90,9 +91,9 @@ if (!module.parent) {
                 url,
             )
             .expect('status', 200)
-            .inspectBody();
+            //.inspectBody();
       });
     });
   });
 }
-module.exports = {getLocations};
+export {getLocations}
