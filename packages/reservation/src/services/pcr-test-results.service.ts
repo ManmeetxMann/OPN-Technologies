@@ -94,6 +94,7 @@ import {normalizeAnalysis} from '../utils/analysis.helper'
 import {CouponEnum} from '../models/coupons'
 import {MountSinaiFormater} from '../utils/mount-sinai-formater'
 import {UserSyncService} from '../../../enterprise/src/services/user-sync-service'
+import {Patient} from '../../../../services-v2/apps/user-service/src/model/patient/patient.entity'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -145,24 +146,22 @@ export class PCRTestResultsService {
 
   private async postPubSubForPresumptivePositiveResultSend(
     testResult: PCRTestResultEmailDTO,
-    adminId: string,
+    userId: string,
   ): Promise<void> {
     /*if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
       LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
       return
     }
+    */
 
     // TODO: Don't use userSyncService for getting a that, user sync service should be removed
-    let patient = null
-    try {
-      patient = await this.userSyncService.getByFirebaseKey(adminId)
-    } catch (e) {
-      console.error(e)
-    }*/
-    console.log(adminId)
+    const patient = await this.userSyncService.getByFirebaseKey(userId)
+    if (!patient) {
+      throw new ResourceNotFoundException(`Patient with id ${userId} not found`)
+    }
 
     const data = {
-      patientCode: 'FA000006',
+      patientCode: (patient as Patient).publicId,
       barCode: testResult.barCode,
       dateTime: testResult.dateTime,
       firstName: testResult.firstName,
@@ -243,7 +242,7 @@ export class PCRTestResultsService {
       {...newPCRResult, ...appointment, labAssay: lab.assay},
       notificationType,
       newPCRResult.id,
-      data.adminId,
+      appointment.userId,
     )
     return newPCRResult.id
   }
@@ -918,7 +917,7 @@ export class PCRTestResultsService {
         pcrResultDataForEmail,
         metaData.action,
         pcrResultRecorded.id,
-        adminId,
+        appointment.userId,
       )
     } else {
       console.log(
@@ -1048,7 +1047,7 @@ export class PCRTestResultsService {
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
     pcrId: string,
-    adminId: string,
+    userId: string,
   ): Promise<void> {
     let addSuccessLog = true
     switch (notficationType) {
@@ -1091,7 +1090,7 @@ export class PCRTestResultsService {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
         } else if (resultData.result === ResultTypes.PresumptivePositive) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
-          await this.postPubSubForPresumptivePositiveResultSend({...resultData, id: pcrId}, adminId)
+          await this.postPubSubForPresumptivePositiveResultSend({...resultData, id: pcrId}, userId)
         } else if (
           resultData.result === ResultTypes.Indeterminate &&
           (resultData.testType === TestTypes.Antibody_All ||
