@@ -64,7 +64,7 @@ describe('user:create', () => {
     })
 
     test('should create new user and associate to auth', async () => {
-        const token = await helpersCommon.getAuthToken(frisby, email, `${firstName} ${lastName}`)
+        const token = await helpersCommon.getAuthToken(frisby, 'harpreet+tmp@stayopn.com', `${firstName} ${lastName}`)
         const url = `${enterpriseServiceUrl}/user/connect/v2/add`
         await frisby
             .post(
