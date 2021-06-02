@@ -642,8 +642,10 @@ class AdminPCRTestResultController implements IControllerBase {
     try {
       const userId = getUserId(res.locals.authenticatedUser)
       const {testResultId} = req.params as {testResultId: string}
-      const {appointment, pcrTestResult} =
-        await this.pcrTestResultsService.getTestResultAndAppointment(testResultId, userId, true)
+      const {
+        appointment,
+        pcrTestResult,
+      } = await this.pcrTestResultsService.getTestResultAndAppointment(testResultId, userId, true)
 
       if (!this.pcrTestResultsService.isDownloadable(pcrTestResult)) {
         throw new BadRequestException(

@@ -1,6 +1,6 @@
 import frisby from 'frisby';
 import helpersCommon from '../../../../helpers/helpers_common'
-import testProfile from '../../../../test_data/test_profile';
+import testProfile from '../../../../test_data/test_profile'
 import faker from 'faker';
 
 // Do setup first
