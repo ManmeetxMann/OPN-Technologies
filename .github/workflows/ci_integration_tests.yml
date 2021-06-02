@@ -20,7 +20,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        ref: develop
+        # ref: develop
+        ref: fix/ci-test-run
 
     - uses: ./.github/actions/integration-tests
       name: Run Integration Tests
