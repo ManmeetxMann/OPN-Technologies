@@ -65,10 +65,6 @@ export class PatientCreateDto {
   @IsOptional()
   gender: Gender
 
-  @IsOptional()
-  @IsString()
-  registrationId?: string
-
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -192,11 +188,6 @@ export class PatientCreateAdminDto {
   @IsString()
   @IsOptional()
   gender: Gender
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  registrationId?: string
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -470,7 +461,6 @@ export const unconfirmedPatientDto = (
   gender: patient.gender,
   isEmailVerified: patient.isEmailVerified,
   dateOfBirth: patient.dateOfBirth,
-  registrationId: patient.registrationId,
   photoUrl: patient.photoUrl,
   consentFileUrl: patient.consentFileUrl,
   status: patient.status,
@@ -555,9 +545,6 @@ export class UnconfirmedPatient {
   @ApiProperty({readOnly: true})
   @IsString()
   dateOfBirth: string
-  @ApiProperty({readOnly: true})
-  @IsString()
-  registrationId: string
   @ApiProperty({readOnly: true})
   @IsString()
   photoUrl: string

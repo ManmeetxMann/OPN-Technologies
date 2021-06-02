@@ -59,6 +59,7 @@ import {AppointmentActivityAction} from '@opn-reservation-v1/models/appointment'
 import {ActionStatus} from '@opn-services/common/model'
 import {OrganizationService} from '@opn-enterprise-v1/services/organization-service'
 import {Organization} from '@opn-enterprise-v1/models/organization'
+import { Platforms } from '@opn-common-v1/types/platform'
 
 @Injectable()
 export class PatientService {
@@ -216,7 +217,7 @@ export class PatientService {
       firstName: data.firstName,
       isEmailVerified: false,
       lastName: data.lastName,
-      registrationId: data.registrationId ?? null,
+      registrationId: await this.getRegistrationId(data),
       photo: data.photoUrl ?? null,
       phoneNumber: data.phoneNumber ?? null,
       authUserId: data.authUserId,
@@ -308,7 +309,7 @@ export class PatientService {
     }
 
     const {travel, health, addresses, digitalConsent, auth} = patient
-
+    
     if (auth && data.email && auth?.email !== data.email) {
       this.firebaseAuthService.updateUser(auth.authUserId, data.email)
       auth.email = data.email
@@ -320,7 +321,7 @@ export class PatientService {
       firstName: data.firstName,
       lastName: data.lastName,
       isEmailVerified: data.isEmailVerified,
-      ...(data.registrationId && {registrationId: data.registrationId}),
+      registrationId: await this.getRegistrationId({...data, firebaseKey: patient.firebaseKey}),
       ...(data.photoUrl && {photo: data.photoUrl}),
       phone: {
         diallingCode: 0,
@@ -390,7 +391,7 @@ export class PatientService {
     entity.phoneNumber = data.phoneNumber
     entity.dateOfBirth = data.dateOfBirth
     entity.photoUrl = data.photoUrl
-    entity.registrationId = data.registrationId
+    entity.registrationId = await this.getRegistrationId(data)
     entity.consentFileUrl = data.consentFileUrl
     entity.isEmailVerified = true
 
@@ -409,7 +410,7 @@ export class PatientService {
     const firebaseUser = await this.userRepository.add({
       firstName: data.firstName,
       lastName: data.lastName,
-      registrationId: data.registrationId ?? null,
+      registrationId: await this.getRegistrationId(data),
       photo: data.photoUrl ?? null,
       phone: {
         diallingCode: 0,
@@ -681,7 +682,7 @@ export class PatientService {
     }
     const patient = await this.patientRepository.findOne(patientId)
     // create or update token
-    const {id} = await this.registrationService.upsert(patient.registrationId,
+    const {id} = await this.registrationService.upsert(patient.firebaseKey,
       {
       osVersion,
       platform,
@@ -738,4 +739,19 @@ export class PatientService {
 
     await this.updateProfile(patient.idPatient, updateDto)
   }
+
+  async getRegistrationId(userData: PatientUpdateDto): Promise<string> {
+    let registrationDb: Registration
+
+    if (userData?.registration?.pushToken || userData?.registration?.osVersion || userData?.registration?.platform) {
+      registrationDb = await this.registrationService.upsert(userData.firebaseKey, {
+        platform: userData?.registration?.platform as Platforms,
+        osVersion: userData?.registration?.osVersion,
+        pushToken: userData?.registration?.pushToken,
+      })
+    }
+
+    return registrationDb?.id || null
+  }
+
 }

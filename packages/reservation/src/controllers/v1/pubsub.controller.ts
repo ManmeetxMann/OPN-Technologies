@@ -60,11 +60,18 @@ class PubsubController implements IControllerBase {
         this.labService.findOneById(testResult.labId),
       ])
 
-      await this.pcrTestResultsService.sendNotification(
-        {...testResult, ...appointment, labAssay: lab.assay},
-        data.notficationType as PCRResultActions | EmailNotficationTypes,
-        testResult.id,
-      )
+      await Promise.all([
+        this.pcrTestResultsService.sendNotification(
+          {...testResult, ...appointment, labAssay: lab.assay},
+          data.notficationType as PCRResultActions | EmailNotficationTypes,
+          testResult.id,
+          testResult.adminId,
+        ),
+        this.pcrTestResultsService.sendPushNotification(
+          {...testResult, ...appointment, labAssay: lab?.assay},
+          testResult.userId,
+        ),
+      ])
 
       res.sendStatus(200)
     } catch (error) {

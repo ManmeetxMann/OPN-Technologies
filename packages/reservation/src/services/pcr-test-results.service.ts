@@ -255,7 +255,6 @@ export class PCRTestResultsService {
       {...newPCRResult, ...appointment, labAssay: lab.assay},
       notificationType,
       newPCRResult.id,
-      data.adminId,
     )
 
     // await this.sendNotification(
@@ -1130,7 +1129,6 @@ export class PCRTestResultsService {
   }
 
   async sendPushNotification(result: PCRTestResultEmailDTO, userId: string): Promise<void> {
-    // await this.userService.updateProperties('5hp8wMZ3AAObLuVZoMHU', {authUserId: null})
     const registration = await this.registrationService.findLastForUserId(userId)
 
     if (!registration?.pushToken) {
@@ -1141,12 +1139,10 @@ export class PCRTestResultsService {
       data: {
         resultId: null,
         notificationType: null as PushNotificationType,
-      },
-      token: registration.pushToken,
-      notification: {
         title: null,
         body: null,
       },
+      token: registration.pushToken,
     }
 
     switch (result.appointmentStatus) {
@@ -1160,30 +1156,29 @@ export class PCRTestResultsService {
 
       case AppointmentStatus.InProgress:
         message.data.notificationType = PushNotificationType.VIEW
-        message.data.resultId = result.resultId
+        message.data.resultId = result.id
         break
 
       case AppointmentStatus.Reported:
         message.data.notificationType = PushNotificationType.VIEW
-        message.data.resultId = result.resultId
+        message.data.resultId = result.id
         break
 
       case AppointmentStatus.ReCollectRequired:
         message.data.notificationType = PushNotificationType.VIEW
-        message.data.resultId = result.resultId
+        message.data.resultId = result.id
         break
 
       case AppointmentStatus.ReCollectRequired:
         message.data.notificationType = PushNotificationType.VIEW
-        message.data.resultId = result.resultId
+        message.data.resultId = result.id
         break
     }
 
-    message.notification.title = getNotificationTitle(result)
-    message.notification.body = getNotificationBody(result)
+    message.data.title = getNotificationTitle(result)
+    message.data.body = getNotificationBody(result)
 
-    const responce = await this.firebaseMessagingService.send(message)
-    console.log(responce)
+    await this.firebaseMessagingService.send(message)
   }
 
   async resendReport(testResultId: string, userId: string): Promise<void> {

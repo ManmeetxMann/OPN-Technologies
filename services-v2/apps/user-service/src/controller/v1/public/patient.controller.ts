@@ -199,8 +199,8 @@ export class PatientController {
   }
 
   @Put()
-  // @UseGuards(AuthGuard)
-  // @Roles([RequiredUserPermission.RegUser])
+  @UseGuards(AuthGuard)
+  @Roles([RequiredUserPermission.RegUser])
   @ApiResponse({type: PatientProfile})
   async update(
     @Body() patientUpdateDto: PatientUpdateDto,
