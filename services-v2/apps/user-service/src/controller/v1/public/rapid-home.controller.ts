@@ -13,6 +13,7 @@ import {OpnConfigService} from '@opn-services/common/services'
 import {CouponService} from '@opn-reservation-v1/services/coupon.service'
 import {CouponEnum} from '@opn-reservation-v1/models/coupons'
 import {ResourceNotFoundException} from '@opn-services/common/exception'
+import {timestampToFormattedIso} from '@opn-services/checkout/utils/times'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -37,7 +38,12 @@ export class RapidHomeController {
   @UseGuards(AuthGuard)
   async getLinkedCodes(@AuthUserDecorator() authUser: User): Promise<ResponseWrapper> {
     const codes = await this.homeKitCodeService.getCodesByUserId(authUser.id)
-    return ResponseWrapper.actionSucceed({codes: codes.map(({rapidHomeKitId}) => rapidHomeKitId)})
+    return ResponseWrapper.actionSucceed({
+      codes: codes.map(code => ({
+        rapidHomeKitId: code.rapidHomeKitId,
+        addedDate: timestampToFormattedIso(code.timestamps.createdAt),
+      })),
+    })
   }
 
   @Post('rapid-home-kit-codes')
