@@ -7,7 +7,7 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
 import {UserService} from '../../../common/src/service/user/user-service'
 // import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
-import {now} from '../../../common/src/utils/times'
+import { getFirestoreTimestamp, now } from "../../../common/src/utils/times";
 import {Config} from '../../../common/src/utils/config'
 import {isPassed, safeTimestamp} from '../../../common/src/utils/datetime-util'
 
@@ -163,19 +163,20 @@ export class PassportService {
 
     return this.identifierRepository
       .getUniqueValue('status')
-      .then((statusToken) =>
-        this.passportRepository.add({
+      .then((statusToken) => {
+        console.log('SAD', firestore.Timestamp.fromDate(validFromDate))
+        return this.passportRepository.add({
           status,
           type,
           statusToken,
           userId,
           organizationId,
           dependantIds,
-          validFrom: firestore.Timestamp.fromDate(validFromDate),
-          validUntil: firestore.Timestamp.fromDate(validUntilDate),
+          validFrom: getFirestoreTimestamp(validFromDate),
+          validUntil: getFirestoreTimestamp(validUntilDate),
           includesGuardian,
-        }),
-      )
+        })
+      })
       .then(mapDates)
       .then(async (passport) => {
         await this.postPassport(passport)
