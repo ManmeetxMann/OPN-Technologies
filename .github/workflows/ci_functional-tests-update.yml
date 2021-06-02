@@ -6,7 +6,6 @@ on:
       - "functional-testing/**"
       - ".github/workflows/ci_functional-tests-update.yml"
     branches: 
-      - master
       - develop
 
 jobs:

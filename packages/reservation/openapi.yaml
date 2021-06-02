@@ -3422,6 +3422,57 @@ paths:
                         type: string
                   page:
                     type: number
+  /reservation/admin/api/v1/test-results/list/failed-confirmatory-request:
+    get:
+      description: Retrieve list of Failed Confirmatory Request
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: string
+                        resultId:
+                          type: string
+                        appintmentId:
+                          type: string
+                        reasons:
+                          type: array
+                          items:
+                            type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
   /reservation/admin/api/v1/pcr-test-results/due-deadline/list/stats:
     get:
       description: Retrieve list of PCR Results

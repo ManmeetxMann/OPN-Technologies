@@ -1,15 +1,16 @@
 name: Integration Test (2AM)
 on:
-  schedule:
-   - cron: "0 3 * * *"
+  # schedule:
+  #  - cron: "0 3 * * *"
   push:
-    paths:
-      - "packages/common/**"
-      - "packages/reservation/**"
-      - ".github/workflows/**"
-      - ".github/actions/**"
+    # paths:
+    #   - "packages/common/**"
+    #   - "packages/reservation/**"
+    #   - ".github/workflows/**"
+    #   - ".github/actions/**"
     branches: 
-      - develop
+      # - develop
+      - fix/integration-test-run
 
 jobs:
   build:
