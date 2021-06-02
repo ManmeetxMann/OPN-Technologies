@@ -96,7 +96,11 @@ import {RegistrationService} from '../../../common/src/service/registry/registra
 import {FirebaseMessagingService} from '../../../common/src/service/messaging/firebase-messaging-service'
 import {PushNotificationType} from '../types/push-notification.type'
 import admin from 'firebase-admin'
-import {getNotificationBody, getNotificationTitle} from '../utils/push-notification.helper'
+import {
+  getNotificationBody,
+  getNotificationTitle,
+  getPushNotificationType,
+} from '../utils/push-notification.helper'
 import {MountSinaiFormater} from '../utils/mount-sinai-formater'
 import {UserSyncService} from '../../../enterprise/src/services/user-sync-service'
 import {Patient} from '../../../../services-v2/apps/user-service/src/model/patient/patient.entity'
@@ -1156,44 +1160,13 @@ export class PCRTestResultsService {
       data: {
         resultId: null,
         notificationType: null as PushNotificationType,
-        title: null,
-        body: null,
+        title: getNotificationTitle(result),
+        content: getNotificationBody(result),
       },
       token: registration.pushToken,
     }
 
-    switch (result.appointmentStatus) {
-      case AppointmentStatus.Canceled:
-        message.data.notificationType = PushNotificationType.LISTING
-        break
-
-      case AppointmentStatus.Pending:
-        message.data.notificationType = PushNotificationType.LISTING
-        break
-
-      case AppointmentStatus.InProgress:
-        message.data.notificationType = PushNotificationType.VIEW
-        message.data.resultId = result.id
-        break
-
-      case AppointmentStatus.Reported:
-        message.data.notificationType = PushNotificationType.VIEW
-        message.data.resultId = result.id
-        break
-
-      case AppointmentStatus.ReCollectRequired:
-        message.data.notificationType = PushNotificationType.VIEW
-        message.data.resultId = result.id
-        break
-
-      case AppointmentStatus.ReCollectRequired:
-        message.data.notificationType = PushNotificationType.VIEW
-        message.data.resultId = result.id
-        break
-    }
-
-    message.data.title = getNotificationTitle(result)
-    message.data.body = getNotificationBody(result)
+    getPushNotificationType(result, message)
 
     await this.firebaseMessagingService.send(message)
   }

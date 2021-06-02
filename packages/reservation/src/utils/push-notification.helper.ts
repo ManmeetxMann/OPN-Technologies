@@ -1,5 +1,8 @@
+import admin from 'firebase-admin'
+
 import {AppointmentStatus} from '../models/appointment'
 import {PCRTestResultEmailDTO} from '../models/pcr-test-results'
+import {PushNotificationType} from '../types/push-notification.type'
 
 export const getNotificationBody = (testResult: PCRTestResultEmailDTO): string => {
   switch (testResult.appointmentStatus) {
@@ -47,4 +50,41 @@ export const getNotificationTitle = (testResult: PCRTestResultEmailDTO): string 
     case AppointmentStatus.ReCollectRequired:
       return 'Update: Re-collection Required'
   }
+}
+
+export const getPushNotificationType = (
+  result: PCRTestResultEmailDTO,
+  message: admin.messaging.Message,
+): admin.messaging.Message => {
+  switch (result.appointmentStatus) {
+    case AppointmentStatus.Canceled:
+      message.data.notificationType = PushNotificationType.LISTING
+      break
+
+    case AppointmentStatus.Pending:
+      message.data.notificationType = PushNotificationType.LISTING
+      break
+
+    case AppointmentStatus.InProgress:
+      message.data.notificationType = PushNotificationType.VIEW
+      message.data.resultId = result.id
+      break
+
+    case AppointmentStatus.Reported:
+      message.data.notificationType = PushNotificationType.VIEW
+      message.data.resultId = result.id
+      break
+
+    case AppointmentStatus.ReCollectRequired:
+      message.data.notificationType = PushNotificationType.VIEW
+      message.data.resultId = result.id
+      break
+
+    case AppointmentStatus.ReCollectRequired:
+      message.data.notificationType = PushNotificationType.VIEW
+      message.data.resultId = result.id
+      break
+  }
+
+  return message
 }
