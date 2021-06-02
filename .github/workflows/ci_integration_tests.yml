@@ -1,17 +1,15 @@
 name: Integration Test (2AM)
 on:
-  # schedule:
-  #  - cron: "0 3 * * *"
+  schedule:
+   - cron: "0 3 * * *"
   push:
-    # paths:
-    #   - "packages/common/**"
-    #   - "packages/reservation/**"
-    #   - ".github/workflows/**"
-    #   - ".github/actions/**"
+    paths:
+      - "packages/common/**"
+      - "packages/reservation/**"
+      - ".github/workflows/**"
+      - ".github/actions/**"
     branches: 
-      # - develop
-      - fix/integration-test-run
-      - fix/ci-test-run
+      - develop
 
 jobs:
   build:
@@ -20,8 +18,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        # ref: develop
-        ref: fix/ci-test-run
+        ref: develop
 
     - uses: ./.github/actions/integration-tests
       name: Run Integration Tests
