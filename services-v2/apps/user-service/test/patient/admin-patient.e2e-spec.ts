@@ -5,18 +5,34 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 import * as request from 'supertest'
 import {App} from '../../src/main'
 
-import {createUser, deleteUserByIdTestDataCreator, commonHeaders} from '@opn-services/test/utils'
+import {
+  createUser,
+  deleteUserByIdTestDataCreator,
+  commonHeaders,
+  deleteUserByEmail,
+} from '@opn-services/test/utils'
 
 import {Patient} from '../../src/model/patient/patient.entity'
 import {PatientTestUtility} from '../utils/patient'
 import {PatientCreateDto} from '../../src/dto/patient'
 
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
+jest.mock('@opn-enterprise-v1/repository/user.repository', () => {
+  return {
+    UserRepository: jest.fn().mockImplementation(() => {
+      return {
+        add: () => ({
+          id: 'RandomFirebaseKey',
+        }),
+      }
+    }),
+  }
+})
 jest.setTimeout(20000)
 
-const organizationId = 'PATIENT_ORG_BASIC'
+const organizationId = 'PATIENT_ORG_BASIC_ADMIN'
 const testDataCreator = __filename.split('/services-v2/')[1]
-const userId = 'PATIENT_BASIC' + 1
+const userId = 'PATIENT_BASIC_ADMIN'
 const headers = {
   accept: 'application/json',
   organizationid: organizationId,
@@ -32,11 +48,11 @@ describe('AdminPatientController (e2e)', () => {
   let patientTestUtility: PatientTestUtility
 
   const userCreatePayload = {
-    email: 'PATIENT_TEST_MAIL_E2E@stayopn.com',
-    firstName: 'PATIENT_E2E',
-    lastName: 'PATIENT_E2E',
+    email: 'PATIENT_TEST_MAIL_E2E_ADMIN@stayopn.com',
+    firstName: 'PATIENT_E2E_ADMIN',
+    lastName: 'PATIENT_E2E_ADMIN',
   }
-  const userMockedMail = 'PATIENT_TEST_MAIL_MOC_E2E@stayopn.com'
+  const userMockedMail = 'PATIENT_TEST_MAIL_MOC_E2E_ADMIN@stayopn.com'
 
   beforeAll(async () => {
     await createUser(
@@ -57,6 +73,11 @@ describe('AdminPatientController (e2e)', () => {
     await new Promise(resolve => app.listen(81, resolve))
 
     patientTestUtility = new PatientTestUtility()
+
+    await Promise.all([
+      patientTestUtility.removeProfileByEmail(userCreatePayload.email),
+      patientTestUtility.removeProfileByEmail(userMockedMail),
+    ])
 
     mockedUser = await patientTestUtility.createPatient({email: userMockedMail})
   })
@@ -132,8 +153,10 @@ describe('AdminPatientController (e2e)', () => {
   afterAll(async () => {
     await Promise.all([
       deleteUserByIdTestDataCreator(userId, testDataCreator),
-      patientTestUtility.findAndRemoveProfile({idPatient: mockedUser.idPatient}),
+      deleteUserByEmail(userCreatePayload.email),
+      deleteUserByEmail(userMockedMail),
       patientTestUtility.findAndRemoveProfile({firstName: userCreatePayload.firstName}),
+      patientTestUtility.findAndRemoveProfile({idPatient: mockedUser.idPatient}),
     ])
     await Promise.all([
       patientTestUtility.patientRepository.delete({firstName: userCreatePayload.firstName}),

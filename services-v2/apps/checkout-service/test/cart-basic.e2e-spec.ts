@@ -138,7 +138,9 @@ describe('Cart basic', () => {
     const cartAfter = await request(server)
       .get(url)
       .set(headers)
-    expect(cartAfter.body.data.paymentSummary.length).toBe(0)
+
+    const [, , total] = cartAfter.body.data.paymentSummary
+    expect(total.amount).toBe(0)
     expect(cartAfter.body.data.cartItems.length).toBe(0)
     done()
   })

@@ -5,14 +5,32 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 import * as request from 'supertest'
 import {App} from '../../src/main'
 
-import {commonHeaders, createUser, deleteUserByIdTestDataCreator} from '@opn-services/test/utils'
+import {
+  commonHeaders,
+  createUser,
+  deleteUserByEmail,
+  deleteUserByIdTestDataCreator,
+} from '@opn-services/test/utils'
 
 import {PatientTestUtility} from '../utils/patient'
 
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
+jest.mock('@opn-enterprise-v1/repository/user.repository', () => {
+  return {
+    UserRepository: jest.fn().mockImplementation(() => {
+      return {
+        add: () => ({
+          id: 'RandomFirebaseKey',
+        }),
+      }
+    }),
+  }
+})
 
-const userId = 'PATIENT_BASIC'
-const organizationId = 'PATIENT_ORG_BASIC'
+jest.setTimeout(10000)
+
+const userId = 'NORMAL_PATIENT_BASIC'
+const organizationId = 'NORMAL_PATIENT_ORG_BASIC'
 const testDataCreator = __filename.split('/services-v2/')[1]
 const headers = {
   accept: 'application/json',
@@ -52,6 +70,7 @@ describe('PatientController (e2e)', () => {
     await new Promise(resolve => app.listen(81, resolve))
 
     patientTestUtility = new PatientTestUtility()
+    await patientTestUtility.removeProfileByEmail(userCreatePayload.email)
   })
 
   test('Create patient - / (POST)', async done => {
@@ -66,6 +85,7 @@ describe('PatientController (e2e)', () => {
   afterAll(async () => {
     await Promise.all([
       deleteUserByIdTestDataCreator(userId, testDataCreator),
+      deleteUserByEmail(userCreatePayload.email),
       patientTestUtility.findAndRemoveProfile({firstName: userCreatePayload.firstName}),
     ])
     await patientTestUtility.patientRepository.delete({firstName: userCreatePayload.firstName})
