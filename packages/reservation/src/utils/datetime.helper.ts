@@ -14,7 +14,7 @@ export const makeDeadline = (
   deadlineLabel?: DeadlineLabel,
 ): firestore.Timestamp => {
   let deadline: moment.Moment
-  const tzDateTime = utcDateTime.clone().tz(timeZone)
+  const tzDateTime = utcDateTime.clone()
   if (deadlineLabel === DeadlineLabel.NextDay) {
     deadline = makeTimeEndOfTheDayMoment(tzDateTime.add(1, 'd'))
   } else if (deadlineLabel === DeadlineLabel.SameDay) {

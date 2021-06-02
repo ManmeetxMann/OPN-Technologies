@@ -36,7 +36,7 @@ export class PatientAuth {
   @ApiProperty({required: true})
   patientId: number
 
-  @Column()
+  @Column({})
   @Column({nullable: true, default: null})
   authUserId?: string
 
@@ -105,97 +105,97 @@ export class PatientAdmin {
   @ApiProperty({readOnly: true})
   patientAdminId: string
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isOpnSuperAdmin?: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isManagementDashboardAdmin: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isTestReportsAdmin: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isTestAppointmentsAdmin: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isTestKitBatchAdmin: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isLabUser: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isLabAppointmentsAdmin: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isLabResultsAdmin: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isTransportsRunsAdmin: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isReceivingAdmin: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isTestRunsAdmin: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isDueTodayAdmin: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isBulkUploadAdmin: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isSingleResultSendAdmin: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isConfirmResultAdmin: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isPackageAdmin: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isCheckInAdmin: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isGenerateAdmin: boolean
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
   isLookupAdmin: boolean
@@ -226,17 +226,17 @@ export class Patient extends Auditable {
   @ApiProperty({required: true})
   firebaseKey: string
 
-  @Column()
+  @Column({})
   @ApiProperty()
   @IsString()
   firstName: string
 
-  @Column()
+  @Column({})
   @ApiProperty()
   @IsString()
   lastName: string
 
-  @Column()
+  @Column({})
   @ApiProperty({nullable: true, default: false})
   @IsBoolean()
   isEmailVerified?: boolean
