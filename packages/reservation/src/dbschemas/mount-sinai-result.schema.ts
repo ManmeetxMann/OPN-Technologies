@@ -31,4 +31,4 @@ export default Joi.object({
   specimenSource: Joi.string()
     .required()
     .valid('NASOP', 'NASD', 'NARES', 'NTS', 'TS', 'VSALV', 'NMT'),
-})
+}).options({abortEarly: false})
