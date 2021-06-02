@@ -22,7 +22,7 @@ jest.mock('@opn-enterprise-v1/repository/user.repository', () => {
     UserRepository: jest.fn().mockImplementation(() => {
       return {
         add: () => ({
-          id: 'RandomFirebaseKey',
+          id: 'RandomFirebaseKeyAdminTest',
         }),
       }
     }),
