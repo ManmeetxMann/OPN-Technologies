@@ -164,7 +164,6 @@ export class PassportService {
     return this.identifierRepository
       .getUniqueValue('status')
       .then((statusToken) => {
-        console.log('SAD', firestore.Timestamp.fromDate(validFromDate))
         return this.passportRepository.add({
           status,
           type,
