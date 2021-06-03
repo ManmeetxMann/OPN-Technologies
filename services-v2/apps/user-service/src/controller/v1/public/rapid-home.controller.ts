@@ -100,6 +100,6 @@ export class RapidHomeController {
     await this.couponService.saveCoupon(couponCode)
     await this.patientService.updateProfile(patientExists.idPatient, {email})
 
-    return ResponseWrapper.actionSucceed({couponCode: 'couponCode'})
+    return ResponseWrapper.actionSucceed({couponCode})
   }
 }
