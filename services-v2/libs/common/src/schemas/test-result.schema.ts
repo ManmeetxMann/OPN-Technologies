@@ -25,7 +25,7 @@ export const pcrTestResultSchema = Joi.object({
   displayInResult: Joi.boolean().required(),
   dateTime: FirestoreTimestamp.isValid().required(),
   homeKitId: Joi.string().required(),
-  photoUrl: Joi.string().required(),
+  photoUrl: Joi.string(),
   result: Joi.string()
     .required()
     .valid('Positive', 'Negative', 'Invalid'),

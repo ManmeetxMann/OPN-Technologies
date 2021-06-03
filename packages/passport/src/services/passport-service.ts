@@ -1,13 +1,12 @@
 import * as _ from 'lodash'
 import moment from 'moment'
-import {firestore} from 'firebase-admin'
 
 import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
 import {UserService} from '../../../common/src/service/user/user-service'
 // import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
-import {now} from '../../../common/src/utils/times'
+import {getFirestoreTimestamp, now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
 import {isPassed, safeTimestamp} from '../../../common/src/utils/datetime-util'
 
@@ -163,19 +162,19 @@ export class PassportService {
 
     return this.identifierRepository
       .getUniqueValue('status')
-      .then((statusToken) =>
-        this.passportRepository.add({
+      .then((statusToken) => {
+        return this.passportRepository.add({
           status,
           type,
           statusToken,
           userId,
           organizationId,
           dependantIds,
-          validFrom: firestore.Timestamp.fromDate(validFromDate),
-          validUntil: firestore.Timestamp.fromDate(validUntilDate),
+          validFrom: getFirestoreTimestamp(validFromDate),
+          validUntil: getFirestoreTimestamp(validUntilDate),
           includesGuardian,
-        }),
-      )
+        })
+      })
       .then(mapDates)
       .then(async (passport) => {
         await this.postPassport(passport)

@@ -51,6 +51,6 @@ export class RapidHomeKitCodeToUserAssocRepository extends DataModel<RapidHomeKi
       used: false,
     })
 
-    return this.add(validKitToUserAssoc)
+    return this.add(validKitToUserAssoc as RapidHomeKitToUserAssoc)
   }
 }

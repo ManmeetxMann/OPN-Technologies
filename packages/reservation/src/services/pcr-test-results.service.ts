@@ -94,12 +94,19 @@ import {normalizeAnalysis} from '../utils/analysis.helper'
 import {CouponEnum} from '../models/coupons'
 import {MountSinaiFormater} from '../utils/mount-sinai-formater'
 import {UserSyncService} from '../../../enterprise/src/services/user-sync-service'
+import {Patient} from '../../../../services-v2/apps/user-service/src/model/patient/patient.entity'
+import MountSinaiSchema from '../dbschemas/mount-sinai-result.schema'
+import {FailedResultConfirmatoryRequestRepository} from '../respository/failed-result-confirmatory-request.repository'
+import {FailedResultConfirmatoryRequest} from '../models/failed-result-confirmatory-request'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
   private testResultsReportingTracker = new TestResultsReportingTrackerRepository(this.datastore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.datastore)
   private appointmentsRepository = new AppointmentsRepository(this.datastore)
+  private failedResultConfirmatoryRequestRepository = new FailedResultConfirmatoryRequestRepository(
+    this.datastore,
+  )
 
   private appointmentService = new AppoinmentService()
   private organizationService = new OrganizationService()
@@ -145,24 +152,22 @@ export class PCRTestResultsService {
 
   private async postPubSubForPresumptivePositiveResultSend(
     testResult: PCRTestResultEmailDTO,
-    adminId: string,
+    userId: string,
   ): Promise<void> {
     /*if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
       LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
       return
     }
+    */
 
     // TODO: Don't use userSyncService for getting a that, user sync service should be removed
-    let patient = null
-    try {
-      patient = await this.userSyncService.getByFirebaseKey(adminId)
-    } catch (e) {
-      console.error(e)
-    }*/
-    console.log(adminId)
+    const patient = await this.userSyncService.getByFirebaseKey(userId)
+    if (!patient) {
+      throw new ResourceNotFoundException(`Patient with id ${userId} not found`)
+    }
 
     const data = {
-      patientCode: 'FA000006',
+      patientCode: (patient as Patient).publicId,
       barCode: testResult.barCode,
       dateTime: testResult.dateTime,
       firstName: testResult.firstName,
@@ -182,6 +187,18 @@ export class PCRTestResultsService {
     //Utility to Format for MountSinai
     const mountSinaiFormater = new MountSinaiFormater(data)
     const formatedORMData = mountSinaiFormater.get()
+
+    try {
+      await MountSinaiSchema.validateAsync(formatedORMData)
+    } catch (errors) {
+      const reasons = errors.details.map((err) => err.message)
+      await this.failedResultConfirmatoryRequestRepository.save({
+        resultId: testResult.id,
+        appointmentId: testResult.appointmentId,
+        reasons,
+      })
+      throw new ResourceNotFoundException(`Patient data is invalid. Data could not be sent`)
+    }
 
     const pubsub = new OPNPubSub(Config.get('PRESUMPTIVE_POSITIVE_RESULTS_TOPIC'))
     pubsub.publish(formatedORMData)
@@ -243,7 +260,7 @@ export class PCRTestResultsService {
       {...newPCRResult, ...appointment, labAssay: lab.assay},
       notificationType,
       newPCRResult.id,
-      data.adminId,
+      appointment.userId,
     )
     return newPCRResult.id
   }
@@ -918,7 +935,7 @@ export class PCRTestResultsService {
         pcrResultDataForEmail,
         metaData.action,
         pcrResultRecorded.id,
-        adminId,
+        appointment.userId,
       )
     } else {
       console.log(
@@ -1048,7 +1065,7 @@ export class PCRTestResultsService {
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
     pcrId: string,
-    adminId: string,
+    userId: string,
   ): Promise<void> {
     let addSuccessLog = true
     switch (notficationType) {
@@ -1091,7 +1108,7 @@ export class PCRTestResultsService {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
         } else if (resultData.result === ResultTypes.PresumptivePositive) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
-          await this.postPubSubForPresumptivePositiveResultSend({...resultData, id: pcrId}, adminId)
+          await this.postPubSubForPresumptivePositiveResultSend({...resultData, id: pcrId}, userId)
         } else if (
           resultData.result === ResultTypes.Indeterminate &&
           (resultData.testType === TestTypes.Antibody_All ||
@@ -1880,7 +1897,7 @@ export class PCRTestResultsService {
         AppointmentStatus.Reported === pcr.appointmentStatus
       if (pcr.appointmentStatus === AppointmentStatus.Pending) {
         result = ResultTypes.Pending
-      } else if (appointmentClosed) {
+      } else if (appointmentClosed || pcr.testType === TestTypes.RapidAntigenAtHome) {
         result = pcr.result
       } else {
         result = AppointmentReasons.InProgress
@@ -2113,5 +2130,9 @@ export class PCRTestResultsService {
         },
       )
     }
+  }
+
+  async getAllFailedResultConfirmatory(): Promise<FailedResultConfirmatoryRequest[]> {
+    return await this.failedResultConfirmatoryRequestRepository.getAll()
   }
 }

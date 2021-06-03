@@ -86,6 +86,7 @@ export type OrganizationLocation = {
   validFrom?: string
   validUntil?: string
   nfcGateOnly?: boolean
+  questionnaireId?: string
 } & OrganizationConfiguration
 
 export type OrganizationConfiguration = {

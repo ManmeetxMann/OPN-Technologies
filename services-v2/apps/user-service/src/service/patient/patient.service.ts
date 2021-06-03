@@ -290,14 +290,14 @@ export class PatientService {
   async updateProfile(patientId: number, data: PatientUpdateDto): Promise<Patient> {
     const patient = await this.getProfilebyId(patientId)
     data.idPatient = patientId
-    patient.firstName = data.firstName
-    patient.lastName = data.lastName
-    patient.gender = data.gender
-    patient.dateOfBirth = data.dateOfBirth
-    patient.phoneNumber = data.phoneNumber
-    patient.isEmailVerified = data.isEmailVerified
-    patient.photoUrl = data.photoUrl
-    patient.consentFileUrl = data.consentFileUrl
+    patient.firstName = data.firstName || patient.firstName
+    patient.lastName = data.lastName || patient.lastName
+    patient.gender = data.gender || patient.gender
+    patient.dateOfBirth = data.dateOfBirth || patient.dateOfBirth
+    patient.phoneNumber = data.phoneNumber || patient.phoneNumber
+    patient.isEmailVerified = data.isEmailVerified || patient.isEmailVerified
+    patient.photoUrl = data.photoUrl || patient.photoUrl
+    patient.consentFileUrl = data.consentFileUrl || patient.consentFileUrl
 
     if (data?.lastAppointment) {
       patient.lastAppointment = safeTimestamp(data.lastAppointment)
@@ -392,7 +392,7 @@ export class PatientService {
     entity.photoUrl = data.photoUrl
     entity.registrationId = data.registrationId
     entity.consentFileUrl = data.consentFileUrl
-    entity.isEmailVerified = true
+    entity.isEmailVerified = data.isEmailVerified || false
 
     return this.patientRepository.save(entity)
   }
