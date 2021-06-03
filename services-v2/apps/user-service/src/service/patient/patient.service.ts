@@ -177,7 +177,7 @@ export class PatientService {
       isEmailVerified: false,
       authUserId: data.authUserId,
       active: false,
-      organizationIds: [],
+      organizationIds: [this.configService.get('PUBLIC_ORG_ID')],
       creator: UserCreator.syncFromSQL,
     } as AuthUser
 

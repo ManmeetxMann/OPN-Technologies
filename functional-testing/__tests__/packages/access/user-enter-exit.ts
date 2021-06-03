@@ -45,8 +45,8 @@ const createPassportAndStatusToken = async () => {
         )
 
     expect(data.status).toEqual(200)
-    expect(data.json.data.passport.status).toBe('proceed')
-    return data.json.data.passport
+    expect(data.json.data.status).toBe('proceed')
+    return data.json.data
 }
 /**
  * @group access-service
