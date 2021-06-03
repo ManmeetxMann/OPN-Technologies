@@ -24,12 +24,14 @@ export class RegistrationService {
   }
 
   findLastForUserId(userId: string): Promise<Registration> {
-    return this.repository
-      .getQueryFindWhereArrayContains('userIds', userId)
-      //@ts-ignore
-      .orderBy('timestamps.updatedAt', 'desc')
-      .limit(1)
-      .fetch()[0]
+    return (
+      this.repository
+        .getQueryFindWhereArrayContains('userIds', userId)
+        //@ts-ignore
+        .orderBy('timestamps.updatedAt', 'desc')
+        .limit(1)
+        .fetch()[0]
+    )
   }
 
   update(registration: Registration): Promise<Registration> {
