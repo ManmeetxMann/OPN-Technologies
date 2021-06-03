@@ -1138,6 +1138,11 @@ export class PCRTestResultsService {
   }
 
   async sendPushNotification(result: PCRTestResultEmailDTO, userId: string): Promise<void> {
+    if (Config.get('TEST_RESULT_PUSH_NOTIFICATION') !== 'enabled') {
+      LogInfo('PCRTestResultsService:sendPushNotification', 'PushNotificationDisabled', {})
+      return
+    }
+
     const registration = await this.registrationService.findLastForUserId(userId)
 
     if (!registration?.pushToken) {
