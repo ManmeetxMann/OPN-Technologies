@@ -11,23 +11,6 @@ const conn = mysql.createConnection({
   database: 'finance',
   port: 8889,
 })
-function count_duplicate(a) {
-  const counts = {}
-
-  for (let i = 0; i < a.length; i++) {
-    if (counts[a[i]]) {
-      counts[a[i]] += 1
-    } else {
-      counts[a[i]] = 1
-    }
-  }
-  for (const prop in counts) {
-    if (counts[prop] >= 2) {
-      console.log(prop + ' counted: ' + counts[prop] + ' times.')
-    }
-  }
-  console.log(counts)
-}
 
 async function validateStripeCharges() {
   const acuityIds = []

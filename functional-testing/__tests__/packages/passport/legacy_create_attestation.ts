@@ -16,7 +16,7 @@ const userId = testProfile.get().userId
 /**
  * @group passport-service
  * @group /passport/user/status/update
- * @group create-attestation
+ * @group passport-controller
  */
 describe('post:passport: /user/status/update', () => {
     test('Succcessfully Save Attestation and Create new Passport with Proceed Pass', async () => {
