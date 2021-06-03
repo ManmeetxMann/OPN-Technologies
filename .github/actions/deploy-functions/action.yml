@@ -86,7 +86,10 @@ runs:
       gcloud secrets versions access latest --secret=${{ inputs.secret_file_name }} > ./.env
       echo "::endgroup::"
       echo "::group::Deploy to GAE"
+      ls
+      cat package.json
       npm install
+      ls
       npm run build
       export TEST=test
       npm run deploy
