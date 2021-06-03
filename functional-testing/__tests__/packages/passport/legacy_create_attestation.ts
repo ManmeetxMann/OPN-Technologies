@@ -48,7 +48,7 @@ describe('post:passport: /user/status/update', () => {
             )
             
             expect(data.status).toEqual(200)
-            expect(data.json.data.passport.status).toBe('proceed')
+            expect(data.json.data.status).toBe('proceed')
     })
 
     test('Succcessfully Save Attestation and Create new Passport with Caution', async () => {
@@ -79,7 +79,7 @@ describe('post:passport: /user/status/update', () => {
                 }
             )
             expect(data.status).toEqual(200)
-            expect(data.json.data.passport.status).toBe('caution')
+            expect(data.json.data.status).toBe('caution')
     })
 
     test('Succcessfully Save Attestation and Create new Passport with stop', async () => {
@@ -110,6 +110,6 @@ describe('post:passport: /user/status/update', () => {
                 }
             )
             expect(data.status).toEqual(200)
-            expect(data.json.data.passport.status).toBe('stop')
+            expect(data.json.data.status).toBe('stop')
     })
 })
