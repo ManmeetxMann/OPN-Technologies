@@ -1,5 +1,6 @@
 gcloud functions deploy user-v1-sync-create \
     --entry-point=createUser \
+    --region=$REGION \
     --source=./dist \
     --runtime=nodejs12 \
     --memory=128MB \
@@ -9,6 +10,7 @@ gcloud functions deploy user-v1-sync-create \
 
 gcloud functions deploy user-v1-sync-update \
     --entry-point=updateUser \
+    --region=$REGION \
     --source=./dist \
     --runtime=nodejs12 \
     --memory=128MB \

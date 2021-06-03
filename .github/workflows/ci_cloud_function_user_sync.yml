@@ -7,8 +7,8 @@ on:
       - '.github/workflows/ci_cloud_function_user_sync.yml'
       - '.github/actions/deploy-functions/**'
     branches:
-      # - develop
-      - feature/users-sync
+      - develop
+      # - feature/users-sync
 
 jobs:
   build:
