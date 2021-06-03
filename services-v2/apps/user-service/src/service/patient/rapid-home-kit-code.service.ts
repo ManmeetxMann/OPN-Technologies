@@ -43,7 +43,6 @@ export class RapidHomeKitCodeService {
     code: string,
     userId: string,
   ): Promise<RapidHomeKitToUserAssoc> {
-    await this.homeKitCodeRepository.delete(homeKitId)
     const [
       homeKitCodeAssociations,
     ] = await this.homeKitCodeToUserRepository.getUnusedByUserIdAndCode(userId, code)
