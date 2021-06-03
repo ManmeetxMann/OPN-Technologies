@@ -12,7 +12,7 @@
         "dist"
     ],
     "scripts": {
-        "test": "jest --watchAll=false --forceExit",
+        "test": "jest",
         "test:local": "FIRESTORE_EMULATOR_HOST=localhost:8080 FIREBASE_FIRESTORE_EMULATOR_ADDRESS=localhost:8080 jest",
         "test:coverage": "jest --coverage",
         "clean": "rimraf -rf ./dist",
