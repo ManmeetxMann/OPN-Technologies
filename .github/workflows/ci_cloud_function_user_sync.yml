@@ -8,7 +8,7 @@ on:
       - '.github/actions/deploy-functions/**'
     branches:
       - develop
-      # - feature/users-sync
+      - feature/users-sync
 
 jobs:
   build:
