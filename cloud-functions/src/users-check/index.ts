@@ -1,26 +1,26 @@
 /**
- * Background Cloud Function,
- * listens to firestore user collection create and update event,
- * syncs data to cloud SQL
+ * Crone Based Cloud Function,
+ * Check firestore user and mysql patient collections synced or no
  */
 import * as functions from 'firebase-functions'
 import {UserHandler} from './src/handlers'
+import {Config} from '../../../packages/common/src/utils/config'
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
-const createUser = functions.firestore
-  .document('users/{userId}')
-  .onCreate(async (snap, context) => {
-    const firebaseKey = context.params.userId
-    const newValue = snap.data()
-    UserHandler.createUser(firebaseKey, newValue)
+const checkUserSyncCoverage = functions.pubsub
+  .schedule('0 11 * * *')
+  .timeZone(timeZone)
+  .onRun(() => {
+    UserHandler.checkUserSyncCoverage()
+    return null
   })
 
-const updateUser = functions.firestore
-  .document('users/{userId}')
-  .onUpdate(async (change, context) => {
-    const firebaseKey = context.params.userId
-    const newValue = change.after.data()
-    const previousValue = change.before.data()
-    UserHandler.updateUser(firebaseKey, newValue, previousValue)
+const checkPatientSyncCoverage = functions.pubsub
+  .schedule('0 11 * * *')
+  .timeZone(timeZone)
+  .onRun(() => {
+    UserHandler.checkPatientSyncCoverage()
+    return null
   })
 
-export {createUser, updateUser}
+export {checkUserSyncCoverage, checkPatientSyncCoverage}

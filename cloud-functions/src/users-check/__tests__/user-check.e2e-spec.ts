@@ -1,8 +1,7 @@
 import {UserHandler} from '../src/handlers'
 import {getConnection} from 'typeorm'
 
-describe('Cloud Function: User sync', () => {
-  // const usererId = 'new_user_id'
+describe('Cloud Function: User check', () => {
   const user = {
     admin: {isOpnSuperAdmin: true},
     authUserId: 'authUserId_000',
@@ -14,14 +13,21 @@ describe('Cloud Function: User sync', () => {
     timestamps: {updatedAt: {_seconds: 1619931339, _nanoseconds: 58000000}},
   }
 
-  test('Check user with mysql', async () => {
+  test('Check patients', async () => {
     const newUser = Object.assign({}, user)
     newUser.firstName = 'new user'
     await UserHandler.checkUserSyncCoverage()
-    // await UserHandler.updateUser(userId, newUser, user)
 
     expect(200).toBe(200)
-  })
+  }, 10000)
+
+  // test('Check users', async () => {
+  //   const newUser = Object.assign({}, user)
+  //   newUser.firstName = 'new user'
+  //   await UserHandler.checkPatientSyncCoverage()
+  //
+  //   expect(200).toBe(200)
+  // })
 
   afterAll(async () => {
     const connection = getConnection()
