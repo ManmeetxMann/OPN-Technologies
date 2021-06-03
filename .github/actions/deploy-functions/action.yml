@@ -82,8 +82,8 @@ runs:
       echo "::endgroup::"
       
       echo "::group::Add Application Environment Variables"
-      echo "Writing Environment Variables ${{ inputs.secret_file_name }} to: ./cloud-functions/src/.env"
-      gcloud secrets versions access latest --secret=${{ inputs.secret_file_name }} > ./cloud-functions/src/.env
+      echo "Writing Environment Variables ${{ inputs.secret_file_name }} to: ./cloud-functions/src/${{ inputs.function_name }}/.env"
+      gcloud secrets versions access latest --secret=${{ inputs.secret_file_name }} > ./cloud-functions/src/${{ inputs.function_name }}/.env
       echo "::endgroup::"
 
       echo "::group::Install dependencies"
