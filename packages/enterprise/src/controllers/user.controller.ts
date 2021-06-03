@@ -206,10 +206,6 @@ class UserController implements IControllerBase {
       // Add to registry
       await this.registrationService.linkUser(registrationId, userId)
 
-      LogInfo(functions.userEdit, events.updateUser, {
-        userId,
-        updatedBy: getUserId(res.locals.authenticatedUser),
-      })
       res.json(actionSucceed())
     } catch (error) {
       LogError(functions.userLink, events.updateUser, {...error})
@@ -241,11 +237,6 @@ class UserController implements IControllerBase {
       } else {
         await this.userService.updateProperties(userId, propertiesToUpdate)
       }
-
-      LogInfo(functions.userEdit, events.updateUser, {
-        userId,
-        updatedBy: getUserId(res.locals.authenticatedUser),
-      })
 
       res.json(actionSucceed())
     } catch (error) {
