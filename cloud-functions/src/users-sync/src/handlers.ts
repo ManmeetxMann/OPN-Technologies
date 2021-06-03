@@ -2,7 +2,7 @@ import * as functions from 'firebase-functions'
 import * as _ from 'lodash'
 import {getCreateDatabaseConnection} from './connection'
 import * as patientEntries from '../../../../services-v2/apps/user-service/src/model/patient/patient.entity'
-import {UserCreator} from '../../../../packages/common/src/data/user'
+import {UserCreator} from '../../../../packages/common/src/data/user-status'
 class UserHandler {
   /**
    * Handler for firestore user create
