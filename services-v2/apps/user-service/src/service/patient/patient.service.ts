@@ -318,12 +318,12 @@ export class PatientService {
     }
 
     const userSync = {
-      email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      isEmailVerified: data.isEmailVerified,
-      ...(data.registrationId && {registrationId: data.registrationId}),
-      ...(data.photoUrl && {photo: data.photoUrl}),
+      email: auth.email,
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      isEmailVerified: patient.isEmailVerified,
+      ...(patient.registrationId && {registrationId: patient.registrationId}),
+      ...(patient.photoUrl && {photo: patient.photoUrl}),
       phone: {
         diallingCode: 0,
       },
