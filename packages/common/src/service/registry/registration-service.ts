@@ -26,7 +26,8 @@ export class RegistrationService {
   findLastForUserId(userId: string): Promise<Registration> {
     return this.repository
       .getQueryFindWhereArrayContains('userIds', userId)
-      .orderBy('timestamps', 'desc')
+      //@ts-ignore
+      .orderBy('timestamps.updatedAt', 'desc')
       .limit(1)
       .fetch()[0]
   }
