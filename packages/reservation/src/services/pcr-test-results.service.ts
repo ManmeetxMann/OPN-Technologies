@@ -278,11 +278,6 @@ export class PCRTestResultsService {
       newPCRResult.id,
     )
 
-    // await this.sendNotification(
-    //   {...newPCRResult, ...appointment, labAssay: lab.assay},
-    //   notificationType,
-    //   newPCRResult.id,
-    // )
     return newPCRResult.id
   }
 
@@ -954,13 +949,6 @@ export class PCRTestResultsService {
       }
 
       this.postPubSubForResultSend(pcrResultDataForEmail, metaData.action, pcrResultRecorded.id)
-      // await this.sendNotification(pcrResultDataForEmail, metaData.action, pcrResultRecorded.id)
-      // await this.sendNotification(
-      //   pcrResultDataForEmail,
-      //   metaData.action,
-      //   pcrResultRecorded.id,
-      //   adminId,
-      // )
     } else {
       console.log(
         `handlePCRResultSaveAndSend: Not Notification is sent for ${barCode}. Notify is off.`,
