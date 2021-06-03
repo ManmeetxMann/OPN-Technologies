@@ -1,0 +1,29 @@
+name: Cloud Function User Sync
+
+on:
+  push:
+    paths:
+      - 'cloud-functions/src/users-sync/**'
+      - '.github/workflows/ci_cloud_function_user_sync.yml'
+      - '.github/actions/deploy-functions/**'
+    branches:
+      - develop
+      - feature/users-sync
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: ./.github/actions/deploy-functions
+        with:
+          function_name: 'users-sync'
+          secret_file_name: 'CF_USERS_SYNC'
+        name: Build & Deploy to Cloud Functions
+        env:
+          dev_service_account: ${{ secrets.DEV_GCP_CLOUDBUILD_SA_KEY}}
+          infra_dev_service_account: ${{ secrets.INFRA_DEV_GCP_CLOUDBUILD_SA_KEY}}
+          preprod_service_account: ${{ secrets.PREPROD_GCP_CLOUDBUILD_SA_KEY }}
+          prod_service_account: ${{ secrets.PROD_GCP_CLOUDBUILD_SA_KEY }}
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

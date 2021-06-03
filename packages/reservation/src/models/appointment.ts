@@ -4,37 +4,7 @@ import {isSameOrBefore, makeRegularIsoDate} from '../utils/datetime.helper'
 import {PageableRequestFilter} from '../../../common/src/types/request'
 import {formatDateRFC822Local} from '../utils/datetime.helper'
 import {ReservationPushTypes} from '../types/appointment-push'
-
-export enum AppointmentStatus {
-  Pending = 'Pending',
-  Submitted = 'Submitted',
-  InTransit = 'InTransit',
-  Received = 'Received',
-  CheckedIn = 'CheckedIn',
-  InProgress = 'InProgress',
-  Reported = 'Reported',
-  ReRunRequired = 'ReRunRequired',
-  ReCollectRequired = 'ReCollectRequired',
-  Canceled = 'Canceled',
-}
-
-export enum ResultTypes {
-  PresumptivePositive = 'PresumptivePositive',
-  PreliminaryPositive = 'PreliminaryPositive',
-  Positive = 'Positive',
-  Negative = 'Negative',
-  Pending = 'Pending',
-  Invalid = 'Invalid',
-  Inconclusive = 'Inconclusive',
-  Indeterminate = 'Indeterminate',
-}
-
-export enum Gender {
-  Male = 'Male',
-  Female = 'Female',
-  Other = 'Other',
-  PreferNotToSay = 'Prefer Not to Say',
-}
+import {AppointmentStatus, ResultTypes, Gender} from './appointment-enums'
 
 export type AppointmentDBModel = {
   id: string
@@ -477,3 +447,5 @@ export type UpdateTransPortRun = {
   userId: string
   labId?: string
 }
+
+export {AppointmentStatus, ResultTypes, Gender}

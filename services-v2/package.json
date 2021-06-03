@@ -25,7 +25,8 @@
     "build:checkout-service": "SERVICE=checkout-service npm run build:service",
     "build:service": "nest build $SERVICE && cp ./package.json ./dist/apps/$SERVICE/ && cp ./.env ./dist/apps/$SERVICE/ && cp ./.env ./dist/",
     "deploy:user-service": "gcloud app deploy ./dist/apps/user-service",
-    "deploy:checkout-service": "gcloud app deploy ./dist/apps/checkout-service"
+    "deploy:checkout-service": "gcloud app deploy ./dist/apps/checkout-service",
+    "migration:schema-sync": " ts-node --transpile-only ./node_modules/typeorm/cli.js schema:sync"
   },
   "dependencies": {
     "@firestore-simple/admin": "^7.0.6",
