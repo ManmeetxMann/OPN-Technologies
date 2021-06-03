@@ -77,6 +77,7 @@ class UserController implements IControllerBase {
       next(error)
     }
   }
+
   private check = async (
     res: Response,
     statusToken: string,
@@ -127,7 +128,7 @@ class UserController implements IControllerBase {
         orgId,
         PassportType.Attestation,
       )
-      res.json(actionSucceed(newPassport))
+      res.json(actionSucceed(newPassport.passport))
       return
     }
 
@@ -211,7 +212,7 @@ class UserController implements IControllerBase {
         await this.alertService.sendAlert(passport.passport, saved, organizationId, locationId)
       }
 
-      res.json(actionSucceed(passport))
+      res.json(actionSucceed(passport.passport))
     } catch (error) {
       next(error)
     }
