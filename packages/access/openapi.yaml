@@ -866,3 +866,53 @@ paths:
       responses:
         '200':
           description: Success
+
+  /admin/createToken:
+    post:
+      description: Exchange status-token for an access-token
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusTokenExchangeRequest'
+      responses:
+        '200':
+          description: Successfully exchanged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfAccess'
+                
+  /user/enter:
+    post:
+      description: Handle self user's entrance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelfEntryOrExitRequest'
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfEnterOrExit'
+
+  /user/exit:
+    post:
+      description: Handle self user's exit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelfEntryOrExitRequest'
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfEnterOrExit'

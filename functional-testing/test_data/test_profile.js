@@ -75,9 +75,9 @@ let profiles = {
         "lastName":"Gill 6",
         "groupId":"GRP1",
         "groupName":"TEST1_GRP1",
-        "userId":"VK1tRyuU5znFGptWP6s",
-        "locationTitle":"TEST1 LOC1",
-        "locationId":"sWH9zD3430XuaHd9DebY"
+        "userId":"iVK1tRyuU5znFGptWP6s",
+        "locationTitle":"TEST1_LOC1",
+        "locationId":"TEST_LOC1"
     },
 }
 

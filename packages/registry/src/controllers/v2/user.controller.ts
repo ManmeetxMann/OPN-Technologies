@@ -5,6 +5,7 @@ import {UserService} from '../../../../common/src/service/user/user-service'
 import {LegacyDependant, User} from '../../../../common/src/data/user'
 import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
 
+import * as _ from 'lodash'
 class UserController implements IRouteController {
   public router = Router()
   private userService = new UserService()
@@ -18,9 +19,39 @@ class UserController implements IRouteController {
     this.router.use(
       '/v2/users',
       Router()
+        .get('/:userId/dependants', this.getAllDependants)
         .post('/:userId/dependants', this.addDependants)
         .delete('/:userId/dependants/:dependantId', this.removeDependant),
     )
+  }
+
+  // TODO: make this org-specific
+  getAllDependants = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.params['userId']
+      const [user, dependants] = await Promise.all([
+        this.userService.findOne(userId),
+        this.userService.getAllDependants(userId),
+      ])
+      const allGroups = _.flatten(
+        await Promise.all(
+          (user.organizationIds ?? []).map((orgId) =>
+            this.organizationService.getDependantGroups(orgId, userId),
+          ),
+        ),
+      )
+
+      const legacyDependants = dependants.map((dep) => ({
+        firstName: dep.firstName,
+        lastName: dep.lastName,
+        id: dep.id,
+        groupId: allGroups.find((membership) => membership.userId === dep.id)?.groupId,
+      }))
+
+      res.json(actionSucceed(legacyDependants))
+    } catch (error) {
+      next(error)
+    }
   }
 
   // TODO: update API to not use LegacyDependant
