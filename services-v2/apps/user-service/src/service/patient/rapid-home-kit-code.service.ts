@@ -28,7 +28,7 @@ export class RapidHomeKitCodeService {
       code,
     )
     if (homeKitCodeAssociations.length) {
-      throw new BadRequestException('Associations already exists')
+      throw new BadRequestException('Kit Already Linked')
     }
     await this.homeKitCodeToUserRepository.save(code, userId)
     const [homeKitCode] = await this.get(code)
