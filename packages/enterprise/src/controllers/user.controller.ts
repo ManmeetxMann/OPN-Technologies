@@ -19,7 +19,6 @@ import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {LogError, LogInfo} from '../../../common/src/utils/logging-setup'
 import {UserLogsEvents as events, UserLogsFunctions as functions} from '../types/new-user'
-import {getUserId} from '../../../common/src/utils/auth'
 
 class UserController implements IControllerBase {
   public path = '/user'
