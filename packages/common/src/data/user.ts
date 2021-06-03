@@ -25,7 +25,7 @@ export type User = {
   readTermsAndConditions?: boolean
   receiveResultsViaEmail?: boolean
   receiveNotificationsFromGov?: boolean
-  // status?: UserStatus
+  status?: UserStatus
 }
 
 export type LocalUser = Auditable & {
