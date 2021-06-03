@@ -1877,7 +1877,6 @@ export class PCRTestResultsService {
     }
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
-    console.log({pcrResults})
     const [attestations, temperatures, pulseOxygens] = await Promise.all([
       organizationId
         ? this.attestationService.getAllAttestationByUserId(userId, organizationId)
