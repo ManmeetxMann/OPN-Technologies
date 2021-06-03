@@ -5,6 +5,8 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 
 import {App} from '../src/main'
 
+jest.setTimeout(10000)
+
 describe('CheckoutInternalController (e2e)', () => {
   const url = `/api/v1/internal/cart`
   let app: NestFastifyApplication

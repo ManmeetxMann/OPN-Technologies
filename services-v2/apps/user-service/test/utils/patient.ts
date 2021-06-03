@@ -52,21 +52,25 @@ export class PatientTestUtility {
   }
 
   async findAndRemoveProfile(criteria: unknown): Promise<void> {
-    const patient = await this.patientRepository.findOne(criteria)
+    const patients = await this.patientRepository.find(criteria)
 
-    if (patient?.firebaseKey) {
-      await deleteUserById(patient?.firebaseKey)
-    }
+    await Promise.all(
+      patients.map(async patient => {
+        if (patient?.firebaseKey) {
+          await deleteUserById(patient?.firebaseKey)
+        }
 
-    const deleteCriteria = {patientId: patient?.idPatient}
-    await Promise.all([
-      this.authRepository.delete(deleteCriteria),
-      this.addressesRepository.delete(deleteCriteria),
-      this.healthRepository.delete(deleteCriteria),
-      this.travelRepository.delete(deleteCriteria),
-      this.consentRepository.delete(deleteCriteria),
-      this.patientToOrgRepository.delete(deleteCriteria),
-    ])
+        const deleteCriteria = {patientId: patient?.idPatient}
+        await Promise.all([
+          this.authRepository.delete(deleteCriteria),
+          this.addressesRepository.delete(deleteCriteria),
+          this.healthRepository.delete(deleteCriteria),
+          this.travelRepository.delete(deleteCriteria),
+          this.consentRepository.delete(deleteCriteria),
+          this.patientToOrgRepository.delete(deleteCriteria),
+        ])
+      }),
+    )
   }
 
   getProfilePayload(data: {email: string; firstName?: string; lastName?: string}): unknown {

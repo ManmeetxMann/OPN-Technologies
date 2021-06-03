@@ -43,6 +43,13 @@ export const createUser = async (
     .set(data)
 }
 
+export const deleteUserByEmailTestDataCreator = async (email: string): Promise<void> => {
+  const userCollection = database.collection(collectionName)
+  const ref = await userCollection.where('email', '==', email).get()
+  const deleteDocs = ref.docs.map(doc => doc.ref.delete())
+  await Promise.all(deleteDocs)
+}
+
 export const deleteUserByIdTestDataCreator = async (
   id: string,
   testDataCreator: string,

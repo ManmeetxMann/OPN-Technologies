@@ -5,7 +5,12 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 import * as request from 'supertest'
 import {App} from '../../src/main'
 
-import {commonHeaders, createUser, deleteUserByIdTestDataCreator} from '@opn-services/test/utils'
+import {
+  commonHeaders,
+  createUser,
+  deleteUserByEmailTestDataCreator,
+  deleteUserByIdTestDataCreator
+} from "@opn-services/test/utils";
 
 import {PatientTestUtility} from '../utils/patient'
 
@@ -66,6 +71,7 @@ describe('PatientController (e2e)', () => {
   afterAll(async () => {
     await Promise.all([
       deleteUserByIdTestDataCreator(userId, testDataCreator),
+      deleteUserByEmailTestDataCreator(userCreatePayload.email),
       patientTestUtility.findAndRemoveProfile({firstName: userCreatePayload.firstName}),
     ])
     await patientTestUtility.patientRepository.delete({firstName: userCreatePayload.firstName})
