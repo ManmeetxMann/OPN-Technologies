@@ -312,18 +312,18 @@ export class PatientService {
     const {travel, health, addresses, digitalConsent, auth} = patient
 
     if (auth && data.email && auth?.email !== data.email) {
-      this.firebaseAuthService.updateUser(auth.authUserId, data.email)
+      await this.firebaseAuthService.updateUser(auth.authUserId, {email: data.email})
       auth.email = data.email
       await this.patientAuthRepository.save(auth)
     }
 
     const userSync = {
-      email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      isEmailVerified: data.isEmailVerified,
-      ...(data.registrationId && {registrationId: data.registrationId}),
-      ...(data.photoUrl && {photo: data.photoUrl}),
+      email: auth.email,
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      isEmailVerified: patient.isEmailVerified,
+      ...(patient.registrationId && {registrationId: patient.registrationId}),
+      ...(patient.photoUrl && {photo: patient.photoUrl}),
       phone: {
         diallingCode: 0,
       },

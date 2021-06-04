@@ -2052,12 +2052,16 @@ export class PCRTestResultsService {
   }
 
   isDownloadable(pcrTestResult: PCRTestResultDBModel): boolean {
-    const allowedResultTypes = [
+    const allowedResult = [
       ResultTypes.Negative,
       ResultTypes.Positive,
       ResultTypes.PresumptivePositive,
     ]
-    return allowedResultTypes.includes(pcrTestResult.result)
+
+    const allowedResultTypes = [
+      TestTypes.PCR, TestTypes.RapidAntigen, TestTypes.Antibody_All, TestTypes.Antibody_IgM, TestTypes.ExpressPCR]
+
+    return allowedResult.includes(pcrTestResult.result) && allowedResultTypes.includes(pcrTestResult.testType)
   }
 
   async getAllResultsByUserAndChildren(

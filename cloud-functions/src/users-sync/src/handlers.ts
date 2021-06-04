@@ -23,8 +23,8 @@ class UserHandler {
       firebaseKey,
       firstName: newValue.firstName,
       lastName: newValue.lastName,
-      photoUrl: newValue.base64Photo,
-      registrationId: newValue.registrationId ?? null,
+      photoUrl: newValue?.photo ?? null,
+      registrationId: newValue?.registrationId ?? null,
       isEmailVerified: false, // TODO check a logic
     }
 
@@ -70,7 +70,7 @@ class UserHandler {
       firebaseKey,
       firstName: newValue.firstName,
       lastName: newValue.lastName,
-      photoUrl: newValue.base64Photo,
+      photoUrl: newValue?.photo,
     }
 
     try {

@@ -14,6 +14,7 @@ import {CouponService} from '@opn-reservation-v1/services/coupon.service'
 import {CouponEnum} from '@opn-reservation-v1/models/coupons'
 import {ResourceNotFoundException} from '@opn-services/common/exception'
 import {timestampToFormattedIso} from '@opn-services/common/utils/times'
+import {PatientService} from '@opn-services/user/service/patient/patient.service'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -26,6 +27,7 @@ export class RapidHomeController {
   constructor(
     private homeKitCodeService: RapidHomeKitCodeService,
     private configService: OpnConfigService,
+    private patientService: PatientService,
   ) {
     this.encryptionService = new EncryptionService(
       this.configService.get('RAPID_HOME_KIT_CODE_ENCRYPTION_KEY'),
@@ -86,11 +88,18 @@ export class RapidHomeController {
       throw new ResourceNotFoundException('email does not belong to user')
     }
 
+    const patientExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
+    if (!patientExists) {
+      throw new ResourceNotFoundException('User with given id not found')
+    }
+
     const couponCode = await this.couponService.createCoupon(
       authUser.email,
       CouponEnum.forRapidHome,
     )
     await this.couponService.saveCoupon(couponCode)
-    return ResponseWrapper.actionSucceed({couponCode: couponCode})
+    await this.patientService.updateProfile(patientExists.idPatient, {email})
+
+    return ResponseWrapper.actionSucceed({couponCode})
   }
 }

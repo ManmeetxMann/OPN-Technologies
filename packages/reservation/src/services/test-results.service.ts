@@ -46,6 +46,7 @@ export class TestResultsService {
           {...testResult, ...appointment},
           this.rapidAntigenTestResultsService.getPDFType(appointment.id, testResult.result),
         )
+
       case TestTypes.Antibody_All:
         return AntibodyAllPDFStream(
           {
@@ -56,6 +57,7 @@ export class TestResultsService {
           },
           this.pcrTestResultsService.getAntibodyPDFType(appointment.id, testResult.result),
         )
+
       case TestTypes.Antibody_IgM:
         return AntibodyAllPDFStream(
           {
@@ -66,6 +68,13 @@ export class TestResultsService {
           },
           this.pcrTestResultsService.getAntibodyPDFType(appointment.id, testResult.result),
         )
+
+      case TestTypes.ExpressPCR:
+        return PCRResultPDFStream(
+          {...testResult, ...appointment, labAssay: lab.assay},
+          this.pcrTestResultsService.getPDFType(appointment.id, testResult.result),
+        )
+
       default:
         throw new BadRequestException(
           `PDFs for tests with the ${testResult.testType} type is not supported at the moment`,
