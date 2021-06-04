@@ -3,3 +3,7 @@ export enum UserStatus {
   CONFIRMED = 'CONFIRMED',
   MERGED = 'MERGED',
 }
+
+export enum UserCreator {
+  syncFromSQL = 'syncFromSQL',
+}

@@ -19,6 +19,7 @@ import {Patient} from '../model/patient/patient.entity'
 import {Type} from 'class-transformer'
 import {UserStatus} from '@opn-common-v1/data/user'
 import {Gender} from '@opn-reservation-v1/models/appointment'
+import {toFormattedIso} from '@opn-services/common/utils/times'
 
 export class AuthenticateDto {
   @ApiProperty()
@@ -497,7 +498,7 @@ export const patientProfileDto = (
   firstName: patient.firstName,
   lastName: patient.lastName,
   gender: patient?.gender,
-  dateOfBirth: patient.dateOfBirth,
+  dateOfBirth: patient.dateOfBirth ? toFormattedIso(patient.dateOfBirth) : null,
   email: patient.auth?.email,
   registrationId: patient?.registrationId,
   phoneNumber: patient.phoneNumber,

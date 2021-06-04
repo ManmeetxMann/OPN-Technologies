@@ -11,6 +11,7 @@ import {ReservationPushTypes} from '../types/appointment-push'
 import {toDateFormat} from '../../../common/src/utils/times'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
+import {makeSpaceOnTitleCase} from '../../../common/src/utils/utils'
 import {
   dateToDateTime,
   formatDateRFC822Local,
@@ -1906,7 +1907,7 @@ export class PCRTestResultsService {
       testResult.push({
         id: pcr.id,
         type: pcr.testType ?? TestTypes.PCR,
-        name: pcr.testType ?? TestTypes.PCR,
+        name: pcr.testType ? this.getTestName(pcr.testType) : TestTypes.PCR,
         firstName: pcr.firstName,
         lastName: pcr.lastName,
         testDateTime: formatDateRFC822Local(pcr.dateTime),
@@ -1958,6 +1959,19 @@ export class PCRTestResultsService {
     })
 
     return testResult
+  }
+
+  getTestName(type: TestTypes): string {
+    switch (type) {
+      case TestTypes.RapidAntigenAtHome:
+        return 'Rapid Antigen Test'
+      case TestTypes.RapidAntigen:
+        return makeSpaceOnTitleCase(type)
+      case TestTypes.EmergencyRapidAntigen:
+        return makeSpaceOnTitleCase(type)
+      default:
+        return type
+    }
   }
 
   getPDFType(appointmentID: string, result: ResultTypes): PCRResultPDFType {
@@ -2038,12 +2052,16 @@ export class PCRTestResultsService {
   }
 
   isDownloadable(pcrTestResult: PCRTestResultDBModel): boolean {
-    const allowedResultTypes = [
+    const allowedResult = [
       ResultTypes.Negative,
       ResultTypes.Positive,
       ResultTypes.PresumptivePositive,
     ]
-    return allowedResultTypes.includes(pcrTestResult.result)
+
+    const allowedResultTypes = [
+      TestTypes.PCR, TestTypes.RapidAntigen, TestTypes.Antibody_All, TestTypes.Antibody_IgM, TestTypes.ExpressPCR]
+
+    return allowedResult.includes(pcrTestResult.result) && allowedResultTypes.includes(pcrTestResult.testType)
   }
 
   async getAllResultsByUserAndChildren(

@@ -85,8 +85,8 @@ export const commonConfig: Record<string, string | string[] | number | boolean> 
   LINK_PRIVACYPOLICY: 'https://dev.pages.opnte.ch/privacy-policy.html',
   LINK_TERMSOFSERVICE: 'https://dev.pages.opnte.ch/terms-of-service.html',
 
-  FH_LINK_PRIVACYPOLICY: 'https://dev.pages.opnte.ch/privacy-policy.html',
-  FH_LINK_TERMSOFSERVICE: 'https://dev.pages.opnte.ch/terms-of-service.html',
+  FH_LINK_PRIVACYPOLICY: 'https://www.fhhealth.com/privacy-policy',
+  FH_LINK_TERMSOFSERVICE: 'https://www.fhhealth.com/terms-of-service',
 
   REPORT_BUCKET_NAME: 'opn-reports-staging',
 
