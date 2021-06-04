@@ -365,7 +365,7 @@ export class ReportService {
     return userTemplate({
       attestations: printableAttestations,
       locations: printableAccessHistory,
-      passportStatus: (passport && passport.status) ?passport.status:PassportStatuses.Pending,
+      passportStatus: passport && passport.status ? passport.status : PassportStatuses.Pending,
       temperatureChecks,
       exposures: _.uniqBy(
         printableExposures,
