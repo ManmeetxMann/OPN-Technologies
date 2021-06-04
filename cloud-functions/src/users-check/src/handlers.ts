@@ -40,15 +40,14 @@ class UserHandler {
             }
           })
         }
-        offset += patients?.length
-        hasMore = !patients.length
       }
-      hasMore = false
+      offset += patients?.length
+      hasMore = !!patients.length
     }
   }
 
   static async checkPatientSyncCoverage() {
-    let offset = 0
+    let offset = 10
     let hasMore = true
     while (hasMore) {
       const firebaseUsers = await UserHandler.getFirebaseUsers(offset)
@@ -70,10 +69,9 @@ class UserHandler {
             }
           })
         }
-        offset += firebaseUsers?.docs?.length
-        hasMore = !firebaseUsers?.empty
       }
-      hasMore = false
+      offset += firebaseUsers?.docs?.length
+      hasMore = !firebaseUsers.empty
     }
   }
 
