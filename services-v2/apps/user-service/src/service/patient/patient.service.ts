@@ -338,13 +338,16 @@ export class PatientService {
     await this.userRepository.updateProperties(patient.firebaseKey, userSync)
 
     const promises = await Promise.all([
-      this.patientRepository.save(patient),
       this.saveTravel(data, travel?.idPatientTravel),
       this.saveHealth(data, health?.idPatientTravel),
       this.saveAddress(data, addresses?.idPatientAddresses),
       this.saveConsent(data, digitalConsent?.idPatientDigitalConsent),
     ])
-    return promises[0]
+    delete patient.travel
+    delete patient.health
+    delete patient.addresses
+    delete patient.digitalConsent
+    return this.patientRepository.save(patient)
   }
 
   async connectOrganization(patientId: number, firebaseOrganizationId: string): Promise<void> {
