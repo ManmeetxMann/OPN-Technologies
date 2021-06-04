@@ -48,7 +48,7 @@ export class PatientHealth extends Auditable {
   @ApiProperty({required: true})
   patientId: number
 
-  @Column({})
+  @Column()
   @ApiProperty()
   @IsString()
   healthType: string

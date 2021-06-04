@@ -14,23 +14,23 @@ export class OrganizationLocation extends Auditable {
   @ApiProperty({required: true})
   title!: string
 
-  @Column({})
+  @Column()
   @ApiProperty()
   streetAddress: string
 
-  @Column({})
+  @Column()
   @ApiProperty()
   city: string
 
-  @Column({})
+  @Column()
   @ApiProperty()
   zip: string
 
-  @Column({})
+  @Column()
   @ApiProperty()
   state: string
 
-  @Column({})
+  @Column()
   @ApiProperty()
   country: string
 

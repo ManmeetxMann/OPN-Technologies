@@ -14,7 +14,7 @@ export class OrganizationGroup extends Auditable {
   @ApiProperty({required: true})
   name!: string
 
-  @Column({})
+  @Column()
   @ApiProperty()
   priority?: number
 

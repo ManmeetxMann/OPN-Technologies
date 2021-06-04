@@ -46,7 +46,7 @@ export class PatientToDelegates {
     patient => patient.idPatient,
   )
   @JoinColumn({name: 'dependantId', referencedColumnName: 'idPatient'})
-  @Column({})
+  @Column()
   @ApiProperty()
   dependantId: number
 }
