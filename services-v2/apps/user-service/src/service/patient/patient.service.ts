@@ -30,13 +30,13 @@ import {
   PatientHealthRepository,
   PatientRepository,
   PatientToDelegatesRepository,
-  PatientTravelRepository,
   PatientToOrganizationRepository,
+  PatientTravelRepository,
 } from '../../repository/patient.repository'
 
 import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
 import {OpnConfigService} from '@opn-services/common/services'
-import {BadRequestException} from '@opn-services/common/exception'
+import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
 import {LogError} from '@opn-services/common/utils/logging'
 import {PubSubEvents, PubSubFunctions} from '@opn-services/common/types/activity-logs'
 
@@ -51,11 +51,9 @@ import {safeTimestamp} from '@opn-common-v1/utils/datetime-util'
 import {AuthShortCodeRepository} from '@opn-enterprise-v1/repository/auth-short-code.repository'
 import {AuthShortCode} from '@opn-enterprise-v1/models/auth'
 import * as _ from 'lodash'
-import {ResourceNotFoundException} from '@opn-services/common/exception'
 import {PCRTestResultsRepository} from '@opn-services/user/repository/test-result.repository'
 import {AppointmentsRepository} from '@opn-reservation-v1/respository/appointments-repository'
-import {AppointmentDBModel} from '@opn-reservation-v1/models/appointment'
-import {AppointmentActivityAction} from '@opn-reservation-v1/models/appointment'
+import {AppointmentActivityAction, AppointmentDBModel} from '@opn-reservation-v1/models/appointment'
 import {ActionStatus} from '@opn-services/common/model'
 import {OrganizationService} from '@opn-enterprise-v1/services/organization-service'
 import {Organization} from '@opn-enterprise-v1/models/organization'
@@ -337,7 +335,7 @@ export class PatientService {
     Object.keys(userSync).forEach(key => userSync[key] === undefined && delete userSync[key])
     await this.userRepository.updateProperties(patient.firebaseKey, userSync)
 
-    const promises = await Promise.all([
+    await Promise.all([
       this.saveTravel(data, travel?.idPatientTravel),
       this.saveHealth(data, health?.idPatientTravel),
       this.saveAddress(data, addresses?.idPatientAddresses),
