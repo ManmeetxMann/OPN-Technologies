@@ -29,6 +29,10 @@ export class TestResultCreateDto {
   homeKitCode?: string
 
   @ApiProperty()
+  @IsString()
+  generatedCouponCode?: string
+
+  @ApiProperty()
   @ApiPropertyOptional()
   @IsString()
   @IsUrl()

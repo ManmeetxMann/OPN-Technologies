@@ -386,6 +386,10 @@ export class CouponDto {
   @ApiProperty()
   @IsString()
   email: string
+
+  @ApiProperty()
+  @IsString()
+  id: string
 }
 
 export enum migrationActions {

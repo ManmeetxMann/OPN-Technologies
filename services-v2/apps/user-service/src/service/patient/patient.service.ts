@@ -347,6 +347,21 @@ export class PatientService {
     return promises[0]
   }
 
+  async setPatientAndUserEmail(patientId: number, data: PatientUpdateDto): Promise<void> {
+    const patient = await this.getProfilebyId(patientId)
+    if (!patient) {
+      throw new ResourceNotFoundException('User with given id not found')
+    }
+    const auth = patient.auth
+
+    if (auth && data.email && auth?.email !== data.email) {
+      auth.email = data.email
+      await this.patientAuthRepository.save(auth)
+    }
+
+    await this.userRepository.updateProperties(patient.firebaseKey, {email: data.email})
+  }
+
   async connectOrganization(patientId: number, firebaseOrganizationId: string): Promise<void> {
     const patient = await this.getProfilebyId(patientId)
     if (!patient) {
