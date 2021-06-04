@@ -7,6 +7,11 @@ on:
       - ".github/workflows/ci_cloud_function_sms_notification.yml"
     branches: 
       - develop
+    tags:
+      - infra-dev-sms-notifications-*
+      - preprod-sms-notifications-*
+      - preprod-all-*
+      - prod-sms-notifications-*
 
 jobs:
   build:
