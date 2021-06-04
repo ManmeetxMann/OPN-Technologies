@@ -12,7 +12,7 @@ import {RapidHomeKitCodeService} from '../../../service/patient/rapid-home-kit-c
 import {OpnConfigService} from '@opn-services/common/services'
 import {CouponService} from '@opn-reservation-v1/services/coupon.service'
 import {CouponEnum} from '@opn-reservation-v1/models/coupons'
-import {ResourceNotFoundException} from '@opn-services/common/exception'
+import {ForbiddenException, ResourceNotFoundException} from '@opn-services/common/exception'
 import {timestampToFormattedIso} from '@opn-services/checkout/utils/times'
 import {PatientService} from '@opn-services/user/service/patient/patient.service'
 import {TestResultService} from '@opn-services/user/service/patient/test-result.service'
@@ -103,7 +103,7 @@ export class RapidHomeController {
     }
 
     if (authUser.id !== pcrTestResult.userId) {
-      throw new ResourceNotFoundException('pcr test result does not belong to user')
+      throw new ForbiddenException('pcr test result does not belong to user')
     }
 
     if (!pcrTestResult.generatedCouponCode) {

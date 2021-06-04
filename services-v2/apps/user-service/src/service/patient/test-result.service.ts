@@ -23,7 +23,7 @@ export class TestResultService {
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private userRepository = new UserRepository(this.dataStore)
 
-  async findPCRResultById(id: string): Promise<TestResultCreateDto> {
+  findPCRResultById(id: string): Promise<TestResultCreateDto> {
     return this.pcrTestResultsRepository.findOneById(id)
   }
 
@@ -31,10 +31,7 @@ export class TestResultService {
     id: string,
     generatedCouponCode: string,
   ): Promise<TestResultCreateDto> {
-    return await this.pcrTestResultsRepository.update({
-      id,
-      generatedCouponCode,
-    } as TestResultCreateDto)
+    return await this.pcrTestResultsRepository.updateProperties(id, {generatedCouponCode})
   }
 
   async createPCRResults(data: TestResultCreateDto, userId: string): Promise<TestResultCreateDto> {
