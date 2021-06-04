@@ -28,7 +28,7 @@ export class RapidHomeKitCodeService {
       code,
     )
     if (homeKitCodeAssociations.length) {
-      throw new BadRequestException('Associations already exists')
+      throw new BadRequestException('Kit Already Linked')
     }
     await this.homeKitCodeToUserRepository.save(code, userId)
     const [homeKitCode] = await this.get(code)
@@ -43,7 +43,6 @@ export class RapidHomeKitCodeService {
     code: string,
     userId: string,
   ): Promise<RapidHomeKitToUserAssoc> {
-    await this.homeKitCodeRepository.delete(homeKitId)
     const [
       homeKitCodeAssociations,
     ] = await this.homeKitCodeToUserRepository.getUnusedByUserIdAndCode(userId, code)

@@ -8,8 +8,8 @@ import fetch from 'node-fetch'
 import moment from 'moment-timezone'
 
 const ACUITY_ENV_NON_PROD = false
-const START_DATE = '2021-06-01' //Starting from OCT 1st
-const END_DATE = '2021-12-02' //new Date()
+const START_DATE = '2020-12-01' //Starting from OCT 1st
+const END_DATE = '2021-05-02' //new Date()
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
@@ -108,7 +108,7 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
   const userPassBase64 = userPassBuf.toString('base64')
   const apiUrl =
     APIURL +
-    '/api/v1/appointments?max=2500&' +
+    '/api/v1/appointments?canceled=true&max=2500&' +
     querystring.stringify(filters as ParsedUrlQueryInput)
 
   return fetch(apiUrl, {

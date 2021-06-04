@@ -3,7 +3,7 @@ import {AdminProfile} from './admin'
 import {FieldValue} from '../utils/firebase'
 import {Auditable} from '../types/auditable'
 import {Phone} from '../types/phone'
-import {UserStatus} from './user-status'
+import {UserStatus, UserCreator} from './user-status'
 
 // TODO: DEPRECATE
 export type User = {
@@ -89,6 +89,7 @@ export type AuthUser = Auditable & {
   registrationId?: string
   memberId?: string
   stripeCustomerId?: string
+  creator?: UserCreator
 }
 
 // TODO: this duplicates the user in the enterprise service
@@ -114,4 +115,4 @@ export const userDTO = (user: AuthUser | User, forceAdminEnabled?: boolean): Use
   delegates: (user as User).delegates ?? [],
 })
 
-export {UserStatus}
+export {UserStatus, UserCreator}

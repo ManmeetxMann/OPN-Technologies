@@ -1,4 +1,4 @@
-import {ApiProperty} from '@nestjs/swagger'
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl} from 'class-validator'
 import {firestore} from 'firebase-admin'
 
@@ -29,17 +29,20 @@ export class TestResultCreateDto {
   homeKitCode?: string
 
   @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
   @IsUrl()
-  @IsNotEmpty()
-  photoUrl: string
+  @IsOptional()
+  photoUrl?: string
 
   @ApiProperty()
+  @ApiPropertyOptional()
   @IsNumber()
   @IsOptional()
   dependantId?: number
 
   @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   organizationId?: string

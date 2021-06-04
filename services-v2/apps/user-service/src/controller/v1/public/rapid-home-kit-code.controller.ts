@@ -34,7 +34,7 @@ export class RapidHomeKitCodeController {
   async checkCode(@Param('code') code: string): Promise<ResponseWrapper> {
     const [homeKitCode] = await this.homeKitCodeService.get(code)
     if (!homeKitCode) {
-      throw new ResourceNotFoundException(`Requested code: ${code} not found`)
+      throw new ResourceNotFoundException(`Home kit is not registered`)
     }
 
     const encryptedToken = this.encryptionService.encrypt(homeKitCode.code)
