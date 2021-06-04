@@ -9,6 +9,11 @@ on:
     branches:
       - develop
       - feature/users-sync
+    tags:
+      - infra-dev-user-sync-*
+      - preprod-user-sync-*
+      - preprod-all-*
+      - prod-user-sync-*
 
 jobs:
   build:
