@@ -13,8 +13,6 @@
 				"migration:remove-admin-auth-id": "ts-node ./remove-admin-auth-id",
 				"migration:update-organizationids-for-users": "ts-node ./update-organizationids-for-users",
 				"migration:trim-firstname-lastname-and-fix-last-name": "ts-node ./trim-firstname-lastname-and-fix-last-name",
-				"tools:count-total-number-of-users": "ts-node ./tools/count-total-number-of-users",
-				"tools:users-with-multi-orgs": "ts-node ./tools/users-with-multi-orgs",
 				"migration:migrate-attestation-questionaireid-field": "ts-node ./add-questionnaireid-to-attestation",
 				"migration:test-results-to-pcr": "ts-node ./test-results-to-pcr",
 				"migration:migration-acuity-to-appointments": "ts-node ./acuity-to-appointments",

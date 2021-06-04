@@ -60,11 +60,13 @@ class InternalController implements IControllerBase {
       })
       console.log(`${memberships.length} memberships found`)
 
-      const [organization, lookups, questionnaire] = await Promise.all([
+      const [organization, lookups] = await Promise.all([
         this.organizationService.findOneById(organizationId),
         this.reportService.getLookups(userIds, organizationId),
-        this.questionnaireService.getQuestionnaire(organizationId),
       ])
+      const questionnaire = await this.questionnaireService.getQuestionnaire(
+        organization.questionnaireId,
+      )
       console.log(`lookups retrieved`)
 
       const allTemplates = await Promise.all(

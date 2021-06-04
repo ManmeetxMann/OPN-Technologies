@@ -17,8 +17,8 @@ async function main() {
     .collection('organizations')
     .doc('PUBLIC_ORG')
     .set({
-      key: 88190,
-      name: 'OPN Public ORG',
+      key: 881900,
+      name: 'Public',
       type: 'default',
       enablePaymentForBooking: true,
       allowDependants: false,
