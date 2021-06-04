@@ -1,6 +1,6 @@
-const frisby = require('frisby');
-const helpersCommon = require('helpers_common');
-const testProfile = require('test_profile');
+import frisby from 'frisby';
+import helpersCommon from '../../../../helpers/helpers_common'
+import testProfile from '../../../../test_data/test_profile';
 
 // Do setup first
 frisby.globalSetup({
@@ -24,7 +24,7 @@ describe('admin:operations:create', () => {
         .post(
             url,
             {
-              'email': 'harpreet+14@stayopn.com',
+              'email': 'gabriel@stayopn.com',
               'organizationId': organizationId,
               'locationIds': [
               ],
@@ -32,10 +32,13 @@ describe('admin:operations:create', () => {
                 organizationId,
               ],
               'healthAdminForOrganizationIds': [
+                organizationId,
               ],
               'nfcAdminForOrganizationIds': [
+                organizationId,
               ],
               'nfcGateKioskAdminForOrganizationIds': [
+                organizationId,
               ],
               'groupIds': [
               ],
@@ -59,7 +62,8 @@ describe('admin:operations:create', () => {
               'isLookupAdmin': false,
               'isRapidResultSenderAdmin': false,
               'adminForLabIds': [],
-              'isIDBarCodesAdmin': false,
+              'isClinicUser': false,
+              'isOrganizeAdmin': false,
               'isSingleResultSendAdmin': false,
               'isRapidResultOrgAdmin': false,
             },

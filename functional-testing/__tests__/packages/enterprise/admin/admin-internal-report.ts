@@ -15,14 +15,14 @@ const organizationId = testProfile.get().organizationId
 
 /**
  * @group enterprise-service
- * @group /access/api/v1/admin/stats/v2
- * @group admin-stats
+ * @group /enterprise/internal/group-report 
+ * @group admin-internal-report
  * @group admin-user
  */
 describe('Get Admin Stats', () => {
     test('able to successfully get stats', async () => {
         const token = await helpersCommon.runAuthenticatedTest(frisby)
-        const url = `${serviceUrl}/organizations/FTpEUi94EjQOzI3ev0Wy/stats`;
+        const url = `${serviceUrl}/internal/group-report`;
         const response = await frisby
             .setup({
                 request: {
@@ -32,25 +32,16 @@ describe('Get Admin Stats', () => {
                     },
                 },
             })
-            .get(url)
+            .post(url,{//TODO: Make Dynamic
+              organizationId: "OhvmJymrhQAY9VsxplEw",
+              from: "2021-05-05T00:00:00.000Z",
+              email: "mary+craigleith4@stayopn.com",
+              name: "Marycraig4u Ios",
+              to: "2021-06-04T03:59:59.999Z",
+              groupId: "Vn61FXaGjtMuDNECSGsX",
+              })
             .inspectBody()
         expect(response.status).toEqual(200)
     })
 
-    test('able to successfully get admin-stats-v2', async () => {
-        const url = `${serviceUrl}/organizations/${organizationId}/stats/health`;
-        const token = await helpersCommon.runAuthenticatedTest(frisby)
-        
-        await frisby
-        .setup({
-            request: {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            },
-        })
-        .get(url)
-        .inspectBody()
-        .expect('status', 200);
-    })
 })
