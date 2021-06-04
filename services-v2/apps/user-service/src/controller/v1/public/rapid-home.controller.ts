@@ -13,7 +13,7 @@ import {OpnConfigService} from '@opn-services/common/services'
 import {CouponService} from '@opn-reservation-v1/services/coupon.service'
 import {CouponEnum} from '@opn-reservation-v1/models/coupons'
 import {ResourceNotFoundException} from '@opn-services/common/exception'
-import {timestampToFormattedIso} from '@opn-services/checkout/utils/times'
+import {timestampToFormattedIso} from '@opn-services/common/utils/times'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
