@@ -55,6 +55,15 @@ beforeAll(function () {
                         })
                     }),
                 ),
+                asOfDateTime: Joi.string().required(),
+                passportsCountByStatus: Joi.object({
+                    pending: Joi.number().required(),
+                    proceed: Joi.number().required(),
+                    caution: Joi.number().required(),
+                    stop: Joi.number().required(),
+                    temperature_check_required: Joi.number().required()
+                }),
+                hourlyCheckInsCounts: Joi.array()
             }),
             status: Joi.object({
                 code: Joi.string().required(),
@@ -62,6 +71,7 @@ beforeAll(function () {
             }),
             page: Joi.number().required(),
         });
+        //const { error } = schema.validate(response.json);
         const { error } = schema.validate(response.json, { stripUnknown: true });
         expect(error).toBe(null);
     });
@@ -87,7 +97,7 @@ describe('Get Admin Stats', () => {
             })
             .get(url)
             .expect('validateSchema')
-        //.inspectBody()
+            .inspectBody()
         expect(response.status).toEqual(200)
 
 

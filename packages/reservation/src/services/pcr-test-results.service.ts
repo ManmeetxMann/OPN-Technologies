@@ -2059,9 +2059,17 @@ export class PCRTestResultsService {
     ]
 
     const allowedResultTypes = [
-      TestTypes.PCR, TestTypes.RapidAntigen, TestTypes.Antibody_All, TestTypes.Antibody_IgM, TestTypes.ExpressPCR]
+      TestTypes.PCR,
+      TestTypes.RapidAntigen,
+      TestTypes.Antibody_All,
+      TestTypes.Antibody_IgM,
+      TestTypes.ExpressPCR,
+    ]
 
-    return allowedResult.includes(pcrTestResult.result) && allowedResultTypes.includes(pcrTestResult.testType)
+    return (
+      allowedResult.includes(pcrTestResult.result) &&
+      allowedResultTypes.includes(pcrTestResult.testType)
+    )
   }
 
   async getAllResultsByUserAndChildren(

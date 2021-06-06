@@ -4,13 +4,9 @@ import {Range} from '../../../common/src/types/range'
 import {User, UserDependant} from '../../../common/src/data/user'
 import {isPassed, safeTimestamp} from '../../../common/src/utils/datetime-util'
 
-export type AccessWithPassportStatusAndUser = {
+export type AccessWithPassportStatusAndUser = Access & {
   user: User
   status: PassportStatus
-  exitAt: string | null
-  enteredAt: string | null
-  parentUserId: string | null
-  locationId: string | null
 }
 
 export type Access = {
