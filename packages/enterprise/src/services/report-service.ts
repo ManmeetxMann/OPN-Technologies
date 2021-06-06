@@ -120,6 +120,12 @@ export class ReportService {
     }
 
     const accesses = data.map(({user, status, access}) => ({
+      token: access?.token,
+      statusToken: access?.statusToken,
+      createdAt: access?.createdAt,
+      includesGuardian: access?.includesGuardian,
+      dependants: access?.dependants,
+      userId: user.id,
       // remove not-yet-exited exitAt
       exitAt: nullOrISOString(status, access?.exitAt),
       enteredAt: nullOrISOString(status, access?.enteredAt),

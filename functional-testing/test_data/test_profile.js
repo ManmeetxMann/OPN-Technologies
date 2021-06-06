@@ -79,6 +79,17 @@ let profiles = {
         "locationTitle":"TEST1_LOC1",
         "locationId":"TEST_LOC1"
     },
+    "mary_prod_admin":{
+        "email":"mary+march41@stayopn.com",
+        "organizationId":"FTpEUi94EjQOzI3ev0Wy",
+        "firstName":"Mary",
+        "lastName":"March",
+        "groupId":"GRP1",
+        "groupName":"TEST1_GRP1",
+        "userId":"iVK1tRyuU5znFGptWP6s",
+        "locationTitle":"TEST1_LOC1",
+        "locationId":"TEST_LOC1"
+    },
 }
 
 module.exports = {
