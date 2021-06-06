@@ -109,6 +109,35 @@ describe('Cart basic', () => {
     done()
   })
 
+  test('add, read and get one item on the cart', async done => {
+    const result = await request(server)
+      .post(url)
+      .set({
+        ...headers,
+        'Content-Type': 'application/json',
+      })
+      .send({items: [cartItem]})
+
+    const listCart = await request(server)
+      .get(url)
+      .set(headers)
+
+    expect(result.status).toBe(201)
+    expect(listCart.status).toBe(200)
+
+    const oneCartItem = listCart.body.data.cartItems[0]
+
+    const getOneResult = await request(server)
+      .get(`${url}/${oneCartItem.cartItemId}`)
+      .set(headers)
+
+    expect(getOneResult.status).toBe(200)
+    expect(
+      `${getOneResult.body.data.patient.firstName} ${getOneResult.body.data.patient.lastName}`,
+    ).toBe(oneCartItem.patientName)
+    done()
+  })
+
   test('add few card items and remove all', async done => {
     // should have added item
     await request(server)
