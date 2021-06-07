@@ -22,6 +22,7 @@ import AdminHistoryController from './controllers/v1/admin/admin-scan-history.co
 import AdminRapidAntigenTestTesultsController from './controllers/v1/admin/rapid-antigen-test-results.controller'
 import AdminAppointmentAvailabilityController from './controllers/v1/admin/appointment-availability.controller'
 import PulseOxygenController from './controllers/v1/pulse-oxygen.controller'
+import AdminDriverController from './controllers/v1/admin/driver.controller'
 
 import InternalRapidAntigenResultEmailSendController from './controllers/v1/internal/rapid-antigen-send-result-email.controller'
 import AdminClinicController from './controllers/v1/admin/clinic.controller'
@@ -67,6 +68,7 @@ export const app = new App({
     new InternalSyncAppointmentController(),
     new InternalConfirmatoryResultReceivedController(),
     new PubsubController(),
+    new AdminDriverController()
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })
