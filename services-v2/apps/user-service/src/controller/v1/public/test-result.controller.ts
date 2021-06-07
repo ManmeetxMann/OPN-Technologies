@@ -28,6 +28,8 @@ export class TestResultController {
     @Body() {homeKitCode, dependantId, organizationId, ...testResult}: TestResultCreateDto,
     @AuthUserDecorator() authUser: AuthUser,
   ): Promise<ResponseWrapper<TestResultCreateDto>> {
+    this.testResultService.validatePayload(testResult)
+
     const patientExists = dependantId
       ? await this.patientService.getPatientByDependantId(dependantId)
       : null
@@ -41,6 +43,8 @@ export class TestResultController {
     if (!homeKit) {
       throw new ResourceNotFoundException('Home kit not found')
     }
+    // Trows error if kit already used for current user
+    await this.homeKitCodeService.markAsUsedHomeKitCode(homeKit.code, authUser.id)
 
     const isOrgIdValid = organizationId
       ? await this.testResultService.validateOrganization(organizationId, userId)
@@ -53,7 +57,6 @@ export class TestResultController {
     const result = await this.testResultService.createPCRResults({...props}, userId)
     const validatedUserData = this.testResultService.validateUserData(testResult)
     await this.testResultService.syncUser(validatedUserData, userId)
-    await this.homeKitCodeService.markAsUsedHomeKitCode(homeKit.id, homeKit.code, authUser.id)
 
     return ResponseWrapper.actionSucceed(result)
   }

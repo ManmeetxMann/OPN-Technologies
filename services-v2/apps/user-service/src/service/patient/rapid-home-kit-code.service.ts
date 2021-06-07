@@ -38,14 +38,14 @@ export class RapidHomeKitCodeService {
     })
   }
 
-  async markAsUsedHomeKitCode(
-    homeKitId: string,
-    code: string,
-    userId: string,
-  ): Promise<RapidHomeKitToUserAssoc> {
+  async markAsUsedHomeKitCode(code: string, userId: string): Promise<RapidHomeKitToUserAssoc> {
     const [
       homeKitCodeAssociations,
     ] = await this.homeKitCodeToUserRepository.getUnusedByUserIdAndCode(userId, code)
+
+    if (!homeKitCodeAssociations) {
+      throw new BadRequestException('Kit Already Used')
+    }
 
     return this.homeKitCodeToUserRepository.updateProperties(homeKitCodeAssociations.id, {
       used: true,

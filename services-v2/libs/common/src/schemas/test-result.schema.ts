@@ -5,8 +5,8 @@ export const pcrTestResultSchema = Joi.object({
   id: Joi.string(),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
-  dateOfBirth: Joi.string().required(),
-  postalCode: Joi.string().required(),
+  dateOfBirth: Joi.string(),
+  postalCode: Joi.string(),
   generatedCouponCode: Joi.string(),
   testType: Joi.string()
     .required()

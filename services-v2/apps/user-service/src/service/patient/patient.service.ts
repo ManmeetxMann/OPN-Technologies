@@ -57,7 +57,7 @@ import {AppointmentActivityAction, AppointmentDBModel} from '@opn-reservation-v1
 import {ActionStatus} from '@opn-services/common/model'
 import {OrganizationService} from '@opn-enterprise-v1/services/organization-service'
 import {Organization} from '@opn-enterprise-v1/models/organization'
-import { Platforms } from '@opn-common-v1/types/platform'
+import {Platforms} from '@opn-common-v1/types/platform'
 
 @Injectable()
 export class PatientService {
@@ -309,7 +309,7 @@ export class PatientService {
     }
 
     const {travel, health, addresses, digitalConsent, auth} = patient
-    
+
     if (auth && data.email && auth?.email !== data.email) {
       await this.firebaseAuthService.updateUser(auth.authUserId, {email: data.email})
       auth.email = data.email
@@ -689,10 +689,7 @@ export class PatientService {
   /**
    * Update or insert push token
    */
-  async upsertPushToken(
-    patientId: number,
-    registration: Omit<Registration, 'id'>,
-  ): Promise<void> {
+  async upsertPushToken(patientId: number, registration: Omit<Registration, 'id'>): Promise<void> {
     const {pushToken, osVersion, platform} = registration
 
     // validate if we get token
@@ -701,8 +698,7 @@ export class PatientService {
     }
     const patient = await this.patientRepository.findOne(patientId)
     // create or update token
-    const {id} = await this.registrationService.upsert(patient.firebaseKey,
-      {
+    const {id} = await this.registrationService.upsert(patient.firebaseKey, {
       osVersion,
       platform,
       pushToken,
@@ -762,7 +758,11 @@ export class PatientService {
   async getRegistrationId(userData: PatientUpdateDto): Promise<string> {
     let registrationDb: Registration
 
-    if (userData?.registration?.pushToken || userData?.registration?.osVersion || userData?.registration?.platform) {
+    if (
+      userData?.registration?.pushToken ||
+      userData?.registration?.osVersion ||
+      userData?.registration?.platform
+    ) {
       registrationDb = await this.registrationService.upsert(userData.firebaseKey, {
         platform: userData?.registration?.platform as Platforms,
         osVersion: userData?.registration?.osVersion,
@@ -772,5 +772,4 @@ export class PatientService {
 
     return registrationDb?.id || null
   }
-
 }
