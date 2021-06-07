@@ -92,6 +92,30 @@ describe('Cart coupons', () => {
     done()
   })
 
+  test('add cart item, use 10$ coupon', async done => {
+    // remove all cart items
+    const cart = await request(server)
+      .get(url)
+      .set(headers)
+    expect(cart.body.data.cartItems[0].price).toBe(45)
+    expect(cart.body.data.cartItems[0].discountedPrice).toBe(35)
+    expect(cart.status).toBe(200)
+    const deleteCouponRequest = await request(server)
+      .delete(`${url}/coupons`)
+      .set(headers)
+    expect(deleteCouponRequest.body.data.cartItems[0].price).toBe(45)
+    // @TODO Create ticket for updating delete endpoint, it should return null instead of undefined
+    expect(deleteCouponRequest.body.data.cartItems[0].discountedPrice).toBe(undefined)
+    expect(deleteCouponRequest.status).toBe(200)
+    const updatedCart = await request(server)
+      .get(url)
+      .set(headers)
+    expect(updatedCart.body.data.cartItems[0].price).toBe(45)
+    expect(updatedCart.body.data.cartItems[0].discountedPrice).toBe(null)
+    expect(updatedCart.status).toBe(200)
+    done()
+  })
+
   afterAll(async () => {
     await Promise.all([await app.close(), deleteUserByIdTestDataCreator(userId, testDataCreator)])
   })
