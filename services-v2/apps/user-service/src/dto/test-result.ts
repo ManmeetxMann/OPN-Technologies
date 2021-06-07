@@ -30,6 +30,7 @@ export class TestResultCreateDto {
 
   @ApiProperty()
   @IsString()
+  @IsOptional()
   generatedCouponCode?: string
 
   @ApiProperty()
