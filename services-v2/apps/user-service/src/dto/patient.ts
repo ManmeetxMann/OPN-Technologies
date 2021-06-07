@@ -66,10 +66,6 @@ export class PatientCreateDto {
   @IsOptional()
   gender: Gender
 
-  @IsOptional()
-  @IsString()
-  registrationId?: string
-
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -193,11 +189,6 @@ export class PatientCreateAdminDto {
   @IsString()
   @IsOptional()
   gender: Gender
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  registrationId?: string
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -348,11 +339,6 @@ class FCMRegistration {
   @ApiPropertyOptional()
   @IsOptional()
   platform?: string
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  registrationId?: string
 }
 
 export class PatientUpdateAdminDto extends PartialType(PatientCreateAdminDto) {}
@@ -476,7 +462,6 @@ export const unconfirmedPatientDto = (
   gender: patient.gender,
   isEmailVerified: patient.isEmailVerified,
   dateOfBirth: patient.dateOfBirth,
-  registrationId: patient.registrationId,
   photoUrl: patient.photoUrl,
   consentFileUrl: patient.consentFileUrl,
   status: patient.status,
@@ -500,7 +485,6 @@ export const patientProfileDto = (
   gender: patient?.gender,
   dateOfBirth: patient.dateOfBirth ? toFormattedIso(patient.dateOfBirth) : null,
   email: patient.auth?.email,
-  registrationId: patient?.registrationId,
   phoneNumber: patient.phoneNumber,
   photoUrl: patient.photoUrl,
   organizations: patient.organizations,
@@ -562,9 +546,6 @@ export class UnconfirmedPatient {
   @ApiProperty({readOnly: true})
   @IsString()
   dateOfBirth: string
-  @ApiProperty({readOnly: true})
-  @IsString()
-  registrationId: string
   @ApiProperty({readOnly: true})
   @IsString()
   photoUrl: string

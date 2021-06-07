@@ -217,12 +217,15 @@ export class PatientController {
     }
 
     if (patientUpdateDto?.registration) {
-      const {registrationId, pushToken, osVersion, platform} = patientUpdateDto.registration
-      await this.patientService.upsertPushToken(id, registrationId, {
-        osVersion,
-        platform: platform as Platform,
-        pushToken,
-      })
+      const {pushToken, osVersion, platform} = patientUpdateDto.registration
+      await this.patientService.upsertPushToken(
+        id,
+        {
+          osVersion,
+          platform: platform as Platform,
+          pushToken,
+        }
+      )
     }
 
     const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
