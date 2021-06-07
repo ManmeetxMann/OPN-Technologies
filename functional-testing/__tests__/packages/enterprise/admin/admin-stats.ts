@@ -85,7 +85,7 @@ beforeAll(function () {
 describe('Get Admin Stats', () => {
     test('able to successfully get stats', async () => {
         const token = await helpersCommon.runAuthenticatedTest(frisby)
-        const url = `${serviceUrl}/organizations/${organizationId}/stats`;
+        const url = `${serviceUrl}/organizations/${organizationId}/stats?groupId=67Ax1Z9Z9HjXurZLaMR0`;
         const response = await frisby
             .setup({
                 request: {
