@@ -1305,7 +1305,12 @@ export class PCRTestResultsService {
   }
 
   async generateCouponCode(email: string, resultData: PCRTestResultDBModel): Promise<string> {
-    const couponCode = await this.couponService.createCoupon(email, CouponEnum.forResample)
+    const couponCode = await this.couponService.createCoupon(
+      email,
+      CouponEnum.forResample,
+      resultData.testType,
+    )
+
     await this.couponService.saveCoupon(couponCode, resultData.organizationId, resultData.barCode)
 
     LogInfo('generateCouponCode', 'CouponCodeCreated', {
