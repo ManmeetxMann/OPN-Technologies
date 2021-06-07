@@ -2,7 +2,7 @@ import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl} from 'class-validator'
 import {firestore} from 'firebase-admin'
 
-enum TestTypes {
+export enum TestTypes {
   Positive = 'Positive',
   Negative = 'Negative',
   Invalid = 'Invalid',
@@ -73,13 +73,12 @@ export class TestResultCreateDto {
   lastName: string
 
   @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @IsDateString()
   dateOfBirth: string
 
   @ApiProperty()
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   postalCode: string
 }
