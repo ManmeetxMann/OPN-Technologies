@@ -138,6 +138,44 @@ describe('Cart basic', () => {
     done()
   })
 
+  test('update cart item', async done => {
+    const listCart = await request(server)
+      .get(url)
+      .set(headers)
+
+    expect(listCart.status).toBe(200)
+
+    const oneCartItem = listCart.body.data.cartItems[0]
+
+    const getOneResult = await request(server)
+      .get(`${url}/${oneCartItem.cartItemId}`)
+      .set(headers)
+
+    expect(getOneResult.status).toBe(200)
+
+    const updateItem = await request(server)
+      .put(`${url}`)
+      .set({
+        ...headers,
+        'Content-Type': 'application/json',
+      })
+      .send({
+        ...getOneResult.body,
+        slotId: cartItem.slotId,
+        cartItemId: oneCartItem.cartItemId,
+        firstName: 'UPDATEDFIRSTNAME',
+      })
+    expect(updateItem.status).toBe(200)
+
+    const updatedOneResult = await request(server)
+      .get(`${url}/${oneCartItem.cartItemId}`)
+      .set(headers)
+
+    expect(updatedOneResult.status).toBe(200)
+    expect(updatedOneResult.body.data.patient.firstName).toBe('UPDATEDFIRSTNAME')
+    done()
+  })
+
   test('add few card items and remove all', async done => {
     // should have added item
     await request(server)
