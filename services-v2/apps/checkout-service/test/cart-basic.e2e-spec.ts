@@ -64,6 +64,21 @@ describe('Cart basic', () => {
     done()
   })
 
+  test('add to cart wrong payload', async done => {
+    const result = await request(server)
+      .post(url)
+      .set({
+        ...headers,
+        'Content-Type': 'application/json',
+      })
+      .send({items: [{}]})
+
+    expect(result.body.code).toBe('failed')
+    expect(result.status).toBe(400)
+
+    done()
+  })
+
   test('add and read the cart', async done => {
     const getBefore = await request(server)
       .get(url)
