@@ -23,6 +23,17 @@ export class TestResultService {
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private userRepository = new UserRepository(this.dataStore)
 
+  findPCRResultById(id: string): Promise<TestResultCreateDto> {
+    return this.pcrTestResultsRepository.findOneById(id)
+  }
+
+  async addCouponCodePCRResultById(
+    id: string,
+    generatedCouponCode: string,
+  ): Promise<TestResultCreateDto> {
+    return await this.pcrTestResultsRepository.updateProperties(id, {generatedCouponCode})
+  }
+
   async createPCRResults(data: TestResultCreateDto, userId: string): Promise<TestResultCreateDto> {
     const pcrTestResultTypesValidator = new JoiValidator(pcrTestResultSchema)
     const isRunByJest = process.env.JEST_WORKER_ID

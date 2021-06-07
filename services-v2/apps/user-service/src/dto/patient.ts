@@ -371,8 +371,12 @@ export class LinkToAccountDto {
 
 export class CouponDto {
   @ApiProperty()
-  @IsString()
+  @IsEmail()
   email: string
+
+  @ApiProperty()
+  @IsString()
+  id: string
 }
 
 export enum migrationActions {
