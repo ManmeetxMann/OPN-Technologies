@@ -970,6 +970,12 @@ components:
               type: string
             status:
               type: string
+            antibodySpecimenType:
+              type: string
+            methodology:
+              type: string
+            indication:
+              type: string
             resultMetaData:
               type: object
               additionalProperties: false
