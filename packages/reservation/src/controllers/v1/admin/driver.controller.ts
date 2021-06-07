@@ -1,5 +1,5 @@
 import {NextFunction, Request, Response, Router} from 'express'
-import IControllerBase from "packages/common/src/interfaces/IControllerBase.interface";
+import IControllerBase from "../../../../../common/src/interfaces/IControllerBase.interface";
 import { authorizationMiddleware } from '../../../../../common/src/middlewares/authorization';
 import { RequiredUserPermission } from '../../../../../common/src/types/authorization';
 import { getUserId } from '../../../../..//common/src/utils/auth';

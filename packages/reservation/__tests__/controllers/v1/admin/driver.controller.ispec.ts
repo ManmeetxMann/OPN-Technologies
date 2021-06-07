@@ -67,7 +67,6 @@ describe('AdminDriverController', () => {
           name: driverName,
           enabled: false
         }).then(async (result) => {
-          const getRes = await request(server.app).get(url).set('authorization', 'bearer 10000')
           expect(result.status).toBe(200)
           expect(result.body.data).toHaveProperty('id')
         })
