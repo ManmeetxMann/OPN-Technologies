@@ -481,6 +481,9 @@ export type SinglePcrTestResultUi = {
   resultMetaData: TestResultsMetaData
   couponCode?: string
   status?: string
+  antibodySpecimenType?: string
+  methodology?: string
+  indication?: string
 }
 
 export const singlePcrTestResultDTO = (
@@ -550,6 +553,14 @@ export const singlePcrTestResultDTO = (
         : 'Re-Collection'
   }
 
+  const isAntibodyOrAntigen = [
+    TestTypes.Antibody_All,
+    TestTypes.Antibody_IgM,
+    TestTypes.RapidAntigen,
+    TestTypes.EmergencyRapidAntigen,
+    TestTypes.RapidAntigenAtHome,
+  ].includes(pcrTestResult.testType)
+
   return {
     email: appointment.email,
     firstName: appointment.firstName,
@@ -588,6 +599,9 @@ export const singlePcrTestResultDTO = (
     resultMetaData: pcrTestResult.resultMetaData,
     couponCode: pcrTestResult?.couponCode,
     status,
+    antibodySpecimenType: isAntibodyOrAntigen ? 'Serum' : 'N/A',
+    methodology: isAntibodyOrAntigen ? 'Chemiluminescence' : 'N/A',
+    indication: isAntibodyOrAntigen ? 'Suspected Exposure to COVID-19' : 'N/A',
   }
 }
 
