@@ -28,7 +28,7 @@ export class CouponService {
   async createCoupon(
     email: string,
     couponIdType: CouponEnum,
-    testType?: TestTypes,
+    testType: TestTypes = TestTypes.PCR,
   ): Promise<string> {
     const couponID =
       couponIdType === CouponEnum.forResample
