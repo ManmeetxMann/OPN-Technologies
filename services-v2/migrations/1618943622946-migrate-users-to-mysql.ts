@@ -1,6 +1,7 @@
-import {MigrationInterface, QueryRunner, getConnection} from 'typeorm'
+import {MigrationInterface, QueryRunner, getConnection, getRepository} from 'typeorm'
 import {Config} from '../../packages/common/src/utils/config'
 import {initializeApp, credential, firestore} from 'firebase-admin'
+import {Patient} from '../apps/user-service/src/model/patient/patient.entity'
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
@@ -81,38 +82,50 @@ async function insertAllUsers(): Promise<Result[]> {
     //hasMore = false
 
     const othersPromises = []
+    const patients = []
 
     for (const user of userSnapshot.docs) {
-      // First step is to create Patient
-      const patient = adaptPatientsData(user)
-      const patientResult = await insertData(patient, 'patient')
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const patientId = patientResult.identifiers[0].idPatient
+      patients.push(adaptPatientsData(user))
+    }
 
-      if (user.data().admin) {
-        const admin = adaptAdminsData(patientId, user)
+    const patientResults = await insertData(patients, 'patient')
+    const newPatients = await getPatientsByIds(
+      patientResults.identifiers.map(elem => elem.idPatient),
+    )
+
+    for (const firebaseUser of userSnapshot.docs) {
+      const normalUser = firebaseUser.data()
+      const patient = newPatients.find(elem => elem.firebaseKey == firebaseUser.id)
+      const patientId = patient.idPatient
+
+      if (normalUser.admin) {
+        const admin = adaptAdminsData(patientId, normalUser)
         othersPromises.push(insertData(admin, 'patientAdmin'))
       }
 
-      const authData = adaptAuthData(patientId, user)
-      othersPromises.push(insertData(authData, 'patientAuth'))
-
-      if (user.data().organizationIds && user.data().organizationIds.length) {
-        const patientOrganizations = adaptPatientsOrganizationsData(patientId, user.data())
-        othersPromises.push(insertData(patientOrganizations, 'patientToOrganization'))
+      if (normalUser.authUserId) {
+        const authData = adaptAuthData(patientId, normalUser)
+        othersPromises.push(insertData(authData, 'patientAuth'))
       }
 
-      const othersResults = await promiseAllSettled(othersPromises)
-      results.push(...othersResults)
+      if (normalUser.organizationIds && normalUser.organizationIds.length) {
+        const patientOrganizations = adaptPatientsOrganizationsData(patientId, normalUser)
+        othersPromises.push(insertData(patientOrganizations, 'patientToOrganization'))
+      }
     }
+    const othersResults = await promiseAllSettled(othersPromises)
+    results.push(...othersResults)
   }
   return results
 }
 
+async function getPatientsByIds(ids) {
+  return getRepository(Patient).findByIds(ids)
+}
+
 async function insertData(snapshot, modelName: string) {
   const insertUser = async snapshot => {
-    return await getConnection()
+    return getConnection()
       .createQueryBuilder()
       .insert()
       .into(modelName)
@@ -127,7 +140,7 @@ async function insertData(snapshot, modelName: string) {
   }
 }
 
-function adaptPatientsOrganizationsData(patientId: string, userSnapshot) {
+function adaptPatientsOrganizationsData(patientId: number, userSnapshot) {
   return userSnapshot.organizationIds
     .map(firebaseOrganizationId => {
       if (firebaseOrganizationId) {
@@ -141,8 +154,7 @@ function adaptPatientsOrganizationsData(patientId: string, userSnapshot) {
 }
 
 // eslint-disable-next-line complexity
-function adaptAdminsData(patientId: string, userSnapshot) {
-  const snapshot = userSnapshot.data()
+function adaptAdminsData(patientId: number, snapshot) {
   if (snapshot?.admin) {
     const data = snapshot.admin
     return {
@@ -205,23 +217,22 @@ function adaptPatientsData(user) {
   return profileData
 }
 
-function adaptAuthData(patientId: string, user) {
-  const userData = user.data()
+function adaptAuthData(patientId: number, user) {
   const profileData: {
     email?: string
     phoneNumber?: string
     authUserId: string
-    patientId: string
+    patientId: number
   } = {
-    email: userData.email || null,
-    authUserId: userData.authUserId,
+    email: user.email || null,
+    authUserId: user.authUserId,
     patientId,
   }
-  if (userData.phone && userData.phone.number) {
-    profileData.phoneNumber = `${userData.phone.number}`
+  if (user.phone && user.phone.number) {
+    profileData.phoneNumber = `${user.phone.number}`
   }
-  if (userData.phoneNumber) {
-    profileData.phoneNumber = userData.phoneNumber
+  if (user.phoneNumber) {
+    profileData.phoneNumber = user.phoneNumber
   }
   return profileData
 }
