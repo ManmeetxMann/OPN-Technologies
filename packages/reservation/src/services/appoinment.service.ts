@@ -853,7 +853,7 @@ export class AppoinmentService {
     } else {
       await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
         appointment.id,
-        {labId: appointment.labId, appointmentStatus: AppointmentStatus.InTransit},
+        {labId: appointment.labId, appointmentStatus: appointment.appointmentStatus || AppointmentStatus.InTransit},
         PcrResultTestActivityAction.UpdateFromAppointment,
         appointment.userId,
       )
