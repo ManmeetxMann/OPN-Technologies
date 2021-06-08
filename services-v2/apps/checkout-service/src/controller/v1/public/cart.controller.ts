@@ -302,7 +302,7 @@ export class CartController {
 
     // Save order information and delete all cart items
     await this.userCardService.saveOrderInformation(appointmentCreateStatuses, paymentIntentCapture)
-    await this.userCardService.deleteAllCartItems(authUserId, organizationId)
+    await this.userCardService.deleteCart(authUserId, organizationId)
 
     result.cart.isValid = true
     return ResponseWrapper.actionSucceed(result)
@@ -367,7 +367,7 @@ export class CartController {
       return ResponseWrapper.actionSucceed(result)
     }
 
-    await this.userCardService.deleteAllCartItems(authUserId, organizationId)
+    await this.userCardService.deleteCart(authUserId, organizationId)
 
     return ResponseWrapper.actionSucceed(result)
   }

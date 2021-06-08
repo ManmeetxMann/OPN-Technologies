@@ -494,6 +494,11 @@ export class UserCardService {
     })
   }
 
+  async deleteCart(userId: string, organizationId: string): Promise<void> {
+    await this.deleteAllCartItems(userId, organizationId)
+    await this.userCartRepository.removeCart(userId, organizationId)
+  }
+
   async deleteCartItem(userId: string, cartItemId: string, organizationId: string): Promise<void> {
     const userOrgId = `${userId}_${organizationId}`
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
