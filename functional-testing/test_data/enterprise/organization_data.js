@@ -28,6 +28,9 @@ module.exports = {
             data.id = overWriteObj.id;
         }
         
+        if (overWriteObj.enableTemperatureCheck !== undefined) {
+          data.enableTemperatureCheck = overWriteObj.enableTemperatureCheck;
+      }
         
         return data;
     }

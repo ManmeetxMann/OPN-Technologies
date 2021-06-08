@@ -29,6 +29,30 @@ components:
       required:
         - error
 
+    QuickbloxResponse: 
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - complete
+                - error
+            message:
+              type: string
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            provider_id:
+              type: number
+          required:
+            - provider_id
+
     ResultContentResponse: 
       type: object
       deprecated: false
@@ -183,3 +207,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResultContentResponse'
+
+  /config/api/v1/quickblox:
+    get:
+      description: Return provider id
+      tags:
+        - Quickblox
+      security:
+        - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuickbloxResponse'

@@ -138,8 +138,23 @@ describe('Cart basic', () => {
     const cartAfter = await request(server)
       .get(url)
       .set(headers)
-    expect(cartAfter.body.data.paymentSummary.length).toBe(0)
+
+    const [, , total] = cartAfter.body.data.paymentSummary
+    expect(total.amount).toBe(0)
     expect(cartAfter.body.data.cartItems.length).toBe(0)
+    done()
+  })
+
+  test('try to add max item count', async done => {
+    const response = await request(server)
+      .post(url)
+      .set({
+        ...headers,
+        'Content-Type': 'application/json',
+      })
+      .send({items: Array(51).fill(cartItem)})
+
+    expect(response.body.status.message).toBe('Maximum cart items limit reached')
     done()
   })
 

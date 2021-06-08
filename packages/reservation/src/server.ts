@@ -31,7 +31,7 @@ createConnection({
   database: Config.get('DB_SQL_NAME'),
   username: Config.get('DB_SQL_USERNAME'),
   password: Config.get('DB_SQL_PASSWORD'),
-  entities: [join(__dirname, '../../../services-v2/apps/user-service/src/model/**/*.ts')],
+  entities: [join(__dirname, '../../../services-v2/apps/user-service/src/model/**/*{.ts,.js}')],
   synchronize: false,
   logging: false,
 })

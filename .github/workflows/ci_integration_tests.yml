@@ -1,19 +1,19 @@
 name: Integration Test (2AM)
 on:
-  # schedule:
-  #  - cron: "0 3 * * *"
+  schedule:
+   - cron: "0 3 * * *"
   push:
-    # paths:
-    #   - "packages/common/**"
-    #   - "packages/reservation/**"
-    #   - ".github/workflows/**"
-    #   - ".github/actions/**"
+    paths:
+      - "packages/common/**"
+      - "packages/reservation/**"
+      - ".github/workflows/**"
+      - ".github/actions/**"
     branches: 
-      # - develop
-      - fix/integration-test-run
+      - develop
 
 jobs:
   build:
+    timeout-minutes: 10
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2

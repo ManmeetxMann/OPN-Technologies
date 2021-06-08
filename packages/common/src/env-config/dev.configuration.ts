@@ -28,4 +28,6 @@ export const devConfig: Record<string, string | string[] | number | boolean> = {
   LOG_VALIDATION_ERRORS: 'enabled',
 
   IS_SERVICE_V2_SWAGGER_ENABLED: 'enabled',
+
+  TEST_RESULT_PUSH_NOTIFICATION: 'enabled',
 }

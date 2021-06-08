@@ -41,7 +41,7 @@ import {LogError} from '@opn-services/common/utils/logging'
 
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
 import {acuityTypesSchema, cartItemSchema} from '@opn-services/common/schemas'
-import {toFormattedIso} from '@opn-services/checkout/utils/times'
+import {toFormattedIso} from '@opn-services/common/utils/times'
 import {UserCardDiscountService} from '@opn-services/checkout/service'
 
 /**
@@ -492,6 +492,11 @@ export class UserCardService {
         },
       },
     })
+  }
+
+  async deleteCart(userId: string, organizationId: string): Promise<void> {
+    await this.deleteAllCartItems(userId, organizationId)
+    await this.userCartRepository.removeCart(userId, organizationId)
   }
 
   async deleteCartItem(userId: string, cartItemId: string, organizationId: string): Promise<void> {

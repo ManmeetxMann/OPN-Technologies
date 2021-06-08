@@ -19,6 +19,7 @@ import {Patient} from '../model/patient/patient.entity'
 import {Type} from 'class-transformer'
 import {UserStatus} from '@opn-common-v1/data/user'
 import {Gender} from '@opn-reservation-v1/models/appointment'
+import {toFormattedIso} from '@opn-services/common/utils/times'
 
 export class AuthenticateDto {
   @ApiProperty()
@@ -64,10 +65,6 @@ export class PatientCreateDto {
   @IsString()
   @IsOptional()
   gender: Gender
-
-  @IsOptional()
-  @IsString()
-  registrationId?: string
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -192,11 +189,6 @@ export class PatientCreateAdminDto {
   @IsString()
   @IsOptional()
   gender: Gender
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  registrationId?: string
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -347,11 +339,6 @@ class FCMRegistration {
   @ApiPropertyOptional()
   @IsOptional()
   platform?: string
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  registrationId?: string
 }
 
 export class PatientUpdateAdminDto extends PartialType(PatientCreateAdminDto) {}
@@ -384,8 +371,12 @@ export class LinkToAccountDto {
 
 export class CouponDto {
   @ApiProperty()
-  @IsString()
+  @IsEmail()
   email: string
+
+  @ApiProperty()
+  @IsString()
+  id: string
 }
 
 export enum migrationActions {
@@ -475,7 +466,6 @@ export const unconfirmedPatientDto = (
   gender: patient.gender,
   isEmailVerified: patient.isEmailVerified,
   dateOfBirth: patient.dateOfBirth,
-  registrationId: patient.registrationId,
   photoUrl: patient.photoUrl,
   consentFileUrl: patient.consentFileUrl,
   status: patient.status,
@@ -497,9 +487,8 @@ export const patientProfileDto = (
   firstName: patient.firstName,
   lastName: patient.lastName,
   gender: patient?.gender,
-  dateOfBirth: patient.dateOfBirth,
+  dateOfBirth: patient.dateOfBirth ? toFormattedIso(patient.dateOfBirth) : null,
   email: patient.auth?.email,
-  registrationId: patient?.registrationId,
   phoneNumber: patient.phoneNumber,
   photoUrl: patient.photoUrl,
   organizations: patient.organizations,
@@ -561,9 +550,6 @@ export class UnconfirmedPatient {
   @ApiProperty({readOnly: true})
   @IsString()
   dateOfBirth: string
-  @ApiProperty({readOnly: true})
-  @IsString()
-  registrationId: string
   @ApiProperty({readOnly: true})
   @IsString()
   photoUrl: string

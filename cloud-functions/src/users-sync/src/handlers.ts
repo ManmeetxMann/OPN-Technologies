@@ -2,21 +2,29 @@ import * as functions from 'firebase-functions'
 import * as _ from 'lodash'
 import {getCreateDatabaseConnection} from './connection'
 import * as patientEntries from '../../../../services-v2/apps/user-service/src/model/patient/patient.entity'
-
+import {UserCreator} from '../../../../packages/common/src/data/user-status'
 class UserHandler {
   /**
    * Handler for firestore user create
    */
   static async createUser(firebaseKey, newValue) {
     const {userRepository, userAuthRepository} = await UserHandler.getRepositories()
-    functions.logger.log('createUser')
+
+    if (newValue.creator == UserCreator.syncFromSQL) {
+      functions.logger.log(
+        `createUser skipped authUserId:${newValue.authUserId} creator:${UserCreator.syncFromSQL}`,
+      )
+      return
+    }
+
+    functions.logger.log(`createUser authUserId:${newValue.authUserId}`)
 
     const newUser = {
       firebaseKey,
       firstName: newValue.firstName,
       lastName: newValue.lastName,
-      photoUrl: newValue.base64Photo,
-      registrationId: newValue.registrationId ?? null,
+      photoUrl: newValue?.photo ?? null,
+      registrationId: newValue?.registrationId ?? null,
       isEmailVerified: false, // TODO check a logic
     }
 
@@ -62,7 +70,7 @@ class UserHandler {
       firebaseKey,
       firstName: newValue.firstName,
       lastName: newValue.lastName,
-      photoUrl: newValue.base64Photo,
+      photoUrl: newValue?.photo,
     }
 
     try {

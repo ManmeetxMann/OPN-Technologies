@@ -153,6 +153,12 @@ class AdminPCRTestResultController implements IControllerBase {
       this.replyComment,
     )
 
+    innerRouter.get(
+      this.path + '/test-results/list/failed-confirmatory-request',
+      listTestResultsAuth,
+      this.listFailedResultConfirmatory,
+    )
+
     this.router.use('/', innerRouter)
   }
 
@@ -667,6 +673,20 @@ class AdminPCRTestResultController implements IControllerBase {
       await this.pcrTestResultsService.resendReport(testResultId, userId)
 
       res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  listFailedResultConfirmatory = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const failedResults = await this.pcrTestResultsService.getAllFailedResultConfirmatory()
+
+      res.json(actionSucceed(failedResults))
     } catch (error) {
       next(error)
     }

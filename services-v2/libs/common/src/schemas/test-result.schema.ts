@@ -5,8 +5,9 @@ export const pcrTestResultSchema = Joi.object({
   id: Joi.string(),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
-  dateOfBirth: Joi.string().required(),
-  postalCode: Joi.string().required(),
+  dateOfBirth: Joi.string(),
+  postalCode: Joi.string(),
+  generatedCouponCode: Joi.string(),
   testType: Joi.string()
     .required()
     .valid(
@@ -25,7 +26,7 @@ export const pcrTestResultSchema = Joi.object({
   displayInResult: Joi.boolean().required(),
   dateTime: FirestoreTimestamp.isValid().required(),
   homeKitId: Joi.string().required(),
-  photoUrl: Joi.string().required(),
+  photoUrl: Joi.string(),
   result: Joi.string()
     .required()
     .valid('Positive', 'Negative', 'Invalid'),

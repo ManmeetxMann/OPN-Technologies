@@ -19,7 +19,7 @@ const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 describe('post:labs', () => {
   test('should be successfull to create lab', async () => {
     const url = `${reservationServiceUrl}/reservation/admin/api/v1/labs`;
-    const token = await helpersCommon.runAuthenticatedTest(frisby);
+    const token = await helpersCommon.runAuthenticatedTest(frisby)
 
     return frisby
         .setup({

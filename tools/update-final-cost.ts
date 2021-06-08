@@ -117,7 +117,7 @@ async function updatePackageDetails(packages, products) {
 
 async function updateWithUserPaidAmount() {
   return new Promise((resolve, reject) => {
-    const updateFinalPriceWithUserPaidAmountSQL = `UPDATE appointments_finance SET finalPrice=amountPaid, source='paidByUser' WHERE amountPaid>0`
+    const updateFinalPriceWithUserPaidAmountSQL = `UPDATE appointments SET finalPrice=amountPaid, source='paidByUser' WHERE amountPaid>0`
     conn
       .query(updateFinalPriceWithUserPaidAmountSQL, [])
       .on('error', (err) => {
@@ -133,7 +133,7 @@ async function updateWithUserPaidAmount() {
 
 async function updateWithPaidByOrgAmount() {
   return new Promise((resolve, reject) => {
-    const updateFinalPriceWithPaidByOrgAmountSQL = `UPDATE appointments_finance SET finalPrice=costForOrg, source='paidByOrg' WHERE costForOrg>0`
+    const updateFinalPriceWithPaidByOrgAmountSQL = `UPDATE appointments SET finalPrice=costForOrg, source='paidByOrg' WHERE costForOrg>0`
     conn
       .query(updateFinalPriceWithPaidByOrgAmountSQL, [])
       .on('error', (err) => {
@@ -177,7 +177,7 @@ async function updatePerUnitCostForPackages(perUnitCostForPacakges, source: Pric
     }
     let packageProcessed = 0
     perUnitCostForPacakges.forEach(function (record) {
-      const sql = `UPDATE appointments_finance SET finalPrice=${record.perUnitCost}, source="${source}" WHERE packageCode="${record.packageCode}" AND finalPrice=0`
+      const sql = `UPDATE appointments SET finalPrice=${record.perUnitCost}, source="${source}" WHERE packageCode="${record.packageCode}" AND finalPrice=0`
       conn
         .query(sql, [])
         .on('error', (err) => {
@@ -199,7 +199,7 @@ async function updatePerUnitCostForPackages(perUnitCostForPacakges, source: Pric
 async function getPackagesWithZeroCost() {
   return new Promise((resolve, reject) => {
     const packages = []
-    const sql = `SELECT packageCode FROM appointments_finance WHERE packageCode!="" AND finalPrice=0 GROUP BY packageCode`
+    const sql = `SELECT packageCode FROM appointments WHERE packageCode!="" AND finalPrice=0 GROUP BY packageCode`
     conn
       .query(sql, [])
       .on('error', (err) => {
@@ -265,7 +265,7 @@ async function getCostFromPackageDescription(packages) {
 
 async function updateSourceForFreeAppointmentUnderFHHealthCalendar() {
   return new Promise((resolve, reject) => {
-    const sql = `UPDATE appointments_finance SET source='FHHealthCalendar' WHERE finalPrice=0 AND calendarID=5092486 AND source is null`
+    const sql = `UPDATE appointments SET source='FHHealthCalendar' WHERE finalPrice=0 AND calendarID=5092486 AND source is null`
     conn
       .query(sql, [])
       .on('error', (err) => {
@@ -281,7 +281,7 @@ async function updateSourceForFreeAppointmentUnderFHHealthCalendar() {
 
 async function updateSourceForFreeAppointmentUnderFHHealthORG() {
   return new Promise((resolve, reject) => {
-    const sql = `UPDATE appointments_finance SET source='FHHealthOrg' WHERE finalPrice=0 AND source is null AND organizationId="8YBSzW5zXUONnBLrCuwr"`
+    const sql = `UPDATE appointments SET source='FHHealthOrg' WHERE finalPrice=0 AND source is null AND organizationId="8YBSzW5zXUONnBLrCuwr"`
     conn
       .query(sql, [])
       .on('error', (err) => {
@@ -297,7 +297,7 @@ async function updateSourceForFreeAppointmentUnderFHHealthORG() {
 
 async function updateSourceForFreeRERUNAppointment() {
   return new Promise((resolve, reject) => {
-    const sql = `UPDATE appointments_finance SET source='ReRun' WHERE finalPrice=0 AND source is null AND packageCode LIKE 'RERUN%'`
+    const sql = `UPDATE appointments SET source='ReRun' WHERE finalPrice=0 AND source is null AND packageCode LIKE 'RERUN%'`
     conn
       .query(sql, [])
       .on('error', (err) => {
@@ -313,7 +313,7 @@ async function updateSourceForFreeRERUNAppointment() {
 
 async function updateSourceForFreeAppointmentFHHealthEmail() {
   return new Promise((resolve, reject) => {
-    const sql = `UPDATE appointments_finance SET source='FHHealthEmail' WHERE finalPrice=0 AND source is null AND email LIKE '%@fhhealth.ca'`
+    const sql = `UPDATE appointments SET source='FHHealthEmail' WHERE finalPrice=0 AND source is null AND email LIKE '%@fhhealth.ca'`
     conn
       .query(sql, [])
       .on('error', (err) => {
@@ -329,12 +329,12 @@ async function updateSourceForFreeAppointmentFHHealthEmail() {
 
 async function updateSourceForOneTimeUsedCoupons() {
   return new Promise((resolve, reject) => {
-    const sql = `UPDATE appointments_finance SET source='OneTimeUsedCoupon'
+    const sql = `UPDATE appointments SET source='OneTimeUsedCoupon'
         WHERE packageCode IN
         (
             SELECT * FROM
             (
-                SELECT AF.packageCode as packageCode FROM appointments_finance AF LEFT JOIN package_description PD ON AF.packageCode=PD.packageCode WHERE source is null AND PD.packageCode is null GROUP BY AF.packageCode
+                SELECT AF.packageCode as packageCode FROM appointments AF LEFT JOIN package_description PD ON AF.packageCode=PD.packageCode WHERE source is null AND PD.packageCode is null GROUP BY AF.packageCode
             ) AS subquery
         )`
     conn

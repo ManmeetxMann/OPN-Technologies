@@ -37,7 +37,7 @@ runs:
       PREPROD_TAG_REF=refs/tags/preprod-
       PROD_TAG_REF=refs/tags/prod-
       echo "::group::Define Deployment Variables"
-      if [[ $GITHUB_REF == 'refs/heads/feature/hl7-egress' ]]; then
+      if [[ $GITHUB_REF == 'refs/heads/feature/users-sync' ]]; then
         echo "Deploy to DEV"
         echo "PROJECT_ID=opn-platform-dev" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=dev_service_account" >> $GITHUB_ENV
@@ -80,23 +80,26 @@ runs:
       gcloud auth activate-service-account --key-file=./service-account.json --project=${{ env.PROJECT_ID }}
       rm ./service-account.json
       echo "::endgroup::"
+      
       echo "::group::Add Application Environment Variables"
-      cd ./cloud-functions/src/${{ inputs.function_name }}
-      echo "Writing Environment Variables ${{ inputs.secret_file_name }} to: ./cloud-functions/src/.env"
-      gcloud secrets versions access latest --secret=${{ inputs.secret_file_name }} > ./.env
+      echo "Writing Environment Variables ${{ inputs.secret_file_name }} to: ./cloud-functions/src/${{ inputs.function_name }}/.env"
+      gcloud secrets versions access latest --secret=${{ inputs.secret_file_name }} > ./cloud-functions/src/${{ inputs.function_name }}/.env
       echo "::endgroup::"
-      echo "::group::Deploy to GAE"
+
+      echo "::group::Install dependencies"
+      cd ./services-v2
       npm install
+      cd ../cloud-functions/src/${{ inputs.function_name }}
+      npm install
+      echo "::endgroup::"
+
+      echo "::group::Build"
       npm run build
-      gcloud functions deploy ${{ inputs.function_name }} \
-        --entry-point=requestHandler \
-        --egress-settings=private-ranges-only \
-        --region=${{ inputs.region }} \
-        --source=./dist \
-        --runtime=nodejs12 \
-        --memory=128MB \
-        --trigger-topic=${{ inputs.trigger_topic }} \
-        --vpc-connector=projects/${{ env.PROJECT_ID }}/locations/${{ inputs.region }}/connectors/connector-subnet1 \
-        --env-vars-file=./.env
+      echo "::endgroup::"
+
+      echo "::group::Deploy to GAE"
+      export REGION=${{ inputs.region }}
+      export TRIGGER_TOPIC=${{ inputs.trigger_topic }}
+      npm run deploy
       echo "::endgroup::"
     shell: bash
