@@ -145,6 +145,19 @@ describe('Cart basic', () => {
     done()
   })
 
+  test('try to add max item count', async done => {
+    const response = await request(server)
+      .post(url)
+      .set({
+        ...headers,
+        'Content-Type': 'application/json',
+      })
+      .send({items: Array(51).fill(cartItem)})
+
+    expect(response.body.status.message).toBe('Maximum cart items limit reached')
+    done()
+  })
+
   afterAll(async () => {
     await Promise.all([await app.close(), deleteUserByIdTestDataCreator(userId, testDataCreator)])
   })
