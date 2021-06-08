@@ -1,5 +1,5 @@
 import {Body, Controller, Get, Post, UseGuards} from '@nestjs/common'
-import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
+import {ApiBearerAuth, ApiResponse, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 
@@ -12,9 +12,11 @@ import {RapidHomeKitCodeService} from '../../../service/patient/rapid-home-kit-c
 import {OpnConfigService} from '@opn-services/common/services'
 import {CouponService} from '@opn-reservation-v1/services/coupon.service'
 import {CouponEnum} from '@opn-reservation-v1/models/coupons'
-import {ResourceNotFoundException} from '@opn-services/common/exception'
+import {ForbiddenException, ResourceNotFoundException} from '@opn-services/common/exception'
 import {timestampToFormattedIso} from '@opn-services/common/utils/times'
 import {PatientService} from '@opn-services/user/service/patient/patient.service'
+import {TestResultService} from '@opn-services/user/service/patient/test-result.service'
+import {CreateTestResultResponseDto} from '@opn-services/user/dto/test-result'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -24,10 +26,12 @@ export class RapidHomeController {
   private encryptionService: EncryptionService
   private couponService: CouponService
 
+  // eslint-disable-next-line max-params
   constructor(
     private homeKitCodeService: RapidHomeKitCodeService,
     private configService: OpnConfigService,
     private patientService: PatientService,
+    private testResultService: TestResultService,
   ) {
     this.encryptionService = new EncryptionService(
       this.configService.get('RAPID_HOME_KIT_CODE_ENCRYPTION_KEY'),
@@ -78,11 +82,13 @@ export class RapidHomeController {
   @Post('home-test-patients/coupon')
   @Roles([RequiredUserPermission.RegUser])
   @UseGuards(AuthGuard)
+  @ApiResponse({type: CreateTestResultResponseDto})
   async createCoupon(
     @Body() couponBody: CouponDto,
     @AuthUserDecorator() authUser: User,
   ): Promise<ResponseWrapper> {
-    const {email} = couponBody
+    const {email, id} = couponBody
+    let result: string
 
     if (authUser.email && authUser.email !== email) {
       throw new ResourceNotFoundException('email does not belong to user')
@@ -93,13 +99,32 @@ export class RapidHomeController {
       throw new ResourceNotFoundException('User with given id not found')
     }
 
-    const couponCode = await this.couponService.createCoupon(
-      authUser.email,
-      CouponEnum.forRapidHome,
-    )
-    await this.couponService.saveCoupon(couponCode)
-    await this.patientService.updateProfile(patientExists.idPatient, {email})
+    const pcrTestResult = await this.testResultService.findPCRResultById(id)
+    if (!pcrTestResult) {
+      throw new ResourceNotFoundException('pcr-test-result with given id not found')
+    }
 
-    return ResponseWrapper.actionSucceed({couponCode})
+    if (authUser.id !== pcrTestResult.userId) {
+      throw new ForbiddenException('pcr test result does not belong to user')
+    }
+
+    if (!pcrTestResult.generatedCouponCode) {
+      const couponCode = await this.couponService.createCoupon(
+        authUser.email,
+        CouponEnum.forRapidHome,
+      )
+
+      await Promise.all([
+        this.couponService.saveCoupon(couponCode),
+        this.patientService.setPatientAndUserEmail(patientExists.idPatient, {email}),
+        this.testResultService.addCouponCodePCRResultById(id, couponCode),
+      ])
+
+      result = couponCode
+    } else {
+      result = pcrTestResult.generatedCouponCode
+    }
+
+    return ResponseWrapper.actionSucceed({couponCode: result})
   }
 }

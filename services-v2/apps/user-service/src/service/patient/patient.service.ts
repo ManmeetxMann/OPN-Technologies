@@ -57,6 +57,7 @@ import {AppointmentActivityAction, AppointmentDBModel} from '@opn-reservation-v1
 import {ActionStatus} from '@opn-services/common/model'
 import {OrganizationService} from '@opn-enterprise-v1/services/organization-service'
 import {Organization} from '@opn-enterprise-v1/models/organization'
+import {Platforms} from '@opn-common-v1/types/platform'
 
 @Injectable()
 export class PatientService {
@@ -215,7 +216,7 @@ export class PatientService {
       firstName: data.firstName,
       isEmailVerified: false,
       lastName: data.lastName,
-      registrationId: data.registrationId ?? null,
+      registrationId: await this.getRegistrationId(data),
       photo: data.photoUrl ?? null,
       phoneNumber: data.phoneNumber ?? null,
       authUserId: data.authUserId,
@@ -320,7 +321,7 @@ export class PatientService {
       firstName: patient.firstName,
       lastName: patient.lastName,
       isEmailVerified: patient.isEmailVerified,
-      ...(patient.registrationId && {registrationId: patient.registrationId}),
+      registrationId: await this.getRegistrationId({...data, firebaseKey: patient.firebaseKey}),
       ...(patient.photoUrl && {photo: patient.photoUrl}),
       phone: {
         diallingCode: 0,
@@ -346,6 +347,21 @@ export class PatientService {
     delete patient.addresses
     delete patient.digitalConsent
     return this.patientRepository.save(patient)
+  }
+
+  async setPatientAndUserEmail(patientId: number, data: PatientUpdateDto): Promise<void> {
+    const patient = await this.getProfilebyId(patientId)
+    if (!patient) {
+      throw new ResourceNotFoundException('User with given id not found')
+    }
+    const auth = patient.auth
+
+    if (auth && data.email && auth?.email !== data.email) {
+      auth.email = data.email
+      await this.patientAuthRepository.save(auth)
+    }
+
+    await this.userRepository.updateProperties(patient.firebaseKey, {email: data.email})
   }
 
   async connectOrganization(patientId: number, firebaseOrganizationId: string): Promise<void> {
@@ -393,7 +409,7 @@ export class PatientService {
     entity.phoneNumber = data.phoneNumber
     entity.dateOfBirth = data.dateOfBirth
     entity.photoUrl = data.photoUrl
-    entity.registrationId = data.registrationId
+    entity.registrationId = await this.getRegistrationId(data)
     entity.consentFileUrl = data.consentFileUrl
     entity.isEmailVerified = data.isEmailVerified || false
 
@@ -412,7 +428,7 @@ export class PatientService {
     const firebaseUser = await this.userRepository.add({
       firstName: data.firstName,
       lastName: data.lastName,
-      registrationId: data.registrationId ?? null,
+      registrationId: await this.getRegistrationId(data),
       photo: data.photoUrl ?? null,
       phone: {
         diallingCode: 0,
@@ -673,20 +689,16 @@ export class PatientService {
   /**
    * Update or insert push token
    */
-  async upsertPushToken(
-    patientId: number,
-    registrationId: string,
-    registration: Omit<Registration, 'id'>,
-  ): Promise<void> {
+  async upsertPushToken(patientId: number, registration: Omit<Registration, 'id'>): Promise<void> {
     const {pushToken, osVersion, platform} = registration
 
     // validate if we get token
     if (pushToken) {
       await this.messaging.validatePushToken(pushToken)
     }
-
+    const patient = await this.patientRepository.findOne(patientId)
     // create or update token
-    const {id} = await this.registrationService.upsert(registrationId, {
+    const {id} = await this.registrationService.upsert(patient.firebaseKey, {
       osVersion,
       platform,
       pushToken,
@@ -741,5 +753,23 @@ export class PatientService {
     }
 
     await this.updateProfile(patient.idPatient, updateDto)
+  }
+
+  async getRegistrationId(userData: PatientUpdateDto): Promise<string> {
+    let registrationDb: Registration
+
+    if (
+      userData?.registration?.pushToken ||
+      userData?.registration?.osVersion ||
+      userData?.registration?.platform
+    ) {
+      registrationDb = await this.registrationService.upsert(userData.firebaseKey, {
+        platform: userData?.registration?.platform as Platforms,
+        osVersion: userData?.registration?.osVersion,
+        pushToken: userData?.registration?.pushToken,
+      })
+    }
+
+    return registrationDb?.id || null
   }
 }

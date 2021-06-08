@@ -970,6 +970,12 @@ components:
               type: string
             status:
               type: string
+            antibodySpecimenType:
+              type: string
+            methodology:
+              type: string
+            indication:
+              type: string
             resultMetaData:
               type: object
               additionalProperties: false
@@ -1187,6 +1193,28 @@ components:
         - receiveResultsViaEmail
         - receiveNotificationsFromGov
 
+    PubSubRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        subscription:
+          type: string
+        message:
+          type: object
+          additionalProperties: false
+          properties:
+            messageId:
+              type: string
+            message_id:
+              type: string
+            publishTime:
+              type: string
+            publish_time:
+              type: string
+            data:
+              type: string
+            attributes:
+              additionalProperties: true
 
 paths:
   /admin/api/v1/send-fax-for-positive:
@@ -4390,3 +4418,40 @@ paths:
                       message:
                         nullable: true
                         type: string
+
+  /reservation/api/v1/pubsub/test-result:
+    post:
+      description: Pubsub result-result
+      tags:
+        - Pubsub
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Success
+
+  /reservation/api/v1/pubsub/test-result/test:
+    post:
+      description: Test push notification
+      tags:
+        - Pubsub
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                userId:
+                  type: string
+                pcrId:
+                  type: string
+              required:
+                - userId
+                - pcrId
+      responses:
+        '200':
+          description: Success

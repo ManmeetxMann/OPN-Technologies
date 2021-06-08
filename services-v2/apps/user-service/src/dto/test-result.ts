@@ -2,7 +2,7 @@ import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 import {IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString, IsUrl} from 'class-validator'
 import {firestore} from 'firebase-admin'
 
-enum TestTypes {
+export enum TestTypes {
   Positive = 'Positive',
   Negative = 'Negative',
   Invalid = 'Invalid',
@@ -12,6 +12,12 @@ enum ReportAs {
   Individual = 'Individual',
   Family = 'Family',
   PartOfATeam = 'PartOfATeam',
+}
+
+export class CreateTestResultResponseDto {
+  @ApiProperty()
+  @IsString()
+  couponCode: string
 }
 
 export class TestResultCreateDto {
@@ -27,6 +33,10 @@ export class TestResultCreateDto {
   @IsString()
   @IsNotEmpty()
   homeKitCode?: string
+
+  @IsString()
+  @IsOptional()
+  generatedCouponCode?: string
 
   @ApiProperty()
   @ApiPropertyOptional()
@@ -67,14 +77,13 @@ export class TestResultCreateDto {
   @IsNotEmpty()
   lastName: string
 
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsDateString()
-  dateOfBirth: string
+  dateOfBirth?: string
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  @IsNotEmpty()
-  postalCode: string
+  @IsOptional()
+  postalCode?: string
 }

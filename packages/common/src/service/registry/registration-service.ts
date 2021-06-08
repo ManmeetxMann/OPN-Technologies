@@ -23,6 +23,17 @@ export class RegistrationService {
     return this.repository.findWhereArrayContainsAny('userIds', userIds)
   }
 
+  findLastForUserId(userId: string): Promise<Registration> {
+    return (
+      this.repository
+        .getQueryFindWhereArrayContains('userIds', userId)
+        //@ts-ignore
+        .orderBy('timestamps.updatedAt', 'desc')
+        .limit(1)
+        .fetch()[0]
+    )
+  }
+
   update(registration: Registration): Promise<Registration> {
     return this.repository.update(registration)
   }
@@ -35,12 +46,10 @@ export class RegistrationService {
     return this.repository.updateProperty(registrationId, fieldName, fieldValue)
   }
 
-  async upsert(
-    registrationId: string,
-    registration: Omit<Registration, 'id'>,
-  ): Promise<Registration> {
+  async upsert(userId: string, registration: Omit<Registration, 'id'>): Promise<Registration> {
     const {platform, osVersion, pushToken} = registration
-    const registrationExists = pushToken && (await this.findOne(registrationId))
+    const registrationFromDb = await this.findLastForUserId(userId)
+    const registrationExists = pushToken && registrationFromDb?.id
 
     LogInfo('upsert', 'UpsertPushToken', {
       registrationExists,
@@ -48,13 +57,13 @@ export class RegistrationService {
     })
 
     if (registrationExists) {
-      return this.updateProperty(registrationId, 'pushToken', pushToken)
+      return this.updateProperty(registrationFromDb.id, 'pushToken', pushToken)
     } else {
       return this.create({
         platform,
         osVersion,
         pushToken: pushToken ?? null,
-        userIds: [],
+        userIds: [userId],
       })
     }
   }

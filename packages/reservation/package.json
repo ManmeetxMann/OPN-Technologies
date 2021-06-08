@@ -20,7 +20,7 @@
         "initialize": "ts-node -e \"require('./src/server.ts').init()\""
     },
     "dependencies": {
-        "@google-cloud/debug-agent": "5.2.1"
+        "@google-cloud/debug-agent": "5.2.2"
     },
     "devDependencies": {
         "jest": "^27.0.1",

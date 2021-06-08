@@ -24,7 +24,7 @@ describe('admin:operations:create', () => {
         .post(
             url,
             {
-              'email': 'gabriel@stayopn.com',
+              'email': 'mykola+3@stayopn.com',
               'organizationId': organizationId,
               'locationIds': [
               ],

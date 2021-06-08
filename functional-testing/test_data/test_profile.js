@@ -46,6 +46,17 @@ let profiles = {
         "locationTitle":"TEST1_LOC1",
         "locationId":"TEST_LOC1"
     },
+    "harpreet_preprod2_admin":{
+        "email":"harpreet+preprod1@stayopn.com",
+        "organizationId":"FTpEUi94EjQOzI3ev0Wy",
+        "firstName":"Harpreet 1",
+        "lastName":"Gill 1",
+        "groupId":"67Ax1Z9Z9HjXurZLaMR0 ",
+        "groupName":"TEST1_GRP1",
+        "userId":"iVK1tRyuU5znFGptWP6s",
+        "locationTitle":"TEST1_LOC1",
+        "locationId":"TEST_LOC1"
+    },
     "harpreet_dev_lab":{
         "email":"harpreet+6@stayopn.com",
         "organizationId":"TEST1",
@@ -84,7 +95,7 @@ let profiles = {
         "organizationId":"FTpEUi94EjQOzI3ev0Wy",
         "firstName":"Mary",
         "lastName":"March",
-        "groupId":"GRP1",
+        "groupId":"CcVCDjTH66GjDwXHlK9v",
         "groupName":"TEST1_GRP1",
         "userId":"iVK1tRyuU5znFGptWP6s",
         "locationTitle":"TEST1_LOC1",

@@ -93,6 +93,15 @@ import {AntibodyAllPDFContent} from '../templates/antibody-all'
 import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 import {normalizeAnalysis} from '../utils/analysis.helper'
 import {CouponEnum} from '../models/coupons'
+import {RegistrationService} from '../../../common/src/service/registry/registration-service'
+import {FirebaseMessagingService} from '../../../common/src/service/messaging/firebase-messaging-service'
+import {PushNotificationType} from '../types/push-notification.type'
+import admin from 'firebase-admin'
+import {
+  getNotificationBody,
+  getNotificationTitle,
+  getPushNotificationType,
+} from '../utils/push-notification.helper'
 import {MountSinaiFormater} from '../utils/mount-sinai-formater'
 import {UserSyncService} from '../../../enterprise/src/services/user-sync-service'
 import {Patient} from '../../../../services-v2/apps/user-service/src/model/patient/patient.entity'
@@ -126,26 +135,33 @@ export class PCRTestResultsService {
   private temperatureService = new TemperatureService()
   private pulseOxygenService = new PulseOxygenService()
   private labService = new LabService()
+  private readonly firebaseMessagingService = new FirebaseMessagingService()
+  private registrationService = new RegistrationService()
   private userSyncService = new UserSyncService()
 
   private isAppointmentPushEnable = Config.get('APPOINTMENTS_PUSH_NOTIFY') === 'enabled'
 
-  private postPubSubForResultSend(testResult: PCRTestResultEmailDTO, action: string): void {
+  private postPubSubForResultSend(
+    resultData: PCRTestResultEmailDTO,
+    pcrId: string,
+    action: string,
+  ): void {
     if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
       LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
       return
     }
     const data: Record<string, string> = {
-      id: testResult.id,
-      result: testResult.result,
-      date: safeTimestamp(testResult.dateTime).toISOString(),
+      id: pcrId,
+      result: resultData.result,
+      date: safeTimestamp(resultData.dateTime).toISOString(),
     }
     const attributes: Record<string, string> = {
-      userId: testResult.userId,
-      organizationId: testResult.organizationId,
+      notficationType: action,
+      userId: resultData.userId,
+      organizationId: resultData.organizationId,
       actionType: action,
-      phone: testResult.phone.toString(),
-      firstName: testResult.firstName,
+      phone: resultData.phone.toString(),
+      firstName: resultData.firstName,
     }
     const pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
     pubsub.publish(data, attributes)
@@ -257,12 +273,12 @@ export class PCRTestResultsService {
 
     const lab = await this.labService.findOneById(labId)
 
-    await this.sendNotification(
+    this.postPubSubForResultSend(
       {...newPCRResult, ...appointment, labAssay: lab.assay},
       notificationType,
       newPCRResult.id,
-      appointment.userId,
     )
+
     return newPCRResult.id
   }
 
@@ -930,12 +946,8 @@ export class PCRTestResultsService {
         ...appointment,
         ...pcrResultDataForDbUpdate,
       }
-      await this.sendNotification(
-        pcrResultDataForEmail,
-        metaData.action,
-        pcrResultRecorded.id,
-        appointment.userId,
-      )
+
+      this.postPubSubForResultSend(pcrResultDataForEmail, metaData.action, pcrResultRecorded.id)
     } else {
       console.log(
         `handlePCRResultSaveAndSend: Not Notification is sent for ${barCode}. Notify is off.`,
@@ -1066,7 +1078,6 @@ export class PCRTestResultsService {
     pcrId: string,
     userId: string,
   ): Promise<void> {
-    let addSuccessLog = true
     switch (notficationType) {
       case PCRResultActions.SendPreliminaryPositive: {
         await this.sendEmailNotification(resultData)
@@ -1115,7 +1126,6 @@ export class PCRTestResultsService {
         ) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Intermediate)
         } else {
-          addSuccessLog = false
           LogWarning('sendNotification', 'FailedEmailSent BlockedBySystem', {
             barCode: resultData.barCode,
             notficationType,
@@ -1124,15 +1134,33 @@ export class PCRTestResultsService {
         }
       }
     }
+  }
 
-    if (addSuccessLog) {
-      this.postPubSubForResultSend({...resultData, id: pcrId}, 'result')
-      LogInfo('sendNotification', 'SuccessfullEmailSent', {
-        barCode: resultData.barCode,
-        notficationType,
-        resultSent: resultData.result,
-      })
+  async sendPushNotification(result: PCRTestResultEmailDTO, userId: string): Promise<void> {
+    if (Config.get('TEST_RESULT_PUSH_NOTIFICATION') !== 'enabled') {
+      LogInfo('PCRTestResultsService:sendPushNotification', 'PushNotificationDisabled', {})
+      return
     }
+
+    const registration = await this.registrationService.findLastForUserId(userId)
+
+    if (!registration?.pushToken) {
+      throw new BadRequestException(`Registration information for this app not found`)
+    }
+
+    const message: admin.messaging.Message = {
+      data: {
+        resultId: null,
+        notificationType: null as PushNotificationType,
+        title: getNotificationTitle(result),
+        content: getNotificationBody(result),
+      },
+      token: registration.pushToken,
+    }
+
+    getPushNotificationType(result, message)
+
+    await this.firebaseMessagingService.send(message)
   }
 
   async resendReport(testResultId: string, userId: string): Promise<void> {
@@ -1303,7 +1331,12 @@ export class PCRTestResultsService {
   }
 
   async generateCouponCode(email: string, resultData: PCRTestResultDBModel): Promise<string> {
-    const couponCode = await this.couponService.createCoupon(email, CouponEnum.forResample)
+    const couponCode = await this.couponService.createCoupon(
+      email,
+      CouponEnum.forResample,
+      resultData.testType,
+    )
+
     await this.couponService.saveCoupon(couponCode, resultData.organizationId, resultData.barCode)
 
     LogInfo('generateCouponCode', 'CouponCodeCreated', {
