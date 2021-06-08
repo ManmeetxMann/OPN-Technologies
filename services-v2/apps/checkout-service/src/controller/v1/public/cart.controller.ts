@@ -84,7 +84,7 @@ export class CartController {
     const userId = authUser.authUserId
     const organizationId = authUser.requestOrganizationId
 
-    await this.userCardService.clearCoupons(userId, organizationId)
+    await this.userCardService.invalidateCoupons(userId, organizationId)
     const discountedItems = await this.userCardDiscountService.discount(
       coupon,
       userId,
