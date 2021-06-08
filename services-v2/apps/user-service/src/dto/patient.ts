@@ -371,7 +371,7 @@ export class LinkToAccountDto {
 
 export class CouponDto {
   @ApiProperty()
-  @IsEmail()
+  @IsEmail({}, {message: 'Please enter valid email address'})
   email: string
 
   @ApiProperty()
