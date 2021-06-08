@@ -249,7 +249,14 @@ export class UserCardService {
     return userCartItemRepository.count()
   }
 
-  async removeCoupons(userId: string, organizationId: string): Promise<CartResponseDto> {
+  async clearCoupons(userId: string, organizationId: string): Promise<void> {
+    await this.invalidateCoupons(userId, organizationId)
+  }
+
+  private async invalidateCoupons(
+    userId: string,
+    organizationId: string,
+  ): Promise<CardItemDBModel[]> {
     const userOrgId = `${userId}_${organizationId}`
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
     const cartItemsData = await userCartItemRepository.fetchAll()
@@ -258,7 +265,7 @@ export class UserCardService {
       throw new ResourceNotFoundException('userCart-item with given id not found')
     }
 
-    const cartData = await Promise.all(
+    return await Promise.all(
       cartItemsData.map(async cartItem => {
         const cartItemData = {
           ...cartItem,
@@ -267,7 +274,10 @@ export class UserCardService {
         return userCartItemRepository.update(cartItemData)
       }),
     )
+  }
 
+  async removeCoupons(userId: string, organizationId: string): Promise<CartResponseDto> {
+    const cartData = await this.invalidateCoupons(userId, organizationId)
     const cartItems = cartData.map(cartDB => ({
       cartItemId: cartDB.cartItemId,
       label: cartDB.appointmentType.name,
