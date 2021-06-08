@@ -14,6 +14,12 @@ enum ReportAs {
   PartOfATeam = 'PartOfATeam',
 }
 
+export class CreateTestResultResponseDto {
+  @ApiProperty()
+  @IsString()
+  couponCode: string
+}
+
 export class TestResultCreateDto {
   id: string
   testType: string
@@ -28,7 +34,6 @@ export class TestResultCreateDto {
   @IsNotEmpty()
   homeKitCode?: string
 
-  @ApiProperty()
   @IsString()
   @IsOptional()
   generatedCouponCode?: string
@@ -72,13 +77,13 @@ export class TestResultCreateDto {
   @IsNotEmpty()
   lastName: string
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsOptional()
   @IsDateString()
-  dateOfBirth: string
+  dateOfBirth?: string
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  postalCode: string
+  postalCode?: string
 }

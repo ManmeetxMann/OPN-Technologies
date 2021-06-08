@@ -1,5 +1,5 @@
 import {Body, Controller, Get, Post, UseGuards} from '@nestjs/common'
-import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
+import {ApiBearerAuth, ApiResponse, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 
@@ -16,6 +16,7 @@ import {ForbiddenException, ResourceNotFoundException} from '@opn-services/commo
 import {timestampToFormattedIso} from '@opn-services/common/utils/times'
 import {PatientService} from '@opn-services/user/service/patient/patient.service'
 import {TestResultService} from '@opn-services/user/service/patient/test-result.service'
+import {CreateTestResultResponseDto} from '@opn-services/user/dto/test-result'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -81,6 +82,7 @@ export class RapidHomeController {
   @Post('home-test-patients/coupon')
   @Roles([RequiredUserPermission.RegUser])
   @UseGuards(AuthGuard)
+  @ApiResponse({type: CreateTestResultResponseDto})
   async createCoupon(
     @Body() couponBody: CouponDto,
     @AuthUserDecorator() authUser: User,
