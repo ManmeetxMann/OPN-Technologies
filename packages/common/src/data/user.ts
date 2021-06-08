@@ -90,6 +90,7 @@ export type AuthUser = Auditable & {
   memberId?: string
   stripeCustomerId?: string
   creator?: UserCreator
+  delegates?: string[]
 }
 
 // TODO: this duplicates the user in the enterprise service
