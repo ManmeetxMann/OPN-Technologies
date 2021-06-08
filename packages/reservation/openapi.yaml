@@ -4322,3 +4322,71 @@ paths:
       responses:
         '200':
           description: Success
+
+  /reservation/admin/api/v1/test-results/failed-confirmatory-request/sync:
+    post:
+      description: Add transport run to appointment
+      tags:
+        - Transport Runs
+      security:
+        - bearerAuthJWT: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                failedResultsIds:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - failedResultsIds
+      responses:
+        '200':
+          description: sync with Mount Sinai Success
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        appointmentId:
+                          type: string
+                        reason:
+                          type: string
+                        resultId:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            - Success
+                            - Failed
+                      required:
+                        - appointmentId
+                        - resultId
+                        - status
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string

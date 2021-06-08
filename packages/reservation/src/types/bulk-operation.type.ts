@@ -13,6 +13,13 @@ export type BulkOperationResponse = {
   updatedData?: AppointmentDBModel
 }
 
+export type BulkSyncResponse = {
+  appointmentId: string
+  resultId: string
+  status: BulkOperationStatus
+  reason?: string
+}
+
 export type BulkData = {
   vialLocation?: string
   transportRunId?: string

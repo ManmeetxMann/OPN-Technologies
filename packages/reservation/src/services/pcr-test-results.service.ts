@@ -1,5 +1,5 @@
 import moment from 'moment'
-import {fromPairs, sortBy, union} from 'lodash'
+import {fromPairs, sortBy, union, chunk, flatten} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
@@ -75,7 +75,7 @@ import {
 } from '../models/appointment'
 import {PCRResultPDFContent} from '../templates/pcr-test-results'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
-import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
+import {BulkOperationResponse, BulkOperationStatus, BulkSyncResponse} from '../types/bulk-operation.type'
 import {TestRunsService} from '../services/test-runs.service'
 import {TemperatureService} from './temperature.service'
 import {LabService} from './lab.service'
@@ -193,7 +193,7 @@ export class PCRTestResultsService {
       await MountSinaiSchema.validateAsync(formatedORMData)
     } catch (errors) {
       const reasons = errors.details.map((err) => err.message)
-      await this.failedResultConfirmatoryRequestRepository.save({
+      await this.failedResultConfirmatoryRequestRepository.saveOrUpdate({
         resultId: testResult.id,
         appointmentId: testResult.appointmentId,
         reasons,
@@ -727,10 +727,8 @@ export class PCRTestResultsService {
       }
     }
 
-    const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
-      this.datastore,
-      reportTrackerId,
-    )
+    const testResultsReportingTrackerPCRResult =
+      new TestResultsReportingTrackerPCRResultsRepository(this.datastore, reportTrackerId)
     const resultDate = testResultData.resultDate
     const templateId = testResultData.templateId
     const labId = testResultData.labId
@@ -1669,9 +1667,7 @@ export class PCRTestResultsService {
     return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
   }
 
-  async getDueDeadlineStats(
-    queryParams: PcrTestResultsListByDeadlineRequest,
-  ): Promise<{
+  async getDueDeadlineStats(queryParams: PcrTestResultsListByDeadlineRequest): Promise<{
     pcrResultStatsByResultArr: Filter[]
     pcrResultStatsByOrgIdArr: Filter[]
     total: number
@@ -2160,5 +2156,43 @@ export class PCRTestResultsService {
 
   async getAllFailedResultConfirmatory(): Promise<FailedResultConfirmatoryRequest[]> {
     return await this.failedResultConfirmatoryRequestRepository.getAll()
+  }
+
+  async deleteFailedResultConfirmatory(id: string): Promise<void> {
+    return await this.failedResultConfirmatoryRequestRepository.delete(id)
+  }
+
+  getAllFailedResultByIds(failedResultIds: string[]): Promise<FailedResultConfirmatoryRequest[]> {
+    return Promise.all(
+      chunk(failedResultIds, 20).map((chunk) =>
+        this.failedResultConfirmatoryRequestRepository.findWhereIdIn(chunk),
+      ),
+    ).then((results) => flatten(results))
+  }
+
+  async syncMountSinai(appointmentId: string, resultId: string): Promise<BulkSyncResponse> {
+    try {
+      const appointment = await this.appointmentsRepository.getAppointmentById(appointmentId)
+      const testResult = await this.pcrTestResultsRepository.findOneById(resultId)
+      const lab = await this.labService.findOneById(appointment.labId)
+      await this.postPubSubForPresumptivePositiveResultSend(
+        {...testResult, ...appointment, labAssay: lab.assay},
+        appointment.userId,
+      )
+      return {
+        appointmentId,
+        resultId,
+        status: BulkOperationStatus.Success,
+        reason: '',
+      }
+    } catch (error) {
+
+      return {
+        appointmentId,
+        resultId,
+        status: BulkOperationStatus.Failed,
+        reason: error.message,
+      }
+    }
   }
 }
