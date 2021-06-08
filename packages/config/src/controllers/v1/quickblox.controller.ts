@@ -1,4 +1,5 @@
 import {NextFunction, Request, Response, Router} from 'express'
+import {Config} from '../../../../common/src/utils/config'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
@@ -14,14 +15,16 @@ class QuickbloxController implements IControllerBase {
   initRoutes(): void {
     this.router.get(
       this.path + '/quickblox',
-      authorizationMiddleware([RequiredUserPermission.RegUser], true),
+      authorizationMiddleware([RequiredUserPermission.RegUser]),
       this.getquickblox,
     )
   }
 
   getquickblox = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      res.json(actionSucceed({provider_id: 128003204}))
+      const provider_id = Config.get('QUICKBLOX_PROVIDER_ID')
+
+      res.json(actionSucceed({provider_id}))
     } catch (error) {
       next(error)
     }
