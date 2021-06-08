@@ -93,4 +93,6 @@ export const commonConfig: Record<string, string | string[] | number | boolean> 
   IS_SERVICE_V2_SWAGGER_ENABLED: false,
   CLINIC_CODE_MOUNT_SINAI_CONFIRMATORY: 'MS112',
   CLINIC_CODE_FOR_MOUNT_SINAI_LAB: 'MS117',
+
+  QUICKBLOX_PROVIDER_ID: 128003204,
 }
