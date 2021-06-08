@@ -75,7 +75,11 @@ import {
 } from '../models/appointment'
 import {PCRResultPDFContent} from '../templates/pcr-test-results'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
-import {BulkOperationResponse, BulkOperationStatus, BulkSyncResponse} from '../types/bulk-operation.type'
+import {
+  BulkOperationResponse,
+  BulkOperationStatus,
+  BulkSyncResponse,
+} from '../types/bulk-operation.type'
 import {TestRunsService} from '../services/test-runs.service'
 import {TemperatureService} from './temperature.service'
 import {LabService} from './lab.service'
@@ -287,10 +291,8 @@ export class PCRTestResultsService {
   }
 
   async processPCRTestResult(reportTrackerId: string, resultId: string): Promise<void> {
-    const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
-      this.datastore,
-      reportTrackerId,
-    )
+    const testResultsReportingTrackerPCRResult =
+      new TestResultsReportingTrackerPCRResultsRepository(this.datastore, reportTrackerId)
 
     const pcrResults = await testResultsReportingTrackerPCRResult.get(resultId)
     if (!pcrResults) {
@@ -362,10 +364,8 @@ export class PCRTestResultsService {
   async listPCRTestResultReportStatus(
     reportTrackerId: string,
   ): Promise<{inProgress: boolean; pcrTestResults: pcrTestResultsDTO[]}> {
-    const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
-      this.datastore,
-      reportTrackerId,
-    )
+    const testResultsReportingTrackerPCRResult =
+      new TestResultsReportingTrackerPCRResultsRepository(this.datastore, reportTrackerId)
 
     let inProgress = false
     const testResultsReporting = await testResultsReportingTrackerPCRResult.fetchAll()
@@ -2219,7 +2219,6 @@ export class PCRTestResultsService {
         reason: '',
       }
     } catch (error) {
-
       return {
         appointmentId,
         resultId,
