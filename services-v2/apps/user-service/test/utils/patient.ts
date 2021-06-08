@@ -7,10 +7,14 @@ import {
   PatientDigitalConsentRepository,
   PatientHealthRepository,
   PatientRepository,
+  PatientToDelegatesRepository,
   PatientToOrganizationRepository,
   PatientTravelRepository,
 } from '../../src/repository/patient.repository'
-import {PatientToOrganization} from '@opn-services/user/model/patient/patient-relations.entity'
+import {
+  PatientToDelegates,
+  PatientToOrganization,
+} from '@opn-services/user/model/patient/patient-relations.entity'
 import {
   PatientDigitalConsent,
   PatientHealth,
@@ -25,6 +29,7 @@ export class PatientTestUtility {
   travelRepository: PatientTravelRepository
   consentRepository: PatientDigitalConsentRepository
   patientToOrgRepository: PatientToOrganizationRepository
+  patientToDelegatesRepository: PatientToDelegatesRepository
 
   constructor() {
     this.patientRepository = getRepository(Patient)
@@ -34,6 +39,7 @@ export class PatientTestUtility {
     this.travelRepository = getRepository(PatientTravel)
     this.consentRepository = getRepository(PatientDigitalConsent)
     this.patientToOrgRepository = getRepository(PatientToOrganization)
+    this.patientToDelegatesRepository = getRepository(PatientToDelegates)
   }
 
   createPatient(data: {email: string}): Promise<Patient> {
@@ -68,14 +74,20 @@ export class PatientTestUtility {
           this.travelRepository.delete(deleteCriteria),
           this.consentRepository.delete(deleteCriteria),
           this.patientToOrgRepository.delete(deleteCriteria),
+          this.patientToDelegatesRepository.delete({
+            dependantId: deleteCriteria.patientId,
+          }),
+          this.patientToDelegatesRepository.delete({
+            delegateId: deleteCriteria.patientId,
+          }),
         ])
       }),
     )
   }
 
-  getProfilePayload(data: {email: string; firstName?: string; lastName?: string}): unknown {
+  getProfilePayload(data: {email?: string; firstName?: string; lastName?: string}): unknown {
     return {
-      email: data.email,
+      ...(data.email ? {email: data.email} : {}),
       firstName: data.firstName ?? 'TestFirstName',
       lastName: data.lastName ?? 'TestLastName',
       registrationId: 'T_111',

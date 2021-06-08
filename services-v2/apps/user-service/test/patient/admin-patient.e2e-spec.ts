@@ -9,7 +9,7 @@ import {createUser, deleteUserByIdTestDataCreator, commonHeaders} from '@opn-ser
 
 import {Patient} from '../../src/model/patient/patient.entity'
 import {PatientTestUtility} from '../utils/patient'
-import {PatientCreateDto} from '../../src/dto/patient'
+import {PatientCreateDto, DependantCreateDto} from '../../src/dto/patient'
 
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
 jest.setTimeout(20000)
@@ -35,6 +35,10 @@ describe('AdminPatientController (e2e)', () => {
     email: 'PATIENT_TEST_MAIL_E2E@stayopn.com',
     firstName: 'PATIENT_E2E',
     lastName: 'PATIENT_E2E',
+  }
+  const dependantCreatePayload = {
+    firstName: 'DEPENDANT_E2E',
+    lastName: 'DEPENDANT_E2E',
   }
   const userMockedMail = 'PATIENT_TEST_MAIL_MOC_E2E@stayopn.com'
 
@@ -99,6 +103,18 @@ describe('AdminPatientController (e2e)', () => {
     done()
   })
 
+  test('should not allow create patient with same email - / (POST)', async done => {
+    const payload = patientTestUtility.getProfilePayload(userCreatePayload)
+    const response = await request(server)
+      .post(url)
+      .set(headers)
+      .send(payload as PatientCreateDto)
+
+    expect(response.body.message).toBe('User with given email already exists')
+    expect(response.status).toBe(400)
+    done()
+  })
+
   test('should get all patients - / (GET)', async done => {
     const response = await request(server)
       .get(url)
@@ -129,14 +145,42 @@ describe('AdminPatientController (e2e)', () => {
     done()
   })
 
+  test('should add dependants - / (POST)', async done => {
+    const dependantPayload = patientTestUtility.getProfilePayload(dependantCreatePayload)
+    const response = await request(server)
+      .post(`${url}/${mockedUser.idPatient}/dependants`)
+      .set(headers)
+      .send(dependantPayload as DependantCreateDto)
+
+    expect(response.status).toBe(201)
+    expect(response.body.data.firstName).toBe(dependantCreatePayload.firstName)
+    expect(response.body.data.lastName).toBe(dependantCreatePayload.lastName)
+    done()
+  })
+
+  test('should get dependants - /:patientId (GET)', async done => {
+    const response = await request(server)
+      .get(`${url}/${mockedUser.idPatient}/dependants`)
+      .set(headers)
+      .send()
+
+    expect(response.status).toBe(200)
+    expect(response.body.data.length).toBe(1)
+    expect(response.body.data[0].firstName).toBe(dependantCreatePayload.firstName)
+    expect(response.body.data[0].lastName).toBe(dependantCreatePayload.lastName)
+    done()
+  })
+
   afterAll(async () => {
     await Promise.all([
       deleteUserByIdTestDataCreator(userId, testDataCreator),
       patientTestUtility.findAndRemoveProfile({idPatient: mockedUser.idPatient}),
       patientTestUtility.findAndRemoveProfile({firstName: userCreatePayload.firstName}),
+      patientTestUtility.findAndRemoveProfile({firstName: dependantCreatePayload.firstName}),
     ])
     await Promise.all([
       patientTestUtility.patientRepository.delete({firstName: userCreatePayload.firstName}),
+      patientTestUtility.patientRepository.delete({firstName: dependantCreatePayload.firstName}),
       patientTestUtility.patientRepository.delete(mockedUser.idPatient),
     ])
     await app.close()
