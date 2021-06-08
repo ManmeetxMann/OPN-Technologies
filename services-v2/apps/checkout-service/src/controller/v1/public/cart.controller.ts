@@ -107,7 +107,9 @@ export class CartController {
 
     const cartItemsCount = await this.userCardService.cartItemsCount(userId, organizationId)
     const maxCartItemsCount = this.maxCartItemsCount
-    if (cartItemsCount >= maxCartItemsCount) {
+
+    const isItemLimitReached = cartItemsCount + cartItems.items.length > maxCartItemsCount
+    if (isItemLimitReached) {
       LogWarning(CartFunctions.addCartItem, CartEvent.maxCartItems, {
         cartItemsCount,
         maxCartItemsCount,
