@@ -13,12 +13,13 @@ export class DriverRepository extends DataModel<Driver> {
 
   public async addDriver(driver: Driver): Promise<Driver> {
     const driverValid = await DriverChema.validateAsync(driver)
-    return await this.add(driverValid)
+    return this.add(driverValid)
   }
 
   public async updateDriver(name: string, enabled: boolean): Promise<Driver> {
-    const driver = await this.findWhereEqual('name', name)[0];
-    if(driver)
-      return await this.updateProperty(driver.id, 'enabled', enabled)
+    const driver = await this.findWhereEqual('name', name)[0]
+    if (driver) {
+      return this.updateProperty(driver.id, 'enabled', enabled)
+    }
   }
 }
