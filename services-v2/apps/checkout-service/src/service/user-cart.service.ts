@@ -259,7 +259,7 @@ export class UserCardService {
       throw new ResourceNotFoundException('userCart-item with given id not found')
     }
 
-    return await Promise.all(
+    return Promise.all(
       cartItemsData.map(async cartItem => {
         const cartItemData = {
           ...cartItem,
@@ -496,6 +496,11 @@ export class UserCardService {
         },
       },
     })
+  }
+
+  async deleteCart(userId: string, organizationId: string): Promise<void> {
+    await this.deleteAllCartItems(userId, organizationId)
+    await this.userCartRepository.removeCart(userId, organizationId)
   }
 
   async deleteCartItem(userId: string, cartItemId: string, organizationId: string): Promise<void> {

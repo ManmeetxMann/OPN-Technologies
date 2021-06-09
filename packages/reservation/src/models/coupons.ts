@@ -1,8 +1,16 @@
+import {TestTypes} from './appointment'
+
 export type Coupon = {
   id: string
   couponCode: string
   organizationId: string
   lastBarcode: string
+}
+
+export type InconclusiveCoupon = {
+  id: string
+  couponId: number
+  testType: TestTypes
 }
 
 export type AcuityCouponCodeResponse = {

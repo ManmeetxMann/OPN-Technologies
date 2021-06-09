@@ -108,7 +108,9 @@ export class CartController {
 
     const cartItemsCount = await this.userCardService.cartItemsCount(userId, organizationId)
     const maxCartItemsCount = this.maxCartItemsCount
-    if (cartItemsCount >= maxCartItemsCount) {
+
+    const isItemLimitReached = cartItemsCount + cartItems.items.length > maxCartItemsCount
+    if (isItemLimitReached) {
       LogWarning(CartFunctions.addCartItem, CartEvent.maxCartItems, {
         cartItemsCount,
         maxCartItemsCount,
@@ -301,7 +303,7 @@ export class CartController {
 
     // Save order information and delete all cart items
     await this.userCardService.saveOrderInformation(appointmentCreateStatuses, paymentIntentCapture)
-    await this.userCardService.deleteAllCartItems(authUserId, organizationId)
+    await this.userCardService.deleteCart(authUserId, organizationId)
 
     result.cart.isValid = true
     return ResponseWrapper.actionSucceed(result)
@@ -366,7 +368,7 @@ export class CartController {
       return ResponseWrapper.actionSucceed(result)
     }
 
-    await this.userCardService.deleteAllCartItems(authUserId, organizationId)
+    await this.userCardService.deleteCart(authUserId, organizationId)
 
     return ResponseWrapper.actionSucceed(result)
   }
