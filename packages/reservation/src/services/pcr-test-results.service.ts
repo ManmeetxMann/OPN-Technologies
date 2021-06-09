@@ -931,6 +931,7 @@ export class PCRTestResultsService {
         id: testResult.id,
       },
       appointment,
+      linkedBarCodes: testResult.linkedBarCodes,
       runNumber: testResult.runNumber,
       reCollectNumber: testResult.reCollectNumber,
       result: finalResult,
@@ -964,6 +965,7 @@ export class PCRTestResultsService {
     appointment,
     runNumber,
     reCollectNumber,
+    linkedBarCodes,
     result,
     actionBy,
   }: {
@@ -976,6 +978,7 @@ export class PCRTestResultsService {
       id: string
     }
     appointment: AppointmentDBModel
+    linkedBarCodes: string[],
     runNumber: number
     reCollectNumber: number
     result: ResultTypes
@@ -1002,6 +1005,7 @@ export class PCRTestResultsService {
           adminId: resultData.adminId,
           runNumber: nextRunNumber,
           reCollectNumber,
+          linkedBarCodes,
           previousResult: result,
           labId: resultData.labId,
           templateId: resultData.templateId,
@@ -1020,6 +1024,7 @@ export class PCRTestResultsService {
           adminId: resultData.adminId,
           runNumber: nextRunNumber,
           reCollectNumber,
+          linkedBarCodes,
           previousResult: result,
           labId: resultData.labId,
           templateId: resultData.templateId,
@@ -1038,6 +1043,7 @@ export class PCRTestResultsService {
           adminId: resultData.adminId,
           runNumber: nextRunNumber,
           reCollectNumber,
+          linkedBarCodes,
           previousResult: result,
           labId: resultData.labId,
           templateId: resultData.templateId,
