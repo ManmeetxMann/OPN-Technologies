@@ -388,6 +388,9 @@ export class UserCardService {
         throw new ResourceNotFoundException('Appointment type not found')
       }
 
+      // formatas iso string for mobile
+      item.dateOfBirth = toFormattedIso(item.dateOfBirth)
+
       const validCartItem = await cartItemValidator.validate({
         cartItemId: uuidv4(),
         patient: _.omit(item, ['slotId']),
