@@ -56,6 +56,11 @@ export class UserCartRepository extends DataModel<UserCartDBModel> {
       updateOn: now(),
     })
   }
+
+  async removeCart(userId: string, organizationId: string): Promise<void> {
+    const cartId = `${userId}_${organizationId}`
+    await this.doc(cartId).delete()
+  }
 }
 
 export class UserCartItemRepository extends DataModel<CardItemDBModel> {

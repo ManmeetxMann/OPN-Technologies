@@ -425,6 +425,8 @@ export class PatientService {
     delegateId: number,
     data: DependantCreateDto | DependantCreateAdminDto,
   ): Promise<Patient> {
+    const delegate = await this.getbyId(delegateId)
+
     const firebaseUser = await this.userRepository.add({
       firstName: data.firstName,
       lastName: data.lastName,
@@ -437,6 +439,7 @@ export class PatientService {
       active: false,
       organizationIds: [],
       creator: UserCreator.syncFromSQL,
+      delegates: [delegate.firebaseKey],
     } as AuthUser)
 
     data.firebaseKey = firebaseUser.id
