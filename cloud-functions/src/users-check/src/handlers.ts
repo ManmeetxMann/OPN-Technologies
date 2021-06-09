@@ -1,5 +1,4 @@
 import * as functions from 'firebase-functions'
-import * as _ from 'lodash'
 import {getCreateDatabaseConnection} from './connection'
 import * as patientEntries from '../../../../services-v2/apps/user-service/src/model/patient/patient.entity'
 import moment from 'moment'
@@ -21,8 +20,10 @@ class UserHandler {
     let hasMore = true
     let offset = 0
 
+    const userRepository = await UserHandler.getRepositories()
+
     while (hasMore) {
-      const patients = await UserHandler.getPatients(offset)
+      const patients = await UserHandler.getPatients(offset, userRepository)
       if (patients.length) {
         const patientIds = patients.map((patient) => patient.firebaseKey)
         const firebaseUsers = await UserHandler.getFirebaseUsersByIds(patientIds)
@@ -47,14 +48,17 @@ class UserHandler {
   }
 
   static async checkPatientSyncCoverage() {
-    let offset = 10
+    let offset = 0
     let hasMore = true
+    const userRepository = await UserHandler.getRepositories()
+
     while (hasMore) {
       const firebaseUsers = await UserHandler.getFirebaseUsers(offset)
       if (firebaseUsers.docs.length) {
         const firebaseUserIds = firebaseUsers.docs.map((user) => user.id)
         const patients = await UserHandler.getPatientsByFirebaseKeys(
           firebaseUsers.docs.map((user) => user.id),
+          userRepository,
         )
 
         if (!patients.length) {
@@ -81,24 +85,8 @@ class UserHandler {
   private static async getRepositories() {
     const connection = await getCreateDatabaseConnection()
     const userRepository = connection.getRepository(patientEntries.Patient)
-    const userAuthRepository = connection.getRepository(patientEntries.PatientAuth)
 
-    return {userRepository, userAuthRepository}
-  }
-
-  /**
-   * Deep diff of 2 objects
-   */
-  private static async getDataDiffKeys(newValue, previousValue) {
-    function changes(object, base) {
-      return _.transform(object, function (result, value, key) {
-        if (!_.isEqual(value, base[key])) {
-          result[key] =
-            _.isObject(value) && _.isObject(base[key]) ? changes(value, base[key]) : value
-        }
-      })
-    }
-    return changes(newValue, previousValue)
+    return userRepository
   }
 
   private static async getFirebaseUsers(offset) {
@@ -126,8 +114,7 @@ class UserHandler {
       .get()
   }
 
-  private static async getPatientsByFirebaseKeys(firebaseKeys) {
-    const {userRepository} = await UserHandler.getRepositories()
+  private static async getPatientsByFirebaseKeys(firebaseKeys, userRepository) {
     return await userRepository.find({
       where: {
         firebaseKey: In(firebaseKeys),
@@ -135,9 +122,8 @@ class UserHandler {
     })
   }
 
-  private static async getPatients(offset) {
+  private static async getPatients(offset, userRepository) {
     try {
-      const {userRepository} = await UserHandler.getRepositories()
       return await userRepository
         .createQueryBuilder('patient')
         .where('patient.createdAt > :start_at', {

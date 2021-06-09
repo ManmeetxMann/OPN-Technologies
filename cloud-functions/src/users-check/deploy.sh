@@ -1,18 +1,18 @@
+gcloud auth list
 
-gcloud functions deploy user-v1-sync-create \
-    --entry-point=createUser \
+gcloud functions deploy user-v1-check \
+    --entry-point=checkUserSyncCoverage \
+    --memory=128MB \
+    --region=$REGION \
     --source=./dist \
     --runtime=nodejs12 \
-    --memory=128MB \
-    --trigger-event=providers/cloud.firestore/eventTypes/document.create \
-    --trigger-resource="projects/opn-platform-local/databases/(default)/documents/users/{userId}" \
-    --env-vars-file=./.env
+    --trigger-topic=schedule
 
-gcloud functions deploy user-v1-sync-update \
-    --entry-point=updateUser \
+gcloud functions deploy patient-v1-sync \
+    --entry-point=checkPatientSyncCoverage \
+    --region=$REGION \
+    --memory=128MB \
     --source=./dist \
     --runtime=nodejs12 \
-    --memory=128MB \
-    --trigger-event=providers/cloud.firestore/eventTypes/document.update \
-    --trigger-resource="projects/opn-platform-local/databases/(default)/documents/users/{userId}" \
-    --env-vars-file=./.env
+    --trigger-topic=schedule
+
