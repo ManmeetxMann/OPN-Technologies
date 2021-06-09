@@ -2187,12 +2187,12 @@ export class PCRTestResultsService {
     }
   }
 
-  async getAllFailedResultConfirmatory(): Promise<FailedResultConfirmatoryRequest[]> {
-    return await this.failedResultConfirmatoryRequestRepository.getAll()
+  getAllFailedResultConfirmatory(): Promise<FailedResultConfirmatoryRequest[]> {
+    return this.failedResultConfirmatoryRequestRepository.getAll()
   }
 
-  async deleteFailedResultConfirmatory(id: string): Promise<void> {
-    return await this.failedResultConfirmatoryRequestRepository.delete(id)
+  deleteFailedResultConfirmatory(id: string): Promise<void> {
+    return this.failedResultConfirmatoryRequestRepository.delete(id)
   }
 
   getAllFailedResultByIds(failedResultIds: string[]): Promise<FailedResultConfirmatoryRequest[]> {
