@@ -74,19 +74,15 @@ async function checkUsersBeforeMigrate() {
 
   while (hasMore) {
     const userSnapshot = await getFirebaseUsers(offset)
-
     const authUserIds = getAuthUserIds(userSnapshot)
     const users = await getFirebaseUsersByAuthUserIds(authUserIds)
     const foundedUsersAuthIds = getAuthUserIds(users)
 
-    if (hasDuplicates(authUserIds)) {
-      console.log(showDuplicates(authUserIds))
-      throw new Error('There are users with duplicate authUserId in Firestore')
-    }
-
     if (hasDuplicates(foundedUsersAuthIds)) {
-      console.log(showDuplicates(foundedUsersAuthIds))
-      throw new Error('There are users with duplicate authUserId in Firestore')
+      const duplicates = showDuplicates(foundedUsersAuthIds)
+      throw new Error(
+        `There are duplicate users with this [${duplicates}] authUserIds in Firestore`,
+      )
     }
 
     offset += userSnapshot.docs.length
