@@ -23,7 +23,7 @@ export class migrateUsersToMysql1618943622946 implements MigrationInterface {
   public async up(): Promise<void> {
     try {
       console.log(`Migration Starting Time: ${new Date()}`)
-      if (process.env.CHECK_DUPLICATES) {
+      if (Boolean(JSON.parse(Config.get('CHECK_DUPLICATES')))) {
         await checkUsersBeforeMigrate()
       }
       const results = await insertAllUsers()
@@ -71,7 +71,7 @@ async function promiseAllSettled(promises: Promise<unknown>[]): Promise<Result[]
 async function checkUsersBeforeMigrate() {
   let offset = 0
   let hasMore = true
-
+  const duplicates = []
   while (hasMore) {
     const userSnapshot = await getFirebaseUsers(offset)
     const authUserIds = getAuthUserIds(userSnapshot)
@@ -79,24 +79,29 @@ async function checkUsersBeforeMigrate() {
     const foundedUsersAuthIds = getAuthUserIds(users)
 
     if (hasDuplicates(foundedUsersAuthIds)) {
-      const duplicates = showDuplicates(foundedUsersAuthIds)
-      throw new Error(
-        `There are duplicate users with this [${duplicates}] authUserIds in Firestore`,
-      )
+      duplicates.push(...getDuplicates(foundedUsersAuthIds))
     }
 
     offset += userSnapshot.docs.length
     hasMore = !userSnapshot.empty
   }
+
+  if (duplicates && duplicates.length) {
+    throw new Error(`There are duplicate users with this [${duplicates}] authUserIds in Firestore`)
+  }
 }
 
 function getAuthUserIds(userSnapshot) {
+  if (!userSnapshot || !userSnapshot.docs || !userSnapshot.docs.length) {
+    return []
+  }
+
   return userSnapshot.docs.map(user => {
     return user.data().authUserId
   })
 }
 
-function showDuplicates(array) {
+function getDuplicates(array) {
   const duplicates = array.filter((item, index) => array.indexOf(item) !== index)
 
   return [...new Set(duplicates)]
@@ -117,6 +122,9 @@ async function getFirebaseUsers(offset) {
 
 async function getFirebaseUsersByAuthUserIds(authUserIds) {
   try {
+    if (!authUserIds || !authUserIds.length) {
+      return []
+    }
     return database
       .collection('users')
       .where('authUserId', 'in', authUserIds)
