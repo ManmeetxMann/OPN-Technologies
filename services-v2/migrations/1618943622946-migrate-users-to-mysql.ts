@@ -81,12 +81,12 @@ async function checkUsersBeforeMigrate() {
 
     if (hasDuplicates(authUserIds)) {
       console.log(showDuplicates(authUserIds))
-      throw new Error('there are users with duplicate authUserId in Firestore')
+      throw new Error('There are users with duplicate authUserId in Firestore')
     }
 
     if (hasDuplicates(foundedUsersAuthIds)) {
       console.log(showDuplicates(foundedUsersAuthIds))
-      throw new Error('there are users with duplicate authUserId in Firestore')
+      throw new Error('There are users with duplicate authUserId in Firestore')
     }
 
     offset += userSnapshot.docs.length
