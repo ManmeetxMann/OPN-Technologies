@@ -218,13 +218,44 @@ describe('PatientController (e2e)', () => {
         withAuth: true,
       },
     )
+    await createUser(
+      {
+        id: mockedUser.firebaseKey,
+        organizationIds: [organizationId],
+      },
+      testDataCreator,
+    )
+
     const response = await request(server)
       .get(`${url}/unconfirmed`)
       .set(headers)
 
+    expect(mockedUser.firstName).toBe(response.body.data[0].firstName)
+    expect(mockedUser.lastName).toBe(response.body.data[0].lastName)
     expect(response.body.data.length).toBeGreaterThanOrEqual(1)
     response.body.data.forEach(row => expect(row.status).toBe('NEW'))
     expect(response.status).toBe(200)
+    done()
+  })
+
+  test('Migrate User / (GET)', async done => {
+    const unconfirmedResponse = await request(server)
+      .get(`${url}/unconfirmed`)
+      .set(headers)
+
+    const response = await request(server)
+      .post(`${url}/migrate`)
+      .set(headers)
+      .send({
+        migrations: [
+          {
+            notConfirmedPatientId: unconfirmedResponse.body.data[0].idPatient,
+            action: 'NEW',
+          },
+        ],
+      })
+
+    expect(response.status).toBe(201)
     done()
   })
 
