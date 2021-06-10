@@ -20,6 +20,7 @@ import {
   PatientHealth,
   PatientTravel,
 } from '../../src/model/patient/patient-profile.entity'
+import {UserStatus} from '@opn-common-v1/data/user-status'
 
 export class PatientTestUtility {
   patientRepository: PatientRepository
@@ -42,19 +43,31 @@ export class PatientTestUtility {
     this.patientToDelegatesRepository = getRepository(PatientToDelegates)
   }
 
-  createPatient(data: {email: string}): Promise<Patient> {
-    return this.patientRepository.save({
+  async createPatient(
+    data: {email: string; firstName?: string; status?: UserStatus},
+    options?: {withAuth?: boolean},
+  ): Promise<Patient> {
+    const patient = await this.patientRepository.save({
       firebaseKey:
         'TestFirebaseKey' +
         Math.random()
           .toString(36)
           .substring(7),
       email: data.email,
-      firstName: 'PATIENT_TEST_NAME',
+      firstName: data.firstName ? data.firstName : 'PATIENT_TEST_NAME',
       lastName: 'PATIENT_LNAME',
       phoneNumber: '111222333',
       isEmailVerified: true,
+      status: data.status ? data.status : UserStatus.CONFIRMED,
     })
+    if (options?.withAuth) {
+      await this.authRepository.save({
+        patientId: patient.idPatient,
+        authUserId: null,
+        email: data.email,
+      })
+    }
+    return patient
   }
 
   async findAndRemoveProfile(criteria: unknown): Promise<void> {
