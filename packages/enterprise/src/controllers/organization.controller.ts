@@ -14,6 +14,7 @@ import {now} from '../../../common/src/utils/times'
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {Config} from '../../../common/src/utils/config'
 import {PdfService} from '../../../common/src/service/reports/pdf'
+import {LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
 import {adminOrSelf} from '../middleware/admin-or-self'
 
 import {
@@ -711,7 +712,11 @@ class OrganizationController implements IControllerBase {
         }
         userIds.add(membership.userId)
       })
-      console.log(`${memberships.length} memberships found`)
+      LogInfo('getGroupReport', 'MembershipsFound', {
+        count: memberships.length,
+        organizationId,
+        groupId,
+      })
       const membershipLimit = parseInt(Config.get('PDF_GENERATION_EMAIL_THRESHOLD') ?? '100', 10)
       const to = moment(now()).tz(timeZone).endOf('day').toISOString()
       const from = moment(to).startOf('day').subtract(30, 'days').toISOString()
@@ -755,8 +760,15 @@ class OrganizationController implements IControllerBase {
           parent: path,
           task,
         }
-        // @ts-ignore POST has type string
-        await this.taskClient.createTask(request)
+
+        try {
+          LogInfo('getGroupReport', 'CreateCloudTask', {path})
+          // @ts-ignore POST has type string
+          await this.taskClient.createTask(request)
+        } catch (error) {
+          LogWarning('getGroupReport', 'CreateCloudTaskFailed', {error})
+        }
+
         return
       }
       const [organization, lookups] = await Promise.all([
@@ -766,7 +778,7 @@ class OrganizationController implements IControllerBase {
 
       const questionnaireId = organization.questionnaireId
       const questionnaire = await this.questionnaireService.getQuestionnaire(questionnaireId)
-      console.log(`lookups retrieved`)
+      LogInfo('getGroupReport', 'LookupsRetrieved', {organizationId})
 
       const allTemplates = await Promise.all(
         memberships
@@ -783,7 +795,9 @@ class OrganizationController implements IControllerBase {
                 [questionnaire],
               )
               .catch((err) => {
-                console.warn(`error getting content for ${JSON.stringify(membership)} - ${err}`)
+                LogWarning('getGroupReport', 'GettingContentFailed', {
+                  error: `${JSON.stringify(membership)} - ${err}`,
+                })
                 return {
                   content: [],
                   tableLayouts: null,
@@ -791,14 +805,17 @@ class OrganizationController implements IControllerBase {
               }),
           ),
       )
-      console.log('templates retrieved')
+      LogInfo('getGroupReport', 'TemplatesRetrieved', {organizationId})
       if (!allTemplates.length) {
         throw new HttpException('There is no historical data available for this group.')
       }
+
       const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
       const content = _.flatten(_.map(allTemplates, 'content'))
-      console.log('generating stream')
+
+      LogInfo('getGroupReport', 'GeneratingStream', {organizationId})
       const pdfStream = this.pdfService.generatePDFStream(content, tableLayouts)
+
       res.contentType('application/pdf')
       pdfStream.pipe(res)
       res.status(200)
