@@ -805,7 +805,7 @@ class OrganizationController implements IControllerBase {
               }),
           ),
       )
-      LogInfo('getGroupReport', 'TemplatesRetrieved', {organizationId})
+      LogInfo('getGroupReport', 'TemplatesRetrieved', {organizationId, groupId})
       if (!allTemplates.length) {
         throw new HttpException('There is no historical data available for this group.')
       }
@@ -813,7 +813,7 @@ class OrganizationController implements IControllerBase {
       const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
       const content = _.flatten(_.map(allTemplates, 'content'))
 
-      LogInfo('getGroupReport', 'GeneratingStream', {organizationId})
+      LogInfo('getGroupReport', 'GeneratingStream', {organizationId, groupId})
       const pdfStream = this.pdfService.generatePDFStream(content, tableLayouts)
 
       res.contentType('application/pdf')
