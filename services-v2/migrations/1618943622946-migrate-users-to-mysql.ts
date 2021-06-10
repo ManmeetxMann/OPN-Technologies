@@ -23,6 +23,9 @@ export class migrateUsersToMysql1618943622946 implements MigrationInterface {
   public async up(): Promise<void> {
     try {
       console.log(`Migration Starting Time: ${new Date()}`)
+      if (process.env.CHECK_DUPLICATES) {
+        await checkUsersBeforeMigrate()
+      }
       const results = await insertAllUsers()
 
       results.forEach(result => {
@@ -63,6 +66,69 @@ async function promiseAllSettled(promises: Promise<unknown>[]): Promise<Result[]
         })),
     ),
   )
+}
+
+async function checkUsersBeforeMigrate() {
+  let offset = 0
+  let hasMore = true
+
+  while (hasMore) {
+    const userSnapshot = await getFirebaseUsers(offset)
+
+    const authUserIds = getAuthUserIds(userSnapshot)
+    const users = await getFirebaseUsersByAuthUserIds(authUserIds)
+    const foundedUsersAuthIds = getAuthUserIds(users)
+
+    if (hasDuplicates(authUserIds)) {
+      console.log(showDuplicates(authUserIds))
+      throw new Error('there are users with duplicate authUserId in Firestore')
+    }
+
+    if (hasDuplicates(foundedUsersAuthIds)) {
+      console.log(showDuplicates(foundedUsersAuthIds))
+      throw new Error('there are users with duplicate authUserId in Firestore')
+    }
+
+    offset += userSnapshot.docs.length
+    hasMore = !userSnapshot.empty
+  }
+}
+
+function getAuthUserIds(userSnapshot) {
+  return userSnapshot.docs.map(user => {
+    return user.data().authUserId
+  })
+}
+
+function showDuplicates(array) {
+  const duplicates = array.filter((item, index) => array.indexOf(item) !== index)
+
+  return [...new Set(duplicates)]
+}
+
+function hasDuplicates(array) {
+  return new Set(array).size != array.length
+}
+
+async function getFirebaseUsers(offset) {
+  return database
+    .collection('users')
+    .where('authUserId', '!=', null)
+    .offset(offset)
+    .limit(10)
+    .get()
+}
+
+async function getFirebaseUsersByAuthUserIds(authUserIds) {
+  try {
+    return database
+      .collection('users')
+      .where('authUserId', 'in', authUserIds)
+      .get()
+  } catch (error) {
+    console.warn(error)
+    throw error
+  }
 }
 
 async function insertAllUsers(): Promise<Result[]> {
