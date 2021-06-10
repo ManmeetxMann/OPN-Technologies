@@ -1210,6 +1210,24 @@ components:
             attributes:
               additionalProperties: true
 
+    DriversListResponse200:
+      type: array
+      items:
+        type: string
+  
+    DriverUpdateResponse:
+      type: object
+      additionalProperties: false
+      properties: 
+        id:
+          type: string
+
+    DriverResponse:
+        type: object
+        additionalProperties: false
+        properties:
+          id: string
+
 paths:
   /admin/api/v1/send-fax-for-positive:
     post:
@@ -4381,3 +4399,64 @@ paths:
       responses:
         '200':
           description: Success
+
+  /reservation/admin/api/v1/drivers:
+    get:
+      description: Retrieve enabled drivers list
+      tags:
+        - Drivers
+      responses:
+        '200':
+          description: Succesfully retrieve driver list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/#DriversListResponse200'
+    put:
+        description: Update driver's \'enabled\' property  
+        tags:
+          - Drivers
+        requestBody:
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  name: 
+                    type: string
+                  enabled:
+                    type: boolean
+                  required:
+                    - name
+                    - enabled
+        responses:
+          '200':
+            description: Succesfully create driver
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/#DriverUpdateResponse'
+    post:
+        description: Create new driver
+        tags:
+          - Drivers
+        requestBody:
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  name: 
+                    type: string
+                  required:
+                    - name
+        responses:
+          '200':
+            description: Succesfully create driver
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/#DriverResponse'
+
