@@ -3,7 +3,17 @@ import {Config} from '../../packages/common/src/utils/config'
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Patient} from '../apps/user-service/src/model/patient/patient.entity'
 
-const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
+import * as dotenv from 'dotenv'
+const config = dotenv.config()
+
+if (config.error) {
+  console.error('No .env file')
+  process.exit(1)
+}
+
+const serviceAccount = JSON.parse(process.env.FIREBASE_ADMINSDK_SA)
+console.log('\n\n GCP project id:' + serviceAccount.project_id)
+
 initializeApp({
   credential: credential.cert(serviceAccount),
 })
@@ -23,7 +33,7 @@ export class migrateUsersToMysql1618943622946 implements MigrationInterface {
   public async up(): Promise<void> {
     try {
       console.log(`Migration Starting Time: ${new Date()}`)
-      if (Boolean(JSON.parse(Config.get('CHECK_DUPLICATES')))) {
+      if (false) {
         await checkUsersBeforeMigrate()
       }
       const results = await insertAllUsers()
@@ -87,7 +97,7 @@ async function checkUsersBeforeMigrate() {
   }
 
   if (duplicates && duplicates.length) {
-    throw new Error(`There are duplicate users with this [${duplicates}] authUserIds in Firestore`)
+    throw new Error(`There are duplicate users with this ${JSON.stringify(duplicates)} authUserIds in Firestore`)
   }
 }
 
