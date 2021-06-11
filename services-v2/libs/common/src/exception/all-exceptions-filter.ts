@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common'
 
 import {ResponseStatusCodes} from '@opn-services/common/dto'
+import {isProdOrPreprod} from '@opn-services/common/utils'
 
 /**
  * Changes error model response to match v1 validation model
@@ -30,7 +31,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         data: null,
         status: {
           code: ResponseStatusCodes.UnknownError,
-          message: exception['message'],
+          message: isProdOrPreprod() ? 'unknown error' : exception['message'],
         },
       })
     }
