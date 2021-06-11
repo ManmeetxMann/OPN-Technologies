@@ -545,7 +545,7 @@ export class PatientService {
       this.configService.get('PUBLIC_ORG_ID'),
       this.configService.get('PUBLIC_GROUP_ID'),
       firebaseKey,
-      parentUserId
+      parentUserId,
     )
   }
 
