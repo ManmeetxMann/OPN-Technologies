@@ -1211,22 +1211,91 @@ components:
               additionalProperties: true
 
     DriversListResponse200:
-      type: array
-      items:
-        type: string
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
   
     DriverUpdateResponse:
       type: object
       additionalProperties: false
-      properties: 
-        id:
-          type: string
+      properties:
+        data:
+          type: array
+          additionalProperties: false
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
 
     DriverResponse:
-        type: object
-        additionalProperties: false
-        properties:
-          id: string
+      type: object
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
 
 paths:
   /admin/api/v1/send-fax-for-positive:
@@ -4403,6 +4472,8 @@ paths:
   /reservation/admin/api/v1/drivers:
     get:
       description: Retrieve enabled drivers list
+      security:
+        - bearerAuthJWT: []
       tags:
         - Drivers
       responses:
@@ -4411,52 +4482,57 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/#DriversListResponse200'
+                $ref: '#/components/schemas/DriversListResponse200'
     put:
-        description: Update driver's \'enabled\' property  
-        tags:
-          - Drivers
-        requestBody:
+      description: Update driver's \'enabled\' property 
+      security:
+        - bearerAuthJWT: [] 
+      tags:
+        - Drivers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name: 
+                  type: string
+                enabled:
+                  type: boolean
+              required:
+                - name
+                - enabled
+      responses:
+        '200':
+          description: Succesfully create driver
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties: false
-                properties:
-                  name: 
-                    type: string
-                  enabled:
-                    type: boolean
-                  required:
-                    - name
-                    - enabled
-        responses:
-          '200':
-            description: Succesfully create driver
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/#DriverUpdateResponse'
+                $ref: '#/components/schemas/DriverUpdateResponse'
     post:
-        description: Create new driver
-        tags:
-          - Drivers
-        requestBody:
+      description: Create new driver
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Drivers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name: 
+                  type: string
+                  minLength: 1
+              required:
+                - name
+      responses:
+        '200':
+          description: Succesfully create driver
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties: false
-                properties:
-                  name: 
-                    type: string
-                  required:
-                    - name
-        responses:
-          '200':
-            description: Succesfully create driver
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/#DriverResponse'
+                $ref: '#/components/schemas/DriverResponse'
 
