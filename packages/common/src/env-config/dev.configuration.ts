@@ -30,4 +30,5 @@ export const devConfig: Record<string, string | string[] | number | boolean> = {
   IS_SERVICE_V2_SWAGGER_ENABLED: 'enabled',
 
   TEST_RESULT_PUSH_NOTIFICATION: 'enabled',
+  TEST_RESULT_MOUNT_SINAI_SYNC: 'enabled',
 }

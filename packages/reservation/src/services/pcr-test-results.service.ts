@@ -172,11 +172,14 @@ export class PCRTestResultsService {
     testResult: PCRTestResultEmailDTO,
     userId: string,
   ): Promise<void> {
-    /*if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
-      LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
+    if (Config.get('TEST_RESULT_MOUNT_SINAI_SYNC') !== 'enabled') {
+      LogInfo(
+        'PCRTestResultsService:postPubSubForPresumptivePositiveResultSend',
+        'PubSubMountSinaiDisabled',
+        {},
+      )
       return
     }
-    */
 
     // TODO: Don't use userSyncService for getting a that, user sync service should be removed
     const patient = await this.userSyncService.getByFirebaseKey(userId)
