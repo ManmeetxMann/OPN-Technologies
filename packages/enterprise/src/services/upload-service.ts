@@ -1,6 +1,7 @@
 import BucketService from '../../../common/src/service/google/bucket'
 import {Config} from '../../../common/src/utils/config'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
+import {LogInfo} from '../../../common/src/utils/logging-setup'
 import DataStore from '../../../common/src/data/datastore'
 
 import {Stream} from 'stream'
@@ -12,6 +13,8 @@ export default class {
   private identifiersModel = new IdentifiersModel(new DataStore())
   async uploadReport(stream: Stream): Promise<string> {
     const identifier = await this.identifiersModel.getUniqueValue('report')
-    return this.bucketService.uploadFile(`report-${identifier}.pdf`, stream)
+    const fileName = `report-${identifier}.pdf`
+    LogInfo('uploadReport', 'ReportUpload', {fileName, bucketName})
+    return this.bucketService.uploadFile(fileName, stream)
   }
 }

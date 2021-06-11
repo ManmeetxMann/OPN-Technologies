@@ -3,6 +3,7 @@ import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
 import {PdfService} from '../../../common/src/service/reports/pdf'
+import {LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
 
 import {EmailService} from '../services/email-service'
 import UploadService from '../services/upload-service'
@@ -58,7 +59,11 @@ class InternalController implements IControllerBase {
         }
         userIds.add(membership.userId)
       })
-      console.log(`${memberships.length} memberships found`)
+      LogInfo('emailGroupReport', 'MembershipsFound', {
+        count: memberships.length,
+        organizationId,
+        groupId,
+      })
 
       const [organization, lookups] = await Promise.all([
         this.organizationService.findOneById(organizationId),
@@ -67,7 +72,7 @@ class InternalController implements IControllerBase {
       const questionnaire = await this.questionnaireService.getQuestionnaire(
         organization.questionnaireId,
       )
-      console.log(`lookups retrieved`)
+      LogInfo('emailGroupReport', 'LookupsRetrieved', {})
 
       const allTemplates = await Promise.all(
         memberships
@@ -84,7 +89,9 @@ class InternalController implements IControllerBase {
                 [questionnaire],
               )
               .catch((err) => {
-                console.warn(`error getting content for ${JSON.stringify(membership)} - ${err}`)
+                LogWarning('emailGroupReport', 'GettingContentFailed', {
+                  error: `${JSON.stringify(membership)} - ${err}`,
+                })
                 return {
                   content: [],
                   tableLayouts: null,
@@ -92,14 +99,17 @@ class InternalController implements IControllerBase {
               }),
           ),
       )
-      console.log(`generated ${allTemplates.length} templates`)
+      LogInfo('emailGroupReport', 'GeneratedTemplates', {templatesSize: allTemplates.length})
       const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
       const content = _.flatten(_.map(allTemplates, 'content'))
-      console.log(`generating pdf with ${content.length} elements`)
+
+      LogInfo('emailGroupReport', 'GeneratePdfWithElements', {contentSize: content.length})
       const pdfStream = await this.pdfService.generatePDFStream(content, tableLayouts)
-      console.log('uploading pdf')
+
+      LogInfo('emailGroupReport', 'UploadPdf', {organizationId, groupId})
       const filePath = await this.uploadService.uploadReport(pdfStream)
-      console.log('sending email')
+
+      LogInfo('emailGroupReport', 'SendingEmail', {organizationId, groupId})
       await this.emailService.sendGroupReport(email, name, filePath)
       res.sendStatus(200)
     } catch (error) {
