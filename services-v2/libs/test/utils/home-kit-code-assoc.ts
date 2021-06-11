@@ -37,3 +37,10 @@ export const deleteHomeKitAssocByIdTestDataCreator = async (
   const deleteDocs = ref.docs.map(doc => doc.ref.delete())
   await Promise.all(deleteDocs)
 }
+
+export const deleteHomeKitAssocByKitCode = async (rapidHomeKitId: string): Promise<void> => {
+  const homeKitCollection = database.collection(collectionName)
+  const ref = await homeKitCollection.where('rapidHomeKitId', '==', rapidHomeKitId).get()
+  const deleteDocs = ref.docs.map(doc => doc.ref.delete())
+  await Promise.all(deleteDocs)
+}

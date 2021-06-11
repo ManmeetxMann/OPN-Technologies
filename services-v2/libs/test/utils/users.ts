@@ -11,6 +11,7 @@ export const createUser = async (
   dataOverwrite: {
     id: string
     organizationIds: string[]
+    email?: string
   },
   testDataCreator: string,
 ): Promise<void> => {
@@ -22,7 +23,7 @@ export const createUser = async (
     dateOfBirth: '2021-01-01',
     base64Photo: '',
     organizationIds: dataOverwrite.organizationIds,
-    email: 'Test@mail.com',
+    email: dataOverwrite.email ?? 'Test@mail.com',
     admin: null,
     authUserId: dataOverwrite.id,
     delegates: [],
