@@ -158,9 +158,6 @@ export class PCRTestResultsService {
       id: pcrId,
       result: resultData.result,
       date: safeTimestamp(resultData.dateTime).toISOString(),
-    }
-    const attributes: Record<string, string> = {
-      notficationType: action,
       userId: resultData.userId,
       organizationId: resultData.organizationId,
       actionType: action,
@@ -168,7 +165,7 @@ export class PCRTestResultsService {
       firstName: resultData.firstName,
     }
     const pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
-    pubsub.publish(data, attributes)
+    pubsub.publish(data)
   }
 
   private async postPubSubForPresumptivePositiveResultSend(
@@ -1300,7 +1297,7 @@ export class PCRTestResultsService {
 
     const pcrResultDbRecord = await this.pcrTestResultsRepository.findOneById(pcrId)
 
-    const couponCode = pcrResultDbRecord?.couponCode ?? null
+    const couponCode = pcrResultDbRecord.couponCode ?? null
     const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')
     const owner = Config.get('ACUITY_SCHEDULER_USERNAME')
     const appointmentBookingLink = `${appointmentBookingBaseURL}?owner=${owner}&certificate=${couponCode}`
