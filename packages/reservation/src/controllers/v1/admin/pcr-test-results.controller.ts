@@ -204,8 +204,14 @@ class AdminPCRTestResultController implements IControllerBase {
   createPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const adminId = getUserId(res.locals.authenticatedUser)
-      const {barCode, resultAnalysis, sendUpdatedResults, templateId, labId, ...metaData} =
-        req.body as TestResultRequestData
+      const {
+        barCode,
+        resultAnalysis,
+        sendUpdatedResults,
+        templateId,
+        labId,
+        ...metaData
+      } = req.body as TestResultRequestData
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
         .tz(timeZone)
@@ -328,8 +334,14 @@ class AdminPCRTestResultController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {organizationId, barCode, result, date, testType, searchQuery} =
-        req.query as PcrTestResultsListRequest
+      const {
+        organizationId,
+        barCode,
+        result,
+        date,
+        testType,
+        searchQuery,
+      } = req.query as PcrTestResultsListRequest
       if (!barCode && !date) {
         throw new BadRequestException('One of the "deadline", "barCode" or "date" should exist')
       }
@@ -337,20 +349,24 @@ class AdminPCRTestResultController implements IControllerBase {
       const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
       const labId = req.headers?.labid as string
 
-      const {pcrResultStatsByResultArr, pcrResultStatsByOrgIdArr, pcrResultStatsByLabIdArr, total} =
-        await this.pcrTestResultsService.getPCRResultsStats(
-          {
-            organizationId,
-            barCode,
-            result,
-            date,
-            labId,
-            testType,
-            searchQuery,
-          },
-          isLabUser,
-          isClinicUser,
-        )
+      const {
+        pcrResultStatsByResultArr,
+        pcrResultStatsByOrgIdArr,
+        pcrResultStatsByLabIdArr,
+        total,
+      } = await this.pcrTestResultsService.getPCRResultsStats(
+        {
+          organizationId,
+          barCode,
+          result,
+          date,
+          labId,
+          testType,
+          searchQuery,
+        },
+        isLabUser,
+        isClinicUser,
+      )
 
       const filterGroup = [
         {
@@ -389,8 +405,10 @@ class AdminPCRTestResultController implements IControllerBase {
   ): Promise<void> => {
     try {
       const {reportTrackerId} = req.query as ListPCRResultRequest
-      const {inProgress, pcrTestResults} =
-        await this.pcrTestResultsService.listPCRTestResultReportStatus(reportTrackerId)
+      const {
+        inProgress,
+        pcrTestResults,
+      } = await this.pcrTestResultsService.listPCRTestResultReportStatus(reportTrackerId)
 
       if (inProgress) {
         res.json(actionInProgress(pcrTestResults))
@@ -438,8 +456,14 @@ class AdminPCRTestResultController implements IControllerBase {
 
   listDueDeadline = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {testRunId, deadline, barCode, appointmentStatus, organizationId, testType} =
-        req.query as PcrTestResultsListByDeadlineRequest
+      const {
+        testRunId,
+        deadline,
+        barCode,
+        appointmentStatus,
+        organizationId,
+        testType,
+      } = req.query as PcrTestResultsListByDeadlineRequest
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
       }
@@ -462,20 +486,27 @@ class AdminPCRTestResultController implements IControllerBase {
 
   dueDeadlineStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {testRunId, deadline, barCode, testType} =
-        req.query as PcrTestResultsListByDeadlineRequest
+      const {
+        testRunId,
+        deadline,
+        barCode,
+        testType,
+      } = req.query as PcrTestResultsListByDeadlineRequest
       const labId = req.headers?.labid as string
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
       }
-      const {pcrResultStatsByResultArr, pcrResultStatsByOrgIdArr, total} =
-        await this.pcrTestResultsService.getDueDeadlineStats({
-          deadline,
-          testRunId,
-          barCode,
-          labId,
-          testType,
-        })
+      const {
+        pcrResultStatsByResultArr,
+        pcrResultStatsByOrgIdArr,
+        total,
+      } = await this.pcrTestResultsService.getDueDeadlineStats({
+        deadline,
+        testRunId,
+        barCode,
+        labId,
+        testType,
+      })
 
       const filterGroup = [
         {
@@ -618,8 +649,10 @@ class AdminPCRTestResultController implements IControllerBase {
     try {
       const userId = getUserId(res.locals.authenticatedUser)
       const {testResultId} = req.params as {testResultId: string}
-      const {appointment, pcrTestResult} =
-        await this.pcrTestResultsService.getTestResultAndAppointment(testResultId, userId, true)
+      const {
+        appointment,
+        pcrTestResult,
+      } = await this.pcrTestResultsService.getTestResultAndAppointment(testResultId, userId, true)
 
       if (!this.pcrTestResultsService.isDownloadable(pcrTestResult)) {
         throw new BadRequestException(

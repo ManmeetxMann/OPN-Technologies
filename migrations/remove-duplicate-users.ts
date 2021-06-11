@@ -1,3 +1,9 @@
+/**
+ * Remove duplicated user in firestore by authUserId caused by testing and broken user sync
+ * Add auth user ids to array DUPLICATE_USER_AUTH_USER_ID
+ * Remove all profile with less than max fields count and all older by date. To keep only one.
+ */
+
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
 
@@ -18,10 +24,9 @@ initializeApp({
 const database = firestore()
 
 // Array from service-2 user migration script
-const duplicatedUserAuthUsedId = []
+const DUPLICATE_USER_AUTH_USER_ID = []
 
 async function removeDuplicatedUser(authUserId) {
-  // const authUserId = '5QEHhLuhRdPcEr9PKrp0l9aLwZ92'
   const users = await database.collection('users').where('authUserId', '==', authUserId).get()
 
   if (users.empty) {
@@ -81,7 +86,6 @@ async function removeDuplicatedUser(authUserId) {
   console.log(
     `\n\nUser profiles for auth userId ${authUserId} has ${documentWithSameFields.length} document with same keys count`,
   )
-  documentWithSameFields.forEach((result, index) => {})
 
   // Remove all beside recently created
   let index = 0
@@ -103,7 +107,7 @@ async function main() {
     console.log(`Migrate Dependents for GCP projectId: ${serviceAccount.project_id}`)
     console.log(`Migration Starting with DRY_RUN: ${DRY_RUN}`)
 
-    const uniqAuthUserId = [...new Set(duplicatedUserAuthUsedId)]
+    const uniqAuthUserId = [...new Set(DUPLICATE_USER_AUTH_USER_ID)]
 
     for (const authUser of uniqAuthUserId) {
       await removeDuplicatedUser(authUser)

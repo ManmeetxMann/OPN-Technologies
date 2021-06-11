@@ -68,7 +68,7 @@ export const app = new App({
     new InternalSyncAppointmentController(),
     new InternalConfirmatoryResultReceivedController(),
     new PubsubController(),
-    new AdminDriverController()
+    new AdminDriverController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })
