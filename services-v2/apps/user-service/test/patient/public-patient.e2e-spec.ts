@@ -107,7 +107,6 @@ describe('PatientController (e2e)', () => {
       .set(headers)
       .send(userUpdatePayload)
 
-
     expect(response.body.data.lastName).toBe(userUpdatePayload.lastName)
 
     const revertResponse = await request(server)
@@ -256,6 +255,7 @@ describe('PatientController (e2e)', () => {
       })
 
     expect(response.status).toBe(201)
+
     done()
   })
 

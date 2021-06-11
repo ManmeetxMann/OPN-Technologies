@@ -10,6 +10,7 @@ import {
   createRapidTestKitCode,
   deleteRapidCodeByIdTestDataCreator,
 } from '@opn-services/test/utils/rapid-home-code'
+import {deleteHomeKitAssocByKitCode} from '@opn-services/test/utils/home-kit-code-assoc'
 
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
 jest.mock('@opn-services/common/services/google/captcha.service')
@@ -20,12 +21,16 @@ const organizationId = 'PATIENT_ORG_BASIC'
 const rapidHomeCodeId = 'TEST_RAPID_HOME_CODE'
 const rapidHomeKitCode = 'TEST_HOME_KIT_CODE'
 
+const rapidHome2CodeId = 'TEST_RAPID_HOME_CODE2'
+const rapidHome2KitCode = 'TEST_HOME_KIT_CODE2'
+
 describe('RapidHomeKitCodeController (e2e)', () => {
-  const url = '/api/v1/rapid-home-kit-codes'
+  const url = '/api/v1'
   let app: NestFastifyApplication
   let server: HttpService
 
   const userId = 'PATIENT_RAPID_HOME_KIT'
+  const userEmail = 'patientRapidHome@gmail.com'
   const testDataCreator = __filename.split('/services-v2/')[1]
   const headers = {
     accept: 'application/json',
@@ -37,6 +42,7 @@ describe('RapidHomeKitCodeController (e2e)', () => {
       {
         id: userId,
         organizationIds: [organizationId],
+        email: userEmail,
       },
       testDataCreator,
     )
@@ -45,6 +51,14 @@ describe('RapidHomeKitCodeController (e2e)', () => {
       {
         id: rapidHomeCodeId,
         code: rapidHomeKitCode,
+      },
+      testDataCreator,
+    )
+
+    await createRapidTestKitCode(
+      {
+        id: rapidHome2CodeId,
+        code: rapidHome2KitCode,
       },
       testDataCreator,
     )
@@ -59,9 +73,9 @@ describe('RapidHomeKitCodeController (e2e)', () => {
     await new Promise(resolve => app.listen(81, resolve))
   })
 
-  test('should verify rapid home kit code', async done => {
+  test('should verify rapid home kit code and link to account', async done => {
     const response = await request(server)
-      .get(`${url}/${rapidHomeKitCode}`)
+      .get(`${url}/rapid-home-kit-codes/${rapidHomeKitCode}`)
       .set(headers)
       .set(commonHeaders)
       .set({
@@ -69,12 +83,23 @@ describe('RapidHomeKitCodeController (e2e)', () => {
       })
 
     expect(response.status).toBe(200)
+    const encryptedToken = response.body.data.encryptedToken
+    const linkResponse = await request(server)
+      .post(`${url}/rapid-home-kit-user-codes/link-to-account`)
+      .set(headers)
+      .set(commonHeaders)
+      .send({
+        encryptedToken: encryptedToken,
+      })
+
+    expect(linkResponse.status).toBe(201)
+
     done()
   })
 
   test('should return BadRequest (400) without captcha token header', async done => {
     const response = await request(server)
-      .get(`${url}/${rapidHomeKitCode}`)
+      .get(`${url}/rapid-home-kit-codes/${rapidHomeKitCode}`)
       .set(headers)
       .set(commonHeaders)
 
@@ -82,10 +107,63 @@ describe('RapidHomeKitCodeController (e2e)', () => {
     done()
   })
 
+  test('Attach kit code - / (POST)', async done => {
+    const response = await request(server)
+      .post(`${url}/rapid-home-kit-codes`)
+      .set(headers)
+      .set(commonHeaders)
+      .send({
+        code: rapidHome2KitCode,
+      })
+
+    expect(response.status).toBe(201)
+    done()
+  })
+
+  test('Get kit codes - / (GET)', async done => {
+    const response = await request(server)
+      .get(`${url}/rapid-home-kit-user-codes`)
+      .set(headers)
+      .set(commonHeaders)
+
+    expect(response.body.data.codes.length).toBeGreaterThan(1)
+    expect(response.status).toBe(200)
+    done()
+  })
+
+  test('Coupon - / (POST)', async done => {
+    const response = await request(server)
+      .post(`${url}/home-test-patients/coupon`)
+      .set(headers)
+      .set(commonHeaders)
+      .send({
+        email: userEmail,
+      })
+
+    expect(response.status).toBe(201)
+    done()
+  })
+
+  test('Coupon - / (POST)', async done => {
+    const response = await request(server)
+      .post(`${url}/home-test-patients/coupon`)
+      .set(headers)
+      .set(commonHeaders)
+      .send({
+        email: userEmail,
+      })
+
+    expect(typeof response.body.data.couponCode).toBe('string')
+    expect(response.status).toBe(201)
+    done()
+  })
+
   afterAll(async () => {
     await Promise.all([
       deleteUserByIdTestDataCreator(userId, testDataCreator),
       deleteRapidCodeByIdTestDataCreator(rapidHomeCodeId, testDataCreator),
+      deleteHomeKitAssocByKitCode(rapidHomeKitCode),
+      deleteHomeKitAssocByKitCode(rapidHome2KitCode),
     ])
     await app.close()
   })
