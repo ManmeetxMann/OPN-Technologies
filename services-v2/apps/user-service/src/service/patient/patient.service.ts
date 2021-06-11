@@ -38,7 +38,7 @@ import {FirebaseAuthService} from '@opn-services/common/services/firebase/fireba
 import {OpnConfigService} from '@opn-services/common/services'
 import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
 import {LogError} from '@opn-services/common/utils/logging'
-import {PubSubEvents, PubSubFunctions} from '@opn-services/common/types/activity-logs'
+import * as activityLogs from '@opn-services/common/types/activity-logs'
 
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import {OrganizationModel} from '@opn-enterprise-v1/repository/organization.repository'
@@ -184,7 +184,29 @@ export class PatientService {
       userData.organizationIds.push(data.organizationId)
     }
 
-    const firebaseUser = await this.userRepository.add(userData)
+    // Check if user already exist
+    const firestoreUsers = await this.userRepository
+      .getQueryFindWhereEqual('authUserId', data.authUserId)
+      .fetch()
+
+    if (firestoreUsers.length > 1) {
+      LogError(
+        activityLogs.PatientServiceFunctions.createHomePatientProfile,
+        activityLogs.PatientServiceEvents.duplicatedUserFound,
+        {
+          errorMessage: `Found duplicated authUserId: ${data.authUserId}`,
+        },
+      )
+    }
+
+    let firebaseUser = null
+    if (firestoreUsers.length === 0) {
+      firebaseUser = await this.userRepository.add(userData)
+    } else {
+      firebaseUser = firestoreUsers[0]
+    }
+
+    await this.addInPublicGroup(firebaseUser.id)
     data.firebaseKey = firebaseUser.id
     data.isEmailVerified = false
     const patient = await this.createPatient(data as PatientCreateDto)
@@ -235,9 +257,33 @@ export class PatientService {
       }
     }
 
-    const firebaseUser = await this.userRepository.add(userData)
+    // Check if user already exist
+    const firestoreUsers = await this.userRepository
+      .getQueryFindWhereEqual('authUserId', data.authUserId)
+      .fetch()
+
+    if (firestoreUsers.length > 1) {
+      LogError(
+        activityLogs.PatientServiceFunctions.createProfile,
+        activityLogs.PatientServiceEvents.duplicatedUserFound,
+        {
+          errorMessage: `Found duplicated authUserId: ${data.authUserId}`,
+        },
+      )
+    }
+
+    let firebaseUser = null
+    if (firestoreUsers.length === 0) {
+      firebaseUser = await this.userRepository.add(userData)
+    } else {
+      firebaseUser = firestoreUsers[0]
+    }
+
     data.firebaseKey = firebaseUser.id
     data.isEmailVerified = false
+    if (hasPublicOrg) {
+      await this.addInPublicGroup(firebaseUser.id)
+    }
 
     const patient = await this.createPatient(data)
     data.idPatient = patient.idPatient
@@ -437,10 +483,12 @@ export class PatientService {
         number: Number(data.phoneNumber ?? 0),
       },
       active: false,
-      organizationIds: [],
+      organizationIds: [this.configService.get('PUBLIC_ORG_ID')],
       creator: UserCreator.syncFromSQL,
       delegates: [delegate.firebaseKey],
     } as AuthUser)
+
+    await this.addInPublicGroup(firebaseUser.id, delegate.firebaseKey)
 
     data.firebaseKey = firebaseUser.id
 
@@ -532,6 +580,26 @@ export class PatientService {
     organization.patientId = data.idPatient
     organization.firebaseOrganizationId = data.organizationId ?? publicOrg
     return this.patientToOrganizationRepository.save(organization)
+  }
+
+  async addInPublicGroup(firebaseKey: string, parentUserId?: string): Promise<void> {
+    try {
+      await this.organizationService.addUserToGroup(
+        this.configService.get('PUBLIC_ORG_ID'),
+        this.configService.get('PUBLIC_GROUP_ID'),
+        firebaseKey,
+        parentUserId,
+      )
+    } catch (e) {
+      const errorMessage = e.message
+      LogError(
+        activityLogs.PatientServiceFunctions.createHomePatientProfile,
+        activityLogs.PatientServiceEvents.errorAddingUserToOrg,
+        {
+          errorMessage,
+        },
+      )
+    }
   }
 
   async getUnconfirmedPatients(
@@ -713,9 +781,13 @@ export class PatientService {
   async updateProfileWithPubSub(data: AppointmentDBModel): Promise<void> {
     if (!data?.userId) {
       const errorMessage = `User/Patient id is missing`
-      LogError(PubSubFunctions.updateProfileWithPubSub, PubSubEvents.profileUpdateFailed, {
-        errorMessage,
-      })
+      LogError(
+        activityLogs.PubSubFunctions.updateProfileWithPubSub,
+        activityLogs.PubSubEvents.profileUpdateFailed,
+        {
+          errorMessage,
+        },
+      )
       throw new BadRequestException(errorMessage)
     }
 
@@ -726,9 +798,13 @@ export class PatientService {
 
     if (!patient) {
       const errorMessage = `Profile with ${userId} not exists`
-      LogError(PubSubFunctions.updateProfileWithPubSub, PubSubEvents.profileUpdateFailed, {
-        errorMessage,
-      })
+      LogError(
+        activityLogs.PubSubFunctions.updateProfileWithPubSub,
+        activityLogs.PubSubEvents.profileUpdateFailed,
+        {
+          errorMessage,
+        },
+      )
       throw new BadRequestException(errorMessage)
     }
 

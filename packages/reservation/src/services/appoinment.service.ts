@@ -1803,6 +1803,7 @@ export class AppoinmentService {
   }
   private async createUser(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
     const publicOrgId = Config.get('PUBLIC_ORG_ID')
+    const publicGroupId = Config.get('PUBLIC_GROUP_ID')
     const user = await this.userService.create({
       email: acuityAppointment.email,
       firstName: acuityAppointment.firstName,
@@ -1817,6 +1818,10 @@ export class AppoinmentService {
       phoneNumber: acuityAppointment.phone,
       status: UserStatus.NEW,
     })
+
+    if (!acuityAppointment.organizationId) {
+      await this.organizationService.addUserToGroup(publicOrgId, publicGroupId, user.id)
+    }
 
     return user.id
   }

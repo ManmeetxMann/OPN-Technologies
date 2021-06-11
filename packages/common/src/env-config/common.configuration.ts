@@ -72,6 +72,8 @@ export const commonConfig: Record<string, string | string[] | number | boolean> 
   RAPID_ALERGEN_DEADLINE_MIN: 7,
   PCR_VALIDITY_HOURS: 60,
 
+  PDF_GENERATION_EMAIL_THRESHOLD: 100,
+
   CART_EXPIRATION_HOURS: 24,
 
   TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID: 6,
@@ -97,4 +99,6 @@ export const commonConfig: Record<string, string | string[] | number | boolean> 
   CLINIC_CODE_FOR_MOUNT_SINAI_LAB: 'MS117',
 
   QUICKBLOX_PROVIDER_ID: 128003204,
+
+  RAPID_ANTIGEN_KIT_USE_COUNT: 5
 }
