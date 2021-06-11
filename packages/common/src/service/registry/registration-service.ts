@@ -23,15 +23,14 @@ export class RegistrationService {
     return this.repository.findWhereArrayContainsAny('userIds', userIds)
   }
 
-  findLastForUserId(userId: string): Promise<Registration> {
-    return (
-      this.repository
-        .getQueryFindWhereArrayContains('userIds', userId)
-        //@ts-ignore
-        .orderBy('timestamps.updatedAt', 'desc')
-        .limit(1)
-        .fetch()[0]
-    )
+  async findLastForUserId(userId: string): Promise<Registration> {
+    const [registration] = await this.repository
+      .getQueryFindWhereArrayContains('userIds', userId)
+      //@ts-ignore
+      .orderBy('timestamps.createdAt', 'desc')
+      .limit(1)
+      .fetch()
+    return registration
   }
 
   update(registration: Registration): Promise<Registration> {
