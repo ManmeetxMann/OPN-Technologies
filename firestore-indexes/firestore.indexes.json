@@ -937,6 +937,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "registration",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userIds",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "timestamps.createdAt",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [
@@ -981,20 +995,6 @@
         {
           "order": "ASCENDING",
           "queryScope": "COLLECTION_GROUP"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "registration",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "userIds",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "timestamps": "timestamps.updatedAt",
-          "order": "DESCENDING"
         }
       ]
     }

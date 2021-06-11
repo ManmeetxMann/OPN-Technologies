@@ -185,6 +185,7 @@ export class PatientService {
     }
 
     const firebaseUser = await this.userRepository.add(userData)
+    await this.addInPublicGroup(firebaseUser.id)
     data.firebaseKey = firebaseUser.id
     data.isEmailVerified = false
     const patient = await this.createPatient(data as PatientCreateDto)
@@ -238,6 +239,9 @@ export class PatientService {
     const firebaseUser = await this.userRepository.add(userData)
     data.firebaseKey = firebaseUser.id
     data.isEmailVerified = false
+    if (hasPublicOrg) {
+      await this.addInPublicGroup(firebaseUser.id)
+    }
 
     const patient = await this.createPatient(data)
     data.idPatient = patient.idPatient
@@ -437,10 +441,12 @@ export class PatientService {
         number: Number(data.phoneNumber ?? 0),
       },
       active: false,
-      organizationIds: [],
+      organizationIds: [this.configService.get('PUBLIC_ORG_ID')],
       creator: UserCreator.syncFromSQL,
       delegates: [delegate.firebaseKey],
     } as AuthUser)
+
+    await this.addInPublicGroup(firebaseUser.id, delegate.firebaseKey)
 
     data.firebaseKey = firebaseUser.id
 
@@ -532,6 +538,15 @@ export class PatientService {
     organization.patientId = data.idPatient
     organization.firebaseOrganizationId = data.organizationId ?? publicOrg
     return this.patientToOrganizationRepository.save(organization)
+  }
+
+  async addInPublicGroup(firebaseKey: string, parentUserId?: string): Promise<void> {
+    await this.organizationService.addUserToGroup(
+      this.configService.get('PUBLIC_ORG_ID'),
+      this.configService.get('PUBLIC_GROUP_ID'),
+      firebaseKey,
+      parentUserId,
+    )
   }
 
   async getUnconfirmedPatients(
