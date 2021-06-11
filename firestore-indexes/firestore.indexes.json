@@ -937,6 +937,52 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "rapid-home-kit-code-to-user-assoc",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "usedCount",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "rapid-home-kit-code-to-user-assoc",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "rapidHomeKitId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "usedCount",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "registration",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userIds",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "timestamps.updatedAt",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [
@@ -981,20 +1027,6 @@
         {
           "order": "ASCENDING",
           "queryScope": "COLLECTION_GROUP"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "registration",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "userIds",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "timestamps": "timestamps.updatedAt",
-          "order": "DESCENDING"
         }
       ]
     }
