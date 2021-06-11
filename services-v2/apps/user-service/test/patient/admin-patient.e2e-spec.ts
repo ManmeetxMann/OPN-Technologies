@@ -30,6 +30,7 @@ describe('AdminPatientController (e2e)', () => {
   let server: HttpService
   let mockedUser: Patient
   let patientTestUtility: PatientTestUtility
+  let createUserId: string
 
   const userCreatePayload = {
     email: 'PATIENT_TEST_MAIL_E2E@stayopn.com',
@@ -63,6 +64,13 @@ describe('AdminPatientController (e2e)', () => {
     patientTestUtility = new PatientTestUtility()
 
     mockedUser = await patientTestUtility.createPatient({email: userMockedMail})
+    await createUser(
+      {
+        id: mockedUser.firebaseKey,
+        organizationIds: [organizationId],
+      },
+      testDataCreator,
+    )
   })
 
   test('fail to get all patients without bearer - / (GET)', async done => {
@@ -98,6 +106,8 @@ describe('AdminPatientController (e2e)', () => {
       .post(url)
       .set(headers)
       .send(payload as PatientCreateDto)
+
+    createUserId = response.body.data.idPatient
 
     expect(response.status).toBe(201)
     done()
@@ -137,11 +147,21 @@ describe('AdminPatientController (e2e)', () => {
 
   test('should update patient - /:patientId (PUT)', async done => {
     const response = await request(server)
-      .get(`${url}/${mockedUser.idPatient}`)
+      .put(`${url}/${createUserId}`)
       .set(headers)
-      .send()
+      .send({
+        firstName: 'updatedName',
+      })
+
+    const revertResponse = await request(server)
+      .put(`${url}/${createUserId}`)
+      .set(headers)
+      .send({
+        firstName: userCreatePayload.firstName,
+      })
 
     expect(response.status).toBe(200)
+    expect(revertResponse.status).toBe(200)
     done()
   })
 
