@@ -99,4 +99,6 @@ export const commonConfig: Record<string, string | string[] | number | boolean> 
   CLINIC_CODE_FOR_MOUNT_SINAI_LAB: 'MS117',
 
   QUICKBLOX_PROVIDER_ID: 128003204,
+
+  RAPID_ANTIGEN_KIT_USE_COUNT: 5
 }
