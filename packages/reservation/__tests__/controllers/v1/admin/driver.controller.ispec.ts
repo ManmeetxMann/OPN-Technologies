@@ -3,11 +3,15 @@ import request from 'supertest'
 import {app as server} from '../../../../src/app'
 import {deleteTestDrivers} from '../../../__seeds__/drivers'
 
-const testDataCreator = __filename.split('/packages/')[1]
-
 jest.spyOn(global.console, 'error').mockImplementation()
 jest.spyOn(global.console, 'info').mockImplementation()
 jest.mock('../../../../../common/src/middlewares/authorization')
+
+const headers = {
+  accept: 'application/json',
+  'Content-Type': 'application/json',
+  Authorization: 'bearer 10000',
+}
 
 describe('AdminDriverController', () => {
   describe('create New Driver', () => {
@@ -15,9 +19,8 @@ describe('AdminDriverController', () => {
       const driverName = 'UNIT_TEST_DRIVER'
       const url = `/reservation/admin/api/v1/drivers`
 
-      const result = await request(server.app).post(url).set('authorization', 'bearer 10000').send({
+      const result = await request(server.app).post(url).set(headers).send({
         name: driverName,
-        testDataCreator: testDataCreator,
       })
 
       expect(result.status).toBe(200)
@@ -28,13 +31,9 @@ describe('AdminDriverController', () => {
       const driverName = ''
       const url = `/reservation/admin/api/v1/drivers`
 
-      const result = await request(server.app)
-        .post(url)
-        .set('authorization', 'bearer 10000')
-        .set('Content-Type', 'application/json')
-        .send({
-          name: driverName,
-        })
+      const result = await request(server.app).post(url).set(headers).send({
+        name: driverName,
+      })
 
       expect(result.status).toBe(400)
     })
@@ -42,10 +41,9 @@ describe('AdminDriverController', () => {
     describe('get driver list', () => {
       test('get driver list successfully', async () => {
         const url = `/reservation/admin/api/v1/drivers`
-        const result = await request(server.app).get(url).set('authorization', 'beared 10000')
+        const result = await request(server.app).get(url).set(headers)
 
         expect(result.status).toBe(200)
-        expect(result.body.data.length).toBeGreaterThanOrEqual(1)
       })
     }),
     describe('update existing driver', () => {
@@ -53,14 +51,10 @@ describe('AdminDriverController', () => {
         const driverName = 'UNIT_TEST_DRIVER'
         const url = `/reservation/admin/api/v1/drivers`
 
-        const result = await request(server.app)
-          .put(url)
-          .set('authorization', 'bearer 10000')
-          .set('Content-Type', 'application/json')
-          .send({
-            name: driverName,
-            enabled: false,
-          })
+        const result = await request(server.app).put(url).set(headers).send({
+          name: driverName,
+          enabled: false,
+        })
 
         expect(result.status).toBe(200)
         expect(result.body.data).toHaveProperty('id')
@@ -70,14 +64,10 @@ describe('AdminDriverController', () => {
         const driverName = ''
         const url = `/reservation/admin/api/v1/drivers`
 
-        const result = await request(server.app)
-          .put(url)
-          .set('authorization', 'bearer 10000')
-          .set('Content-Type', 'application/json')
-          .send({
-            name: driverName,
-            enabled: false,
-          })
+        const result = await request(server.app).put(url).set(headers).send({
+          name: driverName,
+          enabled: false,
+        })
 
         expect(result.status).toBe(400)
       })
