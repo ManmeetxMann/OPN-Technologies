@@ -100,4 +100,6 @@ export const commonConfig: Record<string, string | string[] | number | boolean> 
 
   QUICKBLOX_PROVIDER_ID: 128003204,
   TEST_RESULT_MOUNT_SINAI_SYNC: 'disabled',
+
+  RAPID_ANTIGEN_KIT_USE_COUNT: 5,
 }

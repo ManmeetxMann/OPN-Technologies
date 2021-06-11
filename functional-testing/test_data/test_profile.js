@@ -14,7 +14,7 @@ let profiles = {
         "locationId":"TEST_LOC1"
     },
     "harpreet_preprod_lab":{
-        "email":"harpreet+test1@stayopn.com",
+        "email":"harpreet+kitchener@stayopn.com",
         "organizationId":"TESTPROD1",
         "firstName":"Harpreet 6",
         "lastName":"Gill 6",
@@ -107,7 +107,7 @@ module.exports = {
     get: function(overWriteObj={}){
         const data = JSON.parse(JSON.stringify(profiles));
         const profile = `${process.env.ACTIVE_TEST_PROFILE}_${process.env.USER_ROLE}`
-        //console.log(`LOADING ${profile}`)
+        console.log(`LOADING ${profile}`)
         return data[profile];
     }
 }
