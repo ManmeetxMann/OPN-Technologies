@@ -147,8 +147,8 @@ export class PCRTestResultsService {
 
   private postPubSubForResultSend(
     resultData: PCRTestResultEmailDTO,
-    pcrId: string,
     action: string,
+    pcrId: string,
   ): void {
     if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
       LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})

@@ -979,7 +979,7 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "timestamps.updatedAt",
+          "fieldPath": "timestamps.createdAt",
           "order": "DESCENDING"
         }
       ]
