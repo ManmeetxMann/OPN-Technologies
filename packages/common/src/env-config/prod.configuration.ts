@@ -67,4 +67,5 @@ export const prodConfig: Record<string, string | string[] | number | boolean> = 
 
   REPORT_BUCKET_NAME: 'opn-reports-production',
   RAPID_ALERGEN_DEADLINE_MIN: 15,
+  TEST_RESULT_PUSH_NOTIFICATION: 'disabled',
 }
