@@ -446,7 +446,7 @@ export class PatientService {
       delegates: [delegate.firebaseKey],
     } as AuthUser)
 
-    await this.addInPublicGroup(firebaseUser.id)
+    await this.addInPublicGroup(firebaseUser.id, delegate.firebaseKey)
 
     data.firebaseKey = firebaseUser.id
 
@@ -540,11 +540,12 @@ export class PatientService {
     return this.patientToOrganizationRepository.save(organization)
   }
 
-  async addInPublicGroup(firebaseKey: string): Promise<void> {
+  async addInPublicGroup(firebaseKey: string, parentUserId?: string): Promise<void> {
     await this.organizationService.addUserToGroup(
       this.configService.get('PUBLIC_ORG_ID'),
       this.configService.get('PUBLIC_GROUP_ID'),
-      firebaseKey
+      firebaseKey,
+      parentUserId
     )
   }
 
