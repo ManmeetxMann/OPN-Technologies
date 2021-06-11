@@ -158,9 +158,6 @@ export class PCRTestResultsService {
       id: pcrId,
       result: resultData.result,
       date: safeTimestamp(resultData.dateTime).toISOString(),
-    }
-    const attributes: Record<string, string> = {
-      notficationType: action,
       userId: resultData.userId,
       organizationId: resultData.organizationId,
       actionType: action,
@@ -168,7 +165,7 @@ export class PCRTestResultsService {
       firstName: resultData.firstName,
     }
     const pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
-    pubsub.publish(data, attributes)
+    pubsub.publish(data)
   }
 
   private async postPubSubForPresumptivePositiveResultSend(
@@ -291,8 +288,10 @@ export class PCRTestResultsService {
   }
 
   async processPCRTestResult(reportTrackerId: string, resultId: string): Promise<void> {
-    const testResultsReportingTrackerPCRResult =
-      new TestResultsReportingTrackerPCRResultsRepository(this.datastore, reportTrackerId)
+    const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
+      this.datastore,
+      reportTrackerId,
+    )
 
     const pcrResults = await testResultsReportingTrackerPCRResult.get(resultId)
     if (!pcrResults) {
@@ -364,8 +363,10 @@ export class PCRTestResultsService {
   async listPCRTestResultReportStatus(
     reportTrackerId: string,
   ): Promise<{inProgress: boolean; pcrTestResults: pcrTestResultsDTO[]}> {
-    const testResultsReportingTrackerPCRResult =
-      new TestResultsReportingTrackerPCRResultsRepository(this.datastore, reportTrackerId)
+    const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
+      this.datastore,
+      reportTrackerId,
+    )
 
     let inProgress = false
     const testResultsReporting = await testResultsReportingTrackerPCRResult.fetchAll()
@@ -743,8 +744,10 @@ export class PCRTestResultsService {
       }
     }
 
-    const testResultsReportingTrackerPCRResult =
-      new TestResultsReportingTrackerPCRResultsRepository(this.datastore, reportTrackerId)
+    const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
+      this.datastore,
+      reportTrackerId,
+    )
     const resultDate = testResultData.resultDate
     const templateId = testResultData.templateId
     const labId = testResultData.labId
@@ -976,7 +979,7 @@ export class PCRTestResultsService {
       id: string
     }
     appointment: AppointmentDBModel
-    linkedBarCodes: string[],
+    linkedBarCodes: string[]
     runNumber: number
     reCollectNumber: number
     result: ResultTypes
@@ -1287,7 +1290,10 @@ export class PCRTestResultsService {
 
   async sendReCollectNotification(resultData: PCRTestResultEmailDTO, pcrId: string): Promise<void> {
     const getTemplateId = (): number => {
-      if (!!resultData.organizationId) {
+      if (
+        !!resultData.organizationId &&
+        resultData.organizationId !== Config.get('PUBLIC_ORG_ID')
+      ) {
         return Config.getInt('TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 6
       } else if (resultData.result === ResultTypes.Inconclusive) {
         return (
@@ -1300,7 +1306,7 @@ export class PCRTestResultsService {
 
     const pcrResultDbRecord = await this.pcrTestResultsRepository.findOneById(pcrId)
 
-    const couponCode = pcrResultDbRecord?.couponCode ?? null
+    const couponCode = pcrResultDbRecord.couponCode ?? null
     const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')
     const owner = Config.get('ACUITY_SCHEDULER_USERNAME')
     const appointmentBookingLink = `${appointmentBookingBaseURL}?owner=${owner}&certificate=${couponCode}`
@@ -1706,7 +1712,9 @@ export class PCRTestResultsService {
     return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
   }
 
-  async getDueDeadlineStats(queryParams: PcrTestResultsListByDeadlineRequest): Promise<{
+  async getDueDeadlineStats(
+    queryParams: PcrTestResultsListByDeadlineRequest,
+  ): Promise<{
     pcrResultStatsByResultArr: Filter[]
     pcrResultStatsByOrgIdArr: Filter[]
     total: number

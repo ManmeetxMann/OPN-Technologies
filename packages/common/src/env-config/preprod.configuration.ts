@@ -65,4 +65,5 @@ export const preprodConfig: Record<string, string | string[] | number | boolean>
 
   REPORT_BUCKET_NAME: 'opn-reports-preprod',
   RAPID_ALERGEN_DEADLINE_MIN: 15,
+  TEST_RESULT_PUSH_NOTIFICATION: 'disabled',
 }
