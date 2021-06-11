@@ -1290,7 +1290,10 @@ export class PCRTestResultsService {
 
   async sendReCollectNotification(resultData: PCRTestResultEmailDTO, pcrId: string): Promise<void> {
     const getTemplateId = (): number => {
-      if (!!resultData.organizationId && resultData.organizationId!==Config.get('PUBLIC_ORG_ID')) {
+      if (
+        !!resultData.organizationId &&
+        resultData.organizationId !== Config.get('PUBLIC_ORG_ID')
+      ) {
         return Config.getInt('TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 6
       } else if (resultData.result === ResultTypes.Inconclusive) {
         return (
