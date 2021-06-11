@@ -5,7 +5,7 @@ import IControllerBase from '../../../../common/src/interfaces/IControllerBase.i
 import {OPNPubSub} from '../../../../common/src/service/google/pub_sub'
 
 import {PCRTestResultsService} from '../../services/pcr-test-results.service'
-import {EmailNotficationTypes, PCRResultActions, PCRTestResultSubmitted} from '../../models/pcr-test-results'
+import {PCRTestResultSubmitted} from '../../models/pcr-test-results'
 import {AppoinmentService} from '../../services/appoinment.service'
 import {LabService} from '../../services/lab.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
@@ -32,7 +32,9 @@ class PubsubController implements IControllerBase {
 
   pcrTestResult: Handler = async (req, res, next): Promise<void> => {
     try {
-      const data = await OPNPubSub.getPublishedData(req.body.message.data) as PCRTestResultSubmitted
+      const data = (await OPNPubSub.getPublishedData(
+        req.body.message.data,
+      )) as PCRTestResultSubmitted
 
       const testResult = await this.pcrTestResultsService.getPCRResultsById(data.id as string)
 
