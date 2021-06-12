@@ -8,11 +8,9 @@ on:
       - ".github/workflows/ci_config.yml"
       - ".github/actions/**"
     branches: 
-      - master
       - develop
     tags:
       - infra-dev-config-*
-      - infra-dev-all-*
       - preprod-config-*
       - preprod-all-*
       - prod-config-*

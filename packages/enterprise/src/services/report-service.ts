@@ -120,6 +120,12 @@ export class ReportService {
     }
 
     const accesses = data.map(({user, status, access}) => ({
+      token: access?.token,
+      statusToken: access?.statusToken,
+      createdAt: access?.createdAt,
+      includesGuardian: access?.includesGuardian,
+      dependants: access?.dependants,
+      userId: user.id,
       // remove not-yet-exited exitAt
       exitAt: nullOrISOString(status, access?.exitAt),
       enteredAt: nullOrISOString(status, access?.enteredAt),
@@ -365,7 +371,7 @@ export class ReportService {
     return userTemplate({
       attestations: printableAttestations,
       locations: printableAccessHistory,
-      passportStatus: passport.status ?? PassportStatuses.Pending,
+      passportStatus: passport && passport.status ? passport.status : PassportStatuses.Pending,
       temperatureChecks,
       exposures: _.uniqBy(
         printableExposures,

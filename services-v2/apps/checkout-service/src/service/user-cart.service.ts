@@ -41,7 +41,7 @@ import {LogError} from '@opn-services/common/utils/logging'
 
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
 import {acuityTypesSchema, cartItemSchema} from '@opn-services/common/schemas'
-import {toFormattedIso} from '@opn-services/checkout/utils/times'
+import {toFormattedIso} from '@opn-services/common/utils/times'
 import {UserCardDiscountService} from '@opn-services/checkout/service'
 
 /**
@@ -249,16 +249,17 @@ export class UserCardService {
     return userCartItemRepository.count()
   }
 
-  async removeCoupons(userId: string, organizationId: string): Promise<CartResponseDto> {
+  async invalidateCoupons(userId: string, organizationId: string): Promise<CardItemDBModel[]> {
     const userOrgId = `${userId}_${organizationId}`
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
     const cartItemsData = await userCartItemRepository.fetchAll()
+    await this.userCartRepository.removeCouponName(userOrgId)
 
     if (!cartItemsData || !cartItemsData.length) {
       throw new ResourceNotFoundException('userCart-item with given id not found')
     }
 
-    const cartData = await Promise.all(
+    return Promise.all(
       cartItemsData.map(async cartItem => {
         const cartItemData = {
           ...cartItem,
@@ -267,7 +268,10 @@ export class UserCardService {
         return userCartItemRepository.update(cartItemData)
       }),
     )
+  }
 
+  async removeCoupons(userId: string, organizationId: string): Promise<CartResponseDto> {
+    const cartData = await this.invalidateCoupons(userId, organizationId)
     const cartItems = cartData.map(cartDB => ({
       cartItemId: cartDB.cartItemId,
       label: cartDB.appointmentType.name,
@@ -388,6 +392,9 @@ export class UserCardService {
         throw new ResourceNotFoundException('Appointment type not found')
       }
 
+      // formatas iso string for mobile
+      item.dateOfBirth = toFormattedIso(item.dateOfBirth)
+
       const validCartItem = await cartItemValidator.validate({
         cartItemId: uuidv4(),
         patient: _.omit(item, ['slotId']),
@@ -492,6 +499,11 @@ export class UserCardService {
         },
       },
     })
+  }
+
+  async deleteCart(userId: string, organizationId: string): Promise<void> {
+    await this.deleteAllCartItems(userId, organizationId)
+    await this.userCartRepository.removeCart(userId, organizationId)
   }
 
   async deleteCartItem(userId: string, cartItemId: string, organizationId: string): Promise<void> {

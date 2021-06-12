@@ -7,14 +7,27 @@ import {JoiValidator} from '@opn-services/common/utils/joi-validator'
 export class RapidHomeKitCodeToUserAssocRepository extends DataModel<RapidHomeKitToUserAssoc> {
   public rootPath = 'rapid-home-kit-code-to-user-assoc'
   readonly zeroSet = []
-  constructor(dataStore: DataStore) {
+  private kitUseCount = null
+  constructor(dataStore: DataStore, kitUseCount: number) {
     super(dataStore)
+    this.kitUseCount = kitUseCount
   }
 
   public getByUserId(userId: string): Promise<RapidHomeKitToUserAssoc[]> {
-    return this.getQueryFindWhereEqual('userId', userId)
-      .where('used', '==', false)
-      .fetch()
+    return this.findWhereEqualInMap([
+      {
+        map: '/',
+        key: 'userId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: userId,
+      },
+      {
+        map: '/',
+        key: 'usedCount',
+        operator: DataModelFieldMapOperatorType.Less,
+        value: this.kitUseCount,
+      },
+    ])
   }
 
   public getUnusedByUserIdAndCode(
@@ -36,21 +49,25 @@ export class RapidHomeKitCodeToUserAssocRepository extends DataModel<RapidHomeKi
       },
       {
         map: '/',
-        key: 'used',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: false,
+        key: 'usedCount',
+        operator: DataModelFieldMapOperatorType.Less,
+        value: this.kitUseCount,
       },
     ])
   }
 
-  public async save(code: string, userId: string): Promise<RapidHomeKitToUserAssoc> {
+  public async addAssociation(code: string, userId: string): Promise<RapidHomeKitToUserAssoc> {
     const validator = new JoiValidator(rapidHomeKitToUserAssocSchema)
     const validKitToUserAssoc = await validator.validate({
       rapidHomeKitId: code,
       userId: userId,
-      used: false,
+      usedCount: 0,
     })
 
-    return this.add(validKitToUserAssoc)
+    return this.add(validKitToUserAssoc as RapidHomeKitToUserAssoc)
+  }
+
+  public async markUsed(homeKitCodeAssociationsId: string): Promise<RapidHomeKitToUserAssoc> {
+    return this.increment(homeKitCodeAssociationsId, 'usedCount', 1)
   }
 }

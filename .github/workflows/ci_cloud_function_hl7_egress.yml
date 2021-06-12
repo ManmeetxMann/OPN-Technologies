@@ -7,9 +7,12 @@ on:
       - ".github/workflows/ci_cloud_function_hl7_egress.yml"
       - ".github/actions/deploy-functions/**"
     branches: 
-      - master
       - develop
-      - feature-hl7-egress
+    tags:
+      - infra-dev-hl7-egress-*
+      - preprod-hl7-egress-*
+      - preprod-all-*
+      - prod-hl7-egress-*
 
 jobs:
   build:

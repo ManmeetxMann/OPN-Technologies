@@ -8,6 +8,7 @@ export type RapidHomeKitCode = {
   prindted: boolean
   printedOn: firestore.Timestamp
   userIds?: string[]
+  userForUserId: string[]
 }
 
 export class RapidHomeKitCodeRepository extends DataModel<RapidHomeKitCode> {

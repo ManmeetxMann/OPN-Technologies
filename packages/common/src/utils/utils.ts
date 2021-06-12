@@ -20,6 +20,13 @@ export const titleCase = (str: string): string => {
   })
 }
 
+/**
+ * `TitleCaseExample` => `Title Case Example`
+ */
+export const makeSpaceOnTitleCase = (str: string): string => {
+  return str.replace(/([A-Z])/g, ' $1').trim()
+}
+
 export const cleanStringField = (str: string | null): string => {
   if (!str) return str
   return str.trim()

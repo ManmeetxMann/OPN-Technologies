@@ -1,6 +1,6 @@
 import frisby from 'frisby';
 import helpersCommon from '../../../../helpers/helpers_common'
-import testProfile from '../../../../test_data/test_profile';
+import testProfile from '../../../../test_data/test_profile'
 import faker from 'faker';
 
 // Do setup first
@@ -64,7 +64,7 @@ describe('user:create', () => {
     })
 
     test('should create new user and associate to auth', async () => {
-        const token = await helpersCommon.getAuthToken(frisby, email, `${firstName} ${lastName}`)
+        const token = await helpersCommon.getAuthToken(frisby, 'harpreet+tmp@stayopn.com', `${firstName} ${lastName}`)
         const url = `${enterpriseServiceUrl}/user/connect/v2/add`
         await frisby
             .post(

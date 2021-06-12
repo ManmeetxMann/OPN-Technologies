@@ -9,6 +9,7 @@ import PubSubController from './controllers/v1/pubsub.controller'
 import InternalController from './controllers/v1/internal/passport.controller'
 import AdminPassportController from './controllers/v1/admin/passport.controller'
 import RootController from './controllers/root.controller'
+import UserController from './controllers/user.controller'
 
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
@@ -26,6 +27,7 @@ export const app = new App({
     new InternalController(),
     new PubSubController(),
     new AdminPassportController(),
+    new UserController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],

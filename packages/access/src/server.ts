@@ -8,6 +8,7 @@ import AccessAdminController from './controllers/v1/admin/access.controller'
 import RootController from './controllers/root.controller'
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
+import UserController from './controllers/user.controller'
 
 const PORT = Number(process.env.PORT) || 5002
 
@@ -20,6 +21,7 @@ const app = new App({
     new AdminController(),
     new AccessAdminController(),
     new AccessController(),
+    new UserController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],

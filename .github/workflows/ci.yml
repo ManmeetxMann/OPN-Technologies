@@ -7,10 +7,10 @@ on:
       - 'cloud-functions/sms-notification/**'
       - '.github/workflows/ci_cloud_function_sms_notification.yml'
     branches:
-      - master
       - develop
 jobs:
   build:
+    timeout-minutes: 10
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2

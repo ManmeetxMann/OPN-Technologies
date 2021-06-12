@@ -1,11 +1,12 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {IsBoolean, IsNotEmpty, IsString} from 'class-validator'
+import {Auditable} from '@opn-common-v1/types/auditable'
 
-export type RapidHomeKitToUserAssoc = {
+export type RapidHomeKitToUserAssoc = Auditable & {
   id: string
   rapidHomeKitId: string
   userId: string
-  used: boolean
+  usedCount: number
 }
 
 export class HomeTestPatientDto {

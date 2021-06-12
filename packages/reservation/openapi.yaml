@@ -970,6 +970,12 @@ components:
               type: string
             status:
               type: string
+            antibodySpecimenType:
+              type: string
+            methodology:
+              type: string
+            indication:
+              type: string
             resultMetaData:
               type: object
               additionalProperties: false
@@ -1187,6 +1193,115 @@ components:
         - receiveResultsViaEmail
         - receiveNotificationsFromGov
 
+    PubSubRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        subscription:
+          type: string
+        message:
+          type: object
+          additionalProperties: false
+          properties:
+            messageId:
+              type: string
+            message_id:
+              type: string
+            publishTime:
+              type: string
+            publish_time:
+              type: string
+            data:
+              type: string
+            attributes:
+              additionalProperties: true
+
+    DriversListResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
+  
+    DriverUpdateResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          additionalProperties: false
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
+
+    DriverResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
 
 paths:
   /admin/api/v1/send-fax-for-positive:
@@ -3400,6 +3515,57 @@ paths:
                         type: string
                   page:
                     type: number
+  /reservation/admin/api/v1/test-results/list/failed-confirmatory-request:
+    get:
+      description: Retrieve list of Failed Confirmatory Request
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: string
+                        resultId:
+                          type: string
+                        appintmentId:
+                          type: string
+                        reasons:
+                          type: array
+                          items:
+                            type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
   /reservation/admin/api/v1/pcr-test-results/due-deadline/list/stats:
     get:
       description: Retrieve list of PCR Results
@@ -4271,3 +4437,176 @@ paths:
       responses:
         '200':
           description: Success
+
+  /reservation/admin/api/v1/test-results/failed-confirmatory-request/sync:
+    post:
+      description: Add transport run to appointment
+      tags:
+        - Transport Runs
+      security:
+        - bearerAuthJWT: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                failedResultsIds:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - failedResultsIds
+      responses:
+        '200':
+          description: sync with Mount Sinai Success
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        appointmentId:
+                          type: string
+                        reason:
+                          type: string
+                        resultId:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            - Success
+                            - Failed
+                      required:
+                        - appointmentId
+                        - resultId
+                        - status
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+
+  /reservation/api/v1/pubsub/test-result:
+    post:
+      description: Pubsub result-result
+      tags:
+        - Pubsub
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Success
+
+  /reservation/api/v1/pubsub/test-result/test:
+    post:
+      description: Test push notification
+      tags:
+        - Pubsub
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                userId:
+                  type: string
+                pcrId:
+                  type: string
+              required:
+                - userId
+                - pcrId
+      responses:
+        '200':
+          description: Success
+
+  /reservation/admin/api/v1/drivers:
+    get:
+      description: Retrieve enabled drivers list
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Drivers
+      responses:
+        '200':
+          description: Succesfully retrieve driver list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriversListResponse200'
+    put:
+      description: Update driver's \'enabled\' property 
+      security:
+        - bearerAuthJWT: [] 
+      tags:
+        - Drivers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name: 
+                  type: string
+                enabled:
+                  type: boolean
+              required:
+                - name
+                - enabled
+      responses:
+        '200':
+          description: Succesfully create driver
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriverUpdateResponse'
+    post:
+      description: Create new driver
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Drivers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name: 
+                  type: string
+                  minLength: 1
+              required:
+                - name
+      responses:
+        '200':
+          description: Succesfully create driver
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriverResponse'
+

@@ -11,6 +11,9 @@ const timeZone = Config.get('DEFAULT_TIME_ZONE')
 const manualModeEnabled = Config.get('FEATURE_DEBUG_MANUAL_TIMESTAMPS') === 'enabled'
 const currentTimeMillis = 0
 
+export const getFirestoreTimestamp = (validFromDate: Date): firestore.FieldValue =>
+  firestore.Timestamp.fromDate(validFromDate)
+
 export const serverTimestamp = (): firestore.FieldValue => {
   if (manualModeEnabled && currentTimeMillis) {
     return new firestore.Timestamp(Math.floor(currentTimeMillis / 1000), currentTimeMillis % 1000)
