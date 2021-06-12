@@ -1,0 +1,21 @@
+dispatch:
+  - url: apidocs.admin.stayopn.net/*
+    service: apidocs
+  - url: access.services.ca.stayopn.net/*
+    service: access
+  - url: config.services.ca.stayopn.net/*
+    service: config
+  - url: enterprise.services.ca.stayopn.net/*
+    service: enterprise
+  - url: lookup.services.ca.stayopn.net/*
+    service: lookup
+  - url: passport.services.ca.stayopn.net/*
+    service: passport
+  - url: registry.services.ca.stayopn.net/*
+    service: registry
+  - url: reservation.services.ca.stayopn.net/*
+    service: reservation
+  - url: user.services.ca.stayopn.net/*
+    service: user-service
+  - url: checkout.services.ca.stayopn.net/*
+    service: checkout-service

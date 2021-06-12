@@ -641,3 +641,14 @@ export type ActivityTrackingDb = ActivityTracking & {
 }
 // determine priority in test Order based on result
 export const getSortOrderByResult = (result: string): number => ResultOrder[result]
+
+export type PCRTestResultSubmitted = {
+  id: string
+  result: ResultTypes
+  date: string
+  userId: string
+  organizationId: string
+  actionType: PCRResultActions | EmailNotficationTypes
+  phone: string
+  firstName: string
+}

@@ -158,9 +158,6 @@ export class PCRTestResultsService {
       id: pcrId,
       result: resultData.result,
       date: safeTimestamp(resultData.dateTime).toISOString(),
-    }
-    const attributes: Record<string, string> = {
-      notficationType: action,
       userId: resultData.userId,
       organizationId: resultData.organizationId,
       actionType: action,
@@ -168,18 +165,21 @@ export class PCRTestResultsService {
       firstName: resultData.firstName,
     }
     const pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
-    pubsub.publish(data, attributes)
+    pubsub.publish(data)
   }
 
   private async postPubSubForPresumptivePositiveResultSend(
     testResult: PCRTestResultEmailDTO,
     userId: string,
   ): Promise<void> {
-    /*if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
-      LogInfo('PCRTestResultsService:postPubSubForResultSend', 'PubSubDisabled', {})
+    if (Config.get('TEST_RESULT_MOUNT_SINAI_SYNC') !== 'enabled') {
+      LogInfo(
+        'PCRTestResultsService:postPubSubForPresumptivePositiveResultSend',
+        'PubSubMountSinaiDisabled',
+        {},
+      )
       return
     }
-    */
 
     // TODO: Don't use userSyncService for getting a that, user sync service should be removed
     const patient = await this.userSyncService.getByFirebaseKey(userId)
@@ -1295,7 +1295,10 @@ export class PCRTestResultsService {
 
   async sendReCollectNotification(resultData: PCRTestResultEmailDTO, pcrId: string): Promise<void> {
     const getTemplateId = (): number => {
-      if (!!resultData.organizationId) {
+      if (
+        !!resultData.organizationId &&
+        resultData.organizationId !== Config.get('PUBLIC_ORG_ID')
+      ) {
         return Config.getInt('TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 6
       } else if (resultData.result === ResultTypes.Inconclusive) {
         return (
@@ -1308,7 +1311,7 @@ export class PCRTestResultsService {
 
     const pcrResultDbRecord = await this.pcrTestResultsRepository.findOneById(pcrId)
 
-    const couponCode = pcrResultDbRecord?.couponCode ?? null
+    const couponCode = pcrResultDbRecord.couponCode ?? null
     const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')
     const owner = Config.get('ACUITY_SCHEDULER_USERNAME')
     const appointmentBookingLink = `${appointmentBookingBaseURL}?owner=${owner}&certificate=${couponCode}`
