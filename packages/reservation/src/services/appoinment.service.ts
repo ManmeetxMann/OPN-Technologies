@@ -88,7 +88,7 @@ import {AppointmentTypes} from '../models/appointment-types'
 import {PackageService} from './package.service'
 import {firestore} from 'firebase-admin'
 import {UserServiceInterface} from '../../../common/src/interfaces/user-service-interface'
-import {UserStatus} from '../../../common/src/data/user'
+import {UserCreator, UserStatus} from '../../../common/src/data/user'
 import {FailedResultConfirmatoryRequest} from '../models/failed-result-confirmatory-request'
 
 // Must to be require otherwise import to V2 fails
@@ -1839,6 +1839,7 @@ export class AppoinmentService {
       registrationId: '',
       phoneNumber: acuityAppointment.phone,
       status: UserStatus.NEW,
+      creator: UserCreator.syncFromAcuity,
     })
 
     if (!acuityAppointment.organizationId) {
