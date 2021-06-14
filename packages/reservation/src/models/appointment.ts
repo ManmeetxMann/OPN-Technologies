@@ -449,3 +449,8 @@ export type UpdateTransPortRun = {
 }
 
 export {AppointmentStatus, ResultTypes, Gender}
+
+export enum ThirdPartySyncSource {
+  TransportRun = 'transportRun',
+  ConfirmatoryRequest = 'confirmatoryRequest',
+}

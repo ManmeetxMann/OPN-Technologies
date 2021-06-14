@@ -48,7 +48,6 @@ class PubsubController implements IControllerBase {
           {...testResult, ...appointment, labAssay: lab.assay},
           data.actionType,
           testResult.id,
-          testResult.adminId,
         ),
         this.pcrTestResultsService.sendPushNotification(
           {...testResult, ...appointment, labAssay: lab?.assay},
