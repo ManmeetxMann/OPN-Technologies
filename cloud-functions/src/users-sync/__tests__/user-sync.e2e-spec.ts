@@ -12,6 +12,7 @@ describe('Cloud Function: User sync', () => {
     lastName: 'fhblab1',
     organizationIds: ['TEST1'],
     timestamps: {updatedAt: {_seconds: 1619931339, _nanoseconds: 58000000}},
+    status: 'NEW',
   }
 
   test('Update user', async () => {
