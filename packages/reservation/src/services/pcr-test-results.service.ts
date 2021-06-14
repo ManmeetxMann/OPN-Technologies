@@ -1092,9 +1092,11 @@ export class PCRTestResultsService {
       throw new BadRequestException(`Registration information for this app not found`)
     }
 
+    await this.firebaseMessagingService.validatePushToken(registration.pushToken)
+
     const message: admin.messaging.Message = {
       data: {
-        resultId: null,
+        resultId: '',
         notificationType: null as PushNotificationType,
         title: getNotificationTitle(result),
         content: getNotificationBody(result),
