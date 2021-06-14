@@ -45,8 +45,8 @@ abstract class AcuityAdapter {
     agreeCancellationRefund: Config.get('ACUITY_FIELD_AGREE_CANCELLATION_REFUND'),
     hadCovidConfirmedOrSymptoms: Config.get('ACUITY_FIELD_HAD_COVID_CONFIRMED'),
     hadCovidConfirmedOrSymptomsDate: Config.get('ACUITY_FIELD_HAD_COVID_CONFIRMED_DATE'),
-    hadCovidExposer: Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE_DATE'),
-    hadCovidExposerDate: Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE'),
+    hadCovidExposer: Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE'),
+    hadCovidExposerDate: Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE_DATE'),
     travelID: Config.get('ACUITY_FIELD_TRAVEL_ID'),
     travelIDIssuingCountry: Config.get('ACUITY_FIELD_TRAVEL_ID_ISSUEING_COUNTRY'),
   }
@@ -483,6 +483,11 @@ abstract class AcuityAdapter {
     appointment.receiveResultsViaEmail = false
     appointment.shareTestResultWithEmployer = false
     appointment.receiveNotificationsFromGov = false
+    appointment.agreeCancellationRefund = false
+    appointment.hadCovidConfirmedOrSymptoms = false
+    appointment.hadCovidConfirmedOrSymptomsDate = ''
+    appointment.hadCovidExposer = false
+    appointment.hadCovidExposerDate = ''
     appointment.swabMethod = 'Deep Nasal'
     appointment.ohipCard = ''
     appointment.travelIDIssuingCountry = ''
@@ -531,6 +536,21 @@ abstract class AcuityAdapter {
             Number(Config.get('ACUITY_FIELD_AGREE_TO_CONDUCT_FH_HEALTH_ACCESSMENT'))
           ) {
             appointment.agreeToConductFHHealthAssessment = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_AGREE_CANCELLATION_REFUND'))) {
+            appointment.agreeCancellationRefund = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_HAD_COVID_CONFIRMED'))) {
+            appointment.hadCovidConfirmedOrSymptoms = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_HAD_COVID_CONFIRMED_DATE'))) {
+            appointment.hadCovidConfirmedOrSymptomsDate = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE'))) {
+            appointment.hadCovidExposer = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE_DATE'))) {
+            appointment.hadCovidExposerDate = field.value
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_TRAVEL_ID'))) {
             appointment.travelID = field.value
