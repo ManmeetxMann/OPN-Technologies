@@ -97,7 +97,7 @@ export class UserCardDiscountService {
         discountData: {
           discountType: discount.discountType,
           discountAmount: discount.discountAmount,
-          name: discount.name,
+          name: discount.certificate,
           couponId: discount.couponID,
           expiration: discount.expiration,
         },
