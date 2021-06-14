@@ -1,6 +1,6 @@
 import {isEmpty} from 'lodash'
 import {makeFirestoreTimestamp} from '../utils/datetime.helper'
-import {now} from '../../../common/src/utils/times'
+import {now, serverTimestamp} from '../../../common/src/utils/times'
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
 import {
@@ -52,7 +52,15 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
 
       if (!appointmentExists) {
         const newAppointmentRef = appointmentCollection.docRef()
-        await transaction.set(newAppointmentRef, validatedData)
+        const withTimestamps = {
+          ...validatedData,
+          timestamps: {
+            createdAt: serverTimestamp(),
+            updatedAt: null,
+          },
+        }
+
+        await transaction.set(newAppointmentRef, withTimestamps)
       } else {
         throw new BadRequestException(
           `Appointment with given Acuity id already exists: ${appointmentData.acuityAppointmentId}`,
