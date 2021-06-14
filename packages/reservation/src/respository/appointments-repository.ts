@@ -56,7 +56,6 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
           ...validatedData,
           timestamps: {
             createdAt: serverTimestamp(),
-            updatedAt: null,
           },
         }
 
