@@ -55,7 +55,7 @@ import {Enterprise} from '../adapter/enterprise'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {UserAddressService} from '../../../enterprise/src/services/user-address-service'
 import {LabService} from './lab.service'
-import {UserSyncService} from '../../../enterprise/src/services/user-sync-service'
+import {SqlService} from '../../../enterprise/src/services/sql-service'
 
 //Models
 import {
@@ -117,7 +117,7 @@ export class AppoinmentService {
   private labService = new LabService()
   private packageService = new PackageService()
   private enterpriseAdapter = new Enterprise()
-  private userSyncService = new UserSyncService()
+  private sqlService = new SqlService()
 
   private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
   private cloudTasks = new OPNCloudTasks('acuity-appointments-sync')
@@ -1890,8 +1890,7 @@ export class AppoinmentService {
       return
     }
 
-    // TODO: Don't use userSyncService for getting a that, user sync service should be removed
-    const patient = await this.userSyncService.getByFirebaseKey(appointment.userId)
+    const patient = await this.sqlService.getPatientByFirebaseKey(appointment.userId)
     if (!patient) {
       throw new ResourceNotFoundException(`Patient with id ${appointment.userId} not found`)
     }
