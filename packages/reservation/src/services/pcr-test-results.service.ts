@@ -76,11 +76,7 @@ import {
 } from '../models/appointment'
 import {PCRResultPDFContent} from '../templates/pcr-test-results'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
-import {
-  BulkOperationResponse,
-  BulkOperationStatus,
-  BulkSyncResponse,
-} from '../types/bulk-operation.type'
+import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
 import {TestRunsService} from '../services/test-runs.service'
 import {TemperatureService} from './temperature.service'
 import {LabService} from './lab.service'
@@ -1021,7 +1017,6 @@ export class PCRTestResultsService {
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
     pcrId: string,
-    userId: string,
   ): Promise<void> {
     switch (notficationType) {
       case PCRResultActions.SendPreliminaryPositive: {
