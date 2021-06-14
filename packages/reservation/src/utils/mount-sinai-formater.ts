@@ -1,6 +1,11 @@
 import moment from 'moment'
-import {Gender} from '../models/appointment'
+import {Gender, ThirdPartySyncSource} from '../models/appointment'
 import {Config} from '../../../common/src/utils/config'
+
+enum SendingFacility {
+  MS112 = 'MS112',
+  MS117 = 'MS117',
+}
 
 enum GenderHL7 {
   A = 'A', //Ambiguous
@@ -25,6 +30,7 @@ type ORMDataRequest = {
   dateTime: FirebaseFirestore.Timestamp
   gender: Gender
   dateOfBirth: string
+  source: ThirdPartySyncSource
 }
 
 type ORMDataResponse = {
@@ -33,6 +39,7 @@ type ORMDataResponse = {
   specimenSource: SpecimenSource
   gender: GenderHL7
   clinicCode: string
+  sendingFacility: SendingFacility
 }
 
 export class MountSinaiFormater {
@@ -74,6 +81,10 @@ export class MountSinaiFormater {
       gender: this.gender(this.ormData.gender),
       dateOfBirth: this.dateOfBirth(this.ormData.dateOfBirth),
       clinicCode: Config.get('CLINIC_CODE_MOUNT_SINAI_CONFIRMATORY'),
+      sendingFacility:
+        this.ormData.source === ThirdPartySyncSource.TransportRun
+          ? SendingFacility.MS117
+          : SendingFacility.MS112,
     }
   }
 }

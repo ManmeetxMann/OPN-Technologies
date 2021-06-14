@@ -54,7 +54,7 @@ class AdminPCRTestResultController implements IControllerBase {
   private pcrTestResultsService = new PCRTestResultsService()
   private testRunService = new TestRunsService()
   private commentService = new CommentService(new UserService())
-  private appoinmentService = new AppoinmentService()
+  private appointmentService = new AppoinmentService()
   public labService = new LabService()
   private testResultsService = new TestResultsService()
 
@@ -537,7 +537,7 @@ class AdminPCRTestResultController implements IControllerBase {
         throw new ResourceNotFoundException(`PCRTestResult with id ${id} not found`)
       }
 
-      const appointment = await this.appoinmentService.getAppointmentDBById(
+      const appointment = await this.appointmentService.getAppointmentDBById(
         pcrTestResult.appointmentId,
       )
 
@@ -608,6 +608,7 @@ class AdminPCRTestResultController implements IControllerBase {
       next(error)
     }
   }
+
   replyComment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {testResultId, commentId} = req.params as TestResultReplyCommentParamRequest
@@ -691,7 +692,7 @@ class AdminPCRTestResultController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const failedResults = await this.pcrTestResultsService.getAllFailedResultConfirmatory()
+      const failedResults = await this.appointmentService.getAllFailedResultConfirmatory()
 
       res.json(actionSucceed(failedResults))
     } catch (error) {
@@ -709,15 +710,13 @@ class AdminPCRTestResultController implements IControllerBase {
         failedResultsIds: string[]
       }
 
-      const failedResults = await this.pcrTestResultsService.getAllFailedResultByIds(
-        failedResultsIds,
-      )
+      const failedResults = await this.appointmentService.getAllFailedResultByIds(failedResultsIds)
 
       const ResultsState: BulkSyncResponse[] = await Promise.all(
         failedResults.map(async ({appointmentId, resultId, id}) => {
-          const result = await this.pcrTestResultsService.syncMountSinai(appointmentId, resultId)
+          const result = await this.appointmentService.syncMountSinai(appointmentId, resultId)
           if (result.status === BulkOperationStatus.Success) {
-            await this.pcrTestResultsService.deleteFailedResultConfirmatory(id)
+            await this.appointmentService.deleteFailedResultConfirmatory(id)
           }
           return result
         }),
