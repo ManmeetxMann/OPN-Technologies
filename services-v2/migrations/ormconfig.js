@@ -1,12 +1,20 @@
 module.exports = {
-  port: process.env.DB_SQL_LOCAL_PORT,
-  host: process.env.DB_SQL_LOCAL_HOST,
+  port: 3306,
+  host: '127.0.0.1',
   type: 'mysql',
-  database: process.env.DB_SQL_NAME,
-  username: process.env.DB_SQL_USERNAME,
-  password: process.env.DB_SQL_PASSWORD,
-  synchronize: process.env.DB_SQL_AUTO_SYNC_SCHEMA,
-  migrationsRun: process.env.DB_SQL_RUN_MIGRATION,
+
+  // Local
+  // database: 'opn_services',
+  // username: 'opn_services_user',
+  // password: 'JA?=b2EfMhd.684g',
+
+  // Pre prod
+  database: 'opn_services',
+  username: 'opn_services_user',
+  password: 'JA?=b2EfMhd.684g',
+
+  synchronize: false,
+  synchronize: false,
   entities: ['../**/*.entity.ts'],
   logging: ['warn', 'error', 'query'],
   migrations: ['./**/*.ts'],

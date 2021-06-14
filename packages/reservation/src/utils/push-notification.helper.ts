@@ -1,4 +1,5 @@
 import admin from 'firebase-admin'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 import {AppointmentStatus} from '../models/appointment'
 import {PCRTestResultEmailDTO} from '../models/pcr-test-results'
@@ -27,6 +28,11 @@ export const getNotificationBody = (testResult: PCRTestResultEmailDTO): string =
 
     case AppointmentStatus.ReCollectRequired:
       return `The speciment that had been collected on ${testResult.firstName} ${testResult.lastName} experienced a technical control failure and in order to complete a successful test we require a new sample. Tap here for more details.`
+
+    default:
+      throw new BadRequestException(
+        `Appointment status ${testResult.appointmentStatus} not supported`,
+      )
   }
 }
 
@@ -49,6 +55,11 @@ export const getNotificationTitle = (testResult: PCRTestResultEmailDTO): string 
 
     case AppointmentStatus.ReCollectRequired:
       return 'Update: Re-collection Required'
+
+    default:
+      throw new BadRequestException(
+        `Appointment status ${testResult.appointmentStatus} not supported`,
+      )
   }
 }
 
@@ -84,6 +95,9 @@ export const getPushNotificationType = (
       message.data.notificationType = PushNotificationType.VIEW
       message.data.resultId = result.id
       break
+
+    default:
+      throw new BadRequestException(`Appointment status ${result.appointmentStatus} not supported`)
   }
 
   return message

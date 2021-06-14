@@ -2,7 +2,7 @@ import frisby from 'frisby';
 import helpersCommon from '../../../../helpers/helpers_common';
 import moment from 'moment';
 
-const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
+const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL
 
 const todaysDate = moment(new Date()).format('YYYY-MM-DD');
 // Do setup first
@@ -32,12 +32,70 @@ describe('PCR TestResultsController', () => {
           .post(
               url,
               {
+                "action": "RecollectAsInconclusive",
+                "autoResult": "Negative",
+                "barCode": "TEST10000000381",
+                "notify": true,
+                "sendUpdatedResults": true,
+                "labId": "CINkotCuHoZSLDN9wYjQ",
+                "templateId": "PCR-1",
+                "resultAnalysis": [{
+                  "label": "famEGene",
+                  "value": "3"
+                }, {
+                  "label": "calRedRdrp",
+                  "value": "4"
+                }, {
+                  "label": "quasarNgene",
+                  "value": "4"
+                }, {
+                  "label": "hexIc",
+                  "value": "5"
+                }, {
+                  "label": "famCt",
+                  "value": "5"
+                }, {
+                  "label": "calRedCt",
+                  "value": "5"
+                }, {
+                  "label": "quasarCt",
+                  "value": "5"
+                }, {
+                  "label": "hexCt",
+                  "value": "5"
+                }],
+                "resultDate": todaysDate
+              }
+          )
+          .expect('status', 200)
+          .inspectBody();
+    });
+  });
+});
+
+/*
+
+RecollectAsInvalid,
+RecollectAsInconclusive,
+SendThisResult,
+DoNothing,
+ReRunToday,
+ReRunTomorrow,
+MarkAsPositive,
+MarkAsNegative,
+SendPreliminaryPositive
+*/
+
+
+/*
+
+{
                 'action': 'SendThisResult',
-                'autoResult': 'PresumptivePositive',
-                'barCode': 'DEV1000003191',
+                'autoResult': 'Positive',//PresumptivePositive
+                'barCode': 'TEST10000000380',
                 // 'comment': 'AWESOM',
-                'labId': 'k0qbPDqTwqitKUwlGHye',
-                'templateId': 'template2',
+                'labId': 'CINkotCuHoZSLDN9wYjQ',
+                'templateId': 'template1',
                 'notify': true,
                 'resultAnalysis': [
                   {
@@ -66,23 +124,5 @@ describe('PCR TestResultsController', () => {
                   }],
                 'resultDate': todaysDate,
                 'sendUpdatedResults': true,
-              },
-          )
-          .expect('status', 200)
-          .inspectBody();
-    });
-  });
-});
-
-/*
-
-RecollectAsInvalid,
-RecollectAsInconclusive,
-SendThisResult,
-DoNothing,
-ReRunToday,
-ReRunTomorrow,
-MarkAsPositive,
-MarkAsNegative,
-SendPreliminaryPositive
-*/
+              }
+              */

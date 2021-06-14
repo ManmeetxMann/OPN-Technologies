@@ -6,7 +6,7 @@ export type RapidHomeKitToUserAssoc = Auditable & {
   id: string
   rapidHomeKitId: string
   userId: string
-  used: boolean
+  usedCount: number
 }
 
 export class HomeTestPatientDto {

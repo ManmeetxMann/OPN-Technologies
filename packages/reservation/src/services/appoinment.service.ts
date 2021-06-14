@@ -1,4 +1,4 @@
-import {flatten, fromPairs, union} from 'lodash'
+import {flatten, fromPairs, union, chunk} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 
@@ -17,6 +17,7 @@ import {
   RescheduleAppointmentDTO,
   ResultTypes,
   TestTypes,
+  ThirdPartySyncSource,
   UpdateTransPortRun,
   UserAppointment,
   userAppointmentDTOResponse,
@@ -54,6 +55,7 @@ import {Enterprise} from '../adapter/enterprise'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {UserAddressService} from '../../../enterprise/src/services/user-address-service'
 import {LabService} from './lab.service'
+import {UserSyncService} from '../../../enterprise/src/services/user-sync-service'
 
 //Models
 import {
@@ -61,12 +63,16 @@ import {
   BulkData,
   BulkOperationResponse,
   BulkOperationStatus,
+  BulkSyncResponse,
 } from '../types/bulk-operation.type'
 import {ReservationPushTypes} from '../types/appointment-push'
 import {DbBatchAppointments} from '../../../common/src/types/push-notification'
-import {PcrResultTestActivityAction} from '../models/pcr-test-results'
+import {PcrResultTestActivityAction, PCRTestResultDBModel} from '../models/pcr-test-results'
 import {AdminScanHistory} from '../models/admin-scan-history'
 import {CardItemDBModel} from '../models/cart'
+import {MountSinaiFormater} from '../utils/mount-sinai-formater'
+import {Patient} from '../../../../services-v2/apps/user-service/src/model/patient/patient.entity'
+import MountSinaiSchema from '../dbschemas/mount-sinai-result.schema'
 
 //Repository
 import {AcuityRepository} from '../respository/acuity.repository'
@@ -76,12 +82,14 @@ import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 import {AppointmentToTestTypeRepository} from '../respository/appointment-to-test-type-association.repository'
 import {CouponRepository} from '../respository/coupon.repository'
+import {FailedResultConfirmatoryRequestRepository} from '../respository/failed-result-confirmatory-request.repository'
 
 import {AppointmentTypes} from '../models/appointment-types'
 import {PackageService} from './package.service'
 import {firestore} from 'firebase-admin'
 import {UserServiceInterface} from '../../../common/src/interfaces/user-service-interface'
 import {UserStatus} from '../../../common/src/data/user'
+import {FailedResultConfirmatoryRequest} from '../models/failed-result-confirmatory-request'
 
 // Must to be require otherwise import to V2 fails
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -100,12 +108,17 @@ export class AppoinmentService {
   private adminScanHistoryRepository = new AdminScanHistoryRepository(this.dataStore)
   private appointmentToTestTypeRepository = new AppointmentToTestTypeRepository(this.dataStore)
   private couponRepository = new CouponRepository(this.dataStore)
+  private failedResultConfirmatoryRequestRepository = new FailedResultConfirmatoryRequestRepository(
+    this.dataStore,
+  )
 
   private organizationService = new OrganizationService()
   private userAddressService = new UserAddressService()
   private labService = new LabService()
   private packageService = new PackageService()
   private enterpriseAdapter = new Enterprise()
+  private userSyncService = new UserSyncService()
+
   private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
   private cloudTasks = new OPNCloudTasks('acuity-appointments-sync')
   private postPubsub(appointment: AppointmentDBModel, action: string): void {
@@ -820,8 +833,12 @@ export class AppoinmentService {
       transportRunId: data.transportRunId,
       labId: data.labId ?? null,
     })
-    await this.createOrUpdatePCRResults(savedAppointment, data.userId)
-
+    const testResult = await this.createOrUpdatePCRResults(savedAppointment, data.userId)
+    await this.postPubSubForToSyncWithThirdParty(
+      savedAppointment,
+      testResult.id,
+      ThirdPartySyncSource.TransportRun,
+    )
     await this.appointmentsRepository.addStatusHistoryById(
       appointmentId,
       AppointmentStatus.InTransit,
@@ -831,7 +848,10 @@ export class AppoinmentService {
     return savedAppointment
   }
 
-  async createOrUpdatePCRResults(appointment: AppointmentDBModel, adminId: string): Promise<void> {
+  async createOrUpdatePCRResults(
+    appointment: AppointmentDBModel,
+    adminId: string,
+  ): Promise<PCRTestResultDBModel> {
     const pcrResults = await this.pcrTestResultsRepository.getPCRResultsByAppointmentId(
       appointment.id,
     )
@@ -850,6 +870,7 @@ export class AppoinmentService {
         id: pcrTest.id,
         appointmentId: appointment.id,
       })
+      return pcrTest
     } else {
       await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
         appointment.id,
@@ -860,6 +881,7 @@ export class AppoinmentService {
         PcrResultTestActivityAction.UpdateFromAppointment,
         appointment.userId,
       )
+      return pcrResults[0]
     }
   }
 
@@ -1837,6 +1859,7 @@ export class AppoinmentService {
       return this.createUser(acuityAppointment)
     }
   }
+
   private async checkWithPhone(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
     const user = await this.userService.findOneByPhone(acuityAppointment.phone)
     if (!user) {
@@ -1851,5 +1874,106 @@ export class AppoinmentService {
         return await this.checkWithEmail(acuityAppointment)
       }
     }
+  }
+
+  async postPubSubForToSyncWithThirdParty(
+    appointment: AppointmentDBModel,
+    testResultId: string,
+    source: ThirdPartySyncSource,
+  ): Promise<void> {
+    if (Config.get('TEST_RESULT_MOUNT_SINAI_SYNC') !== 'enabled') {
+      LogInfo(
+        'PCRTestResultsService:postPubSubForToSyncWithThirdParty',
+        'PubSubMountSinaiDisabled',
+        {},
+      )
+      return
+    }
+
+    // TODO: Don't use userSyncService for getting a that, user sync service should be removed
+    const patient = await this.userSyncService.getByFirebaseKey(appointment.userId)
+    if (!patient) {
+      throw new ResourceNotFoundException(`Patient with id ${appointment.userId} not found`)
+    }
+
+    const data = {
+      patientCode: (patient as Patient).publicId,
+      barCode: appointment.barCode,
+      dateTime: appointment.dateTime,
+      firstName: appointment.firstName,
+      lastName: appointment.lastName,
+      healthCard: appointment.ohipCard,
+      dateOfBirth: appointment.dateOfBirth, //YYYYMMDD
+      gender: appointment.gender, //GenderHL7
+      address1: appointment.address,
+      address2: appointment.addressUnit,
+      city: appointment.city,
+      province: appointment.province, //ON
+      postalCode: appointment.postalCode, //A1A1A1
+      country: appointment.country,
+      testType: appointment.testType,
+      source,
+    }
+
+    //Utility to Format for MountSinai
+    const mountSinaiFormater = new MountSinaiFormater(data)
+    const formatedORMData = mountSinaiFormater.get()
+
+    try {
+      await MountSinaiSchema.validateAsync(formatedORMData)
+    } catch (errors) {
+      const reasons = errors.details.map((err) => err.message)
+      await this.failedResultConfirmatoryRequestRepository.saveOrUpdate({
+        resultId: testResultId,
+        appointmentId: appointment.id,
+        reasons,
+        source,
+      })
+      throw new ResourceNotFoundException(`Patient data is invalid. Data could not be sent`)
+    }
+
+    const pubsub = new OPNPubSub(Config.get('PRESUMPTIVE_POSITIVE_RESULTS_TOPIC'))
+    pubsub.publish(formatedORMData)
+  }
+
+  async syncMountSinai(appointmentId: string, resultId: string): Promise<BulkSyncResponse> {
+    try {
+      const appointment = await this.appointmentsRepository.getAppointmentById(appointmentId)
+      const testResult = await this.pcrTestResultsRepository.findOneById(resultId)
+      await this.postPubSubForToSyncWithThirdParty(
+        appointment,
+        testResult.id,
+        ThirdPartySyncSource.ConfirmatoryRequest, //TODO Make it Dynamic
+      )
+      return {
+        appointmentId,
+        resultId,
+        status: BulkOperationStatus.Success,
+        reason: '',
+      }
+    } catch (error) {
+      return {
+        appointmentId,
+        resultId,
+        status: BulkOperationStatus.Failed,
+        reason: error.message,
+      }
+    }
+  }
+
+  getAllFailedResultConfirmatory(): Promise<FailedResultConfirmatoryRequest[]> {
+    return this.failedResultConfirmatoryRequestRepository.getAll()
+  }
+
+  deleteFailedResultConfirmatory(id: string): Promise<void> {
+    return this.failedResultConfirmatoryRequestRepository.delete(id)
+  }
+
+  getAllFailedResultByIds(failedResultIds: string[]): Promise<FailedResultConfirmatoryRequest[]> {
+    return Promise.all(
+      chunk(failedResultIds, 20).map((chunk) =>
+        this.failedResultConfirmatoryRequestRepository.findWhereIdIn(chunk),
+      ),
+    ).then((results) => flatten(results))
   }
 }

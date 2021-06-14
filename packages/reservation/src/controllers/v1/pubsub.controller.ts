@@ -5,7 +5,7 @@ import IControllerBase from '../../../../common/src/interfaces/IControllerBase.i
 import {OPNPubSub} from '../../../../common/src/service/google/pub_sub'
 
 import {PCRTestResultsService} from '../../services/pcr-test-results.service'
-import {EmailNotficationTypes, PCRResultActions} from '../../models/pcr-test-results'
+import {PCRTestResultSubmitted} from '../../models/pcr-test-results'
 import {AppoinmentService} from '../../services/appoinment.service'
 import {LabService} from '../../services/lab.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
@@ -30,28 +30,11 @@ class PubsubController implements IControllerBase {
     this.router.use(root, route)
   }
 
-  private async parseMessage(message: {
-    data: string
-    attributes: Record<string, string>
-  }): Promise<{
-    userId: string
-    organizationId: string
-    actionType: string
-    data: Record<string, unknown>
-  }> {
-    const {data, attributes} = message
-    const payload = await OPNPubSub.getPublishedData(data)
-    return {
-      userId: attributes.userId,
-      organizationId: attributes.organizationId,
-      actionType: attributes.actionType,
-      data: (payload as unknown) as Record<string, unknown>,
-    }
-  }
-
   pcrTestResult: Handler = async (req, res, next): Promise<void> => {
     try {
-      const {data} = await this.parseMessage(req.body.message)
+      const data = (await OPNPubSub.getPublishedData(
+        req.body.message.data,
+      )) as PCRTestResultSubmitted
 
       const testResult = await this.pcrTestResultsService.getPCRResultsById(data.id as string)
 
@@ -63,9 +46,8 @@ class PubsubController implements IControllerBase {
       await Promise.all([
         this.pcrTestResultsService.sendNotification(
           {...testResult, ...appointment, labAssay: lab.assay},
-          data.notficationType as PCRResultActions | EmailNotficationTypes,
+          data.actionType,
           testResult.id,
-          testResult.adminId,
         ),
         this.pcrTestResultsService.sendPushNotification(
           {...testResult, ...appointment, labAssay: lab?.assay},

@@ -86,3 +86,14 @@ export enum PubSubEvents {
   profileUpdateFailed = 'profileUpdateFailed',
   profileUpdateStarted = 'profileUpdateStarted',
 }
+
+export enum PatientServiceFunctions {
+  addInPublicGroup = 'addInPublicGroup',
+  createProfile = 'createProfile',
+  createHomePatientProfile = 'createHomePatientProfile',
+}
+
+export enum PatientServiceEvents {
+  duplicatedUserFound = 'duplicatedUserFound',
+  errorAddingUserToOrg = 'errorAddingUserToOrg',
+}

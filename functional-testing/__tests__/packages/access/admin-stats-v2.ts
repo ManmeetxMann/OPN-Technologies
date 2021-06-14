@@ -9,7 +9,6 @@ frisby.globalSetup({
     },
 });
 const serviceUrl = process.env.ACCESS_SERVICE_URL
-const enterPriseServiceUrl = process.env.ENTERPRISE_SERVICE_URL
 jest.setTimeout(30000);
 const organizationId = testProfile.get().organizationId
 /**
