@@ -1927,6 +1927,7 @@ export class AppoinmentService {
         resultId: testResultId,
         appointmentId: appointment.id,
         reasons,
+        source,
       })
       throw new ResourceNotFoundException(`Patient data is invalid. Data could not be sent`)
     }

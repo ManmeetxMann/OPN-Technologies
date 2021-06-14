@@ -46,7 +46,6 @@ import {UserService} from '../../../../../enterprise/src/services/user-service'
 import {validateAnalysis} from '../../../utils/analysis.helper'
 import {LabService} from '../../../services/lab.service'
 import {TestResultsService} from '../../../services/test-results.service'
-import {BulkOperationStatus, BulkSyncResponse} from '../../../types/bulk-operation.type'
 
 class AdminPCRTestResultController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
@@ -153,19 +152,6 @@ class AdminPCRTestResultController implements IControllerBase {
       listTestResultsAuth,
       this.replyComment,
     )
-
-    innerRouter.get(
-      this.path + '/test-results/list/failed-confirmatory-request',
-      listTestResultsAuth,
-      this.listFailedResultConfirmatory,
-    )
-
-    innerRouter.post(
-      this.path + '/test-results/failed-confirmatory-request/sync',
-      listTestResultsAuth,
-      this.syncFailedResultConfirmatory,
-    )
-
     this.router.use('/', innerRouter)
   }
 
@@ -681,48 +667,6 @@ class AdminPCRTestResultController implements IControllerBase {
       await this.pcrTestResultsService.resendReport(testResultId, userId)
 
       res.json(actionSucceed())
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  listFailedResultConfirmatory = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    try {
-      const failedResults = await this.appointmentService.getAllFailedResultConfirmatory()
-
-      res.json(actionSucceed(failedResults))
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  syncFailedResultConfirmatory = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    try {
-      const {failedResultsIds} = req.body as {
-        failedResultsIds: string[]
-      }
-
-      const failedResults = await this.appointmentService.getAllFailedResultByIds(failedResultsIds)
-
-      const ResultsState: BulkSyncResponse[] = await Promise.all(
-        failedResults.map(async ({appointmentId, resultId, id}) => {
-          const result = await this.appointmentService.syncMountSinai(appointmentId, resultId)
-          if (result.status === BulkOperationStatus.Success) {
-            await this.appointmentService.deleteFailedResultConfirmatory(id)
-          }
-          return result
-        }),
-      )
-
-      res.json(actionSucceed(ResultsState))
     } catch (error) {
       next(error)
     }

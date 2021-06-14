@@ -33,7 +33,12 @@ import {
   FilterName,
   FilterGroupKey,
 } from '../../../models/appointment'
-import {AppointmentBulkAction, BulkOperationResponse} from '../../../types/bulk-operation.type'
+import {
+  AppointmentBulkAction,
+  BulkOperationResponse,
+  BulkOperationStatus,
+  BulkSyncResponse,
+} from '../../../types/bulk-operation.type'
 import {formatDateRFC822Local} from '../../../utils/datetime.helper'
 import {appointmentTypeUiDTOResponse} from '../../../models/appointment-types'
 
@@ -131,6 +136,17 @@ class AdminAppointmentController implements IControllerBase {
       this.path + '/api/v1/appointments/acuity/types',
       apptLabOrOrgAdminAuth,
       this.getAcuityAppointmentTypeList,
+    )
+    innerRouter.get(
+      this.path + '/api/v1/appointments/list/failed-confirmatory-request',
+      apptLabOrOrgAdminAuth,
+      this.listFailedResultConfirmatory,
+    )
+
+    innerRouter.post(
+      this.path + '/api/v1/appointments/failed-confirmatory-request/sync',
+      apptLabOrOrgAdminAuth,
+      this.syncFailedResultConfirmatory,
     )
 
     this.router.use('/', innerRouter)
@@ -596,6 +612,48 @@ class AdminAppointmentController implements IControllerBase {
           })),
         ),
       )
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  listFailedResultConfirmatory = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const failedResults = await this.appointmentService.getAllFailedResultConfirmatory()
+
+      res.json(actionSucceed(failedResults))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  syncFailedResultConfirmatory = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {failedResultsIds} = req.body as {
+        failedResultsIds: string[]
+      }
+
+      const failedResults = await this.appointmentService.getAllFailedResultByIds(failedResultsIds)
+
+      const ResultsState: BulkSyncResponse[] = await Promise.all(
+        failedResults.map(async ({appointmentId, resultId, id}) => {
+          const result = await this.appointmentService.syncMountSinai(appointmentId, resultId)
+          if (result.status === BulkOperationStatus.Success) {
+            await this.appointmentService.deleteFailedResultConfirmatory(id)
+          }
+          return result
+        }),
+      )
+
+      res.json(actionSucceed(ResultsState))
     } catch (error) {
       next(error)
     }
