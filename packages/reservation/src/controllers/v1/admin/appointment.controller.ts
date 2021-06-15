@@ -375,15 +375,15 @@ class AdminAppointmentController implements IControllerBase {
         }),
       )
 
-      res.json(
-        actionSuccess([
-          ...appointmentsState.map((response) => ({
-            ...response,
-            updatedData: appointmentUiDTOResponse(response.updatedData, isLabUser, isClinicUser),
-          })),
-          ...failed,
-        ]),
-      )
+      const result = appointmentsState.map((response) => ({
+        ...response,
+        updatedData:
+          response.status == BulkOperationStatus.Failed
+            ? response.updatedData
+            : appointmentUiDTOResponse(response.updatedData, isLabUser, isClinicUser),
+      }))
+
+      res.json(actionSuccess([...result, ...failed]))
     } catch (error) {
       next(error)
     }
