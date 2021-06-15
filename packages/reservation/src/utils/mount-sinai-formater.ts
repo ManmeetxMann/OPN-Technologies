@@ -1,13 +1,14 @@
 import moment from 'moment'
 import {Gender, ThirdPartySyncSource} from '../models/appointment'
 import {Config} from '../../../common/src/utils/config'
-import {SpecimenSource, GenderHL7, SendingFacility} from '../models/mount-sinai'
+import {SpecimenSource, GenderHL7} from '../models/mount-sinai'
 
 type ORMDataRequest = {
   dateTime: FirebaseFirestore.Timestamp
   gender: Gender
   dateOfBirth: string
   source: ThirdPartySyncSource
+  healthCard: string
 }
 
 type ORMDataResponse = {
@@ -16,7 +17,7 @@ type ORMDataResponse = {
   specimenSource: SpecimenSource
   gender: GenderHL7
   clinicCode: string
-  sendingFacility: SendingFacility
+  healthCard: string
 }
 
 export class MountSinaiFormater {
@@ -57,11 +58,11 @@ export class MountSinaiFormater {
       specimenSource: SpecimenSource.NASOP,
       gender: this.gender(this.ormData.gender),
       dateOfBirth: this.dateOfBirth(this.ormData.dateOfBirth),
-      clinicCode: Config.get('CLINIC_CODE_MOUNT_SINAI_CONFIRMATORY'),
-      sendingFacility:
+      clinicCode:
         this.ormData.source === ThirdPartySyncSource.TransportRun
-          ? SendingFacility.MS117
-          : SendingFacility.MS112,
+          ? Config.get('CLINIC_CODE_FOR_MOUNT_SINAI_LAB')
+          : Config.get('CLINIC_CODE_MOUNT_SINAI_CONFIRMATORY'),
+      healthCard: this.ormData.healthCard ? this.ormData.healthCard.replace(/\D/g, '') : '',
     }
   }
 }
