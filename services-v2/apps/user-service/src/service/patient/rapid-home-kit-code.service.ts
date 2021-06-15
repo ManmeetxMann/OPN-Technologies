@@ -39,7 +39,7 @@ export class RapidHomeKitCodeService {
     }
 
     // Check is already linked to the user
-    if (homeKitCode.filterUserIds.includes(userId)) {
+    if (homeKitCode.filterUserIds && homeKitCode.filterUserIds.includes(userId)) {
       throw new BadRequestException('Kit Already Linked')
     }
 
