@@ -1,7 +1,6 @@
 import * as Joi from 'joi'
 
 import {ThirdPartySyncSource} from '../models/appointment'
-import {SendingFacility} from '../models/mount-sinai'
 
 export default Joi.object({
   patientCode: Joi.string().required(),
@@ -9,7 +8,10 @@ export default Joi.object({
   dateTime: Joi.string().required(),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
-  healthCard: Joi.string().length(10).pattern(/^[0-9]+$/).allow(''),
+  healthCard: Joi.string()
+    .length(10)
+    .pattern(/^[0-9]+$/)
+    .allow(''),
   dateOfBirth: Joi.string().required(),
   gender: Joi.string().required().valid('A', 'F', 'M', 'N', 'O', 'U'),
   address1: Joi.string().required(),

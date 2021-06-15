@@ -1,8 +1,3 @@
-export enum SendingFacility {
-  MS112 = 'MS112',
-  MS117 = 'MS117',
-}
-
 export enum GenderHL7 {
   A = 'A', //Ambiguous
   F = 'F', //Female
