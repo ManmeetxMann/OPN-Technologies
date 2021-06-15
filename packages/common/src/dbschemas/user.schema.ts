@@ -1,3 +1,4 @@
+import { UserCreator } from '../data/user-status'
 import * as Joi from 'joi'
 
 export default Joi.object({
@@ -19,5 +20,5 @@ export default Joi.object({
   receiveResultsViaEmail: Joi.boolean(),
   receiveNotificationsFromGov: Joi.boolean(),
   status: Joi.string(),
-  creator: Joi.string().allow(null, '').valid('syncFromSQL', 'syncFromAcuity'),
+  creator: Joi.string().valid(...Object.values(UserCreator)),
 })
