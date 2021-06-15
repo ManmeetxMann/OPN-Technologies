@@ -1,30 +1,7 @@
 import moment from 'moment'
 import {Gender, ThirdPartySyncSource} from '../models/appointment'
 import {Config} from '../../../common/src/utils/config'
-
-enum SendingFacility {
-  MS112 = 'MS112',
-  MS117 = 'MS117',
-}
-
-enum GenderHL7 {
-  A = 'A', //Ambiguous
-  F = 'F', //Female
-  M = 'M', //Male
-  N = 'N', //Not applicable
-  O = 'O', //Other
-  U = 'U', //Unknown
-}
-
-enum SpecimenSource {
-  NASOP = 'NASOP', //Nasopharyngeal Swab
-  NASD = 'NASD', //Nasal Swab-Deep
-  NARES = 'NARES', //Nares
-  NTS = 'NTS', //Nasal and Throat Swab
-  TS = 'TS', //Throat Swab
-  VSALV = 'VSALV', //Saliva
-  NMT = 'NMT', //Nasal Mid-Turbinate
-}
+import {SpecimenSource, GenderHL7, SendingFacility} from '../models/mount-sinai'
 
 type ORMDataRequest = {
   dateTime: FirebaseFirestore.Timestamp

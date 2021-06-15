@@ -1,5 +1,8 @@
 import * as Joi from 'joi'
 
+import {ThirdPartySyncSource} from '../models/appointment'
+import {SendingFacility} from '../models/mount-sinai'
+
 export default Joi.object({
   patientCode: Joi.string().required(),
   barCode: Joi.string().required(),
@@ -16,6 +19,12 @@ export default Joi.object({
   postalCode: Joi.string().allow(''),
   country: Joi.string().allow(''),
   clinicCode: Joi.string().required(),
+  source: Joi.string()
+    .required()
+    .valid(...Object.values(ThirdPartySyncSource)),
+  sendingFacility: Joi.string()
+    .required()
+    .valid(...Object.values(SendingFacility)),
   testType: Joi.string()
     .required()
     .valid(
