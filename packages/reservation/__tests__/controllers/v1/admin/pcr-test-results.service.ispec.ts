@@ -4,6 +4,7 @@ import {app as server} from '../../../../src/app'
 import {
   createPCRTestResult,
   deletePCRTestResultByTestDataCreator,
+  fetchTestRunId,
 } from '../../../__seeds__/pcr-test-results'
 import {createComment, deleteCommentByTestDataCreator} from '../../../__seeds__/comments'
 import {createUser} from '../../../__seeds__/user'
@@ -24,6 +25,8 @@ const barCode = 'BAR1'
 const pcrTestId = `commentPcrTestId1`
 const commentTestId = 'commentTestId1'
 const userId = 'USER1'
+
+let testRunId: string
 
 describe('PCRTestResultController', () => {
   beforeAll(async () => {
@@ -90,6 +93,8 @@ describe('PCRTestResultController', () => {
       },
       testDataCreator,
     )
+
+    testRunId = await fetchTestRunId()
   })
 
   describe('get result list', () => {
@@ -215,6 +220,40 @@ describe('PCRTestResultController', () => {
         .set('authorization', 'Bearer LabUser')
         .send()
       expect(result.status).toBe(200)
+    })
+  })
+
+  describe('add test run', () => {
+    test('add test run successfully', async () => {
+      const url = '/reservation/admin/api/v1/pcr-test-results/add-test-run'
+      const pcrTestResultIds = [pcrTestId]
+
+      const result = await request(server.app)
+        .put(url)
+        .set('Content-Type', 'application/json')
+        .set('authorization', 'Bearer LabUser')
+        .send({
+          pcrTestResultIds,
+          testRunId,
+        })
+
+      expect(result.statusCode).toBe(200)
+    })
+
+    test('add test run failed', async () => {
+      const url = '/reservation/admin/api/v1/pcr-test-results/add-test-run'
+      const pcrTestResultIds = [pcrTestId]
+
+      const result = await request(server.app)
+        .put(url)
+        .set('Content-Type', 'application/json')
+        .set('authorization', 'Bearer LabUser')
+        .send({
+          pcrTestResultIds,
+          testRunId: 'inexistent_run_id',
+        })
+
+      expect(result.statusCode).toBe(404)
     })
   })
 

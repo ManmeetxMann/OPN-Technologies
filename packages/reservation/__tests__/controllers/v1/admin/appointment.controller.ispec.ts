@@ -4,6 +4,7 @@ import {app as server} from '../../../../src/app'
 import {
   createAppointment,
   deleteAppointmentByTestDataCreator,
+  fetchTransportRunId,
 } from '../../../__seeds__/appointments'
 
 jest.spyOn(global.console, 'error').mockImplementation()
@@ -18,6 +19,8 @@ const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
 const organizationId = 'TEST1'
 const laboratoryId = 'Lab1'
 const barCode = 'BAR1'
+
+let transportRunId: string
 
 describe('AdminAppointmentController', () => {
   beforeAll(async () => {
@@ -95,6 +98,8 @@ describe('AdminAppointmentController', () => {
       },
       testDataCreator,
     )
+
+    transportRunId = await fetchTransportRunId()
   })
 
   describe('get appointment list', () => {
@@ -201,6 +206,39 @@ describe('AdminAppointmentController', () => {
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBeGreaterThanOrEqual(1)
+    })
+  })
+
+  describe('add transport run', () => {
+    test('add transport run successfully', async () => {
+      const appointments = ['APT1', 'APT2']
+
+      const url = '/reservation/admin/api/v1/appointments/add-transport-run'
+      const result = await request(server.app)
+        .put(url)
+        .set('Content-Type', 'application/json')
+        .set('authorization', 'Bearer LabUser')
+        .send({
+          appointmentIds: appointments,
+          transportRunId,
+        })
+
+      expect(result.statusCode).toBe(200)
+    })
+
+    test('add transport run failed', async () => {
+      const appointments = ['APT1', 'APT2']
+
+      const url = '/reservation/admin/api/v1/appointments/add-transport-run'
+      const result = await request(server.app)
+        .put(url)
+        .set('Content-Type', 'application/json')
+        .set('authorization', 'Bearer LabUser')
+        .send({
+          appointmentIds: appointments,
+        })
+
+      expect(result.statusCode).toBe(400)
     })
   })
 
