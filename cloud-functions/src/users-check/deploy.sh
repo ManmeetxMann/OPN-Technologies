@@ -1,5 +1,3 @@
-gcloud auth list
-
 gcloud functions deploy user-v1-check \
     --entry-point=checkUserSyncCoverage \
     --memory=128MB \

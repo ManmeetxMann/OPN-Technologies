@@ -7,6 +7,7 @@ import {safeTimestamp} from '../../../../packages/common/src/utils/datetime-util
 import {In} from 'typeorm'
 import {Config} from '../../../../packages/common/src/utils/config'
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
+const oneDayByHours = 24
 
 initializeApp({
   credential: credential.cert(serviceAccount),
@@ -96,7 +97,9 @@ class UserHandler {
         .where(
           'timestamps.createdAt',
           '>=',
-          safeTimestamp(moment().subtract(24, 'hours').utc().format('YYYY-MM-DD HH:mm:ss')),
+          safeTimestamp(
+            moment().subtract(oneDayByHours, 'hours').utc().format('YYYY-MM-DD HH:mm:ss'),
+          ),
         )
         .offset(offset)
         .limit(UserHandler.limit)
@@ -127,7 +130,7 @@ class UserHandler {
       return await userRepository
         .createQueryBuilder('patient')
         .where('patient.createdAt > :start_at', {
-          start_at: moment().subtract(24, 'hours').utc().format('YYYY-MM-DD HH:mm:ss'),
+          start_at: moment().subtract(oneDayByHours, 'hours').utc().format('YYYY-MM-DD HH:mm:ss'),
         })
         .offset(offset)
         .limit(UserHandler.limit)
