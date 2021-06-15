@@ -196,10 +196,8 @@ async function insertAllUsers(): Promise<Result[]> {
         othersPromises.push(insertData(admin, 'patientAdmin'))
       }
 
-      if (normalUser.authUserId) {
-        const authData = adaptAuthData(patientId, normalUser)
-        othersPromises.push(insertData(authData, 'patientAuth'))
-      }
+      const authData = adaptAuthData(patientId, normalUser)
+      othersPromises.push(insertData(authData, 'patientAuth'))
 
       if (normalUser.organizationIds && normalUser.organizationIds.length) {
         const patientOrganizations = adaptPatientsOrganizationsData(patientId, normalUser)
@@ -338,7 +336,7 @@ function adaptAuthData(patientId: number, user) {
     patientId: number
   } = {
     email: user.email || null,
-    authUserId: user.authUserId,
+    authUserId: user.authUserId || null,
     patientId,
   }
   if (user.phone && user.phone.number) {
