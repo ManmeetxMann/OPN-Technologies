@@ -26,7 +26,7 @@ export class RapidHomeKitCodeService {
 
   getAvailableCodes(codes: RapidHomeKitCode[]): RapidHomeKitCode[] {
     const kitUseCount = this.configService.get('RAPID_ANTIGEN_KIT_USE_COUNT')
-    return codes.filter(code => !code.usedForUserIds  || code.usedForUserIds .length < kitUseCount)
+    return codes.filter(code => !code.usedForUserIds || code.usedForUserIds.length < kitUseCount)
   }
 
   async assocHomeKitToUser(code: string, userId: string): Promise<RapidHomeKitCode> {
@@ -38,15 +38,15 @@ export class RapidHomeKitCodeService {
       throw new ResourceNotFoundException('Kit not found!')
     }
 
-    // Check is already linked to the user
-    if (homeKitCode.filterUserIds && homeKitCode.filterUserIds.includes(userId)) {
-      throw new BadRequestException('Kit Already Linked')
-    }
-
-    if (homeKitCode.usedForUserIds  && homeKitCode.usedForUserIds .length >= kitUseCount) {
+    if (homeKitCode.usedForUserIds && homeKitCode.usedForUserIds.length >= kitUseCount) {
       throw new BadRequestException(
         `Error this kit has already recorded ${kitUseCount} test results against it.`,
       )
+    }
+
+    // Check is already linked to the user
+    if (homeKitCode.filterUserIds && homeKitCode.filterUserIds.includes(userId)) {
+      throw new BadRequestException('Kit Already Linked')
     }
 
     const addedDate = now()
@@ -68,7 +68,7 @@ export class RapidHomeKitCodeService {
       throw new ResourceNotFoundException('Kit not found!')
     }
 
-    if (homeKitCode.usedForUserIds  && homeKitCode.usedForUserIds .length >= kitUseCount) {
+    if (homeKitCode.usedForUserIds && homeKitCode.usedForUserIds.length >= kitUseCount) {
       throw new BadRequestException(
         `Error this kit has already recorded ${kitUseCount} test results against it.`,
       )
@@ -80,7 +80,7 @@ export class RapidHomeKitCodeService {
 
     // Mark kit used for user
     return await this.homeKitCodeRepository.updateProperties(homeKitCode.id, {
-      usedForUserIds : [...(homeKitCode.usedForUserIds  || []), userId],
+      usedForUserIds: [...(homeKitCode.usedForUserIds || []), userId],
     })
   }
 }

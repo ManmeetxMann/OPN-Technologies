@@ -10,7 +10,7 @@ export type RapidHomeKitCode = Auditable & {
   printedOn: firestore.Timestamp
   userIds?: UserIds[]
   filterUserIds: string[]
-  usedForUserIds : string[]
+  usedForUserIds: string[]
 }
 
 export type UserIds = {
