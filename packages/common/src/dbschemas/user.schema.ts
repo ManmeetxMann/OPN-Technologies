@@ -19,4 +19,5 @@ export default Joi.object({
   receiveResultsViaEmail: Joi.boolean(),
   receiveNotificationsFromGov: Joi.boolean(),
   status: Joi.string(),
+  creator: Joi.string().allow(null, '').valid('syncFromSQL', 'syncFromAcuity'),
 })
