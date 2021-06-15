@@ -605,9 +605,16 @@ export const singlePcrTestResultDTO = (
   }
 }
 
+export enum AntiBodyFieldsToCheckResults {
+  IgAResult = 'IgAResult',
+  IgGResult = 'IgGResult',
+  IgMResult = 'IgMResult',
+}
+
 export enum AnalyseTypes {
   POSITIVE = 'POSITIVE',
   NEGATIVE = 'NEGATIVE',
+  INDETERMINATE = 'INDETERMINATE',
 }
 
 export type ActivityTracking = {

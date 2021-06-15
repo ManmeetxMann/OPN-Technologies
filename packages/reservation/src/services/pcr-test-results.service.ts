@@ -38,6 +38,7 @@ import {
 
 import {
   AnalyseTypes,
+  AntiBodyFieldsToCheckResults,
   AppointmentReasons,
   CreateReportForPCRResultsResponse,
   EmailNotficationTypes,
@@ -160,16 +161,16 @@ export class PCRTestResultsService {
     if (
       data.some(
         (analyse) =>
-          ['IgAResult', 'IgGResult', 'IgMResult'].includes(analyse.label) &&
-          analyse.value === AnalyseTypes.POSITIVE,
+          Object.keys(AntiBodyFieldsToCheckResults).includes(analyse.label) &&
+          String(analyse.value).toLowerCase() === String(AnalyseTypes.POSITIVE).toLowerCase(),
       )
     ) {
       return ResultTypes.Positive
     } else if (
       data.some(
         (analyse) =>
-          ['IgAResult', 'IgGResult', 'IgMResult'].includes(analyse.label) &&
-          analyse.value === AnalyseTypes.INDETERMINATE,
+          Object.keys(AntiBodyFieldsToCheckResults).includes(analyse.label) &&
+          String(analyse.value).toLowerCase() === String(AnalyseTypes.INDETERMINATE).toLowerCase(),
       )
     ) {
       return ResultTypes.Indeterminate
