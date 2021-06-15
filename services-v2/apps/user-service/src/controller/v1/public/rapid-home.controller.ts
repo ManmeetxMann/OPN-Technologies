@@ -43,11 +43,14 @@ export class RapidHomeController {
   @Roles([RequiredUserPermission.RegUser])
   @UseGuards(AuthGuard)
   async getLinkedCodes(@AuthUserDecorator() authUser: User): Promise<ResponseWrapper> {
-    const codes = await this.homeKitCodeService.getCodesByUserId(authUser.id)
+    const allCodes = await this.homeKitCodeService.getCodesByUserId(authUser.id)
+    const availableCodes = this.homeKitCodeService.getAvailableCodes(allCodes)
     return ResponseWrapper.actionSucceed({
-      codes: codes.map(code => ({
-        rapidHomeKitId: code.rapidHomeKitId,
-        addedDate: timestampToFormattedIso(code.timestamps.createdAt),
+      codes: availableCodes.map(code => ({
+        rapidHomeKitId: code.code,
+        addedDate: timestampToFormattedIso(
+          code.userIds.find(attachedData => attachedData.userId === authUser.id).addedDate,
+        ),
       })),
     })
   }
