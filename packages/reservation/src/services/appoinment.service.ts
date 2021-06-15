@@ -55,7 +55,7 @@ import {Enterprise} from '../adapter/enterprise'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {UserAddressService} from '../../../enterprise/src/services/user-address-service'
 import {LabService} from './lab.service'
-import {UserSyncService} from '../../../enterprise/src/services/user-sync-service'
+import {SqlService} from '../../../enterprise/src/services/sql-service'
 
 //Models
 import {
@@ -88,7 +88,7 @@ import {AppointmentTypes} from '../models/appointment-types'
 import {PackageService} from './package.service'
 import {firestore} from 'firebase-admin'
 import {UserServiceInterface} from '../../../common/src/interfaces/user-service-interface'
-import {UserStatus} from '../../../common/src/data/user'
+import {UserCreator, UserStatus} from '../../../common/src/data/user'
 import {FailedResultConfirmatoryRequest} from '../models/failed-result-confirmatory-request'
 
 // Must to be require otherwise import to V2 fails
@@ -117,7 +117,7 @@ export class AppoinmentService {
   private labService = new LabService()
   private packageService = new PackageService()
   private enterpriseAdapter = new Enterprise()
-  private userSyncService = new UserSyncService()
+  private sqlService = new SqlService()
 
   private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
   private cloudTasks = new OPNCloudTasks('acuity-appointments-sync')
@@ -620,6 +620,11 @@ export class AppoinmentService {
       receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
       shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
       agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
+      agreeCancellationRefund: acuityAppointment.agreeCancellationRefund,
+      hadCovidConfirmedOrSymptoms: acuityAppointment.hadCovidConfirmedOrSymptoms,
+      hadCovidConfirmedOrSymptomsDate: acuityAppointment.hadCovidConfirmedOrSymptomsDate,
+      hadCovidExposer: acuityAppointment.hadCovidExposer,
+      hadCovidExposerDate: acuityAppointment.hadCovidExposerDate,
       couponCode,
       userId: appointmentDb?.userId ?? currentUserId,
       locationName: acuityAppointment.calendar,
@@ -1839,6 +1844,7 @@ export class AppoinmentService {
       registrationId: '',
       phoneNumber: acuityAppointment.phone,
       status: UserStatus.NEW,
+      creator: UserCreator.syncFromAcuity,
     })
 
     if (!acuityAppointment.organizationId) {
@@ -1890,8 +1896,7 @@ export class AppoinmentService {
       return
     }
 
-    // TODO: Don't use userSyncService for getting a that, user sync service should be removed
-    const patient = await this.userSyncService.getByFirebaseKey(appointment.userId)
+    const patient = await this.sqlService.getPatientByFirebaseKey(appointment.userId)
     if (!patient) {
       throw new ResourceNotFoundException(`Patient with id ${appointment.userId} not found`)
     }
