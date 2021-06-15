@@ -8,5 +8,8 @@
     "rollback": "ts-node --transpile-only ../node_modules/typeorm/cli.js migration:revert"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "ts-node": "^10.0.0"
+  }
 }
