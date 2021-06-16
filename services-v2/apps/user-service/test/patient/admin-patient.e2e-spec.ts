@@ -24,6 +24,9 @@ jest.mock('@opn-enterprise-v1/repository/user.repository', () => {
         add: () => ({
           id: 'RandomFirebaseKeyAdminTest',
         }),
+        getQueryFindWhereEqual: () => ({
+          fetch: () => [],
+        }),
       }
     }),
   }
@@ -75,8 +78,8 @@ describe('AdminPatientController (e2e)', () => {
     patientTestUtility = new PatientTestUtility()
 
     await Promise.all([
-      patientTestUtility.removeProfileByEmail(userCreatePayload.email),
-      patientTestUtility.removeProfileByEmail(userMockedMail),
+      patientTestUtility.removeProfileByAuth({email: userCreatePayload.email}),
+      patientTestUtility.removeProfileByAuth({email: userMockedMail}),
     ])
 
     mockedUser = await patientTestUtility.createPatient({email: userMockedMail})
