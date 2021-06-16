@@ -6,7 +6,7 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 import {App} from '../../src/main'
 
 import {
-  commonHeaders,
+  // commonHeaders,
   createUser,
   deleteUserByEmail,
   deleteUserByIdTestDataCreator,
@@ -42,7 +42,7 @@ const testDataCreator = __filename.split('/services-v2/')[1]
 describe('PatientController (e2e)', () => {
   // const url = '/api/v1/patients'
   let app: NestFastifyApplication
-  let server: HttpService
+  // let server: HttpService
   let patientTestUtility: PatientTestUtility
 
   const userCreatePayload = {
