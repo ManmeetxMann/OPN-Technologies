@@ -363,7 +363,6 @@ export class PatientService {
     }
 
     const userSync = {
-      email: auth.email,
       firstName: patient.firstName,
       lastName: patient.lastName,
       isEmailVerified: patient.isEmailVerified,
@@ -372,6 +371,10 @@ export class PatientService {
       phone: {
         diallingCode: 0,
       },
+    }
+
+    if (auth?.email) {
+      userSync['email'] = auth.email
     }
 
     if (data.phoneNumber) {
@@ -779,7 +782,9 @@ export class PatientService {
   }
 
   async updateProfileWithPubSub(data: AppointmentDBModel): Promise<void> {
-    if (!data?.userId) {
+    const userId = data?.bookedFor
+
+    if (!userId) {
       const errorMessage = `User/Patient id is missing`
       LogError(
         activityLogs.PubSubFunctions.updateProfileWithPubSub,
@@ -791,7 +796,6 @@ export class PatientService {
       throw new BadRequestException(errorMessage)
     }
 
-    const {userId} = data
     const patient = await this.patientRepository.findOne({
       where: [{idPatient: userId}, {firebaseKey: userId}],
     })
