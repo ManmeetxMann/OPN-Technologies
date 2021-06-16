@@ -1,5 +1,5 @@
 /**
- * This script reads user appointments on acuity and updates/creates users on OPN side
+ * This script reads user appointments on acuity and updates/creates users & updates appointments on OPN side
  */
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
@@ -7,7 +7,11 @@ import querystring, {ParsedUrlQueryInput} from 'querystring'
 import fetch from 'node-fetch'
 import moment from 'moment-timezone'
 import {AppointmentAcuityResponse, Gender} from '../packages/reservation/src/models/appointment'
-import {UserService} from '../packages/common/src/service/user/user-service'
+import {UserCreator, UserStatus} from '../packages/common/src/data/user-status'
+import {UserAddressService} from '../packages/enterprise/src/services/user-address-service'
+import {OrganizationService} from '../packages/enterprise/src/services/organization-service'
+import {AuthService} from '../packages/common/src/service/auth/auth-service'
+import {serverTimestamp} from '../packages/common/src/utils/times'
 
 const ACUITY_ENV_NON_PROD = true
 const START_DATE = '2021-06-10' //Starting from OCT 1st
@@ -28,7 +32,9 @@ const database = firestore()
 const appointmentCollection = database.collection('appointments')
 const userCollection = database.collection('users')
 
-const userService = new UserService()
+const authService = new AuthService()
+const addressService = new UserAddressService()
+const organizationService = new OrganizationService()
 
 enum ResultStatus {
   Fulfilled = 'fulfilled',
@@ -208,7 +214,7 @@ async function fetchAcuity(): Promise<Result[]> {
     await Promise.all(
       acuityAppointments.map(async (acuityAppointment) => {
         const promises = []
-        promises.push(checkAppointment(acuityAppointment))
+        promises.push(processAppointment(acuityAppointment))
         const result = await promiseAllSettled(promises)
         results.push(...result)
       }),
@@ -221,13 +227,18 @@ async function fetchAcuity(): Promise<Result[]> {
   return results
 }
 
-async function checkAppointment(acuityAppointment) {
+/**
+ * Process fetched appointment,
+ * Query users by appointment email,
+ * - If found and matched with email & names, update all matched appointment with userId,
+ * - If not found create new user
+ */
+async function processAppointment(acuityAppointment) {
   const appointment = customFieldsToAppoinment(acuityAppointment)
   const {
     firstName,
     lastName,
     email,
-    barCode,
     dateOfBirth,
     address,
     agreeToConductFHHealthAssessment,
@@ -236,19 +247,11 @@ async function checkAppointment(acuityAppointment) {
     receiveResultsViaEmail,
     receiveNotificationsFromGov,
   } = appointment
-  console.log({barCode})
-  // check if user exists in OPN db with apoointment email
+  // check if users exists in OPN db with appointment email
   const userExists = await userCollection.where('email', '==', email).get()
-  console.log(`user with ${email}: count ${userExists.docs.length}`)
-  console.log('Appointment Name:', `${appointment.firstName} ${appointment.lastName}`)
-  console.log(
-    'Users found:',
-    ...userExists.docs.map((d) => `${d.data().firstName} ${d.data().lastName} -`),
-  )
 
   const userFields = {
     dateOfBirth,
-    address,
     agreeToConductFHHealthAssessment,
     shareTestResultWithEmployer,
     readTermsAndConditions,
@@ -257,39 +260,70 @@ async function checkAppointment(acuityAppointment) {
   }
 
   if (userExists.docs.length) {
+    // loop through users and check email, firstName & lastName matches
     const userUpdates = userExists.docs.map(async (user) => {
       const userData = user.data()
+      const namesMatches = userData.firstName === firstName && userData.lastName === lastName
+      if (namesMatches) {
+        // update all appointments by email with matched name
+        await updateAppointmentsWithUserId(appointment, user)
 
-      if (userData.firstName === firstName && userData.lastName === lastName) {
-        console.log('--->USERID SHOULD BE UPDATED')
-      } else {
-        // TODO: should be flagged as unconfirmed
-        console.log('--->FLAG AS UNCONFIRMED')
+        // update user with terms and dateOfBirth
+        user.ref.update(userFields)
+
+        // add address for user
+        await addressService.InsertIfNotExists(user.id, address)
       }
-
-      // doc.ref.update(userFields)
-      console.log(`User ${user.id} should be updated with`, userFields)
-
-      // update all appointments by email
-      // const appointmentsByEmail = await appointmentCollection.where('email', '==', email).get()
-      // console.log(
-      //   'User appointments should be updated',
-      //   ...appointmentsByEmail.docs.map((a) => a.data().userId),
-      // )
     })
 
-    await Promise.all(userUpdates)
-    // TODO: update user with mandatory fields
+    return Promise.all(userUpdates)
   } else {
-    console.log(`User with ${email} does not exist!`)
-    // TODO: create new user
-    // await userCollection.add({
-    //   firstName,
-    //   lastName,
-    //   email,
-    //   ...userFields,
-    // })
+    // if user not found by email, create new user
+    const publicOrgId = Config.get('PUBLIC_ORG_ID')
+    const publicGroupId = Config.get('PUBLIC_GROUP_ID')
+    const firebaseUserId = await authService.createUser(email)
+    const createdUser = await userCollection.add({
+      email,
+      authUserId: firebaseUserId,
+      firstName,
+      lastName,
+      dateOfBirth,
+      base64Photo: Config.get('DEFAULT_USER_PHOTO') || '',
+      organizationIds: appointment?.organizationId ? [appointment.organizationId] : [publicOrgId],
+      delegates: [],
+      registrationId: '',
+      phoneNumber: appointment.phone,
+      status: UserStatus.NEW,
+      creator: UserCreator.syncFromAcuityToOpnMigration,
+      timestamps: {
+        createdAt: serverTimestamp(),
+        updatedAt: null,
+      },
+      ...userFields,
+    })
+
+    if (!appointment.organizationId) {
+      await organizationService.addUserToGroup(publicOrgId, publicGroupId, createdUser.id)
+    }
+
+    await addressService.InsertIfNotExists(createdUser.id, address)
+
+    return createdUser.id
   }
+}
+
+async function updateAppointmentsWithUserId(acuityAppointment, userData) {
+  const appointmentsByEmailAndName = await appointmentCollection
+    .where('email', '==', acuityAppointment.email)
+    .where('firstName', '==', acuityAppointment.firstName)
+    .where('lastName', '==', acuityAppointment.lastName)
+    .get()
+
+  const updates = appointmentsByEmailAndName.docs.map((appointment) => {
+    return appointment.ref.update({userId: userData.id})
+  })
+
+  await Promise.all(updates)
 }
 
 async function main() {
