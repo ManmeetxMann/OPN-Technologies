@@ -44,7 +44,7 @@ import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import {OrganizationModel} from '@opn-enterprise-v1/repository/organization.repository'
 import DataStore from '@opn-common-v1/data/datastore'
 import {AuthUser, UserStatus, UserCreator} from '@opn-common-v1/data/user'
-import {Registration} from '@opn-common-v1/data/registration'
+import {Registration, TokenSource} from '@opn-common-v1/data/registration'
 import {RegistrationService} from '@opn-common-v1/service/registry/registration-service'
 import {MessagingFactory} from '@opn-common-v1/service/messaging/messaging-service'
 import {safeTimestamp} from '@opn-common-v1/utils/datetime-util'
@@ -168,7 +168,7 @@ export class PatientService {
       .then(([data, totalItems]) => Page.of(data, page, perPage, totalItems))
   }
 
-  async createHomePatientProfile(data: HomeTestPatientDto): Promise<Patient> {
+  async createHomePatientProfile(data: HomeTestPatientDto, tokenSource: TokenSource): Promise<Patient> {
     const userData = {
       firstName: data.firstName,
       lastName: data.lastName,
@@ -209,7 +209,7 @@ export class PatientService {
     await this.addInPublicGroup(firebaseUser.id)
     data.firebaseKey = firebaseUser.id
     data.isEmailVerified = false
-    const patient = await this.createPatient(data as PatientCreateDto)
+    const patient = await this.createPatient(data as PatientCreateDto, tokenSource)
     data.idPatient = patient.idPatient
 
     await Promise.all([this.saveAuth(data), this.saveAddress(data), this.saveOrganization(data)])
@@ -224,6 +224,7 @@ export class PatientService {
   async createProfile(
     data: PatientCreateDto | PatientCreateAdminDto,
     hasPublicOrg = false,
+    tokenSource: TokenSource,
   ): Promise<Patient> {
     const organizationIds = []
     if (hasPublicOrg) {
@@ -238,7 +239,7 @@ export class PatientService {
       firstName: data.firstName,
       isEmailVerified: false,
       lastName: data.lastName,
-      registrationId: await this.getRegistrationId(data),
+      registrationId: await this.getRegistrationId(data, tokenSource),
       photo: data.photoUrl ?? null,
       phoneNumber: data.phoneNumber ?? null,
       authUserId: data.authUserId,
@@ -285,7 +286,7 @@ export class PatientService {
       await this.addInPublicGroup(firebaseUser.id)
     }
 
-    const patient = await this.createPatient(data)
+    const patient = await this.createPatient(data, tokenSource)
     data.idPatient = patient.idPatient
 
     await Promise.all([
@@ -334,7 +335,7 @@ export class PatientService {
    * @param id
    * @param data
    */
-  async updateProfile(patientId: number, data: PatientUpdateDto): Promise<Patient> {
+  async updateProfile(patientId: number, data: PatientUpdateDto, tokenSource: TokenSource): Promise<Patient> {
     const patient = await this.getProfilebyId(patientId)
     data.idPatient = patientId
     patient.firstName = data.firstName || patient.firstName
@@ -367,7 +368,7 @@ export class PatientService {
       firstName: patient.firstName,
       lastName: patient.lastName,
       isEmailVerified: patient.isEmailVerified,
-      registrationId: await this.getRegistrationId({...data, firebaseKey: patient.firebaseKey}),
+      registrationId: await this.getRegistrationId({...data, firebaseKey: patient.firebaseKey}, tokenSource),
       ...(patient.photoUrl && {photo: patient.photoUrl}),
       phone: {
         diallingCode: 0,
@@ -446,6 +447,7 @@ export class PatientService {
 
   async createPatient(
     data: PatientCreateDto | DependantCreateDto | PatientCreateAdminDto,
+    tokenSource: TokenSource,
   ): Promise<Patient> {
     const entity = new Patient()
     entity.firebaseKey = data.firebaseKey
@@ -455,7 +457,7 @@ export class PatientService {
     entity.phoneNumber = data.phoneNumber
     entity.dateOfBirth = data.dateOfBirth
     entity.photoUrl = data.photoUrl
-    entity.registrationId = await this.getRegistrationId(data)
+    entity.registrationId = await this.getRegistrationId(data, tokenSource)
     entity.consentFileUrl = data.consentFileUrl
     entity.isEmailVerified = data.isEmailVerified || false
 
@@ -470,13 +472,14 @@ export class PatientService {
   async createDependant(
     delegateId: number,
     data: DependantCreateDto | DependantCreateAdminDto,
+    tokenSource: TokenSource
   ): Promise<Patient> {
     const delegate = await this.getbyId(delegateId)
 
     const firebaseUser = await this.userRepository.add({
       firstName: data.firstName,
       lastName: data.lastName,
-      registrationId: await this.getRegistrationId(data),
+      registrationId: await this.getRegistrationId(data, tokenSource),
       photo: data.photoUrl ?? null,
       phone: {
         diallingCode: 0,
@@ -496,7 +499,7 @@ export class PatientService {
       firebaseUser.organizationIds.push(data.organizationId)
     }
 
-    const dependant = await this.createPatient(data)
+    const dependant = await this.createPatient(data, tokenSource)
     data.idPatient = dependant.idPatient
 
     await Promise.all([
@@ -761,7 +764,7 @@ export class PatientService {
    * Update or insert push token
    */
   async upsertPushToken(patientId: number, registration: Omit<Registration, 'id'>): Promise<void> {
-    const {pushToken, osVersion, platform} = registration
+    const {pushToken, osVersion, platform, tokenSource} = registration
 
     // validate if we get token
     if (pushToken) {
@@ -773,12 +776,13 @@ export class PatientService {
       osVersion,
       platform,
       pushToken,
+      tokenSource
     })
 
     await this.patientRepository.update({idPatient: patientId}, {registrationId: id})
   }
 
-  async updateProfileWithPubSub(data: AppointmentDBModel): Promise<void> {
+  async updateProfileWithPubSub(data: AppointmentDBModel, tokenSource: TokenSource): Promise<void> {
     if (!data?.userId) {
       const errorMessage = `User/Patient id is missing`
       LogError(
@@ -831,10 +835,10 @@ export class PatientService {
       updateDto.lastAppointment = safeTimestamp(data.dateOfAppointment)
     }
 
-    await this.updateProfile(patient.idPatient, updateDto)
+    await this.updateProfile(patient.idPatient, updateDto, tokenSource)
   }
 
-  async getRegistrationId(userData: PatientUpdateDto): Promise<string> {
+  async getRegistrationId(userData: PatientUpdateDto, tokenSource: TokenSource): Promise<string> {
     let registrationDb: Registration
 
     if (
@@ -846,6 +850,7 @@ export class PatientService {
         platform: userData?.registration?.platform as Platforms,
         osVersion: userData?.registration?.osVersion,
         pushToken: userData?.registration?.pushToken,
+        tokenSource,
       })
     }
 

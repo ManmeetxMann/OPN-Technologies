@@ -103,6 +103,7 @@ import {
   getNotificationTitle,
   getPushNotificationType,
 } from '../utils/push-notification.helper'
+import {TokenSource} from '../../../common/src/data/registration'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -1086,7 +1087,7 @@ export class PCRTestResultsService {
       return
     }
 
-    const registration = await this.registrationService.findLastForUserId(userId)
+    const registration = await this.registrationService.findLastForUserId(userId, TokenSource.FH)
 
     if (!registration?.pushToken) {
       throw new BadRequestException(`Registration information for this app not found`)

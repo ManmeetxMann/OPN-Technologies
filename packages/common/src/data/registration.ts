@@ -7,10 +7,16 @@ export type Registration = {
   platform: Platform
   osVersion: string
   pushToken?: string
+  tokenSource: TokenSource
   userIds?: string[]
   timestamps?: {
     createdAt: firestore.Timestamp
   }
+}
+
+export enum TokenSource {
+  FH = 'FH',
+  OPN = 'OPN',
 }
 
 export type RegistrationUpdate = {

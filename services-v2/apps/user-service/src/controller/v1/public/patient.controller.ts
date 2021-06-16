@@ -1,4 +1,4 @@
-import {Body, Controller, Get, NotFoundException, Post, Put, UseGuards} from '@nestjs/common'
+import {Body, Controller, Get, Headers, NotFoundException, Post, Put, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiBody, ApiExtraModels, ApiResponse, ApiTags, refs} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
@@ -50,6 +50,7 @@ import {AuthShortCodeService} from '@opn-enterprise-v1/services/auth-short-code-
 import {OpnConfigService} from '@opn-services/common/services'
 import * as _ from 'lodash'
 import {ActionStatus} from '@opn-services/common/model'
+import { mapOpnSourceHeader } from '@opn-services/common/utils/registration'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -107,7 +108,7 @@ export class PatientController {
     if (opnHeaders.opnSourceHeader == OpnSources.FH_RapidHome_Web) {
       patientDto.phoneNumber = firebaseAuthUser.phoneNumber
 
-      patient = await this.patientService.createHomePatientProfile(patientDto as HomeTestPatientDto)
+      patient = await this.patientService.createHomePatientProfile(patientDto as HomeTestPatientDto, mapOpnSourceHeader(opnHeaders.opnSourceHeader))
     } else {
       const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
       if (patientExists) {
@@ -119,7 +120,7 @@ export class PatientController {
       if (!patientDto.phoneNumber) {
         patientDto.phoneNumber = firebaseAuthUser.phoneNumber
       }
-      patient = await this.patientService.createProfile(patientDto, hasPublicOrg)
+      patient = await this.patientService.createProfile(patientDto, hasPublicOrg, mapOpnSourceHeader(opnHeaders.opnSourceHeader))
     }
 
     let resultExitsForProvidedEmail = false
@@ -164,6 +165,7 @@ export class PatientController {
   async authenticate(
     @AuthUserDecorator() authUser: AuthUser,
     @Body() authenticateDto: AuthenticateDto,
+    @OpnHeaders() opnHeaders: OpnCommonHeaders,
   ): Promise<ResponseWrapper> {
     const {patientId, organizationId, code} = authenticateDto
     const patientExists = await this.patientService.getAuthByAuthUserId(authUser.authUserId)
@@ -174,7 +176,7 @@ export class PatientController {
     const shortCode = await this.patientService.findShortCodeByPatientEmail(patientExists.email)
     await this.patientService.verifyCodeOrThrowError(shortCode.shortCode, code)
     await this.patientService.connectOrganization(Number(patientId), organizationId)
-    await this.patientService.updateProfile(Number(patientId), {isEmailVerified: true})
+    await this.patientService.updateProfile(Number(patientId), {isEmailVerified: true}, mapOpnSourceHeader(opnHeaders.opnSourceHeader))
     return ResponseWrapper.actionSucceed()
   }
 
@@ -205,6 +207,7 @@ export class PatientController {
   async update(
     @Body() patientUpdateDto: PatientUpdateDto,
     @AuthUserDecorator() authUser: AuthUser,
+    @OpnHeaders() opnHeaders: OpnCommonHeaders,
   ): Promise<ResponseWrapper> {
     const patientExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
     if (!patientExists) {
@@ -218,14 +221,18 @@ export class PatientController {
 
     if (patientUpdateDto?.registration) {
       const {pushToken, osVersion, platform} = patientUpdateDto.registration
-      await this.patientService.upsertPushToken(id, {
-        osVersion,
-        platform: platform as Platform,
-        pushToken,
-      })
+      await this.patientService.upsertPushToken(
+        id,
+        {
+          osVersion,
+          platform: platform as Platform,
+          pushToken,
+          tokenSource: mapOpnSourceHeader(opnHeaders.opnSourceHeader),
+        }
+      )
     }
 
-    const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
+    const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto, mapOpnSourceHeader(opnHeaders.opnSourceHeader))
     LogInfo(UserFunctions.update, UserEvent.updateProfile, {
       userId: patientExists.idPatient,
       updatedBy: id,
@@ -243,6 +250,7 @@ export class PatientController {
   async addDependents(
     @Body() dependantBody: DependantCreateDto,
     @AuthUserDecorator() authUser: AuthUser,
+    @OpnHeaders() opnHeaders: OpnCommonHeaders,
   ): Promise<ResponseWrapper> {
     const delegateExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
     if (!delegateExists) {
@@ -258,7 +266,7 @@ export class PatientController {
       throw new ForbiddenException('Permission not found for this resource')
     }
 
-    const dependant = await this.patientService.createDependant(delegateId, dependantBody)
+    const dependant = await this.patientService.createDependant(delegateId, dependantBody, mapOpnSourceHeader(opnHeaders.opnSourceHeader))
     LogInfo(UserFunctions.addDependents, UserEvent.createPatient, {
       newUserId: dependant.idPatient,
       createdBy: authUser.id,
