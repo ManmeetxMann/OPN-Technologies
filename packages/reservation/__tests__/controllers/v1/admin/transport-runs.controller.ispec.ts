@@ -44,7 +44,7 @@ describe('AdminTransportRunsController', () => {
   // )
   // })
 
-  describe('Dummy test run', () => {
+  test('Dummy test run', async () => {
     expect(200).toBe(200)
   })
 
