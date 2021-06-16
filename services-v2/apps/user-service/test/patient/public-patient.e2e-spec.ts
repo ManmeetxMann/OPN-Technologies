@@ -1,5 +1,5 @@
 import {Test, TestingModule} from '@nestjs/testing'
-import {HttpService} from '@nestjs/common'
+// import {HttpService} from '@nestjs/common'
 import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 
 // import * as request from 'supertest'
