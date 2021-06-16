@@ -3,7 +3,7 @@ import {Handler, Router} from 'express'
 
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {OPNPubSub} from '../../../../common/src/service/google/pub_sub'
-
+import {LogError, LogInfo} from '../../../../common/src/utils/logging-setup'
 import {PCRTestResultsService} from '../../services/pcr-test-results.service'
 import {PCRTestResultSubmitted} from '../../models/pcr-test-results'
 import {AppoinmentService} from '../../services/appoinment.service'
@@ -42,18 +42,31 @@ class PubsubController implements IControllerBase {
         this.appoinmentService.getAppointmentDBById(testResult.appointmentId),
         this.labService.findOneById(testResult.labId),
       ])
-
-      await Promise.all([
-        this.pcrTestResultsService.sendNotification(
+      
+      try{
+        await this.pcrTestResultsService.sendEmailNotificationForResults(
           {...testResult, ...appointment, labAssay: lab.assay},
           data.actionType,
           testResult.id,
-        ),
-        this.pcrTestResultsService.sendPushNotification(
+        )
+      }catch (error) {
+        LogError('PubsubController:pcrTestResult','FailedToSendEmailNotification',{
+          errorMessage: error.toString(),
+        },)
+      }
+
+      try{
+        await this.pcrTestResultsService.sendPushNotification(
           {...testResult, ...appointment, labAssay: lab?.assay},
           testResult.userId,
-        ),
-      ])
+        )
+      }
+      catch (error) {
+        LogError('PubsubController:pcrTestResult','FailedToSendPushNotification',{
+          errorMessage: error.toString(),
+        },)
+      }
+      
 
       res.sendStatus(200)
     } catch (error) {
