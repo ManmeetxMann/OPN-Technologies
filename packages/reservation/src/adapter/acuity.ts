@@ -27,7 +27,7 @@ abstract class AcuityAdapter {
     dateOfBirth: Config.get('ACUITY_FIELD_DATE_OF_BIRTH'),
     registeredNursePractitioner: Config.get('ACUITY_FIELD_NURSE_NAME'),
     organizationId: Config.get('ACUITY_FIELD_ORGANIZATION_ID'),
-    address: Config.get('ACUITY_FIELD_ADDRESS'),
+    address: Config.get('ACUITY_FIELD_ADDRESS_STREET'),
     addressUnit: Config.get('ACUITY_FIELD_ADDRESS_UNIT'),
     city: Config.get('ACUITY_FIELD_CITY'),
     province: Config.get('ACUITY_FIELD_PROVINCE'),
@@ -513,7 +513,12 @@ abstract class AcuityAdapter {
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_ORGANIZATION_ID'))) {
             appointment.organizationId = field.value ?? Config.get('PUBLIC_ORG_ID')
           }
+          //Old Appointments
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS'))) {
+            appointment.address = field.value
+          }
+          //New Field
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS_STREET'))) {
             appointment.address = field.value
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS_UNIT'))) {
