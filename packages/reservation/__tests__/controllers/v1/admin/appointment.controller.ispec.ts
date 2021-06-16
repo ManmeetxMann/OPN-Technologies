@@ -4,8 +4,9 @@ import {app as server} from '../../../../src/app'
 import {
   createAppointment,
   deleteAppointmentByTestDataCreator,
-  fetchTransportRunId,
 } from '../../../__seeds__/appointments'
+
+import {createTransportRun, deleteTransportRuns} from '../../../__seeds__/transport-runs'
 
 jest.spyOn(global.console, 'error').mockImplementation()
 jest.spyOn(global.console, 'info').mockImplementation()
@@ -20,7 +21,7 @@ const organizationId = 'TEST1'
 const laboratoryId = 'Lab1'
 const barCode = 'BAR1'
 
-let transportRunId: string
+const transportRunId = 'APPOINTMENT_TRANSPORT_RUN'
 
 describe('AdminAppointmentController', () => {
   beforeAll(async () => {
@@ -99,7 +100,15 @@ describe('AdminAppointmentController', () => {
       testDataCreator,
     )
 
-    transportRunId = await fetchTransportRunId()
+    await createTransportRun(
+      {
+        id: transportRunId,
+        labId: laboratoryId,
+        label: testDataCreator,
+        createdAt: dateTimeForAppointment1,
+      },
+      testDataCreator,
+    )
   })
 
   describe('get appointment list', () => {
@@ -244,5 +253,6 @@ describe('AdminAppointmentController', () => {
 
   afterAll(async () => {
     await deleteAppointmentByTestDataCreator(testDataCreator)
+    await deleteTransportRuns(testDataCreator)
   })
 })

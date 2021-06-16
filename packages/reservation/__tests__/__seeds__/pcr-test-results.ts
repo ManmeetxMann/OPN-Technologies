@@ -77,10 +77,3 @@ export const deletePCRTestResultByTestDataCreator = async (
     })
   })
 }
-
-export const fetchTestRunId = async (): Promise<string> => {
-  const testRunsQuery = database.collection('test-runs')
-
-  const querySnapshot = await testRunsQuery.get()
-  return querySnapshot.docs[0].data()['testRunId']
-}

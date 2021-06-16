@@ -10,9 +10,35 @@ export const deleteTestRuns = async (testRunName: string): Promise<void> => {
   querySnapshot.forEach((doc) => doc.ref.delete())
 }
 
-export const fetchExistingLabId = async (): Promise<string> => {
-  const labsQuery = database.collection('labs')
+export const createTestRun = async (
+  dataOverwrite: {
+    id: string
+    name?: string
+    createdAt: string
+  },
+  testDataCreator: string,
+): Promise<void> => {
+  const data = {
+    name: dataOverwrite.name ?? 'testRun_1',
+    testRunId: dataOverwrite.id,
+    timestamps: {
+      createdAt: firestore.Timestamp.fromDate(new Date(dataOverwrite.createdAt)),
+      updatedAt: null,
+    },
+    testDataCreator,
+  }
 
-  const querySnapshot = await labsQuery.get()
-  return querySnapshot.docs[0].id
+  await database.collection(collectionName).doc(dataOverwrite.id).set(data)
+}
+
+export const deleteTestRunsByDataCreator = async (testDataCreator: string): Promise<void> => {
+  const test_runs_query = database
+    .collection(collectionName)
+    .where('testDataCreator', '==', testDataCreator)
+
+  await test_runs_query.get().then(function (querySnapshot) {
+    querySnapshot.forEach(function (doc) {
+      doc.ref.delete()
+    })
+  })
 }

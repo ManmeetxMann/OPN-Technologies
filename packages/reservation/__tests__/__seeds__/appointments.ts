@@ -71,10 +71,3 @@ export const deleteAppointmentByTestDataCreator = async (
     })
   })
 }
-
-export const fetchTransportRunId = async (): Promise<string> => {
-  const transportRunsQuery = database.collection('transport-runs')
-
-  const querySnapshot = await transportRunsQuery.get()
-  return querySnapshot.docs[0].data()['transportRunId']
-}

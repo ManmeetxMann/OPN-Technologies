@@ -1,7 +1,8 @@
 import request from 'supertest'
 
 import {app as server} from '../../../../src/app'
-import {deleteTestRuns, fetchExistingLabId} from '../../../__seeds__/test-runs'
+import {createTestRun, deleteTestRuns} from '../../../__seeds__/test-runs'
+import {create as createLab, deleteLabsByTestDataCreator} from '../../../__seeds__/labs'
 
 jest.spyOn(global.console, 'error').mockImplementation()
 jest.spyOn(global.console, 'info').mockImplementation()
@@ -12,16 +13,34 @@ const testRunName = 'TEST_RUN_TEST_RECORD'
 const creationDate = '2021-06-14'
 const creationTime = 'T09:37:29.035Z'
 
+const testDataCreator = __filename.split('/packages/')[1]
+
 const headers = {
   authorization: 'Bearer ClinicUser',
   'Content-Type': 'application/json',
 }
 
-let labId: string
+const labId = 'TEST_RUNS_LAB'
 
 describe('AdminTestRunsController', () => {
   beforeAll(async () => {
-    labId = await fetchExistingLabId()
+    await createTestRun(
+      {
+        id: 'testRun_id',
+        name: testRunName,
+        createdAt: creationDate + creationTime,
+      },
+      testDataCreator,
+    )
+
+    await createLab(
+      {
+        id: labId,
+        createdAt: creationDate + creationTime,
+        userID: 'TEST_RUN_USER',
+      },
+      testDataCreator,
+    )
   })
 
   describe('post test run', () => {
@@ -71,5 +90,6 @@ describe('AdminTestRunsController', () => {
 
   afterAll(async () => {
     await deleteTestRuns(testRunName)
+    await deleteLabsByTestDataCreator(testDataCreator)
   })
 })

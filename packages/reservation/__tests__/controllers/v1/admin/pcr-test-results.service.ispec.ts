@@ -4,10 +4,10 @@ import {app as server} from '../../../../src/app'
 import {
   createPCRTestResult,
   deletePCRTestResultByTestDataCreator,
-  fetchTestRunId,
 } from '../../../__seeds__/pcr-test-results'
 import {createComment, deleteCommentByTestDataCreator} from '../../../__seeds__/comments'
 import {createUser} from '../../../__seeds__/user'
+import {createTestRun, deleteTestRunsByDataCreator} from '../../../__seeds__/test-runs'
 
 //jest.spyOn(global.console, 'error').mockImplementation()
 //jest.spyOn(global.console, 'info').mockImplementation()
@@ -26,7 +26,7 @@ const pcrTestId = `commentPcrTestId1`
 const commentTestId = 'commentTestId1'
 const userId = 'USER1'
 
-let testRunId: string
+const testRunId = 'PCR_TEST_RUN_ID'
 
 describe('PCRTestResultController', () => {
   beforeAll(async () => {
@@ -94,7 +94,13 @@ describe('PCRTestResultController', () => {
       testDataCreator,
     )
 
-    testRunId = await fetchTestRunId()
+    await createTestRun(
+      {
+        id: testRunId,
+        createdAt: dateTimeForAppointment7AM,
+      },
+      testDataCreator,
+    )
   })
 
   describe('get result list', () => {
@@ -260,5 +266,6 @@ describe('PCRTestResultController', () => {
   afterAll(async () => {
     await deletePCRTestResultByTestDataCreator(testDataCreator)
     await deleteCommentByTestDataCreator(pcrTestId)
+    await deleteTestRunsByDataCreator(testDataCreator)
   })
 })

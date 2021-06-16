@@ -1,19 +1,22 @@
 import request from 'supertest'
 
 import {app as server} from '../../../../src/app'
-import {deleteTestRuns, fetchExistingLabId} from '../../../__seeds__/test-runs'
+import {createTransportRun, deleteTransportRuns} from '../../../__seeds__/transport-runs'
+import {create as createLab, deleteLabsByTestDataCreator} from '../../../__seeds__/labs'
 
 jest.spyOn(global.console, 'error').mockImplementation()
 jest.spyOn(global.console, 'info').mockImplementation()
 jest.mock('../../../../../common/src/middlewares/authorization')
 
+const testDataCreator = __filename.split('/packages/')[1]
+
 const url = '/reservation/admin/api/v1/transport-runs'
-const runLabel = 'TEST_RUN_LABEL'
+const runLabel = testDataCreator
 const creationDate = '2021-06-14'
 const creationTime = 'T09:37:29.035Z'
 const driverName = 'TEST_DRIVER'
 
-let labId: string
+const labId = 'TEST_RUN_LAB_ID'
 
 const headers = {
   authorization: 'Bearer ClinicUser',
@@ -22,10 +25,27 @@ const headers = {
 
 describe('AdminTransportRunsController', () => {
   beforeAll(async () => {
-    labId = await fetchExistingLabId()
+    await createTransportRun(
+      {
+        id: 'TRANSPORT_RUN_ID',
+        labId: labId,
+        label: testDataCreator,
+        createdAt: creationDate + creationTime,
+      },
+      testDataCreator,
+    )
+
+    await createLab(
+      {
+        id: labId,
+        createdAt: creationDate + creationTime,
+        userID: 'TEST_RUNS_USER',
+      },
+      testDataCreator,
+    )
   })
 
-  describe('GET', () => {
+  describe('List transport runs', () => {
     test('list transport run success', async () => {
       const result = await request(server.app)
         .get(url)
@@ -44,7 +64,7 @@ describe('AdminTransportRunsController', () => {
     })
   })
 
-  describe('POST', () => {
+  describe('Create transport run', () => {
     test('create new run successfully', async () => {
       const testData = {
         transportDateTime: creationDate + creationTime,
@@ -73,6 +93,7 @@ describe('AdminTransportRunsController', () => {
   })
 
   afterAll(async () => {
-    deleteTestRuns(runLabel)
+    await deleteTransportRuns(testDataCreator)
+    await deleteLabsByTestDataCreator(testDataCreator)
   })
 })
