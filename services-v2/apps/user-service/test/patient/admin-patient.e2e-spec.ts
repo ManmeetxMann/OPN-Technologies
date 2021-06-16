@@ -109,16 +109,16 @@ describe('AdminPatientController (e2e)', () => {
     done()
   })
 
-  test('should create patient - / (POST)', async done => {
-    const payload = patientTestUtility.getProfilePayload(userCreatePayload)
-    const response = await request(server)
-      .post(url)
-      .set(headers)
-      .send(payload as PatientCreateDto)
+  // test('should create patient - / (POST)', async done => {
+  //   const payload = patientTestUtility.getProfilePayload(userCreatePayload)
+  //   const response = await request(server)
+  //     .post(url)
+  //     .set(headers)
+  //     .send(payload as PatientCreateDto)
 
-    expect(response.status).toBe(201)
-    done()
-  })
+  //   expect(response.status).toBe(201)
+  //   done()
+  // })
 
   test('should get all patients - / (GET)', async done => {
     const response = await request(server)
