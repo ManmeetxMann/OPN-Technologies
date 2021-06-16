@@ -43,6 +43,11 @@ export type AppointmentDBModel = {
   readTermsAndConditions: boolean
   receiveResultsViaEmail: boolean
   receiveNotificationsFromGov: boolean
+  agreeCancellationRefund: boolean
+  hadCovidConfirmedOrSymptoms: boolean
+  hadCovidConfirmedOrSymptomsDate?: string
+  hadCovidExposer: boolean
+  hadCovidExposerDate?: string
   userId?: string
   locationName?: string
   locationAddress?: string
@@ -105,6 +110,11 @@ export type AppointmentAcuityResponse = {
   receiveResultsViaEmail: boolean
   registeredNursePractitioner?: string
   shareTestResultWithEmployer: boolean
+  agreeCancellationRefund: boolean
+  hadCovidConfirmedOrSymptoms: boolean
+  hadCovidConfirmedOrSymptomsDate?: string
+  hadCovidExposer: boolean
+  hadCovidExposerDate?: string
   swabMethod?: string
   time: string
   travelID?: string
@@ -449,3 +459,8 @@ export type UpdateTransPortRun = {
 }
 
 export {AppointmentStatus, ResultTypes, Gender}
+
+export enum ThirdPartySyncSource {
+  TransportRun = 'transportRun',
+  ConfirmatoryRequest = 'confirmatoryRequest',
+}

@@ -46,7 +46,6 @@ import {UserService} from '../../../../../enterprise/src/services/user-service'
 import {validateAnalysis} from '../../../utils/analysis.helper'
 import {LabService} from '../../../services/lab.service'
 import {TestResultsService} from '../../../services/test-results.service'
-import {BulkOperationStatus, BulkSyncResponse} from '../../../types/bulk-operation.type'
 
 class AdminPCRTestResultController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
@@ -54,7 +53,7 @@ class AdminPCRTestResultController implements IControllerBase {
   private pcrTestResultsService = new PCRTestResultsService()
   private testRunService = new TestRunsService()
   private commentService = new CommentService(new UserService())
-  private appoinmentService = new AppoinmentService()
+  private appointmentService = new AppoinmentService()
   public labService = new LabService()
   private testResultsService = new TestResultsService()
 
@@ -153,19 +152,6 @@ class AdminPCRTestResultController implements IControllerBase {
       listTestResultsAuth,
       this.replyComment,
     )
-
-    innerRouter.get(
-      this.path + '/test-results/list/failed-confirmatory-request',
-      listTestResultsAuth,
-      this.listFailedResultConfirmatory,
-    )
-
-    innerRouter.post(
-      this.path + '/test-results/failed-confirmatory-request/sync',
-      listTestResultsAuth,
-      this.syncFailedResultConfirmatory,
-    )
-
     this.router.use('/', innerRouter)
   }
 
@@ -177,6 +163,11 @@ class AdminPCRTestResultController implements IControllerBase {
     try {
       const adminId = getUserId(res.locals.authenticatedUser)
       const data = req.body as BulkTestResultRequest
+
+      if (!this.pcrTestResultsService.checkIsValidAntibodyAutoResults(data)) {
+        throw new BadRequestException(`autoResult is incorrect`)
+      }
+
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
         .tz(timeZone)
@@ -537,7 +528,7 @@ class AdminPCRTestResultController implements IControllerBase {
         throw new ResourceNotFoundException(`PCRTestResult with id ${id} not found`)
       }
 
-      const appointment = await this.appoinmentService.getAppointmentDBById(
+      const appointment = await this.appointmentService.getAppointmentDBById(
         pcrTestResult.appointmentId,
       )
 
@@ -608,6 +599,7 @@ class AdminPCRTestResultController implements IControllerBase {
       next(error)
     }
   }
+
   replyComment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {testResultId, commentId} = req.params as TestResultReplyCommentParamRequest
@@ -680,50 +672,6 @@ class AdminPCRTestResultController implements IControllerBase {
       await this.pcrTestResultsService.resendReport(testResultId, userId)
 
       res.json(actionSucceed())
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  listFailedResultConfirmatory = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    try {
-      const failedResults = await this.pcrTestResultsService.getAllFailedResultConfirmatory()
-
-      res.json(actionSucceed(failedResults))
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  syncFailedResultConfirmatory = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    try {
-      const {failedResultsIds} = req.body as {
-        failedResultsIds: string[]
-      }
-
-      const failedResults = await this.pcrTestResultsService.getAllFailedResultByIds(
-        failedResultsIds,
-      )
-
-      const ResultsState: BulkSyncResponse[] = await Promise.all(
-        failedResults.map(async ({appointmentId, resultId, id}) => {
-          const result = await this.pcrTestResultsService.syncMountSinai(appointmentId, resultId)
-          if (result.status === BulkOperationStatus.Success) {
-            await this.pcrTestResultsService.deleteFailedResultConfirmatory(id)
-          }
-          return result
-        }),
-      )
-
-      res.json(actionSucceed(ResultsState))
     } catch (error) {
       next(error)
     }

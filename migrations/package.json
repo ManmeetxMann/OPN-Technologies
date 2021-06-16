@@ -37,7 +37,8 @@
 				"migration:relocate-questionnaireId-organization": "ts-node ./relocate-questionnaireId-organization",
 				"migration:remove-questionnaireId-organization": "ts-node ./remove-questionnaireId-organization",
 				"migration:add-enablePaymentForBooking-field-to-all-organizations": "ts-node ./add-enablePaymentForBooking-field-to-all-organizations",
-				"migration:add-content-result-details": "ts-node ./add-result-details-content"
+				"migration:add-content-result-details": "ts-node ./add-result-details-content",
+				"migration:remove-duplicate-users": "ts-node ./remove-duplicate-users"
 		},
 		"author": "",
 		"license": "Appropriate",

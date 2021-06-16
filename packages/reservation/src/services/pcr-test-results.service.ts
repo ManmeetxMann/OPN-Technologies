@@ -1,5 +1,5 @@
 import moment from 'moment'
-import {fromPairs, sortBy, union, chunk, flatten} from 'lodash'
+import {fromPairs, sortBy, union} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
@@ -37,6 +37,8 @@ import {
 } from '../respository/test-results-reporting-tracker-repository'
 
 import {
+  AnalyseTypes,
+  AntiBodyFieldsToCheckResults,
   AppointmentReasons,
   CreateReportForPCRResultsResponse,
   EmailNotficationTypes,
@@ -61,6 +63,7 @@ import {
   Result,
   ResultReportStatus,
   resultToStyle,
+  Spec,
   TestResutsDTO,
 } from '../models/pcr-test-results'
 
@@ -72,14 +75,11 @@ import {
   filteredAppointmentStatus,
   ResultTypes,
   TestTypes,
+  ThirdPartySyncSource,
 } from '../models/appointment'
 import {PCRResultPDFContent} from '../templates/pcr-test-results'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
-import {
-  BulkOperationResponse,
-  BulkOperationStatus,
-  BulkSyncResponse,
-} from '../types/bulk-operation.type'
+import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
 import {TestRunsService} from '../services/test-runs.service'
 import {TemperatureService} from './temperature.service'
 import {LabService} from './lab.service'
@@ -92,7 +92,7 @@ import {AttestationService} from '../../../passport/src/services/attestation-ser
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {PulseOxygenService} from './pulse-oxygen.service'
 
-import {BulkTestResultRequest, TestResultsMetaData} from '../models/test-results'
+import {BulkTestResultRequest, TemplateTypes, TestResultsMetaData} from '../models/test-results'
 import {AntibodyAllPDFContent} from '../templates/antibody-all'
 import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 import {normalizeAnalysis} from '../utils/analysis.helper'
@@ -106,21 +106,12 @@ import {
   getNotificationTitle,
   getPushNotificationType,
 } from '../utils/push-notification.helper'
-import {MountSinaiFormater} from '../utils/mount-sinai-formater'
-import {UserSyncService} from '../../../enterprise/src/services/user-sync-service'
-import {Patient} from '../../../../services-v2/apps/user-service/src/model/patient/patient.entity'
-import MountSinaiSchema from '../dbschemas/mount-sinai-result.schema'
-import {FailedResultConfirmatoryRequestRepository} from '../respository/failed-result-confirmatory-request.repository'
-import {FailedResultConfirmatoryRequest} from '../models/failed-result-confirmatory-request'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
   private testResultsReportingTracker = new TestResultsReportingTrackerRepository(this.datastore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.datastore)
   private appointmentsRepository = new AppointmentsRepository(this.datastore)
-  private failedResultConfirmatoryRequestRepository = new FailedResultConfirmatoryRequestRepository(
-    this.datastore,
-  )
 
   private appointmentService = new AppoinmentService()
   private organizationService = new OrganizationService()
@@ -141,8 +132,6 @@ export class PCRTestResultsService {
   private labService = new LabService()
   private readonly firebaseMessagingService = new FirebaseMessagingService()
   private registrationService = new RegistrationService()
-  private userSyncService = new UserSyncService()
-
   private isAppointmentPushEnable = Config.get('APPOINTMENTS_PUSH_NOTIFY') === 'enabled'
 
   private postPubSubForResultSend(
@@ -168,61 +157,25 @@ export class PCRTestResultsService {
     pubsub.publish(data)
   }
 
-  private async postPubSubForPresumptivePositiveResultSend(
-    testResult: PCRTestResultEmailDTO,
-    userId: string,
-  ): Promise<void> {
-    if (Config.get('TEST_RESULT_MOUNT_SINAI_SYNC') !== 'enabled') {
-      LogInfo(
-        'PCRTestResultsService:postPubSubForPresumptivePositiveResultSend',
-        'PubSubMountSinaiDisabled',
-        {},
+  private getAutoResult(data: Spec[]): ResultTypes {
+    if (
+      data.some(
+        (analyse) =>
+          Object.keys(AntiBodyFieldsToCheckResults).includes(analyse.label) &&
+          String(analyse.value).toLowerCase() === String(AnalyseTypes.POSITIVE).toLowerCase(),
       )
-      return
+    ) {
+      return ResultTypes.Positive
+    } else if (
+      data.some(
+        (analyse) =>
+          Object.keys(AntiBodyFieldsToCheckResults).includes(analyse.label) &&
+          String(analyse.value).toLowerCase() === String(AnalyseTypes.INDETERMINATE).toLowerCase(),
+      )
+    ) {
+      return ResultTypes.Indeterminate
     }
-
-    // TODO: Don't use userSyncService for getting a that, user sync service should be removed
-    const patient = await this.userSyncService.getByFirebaseKey(userId)
-    if (!patient) {
-      throw new ResourceNotFoundException(`Patient with id ${userId} not found`)
-    }
-
-    const data = {
-      patientCode: (patient as Patient).publicId,
-      barCode: testResult.barCode,
-      dateTime: testResult.dateTime,
-      firstName: testResult.firstName,
-      lastName: testResult.lastName,
-      healthCard: testResult.ohipCard,
-      dateOfBirth: testResult.dateOfBirth, //YYYYMMDD
-      gender: testResult.gender, //GenderHL7
-      address1: testResult.address,
-      address2: testResult.addressUnit,
-      city: testResult.city,
-      province: testResult.province, //ON
-      postalCode: testResult.postalCode, //A1A1A1
-      country: testResult.country,
-      testType: testResult.testType,
-    }
-
-    //Utility to Format for MountSinai
-    const mountSinaiFormater = new MountSinaiFormater(data)
-    const formatedORMData = mountSinaiFormater.get()
-
-    try {
-      await MountSinaiSchema.validateAsync(formatedORMData)
-    } catch (errors) {
-      const reasons = errors.details.map((err) => err.message)
-      await this.failedResultConfirmatoryRequestRepository.saveOrUpdate({
-        resultId: testResult.id,
-        appointmentId: testResult.appointmentId,
-        reasons,
-      })
-      throw new ResourceNotFoundException(`Patient data is invalid. Data could not be sent`)
-    }
-
-    const pubsub = new OPNPubSub(Config.get('PRESUMPTIVE_POSITIVE_RESULTS_TOPIC'))
-    pubsub.publish(formatedORMData)
+    return ResultTypes.Negative
   }
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest): Promise<string> {
@@ -1084,11 +1037,10 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendNotification(
+  async sendEmailNotificationForResults(
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
     pcrId: string,
-    userId: string,
   ): Promise<void> {
     switch (notficationType) {
       case PCRResultActions.SendPreliminaryPositive: {
@@ -1130,7 +1082,11 @@ export class PCRTestResultsService {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
         } else if (resultData.result === ResultTypes.PresumptivePositive) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
-          await this.postPubSubForPresumptivePositiveResultSend({...resultData, id: pcrId}, userId)
+          await this.appointmentService.postPubSubForToSyncWithThirdParty(
+            resultData,
+            pcrId,
+            ThirdPartySyncSource.ConfirmatoryRequest,
+          )
         } else if (
           resultData.result === ResultTypes.Indeterminate &&
           (resultData.testType === TestTypes.Antibody_All ||
@@ -1138,11 +1094,15 @@ export class PCRTestResultsService {
         ) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Intermediate)
         } else {
-          LogWarning('sendNotification', 'FailedEmailSent BlockedBySystem', {
-            barCode: resultData.barCode,
-            notficationType,
-            resultSent: resultData.result,
-          })
+          LogWarning(
+            'PCRTestResultsService:sendEmailNotificationForResults',
+            'FailedEmailSent BlockedBySystem',
+            {
+              barCode: resultData.barCode,
+              notficationType,
+              resultSent: resultData.result,
+            },
+          )
         }
       }
     }
@@ -1160,9 +1120,11 @@ export class PCRTestResultsService {
       throw new BadRequestException(`Registration information for this app not found`)
     }
 
+    await this.firebaseMessagingService.validatePushToken(registration.pushToken)
+
     const message: admin.messaging.Message = {
       data: {
-        resultId: null,
+        resultId: '',
         notificationType: null as PushNotificationType,
         title: getNotificationTitle(result),
         content: getNotificationBody(result),
@@ -2204,44 +2166,13 @@ export class PCRTestResultsService {
     }
   }
 
-  getAllFailedResultConfirmatory(): Promise<FailedResultConfirmatoryRequest[]> {
-    return this.failedResultConfirmatoryRequestRepository.getAll()
-  }
-
-  deleteFailedResultConfirmatory(id: string): Promise<void> {
-    return this.failedResultConfirmatoryRequestRepository.delete(id)
-  }
-
-  getAllFailedResultByIds(failedResultIds: string[]): Promise<FailedResultConfirmatoryRequest[]> {
-    return Promise.all(
-      chunk(failedResultIds, 20).map((chunk) =>
-        this.failedResultConfirmatoryRequestRepository.findWhereIdIn(chunk),
-      ),
-    ).then((results) => flatten(results))
-  }
-
-  async syncMountSinai(appointmentId: string, resultId: string): Promise<BulkSyncResponse> {
-    try {
-      const appointment = await this.appointmentsRepository.getAppointmentById(appointmentId)
-      const testResult = await this.pcrTestResultsRepository.findOneById(resultId)
-      const lab = await this.labService.findOneById(appointment.labId)
-      await this.postPubSubForPresumptivePositiveResultSend(
-        {...testResult, ...appointment, labAssay: lab.assay},
-        appointment.userId,
-      )
-      return {
-        appointmentId,
-        resultId,
-        status: BulkOperationStatus.Success,
-        reason: '',
-      }
-    } catch (error) {
-      return {
-        appointmentId,
-        resultId,
-        status: BulkOperationStatus.Failed,
-        reason: error.message,
-      }
+  checkIsValidAntibodyAutoResults(data: BulkTestResultRequest): boolean {
+    if (data.templateId !== TemplateTypes.antiBody) {
+      return true
     }
+
+    return !data.results.some(
+      (result) => result.autoResult !== this.getAutoResult(result.resultAnalysis),
+    )
   }
 }

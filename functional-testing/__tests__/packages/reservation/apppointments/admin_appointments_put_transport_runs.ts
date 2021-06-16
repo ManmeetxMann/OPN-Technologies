@@ -1,5 +1,5 @@
-const frisby = require('frisby');
-const helpersCommon = require('helpers_common');
+import frisby from 'frisby'
+import helpersCommon from '../../../../helpers/helpers_common'
 
 // Do setup first
 frisby.globalSetup({
@@ -29,8 +29,8 @@ describe('PUT:admin:add transport run', () => {
           .put(
               url,
               {
-                'transportRunId': 'TRA1236-Mar15',
-                'appointmentIds': ['ZTBKiNFZu1TILmT899KF'],
+                'transportRunId': 'TRA1438-Jun14',
+                'appointmentIds': ['VmmDP3Q3oDKyQ3WZloZx'],
               },
           )
           .expect('status', 200)

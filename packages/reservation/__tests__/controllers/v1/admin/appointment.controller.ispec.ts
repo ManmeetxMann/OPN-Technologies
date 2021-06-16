@@ -6,6 +6,8 @@ import {
   deleteAppointmentByTestDataCreator,
 } from '../../../__seeds__/appointments'
 
+import {createTransportRun, deleteTransportRuns} from '../../../__seeds__/transport-runs'
+
 jest.spyOn(global.console, 'error').mockImplementation()
 jest.spyOn(global.console, 'info').mockImplementation()
 jest.mock('../../../../../common/src/middlewares/authorization')
@@ -18,6 +20,8 @@ const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
 const organizationId = 'TEST1'
 const laboratoryId = 'Lab1'
 const barCode = 'BAR1'
+
+const transportRunId = 'APPOINTMENT_TRANSPORT_RUN'
 
 describe('AdminAppointmentController', () => {
   beforeAll(async () => {
@@ -92,6 +96,16 @@ describe('AdminAppointmentController', () => {
         dateTime: `2020-02-01T08:00:00`,
         dateOfAppointment: 'February 01, 2020',
         appointmentStatus: 'InProgress',
+      },
+      testDataCreator,
+    )
+
+    await createTransportRun(
+      {
+        id: transportRunId,
+        labId: laboratoryId,
+        label: testDataCreator,
+        createdAt: dateTimeForAppointment1,
       },
       testDataCreator,
     )
@@ -204,7 +218,41 @@ describe('AdminAppointmentController', () => {
     })
   })
 
+  describe('add transport run', () => {
+    test('add transport run successfully', async () => {
+      const appointments = ['APT1', 'APT2']
+
+      const url = '/reservation/admin/api/v1/appointments/add-transport-run'
+      const result = await request(server.app)
+        .put(url)
+        .set('Content-Type', 'application/json')
+        .set('authorization', 'Bearer LabUser')
+        .send({
+          appointmentIds: appointments,
+          transportRunId,
+        })
+
+      expect(result.statusCode).toBe(200)
+    })
+
+    test('add transport run failed', async () => {
+      const appointments = ['APT1', 'APT2']
+
+      const url = '/reservation/admin/api/v1/appointments/add-transport-run'
+      const result = await request(server.app)
+        .put(url)
+        .set('Content-Type', 'application/json')
+        .set('authorization', 'Bearer LabUser')
+        .send({
+          appointmentIds: appointments,
+        })
+
+      expect(result.statusCode).toBe(400)
+    })
+  })
+
   afterAll(async () => {
     await deleteAppointmentByTestDataCreator(testDataCreator)
+    await deleteTransportRuns(testDataCreator)
   })
 })
