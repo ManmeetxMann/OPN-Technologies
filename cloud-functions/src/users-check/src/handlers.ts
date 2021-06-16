@@ -6,7 +6,7 @@ import {initializeApp, credential, firestore} from 'firebase-admin'
 import {safeTimestamp} from '../../../../packages/common/src/utils/datetime-util'
 import {In} from 'typeorm'
 import {Config} from '../../../../packages/common/src/utils/config'
-const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
+const serviceAccount = JSON.parse(Config.get('FIREBASE_CONFIG'))
 const oneDayByHours = 24
 
 initializeApp({
