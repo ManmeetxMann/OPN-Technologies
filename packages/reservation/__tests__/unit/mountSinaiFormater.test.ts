@@ -22,7 +22,7 @@ describe('Mount Sinai', () => {
       postalCode: 'A1A1A1',
       country: 'test',
       testType: TestTypes.PCR,
-      source: ThirdPartySyncSource.ConfirmatoryRequest
+      source: ThirdPartySyncSource.ConfirmatoryRequest,
     }
 
     const mountSinaiFormater = new MountSinaiFormater(data)

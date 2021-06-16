@@ -14,7 +14,7 @@ import {
 
 import {Patient} from '../../src/model/patient/patient.entity'
 import {PatientTestUtility} from '../utils/patient'
-import {PatientCreateDto} from '../../src/dto/patient'
+// import {PatientCreateDto} from '../../src/dto/patient'
 
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
 jest.mock('@opn-enterprise-v1/repository/user.repository', () => {

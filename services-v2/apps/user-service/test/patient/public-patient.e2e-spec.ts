@@ -2,7 +2,7 @@ import {Test, TestingModule} from '@nestjs/testing'
 import {HttpService} from '@nestjs/common'
 import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 
-import * as request from 'supertest'
+// import * as request from 'supertest'
 import {App} from '../../src/main'
 
 import {
@@ -32,15 +32,15 @@ jest.setTimeout(10000)
 const userId = 'NORMAL_PATIENT_BASIC'
 const organizationId = 'NORMAL_PATIENT_ORG_BASIC'
 const testDataCreator = __filename.split('/services-v2/')[1]
-const headers = {
-  accept: 'application/json',
-  organizationid: organizationId,
-  authorization: `Bearer userId:${userId}`,
-  ...commonHeaders,
-}
+// const headers = {
+//   accept: 'application/json',
+//   organizationid: organizationId,
+//   authorization: `Bearer userId:${userId}`,
+//   ...commonHeaders,
+// }
 
 describe('PatientController (e2e)', () => {
-  const url = '/api/v1/patients'
+  // const url = '/api/v1/patients'
   let app: NestFastifyApplication
   let server: HttpService
   let patientTestUtility: PatientTestUtility
@@ -66,7 +66,7 @@ describe('PatientController (e2e)', () => {
 
     app = testAppModule.createNestApplication(new FastifyAdapter())
 
-    server = app.getHttpServer()
+    // server = app.getHttpServer()
     await new Promise(resolve => app.listen(81, resolve))
 
     patientTestUtility = new PatientTestUtility()
