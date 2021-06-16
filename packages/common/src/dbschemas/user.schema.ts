@@ -1,4 +1,4 @@
-import { UserCreator } from '../data/user-status'
+import {UserCreator} from '../data/user-status'
 import * as Joi from 'joi'
 
 export default Joi.object({

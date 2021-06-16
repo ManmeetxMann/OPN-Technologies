@@ -1094,11 +1094,15 @@ export class PCRTestResultsService {
         ) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Intermediate)
         } else {
-          LogWarning('PCRTestResultsService:sendEmailNotificationForResults', 'FailedEmailSent BlockedBySystem', {
-            barCode: resultData.barCode,
-            notficationType,
-            resultSent: resultData.result,
-          })
+          LogWarning(
+            'PCRTestResultsService:sendEmailNotificationForResults',
+            'FailedEmailSent BlockedBySystem',
+            {
+              barCode: resultData.barCode,
+              notficationType,
+              resultSent: resultData.result,
+            },
+          )
         }
       }
     }
