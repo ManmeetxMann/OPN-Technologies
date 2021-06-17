@@ -102,4 +102,5 @@ export const commonConfig: Record<string, string | string[] | number | boolean> 
   TEST_RESULT_MOUNT_SINAI_SYNC: 'disabled',
 
   RAPID_ANTIGEN_KIT_USE_COUNT: 5,
+  TEST_RUNS_POOL_LIMIT: 5,
 }

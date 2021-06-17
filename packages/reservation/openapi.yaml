@@ -4610,3 +4610,62 @@ paths:
               schema:
                 $ref: '#/components/schemas/DriverResponse'
 
+  /reservation/admin/api/v1/test-runs-pools:
+    post:
+      description: Create new Test Runs Pool
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Test Runs Pool
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                appointmentIds:
+                  type: array
+                  items:
+                    type: string
+                testRunId:
+                  type: string
+                well:
+                  type: string
+              required:
+                - appointmentIds
+                - testRunId
+                - well
+      responses:
+        '200':
+          description: Succesfully create test runs pool
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+                
