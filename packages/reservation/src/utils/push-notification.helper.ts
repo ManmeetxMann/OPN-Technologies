@@ -1,9 +1,8 @@
-import admin from 'firebase-admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 import {AppointmentStatus} from '../models/appointment'
 import {PCRTestResultEmailDTO} from '../models/pcr-test-results'
-import {PushNotificationType} from '../types/push-notification.type'
+import {FHPushNotificationMessage, PushNotificationType} from '../types/push-notification.type'
 
 export const getNotificationBody = (testResult: PCRTestResultEmailDTO): string => {
   switch (testResult.appointmentStatus) {
@@ -65,8 +64,8 @@ export const getNotificationTitle = (testResult: PCRTestResultEmailDTO): string 
 
 export const getPushNotificationType = (
   result: PCRTestResultEmailDTO,
-  message: admin.messaging.Message,
-): admin.messaging.Message => {
+  message: FHPushNotificationMessage,
+): FHPushNotificationMessage => {
   switch (result.appointmentStatus) {
     case AppointmentStatus.Canceled:
       message.data.notificationType = PushNotificationType.RESULT
