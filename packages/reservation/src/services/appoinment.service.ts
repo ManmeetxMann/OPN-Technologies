@@ -839,11 +839,17 @@ export class AppoinmentService {
       labId: data.labId ?? null,
     })
     const testResult = await this.createOrUpdatePCRResults(savedAppointment, data.userId)
-    await this.postPubSubForToSyncWithThirdParty(
-      savedAppointment,
-      testResult.id,
-      ThirdPartySyncSource.TransportRun,
-    )
+
+    // trigger PubSub only if sendORMRequest is enabled for lab
+    const isORMRequestEnabled = await this.labService.isORMRequestEnabled(data.labId)
+    if (isORMRequestEnabled) {
+      await this.postPubSubForToSyncWithThirdParty(
+        savedAppointment,
+        testResult.id,
+        ThirdPartySyncSource.TransportRun,
+      )
+    }
+
     await this.appointmentsRepository.addStatusHistoryById(
       appointmentId,
       AppointmentStatus.InTransit,
