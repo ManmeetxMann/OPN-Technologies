@@ -1,13 +1,6 @@
 import {ApiProperty} from '@nestjs/swagger'
 import {IsBoolean, IsNotEmpty, IsString} from 'class-validator'
 
-export type RapidHomeKitToUserAssoc = {
-  id: string
-  rapidHomeKitId: string
-  userId: string
-  used: boolean
-}
-
 export class HomeTestPatientDto {
   idPatient: number
   firebaseKey: string // Firestore ID

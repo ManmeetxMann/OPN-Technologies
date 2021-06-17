@@ -16,7 +16,11 @@
 				"tool:get-stripe-payment": "ts-node ./get-stripe-payment-id",
 				"tool:appointments-check-duplicate-barcode": "ts-node ./appointments-check-duplicate-barcode",
 				"tool:create-home-kit-pdfs": "ts-node ./create-pdf-with-qr-for-home-test-kit",
-				"tool:get-rapid-home-kit-code": "ts-node ./get-rapid-home-kit-code"
+				"tool:get-rapid-home-kit-code": "ts-node ./get-rapid-home-kit-code",
+				"tool:match-stripe-to-calculated-cost": "ts-node ./match-stripe-to-calculated-cost",
+				"tools:users-with-multi-orgs": "ts-node ./users-with-multi-orgs",
+				"tool:stripe_acuity_id_assoc": "ts-node ./stripe_acuity_id_assoc",
+				"tool:last_created_appointments": "ts-node ./last-created-appointments"
 		},
 		"author": "",
 		"license": "Appropriate",

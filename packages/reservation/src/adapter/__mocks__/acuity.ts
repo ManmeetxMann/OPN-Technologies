@@ -341,6 +341,11 @@ abstract class AcuityAdapter {
       receiveNotificationsFromGov: true,
       receiveResultsViaEmail: true,
       shareTestResultWithEmployer: true,
+      agreeCancellationRefund: true,
+      hadCovidConfirmedOrSymptoms: false,
+      hadCovidConfirmedOrSymptomsDate: '',
+      hadCovidExposer: false,
+      hadCovidExposerDate: '',
       forms: [],
       time: '2021-05-02T08:10:00-0400',
       swabMethod: 'string',
@@ -402,6 +407,11 @@ abstract class AcuityAdapter {
       receiveResultsViaEmail: false,
       shareTestResultWithEmployer: false,
       receiveNotificationsFromGov: false,
+      agreeCancellationRefund: false,
+      hadCovidConfirmedOrSymptoms: false,
+      hadCovidConfirmedOrSymptomsDate: '',
+      hadCovidExposer: false,
+      hadCovidExposerDate: '',
       swabMethod: 'Deep Nasal',
       ohipCard: '',
       travelIDIssuingCountry: '',
@@ -446,6 +456,21 @@ abstract class AcuityAdapter {
             Number(Config.get('ACUITY_FIELD_AGREE_TO_CONDUCT_FH_HEALTH_ACCESSMENT'))
           ) {
             appointment.agreeToConductFHHealthAssessment = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_AGREE_CANCELLATION_REFUND'))) {
+            appointment.agreeCancellationRefund = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_HAD_COVID_CONFIRMED'))) {
+            appointment.hadCovidConfirmedOrSymptoms = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_HAD_COVID_CONFIRMED_DATE'))) {
+            appointment.hadCovidConfirmedOrSymptomsDate = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE'))) {
+            appointment.hadCovidExposer = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_HAD_COVID_EXPOSURE_DATE'))) {
+            appointment.hadCovidExposerDate = field.value
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_TRAVEL_ID'))) {
             appointment.travelID = field.value

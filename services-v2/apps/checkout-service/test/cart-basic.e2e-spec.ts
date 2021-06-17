@@ -221,16 +221,14 @@ describe('Cart basic', () => {
       .get(url)
       .set(headers)
 
-    expect(cartAfter.body.data.paymentSummary.length).toBe(3)
+    const [, , total] = cartAfter.body.data.paymentSummary
     expect(cartAfter.body.data.paymentSummary.find(({uid}) => uid === 'total').amount).toBe(0)
     expect(cartAfter.body.data.cartItems.length).toBe(0)
     done()
   })
 
-  // @TODO: Make sure this code passes after fixing maximum card issue
-  test('add more than maximum card items and remove all', async done => {
-    // should have added item
-    await request(server)
+  test('try to add max item count', async done => {
+    const response = await request(server)
       .post(url)
       .set({
         ...headers,
@@ -238,39 +236,9 @@ describe('Cart basic', () => {
       })
       .send({items: Array(51).fill(cartItem)})
 
-    const failedAddReq = await request(server)
-      .post(url)
-      .set({
-        ...headers,
-        'Content-Type': 'application/json',
-      })
-      .send({items: Array(1).fill(cartItem)})
-
-    expect(failedAddReq.body.status.code).toBe('failed')
-    expect(failedAddReq.body.status.message).toBe('Maximum cart items limit reached')
-
-    const cartAfter = await request(server)
-      .get(url)
-      .set(headers)
-
-    expect(cartAfter.body.data.paymentSummary.length).toBe(3)
-    expect(cartAfter.body.data.cartItems.length).toBe(51)
-    // @TODO After fixing comment out next two lines, and comment above one
-    // expect(cartAfter.body.data.paymentSummary.find(({uid}) => uid === 'total').amount).toBe(0)
-    // expect(cartAfter.body.data.cartItems.length).toBe(0)
-
-    const promises = []
-    // remove all cart items
-    for (const item of cartAfter.body.data.cartItems) {
-      promises.push(
-        request(server)
-          .delete(`${url}/${item.cartItemId}`)
-          .set(headers),
-      )
-    }
-    await Promise.all(promises)
+    expect(response.body.status.message).toBe('Maximum cart items limit reached')
     done()
-  }, 15000)
+  })
 
   afterAll(async () => {
     await Promise.all([await app.close(), deleteUserByIdTestDataCreator(userId, testDataCreator)])

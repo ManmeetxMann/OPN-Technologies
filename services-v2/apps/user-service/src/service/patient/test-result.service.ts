@@ -11,6 +11,8 @@ import {Injectable} from '@nestjs/common'
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
 import {pcrTestResultSchema} from '@opn-services/common/schemas'
 import {TestTypes} from '@opn-reservation-v1/models/appointment'
+import {TestTypes as TestResultTestTypes} from '@opn-services/user/dto/test-result'
+import {BadRequestException} from '@opn-services/common/exception'
 import {firestore} from 'firebase-admin'
 
 @Injectable()
@@ -22,6 +24,17 @@ export class TestResultService {
   private dataStore = new DataStore()
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private userRepository = new UserRepository(this.dataStore)
+
+  findPCRResultById(id: string): Promise<TestResultCreateDto> {
+    return this.pcrTestResultsRepository.findOneById(id)
+  }
+
+  async addCouponCodePCRResultById(
+    id: string,
+    generatedCouponCode: string,
+  ): Promise<TestResultCreateDto> {
+    return await this.pcrTestResultsRepository.updateProperties(id, {generatedCouponCode})
+  }
 
   async createPCRResults(data: TestResultCreateDto, userId: string): Promise<TestResultCreateDto> {
     const pcrTestResultTypesValidator = new JoiValidator(pcrTestResultSchema)
@@ -72,8 +85,19 @@ export class TestResultService {
     return {
       firstName: data.firstName,
       lastName: data.lastName,
-      dateOfBirth: data.dateOfBirth,
-      postalCode: data.postalCode,
+      dateOfBirth: data.dateOfBirth || null,
+      postalCode: data.postalCode || null,
+    }
+  }
+
+  validatePayload(testResult: TestResultCreateDto): void {
+    // Only test result positive needs postalCode and dateOfBirth fields
+    if (
+      testResult.result === TestResultTestTypes.Positive &&
+      !testResult.postalCode &&
+      !testResult.dateOfBirth
+    ) {
+      throw new BadRequestException('postalCode and dateOfBirth are required for result Positive')
     }
   }
 }

@@ -19,7 +19,8 @@ export class FirebaseMessagingService implements MessagingService<admin.messagin
       console.log(`Something went wrong when validating token [${token}];`, error)
       if (
         error.code === FirebaseMessagingErrors.InvalidArgument ||
-        error.code === FirebaseMessagingErrors.Unregistered
+        error.code === FirebaseMessagingErrors.Unregistered ||
+        error.code === FirebaseMessagingErrors.TokenNotRegistered
       ) {
         LogError('validatePushToken', 'InvalidArgumentORUnregistered', {
           errorMessage: error.message,

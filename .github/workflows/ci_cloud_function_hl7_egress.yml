@@ -8,6 +8,11 @@ on:
       - ".github/actions/deploy-functions/**"
     branches: 
       - develop
+    tags:
+      - infra-dev-hl7-egress-*
+      - preprod-hl7-egress-*
+      - preprod-all-*
+      - prod-hl7-egress-*
 
 jobs:
   build:

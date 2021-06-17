@@ -56,6 +56,22 @@ export class UserCartRepository extends DataModel<UserCartDBModel> {
       updateOn: now(),
     })
   }
+
+  async removeCart(userId: string, organizationId: string): Promise<void> {
+    const cartId = `${userId}_${organizationId}`
+    await this.doc(cartId).delete()
+  }
+
+  async removeCouponName(userOrgId: string): Promise<void> {
+    const repo = this.datastore.firestoreAdmin
+      .firestore()
+      .collection(this.rootPath)
+      .doc(userOrgId)
+    repo.update({
+      couponName: null,
+      updateOn: now(),
+    })
+  }
 }
 
 export class UserCartItemRepository extends DataModel<CardItemDBModel> {

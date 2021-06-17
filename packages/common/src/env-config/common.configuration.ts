@@ -6,7 +6,7 @@ export const commonConfig: Record<string, string | string[] | number | boolean> 
   ACUITY_APPOINTMENT_TYPE_ID: 20791574,
   ACUITY_APPOINTMENT_TYPE_MULTIPLEX: 21081115,
   ACUITY_COUPON_ID_FOR_RESAMPLE: 1073154,
-  ACUITY_COUPON_ID_FOR_RAPIDHOME: 1073154,
+  ACUITY_COUPON_ID_FOR_RAPIDHOME: 1236269,
   ACUITY_FIELD_ADDITIONAL_ADDRESS_NOTES: 9112814,
   ACUITY_FIELD_ADDRESS_FOR_TESTING: 9112811,
   ACUITY_FIELD_ADDRESS: 9082854,
@@ -72,6 +72,10 @@ export const commonConfig: Record<string, string | string[] | number | boolean> 
   RAPID_ALERGEN_DEADLINE_MIN: 7,
   PCR_VALIDITY_HOURS: 60,
 
+  PDF_GENERATION_EMAIL_THRESHOLD: 100,
+
+  CART_EXPIRATION_HOURS: 24,
+
   TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID: 6,
   TEST_RESULT_NO_ORG_INCONCLUSIVE_COLLECT_NOTIFICATION_TEMPLATE_ID: 8,
   TEST_RESULT_NO_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID: 5,
@@ -85,12 +89,17 @@ export const commonConfig: Record<string, string | string[] | number | boolean> 
   LINK_PRIVACYPOLICY: 'https://dev.pages.opnte.ch/privacy-policy.html',
   LINK_TERMSOFSERVICE: 'https://dev.pages.opnte.ch/terms-of-service.html',
 
-  FH_LINK_PRIVACYPOLICY: 'https://dev.pages.opnte.ch/privacy-policy.html',
-  FH_LINK_TERMSOFSERVICE: 'https://dev.pages.opnte.ch/terms-of-service.html',
+  FH_LINK_PRIVACYPOLICY: 'https://www.fhhealth.com/privacy-policy',
+  FH_LINK_TERMSOFSERVICE: 'https://www.fhhealth.com/terms-of-service',
 
   REPORT_BUCKET_NAME: 'opn-reports-staging',
 
   IS_SERVICE_V2_SWAGGER_ENABLED: false,
   CLINIC_CODE_MOUNT_SINAI_CONFIRMATORY: 'MS112',
   CLINIC_CODE_FOR_MOUNT_SINAI_LAB: 'MS117',
+
+  QUICKBLOX_PROVIDER_ID: 128003204,
+  TEST_RESULT_MOUNT_SINAI_SYNC: 'disabled',
+
+  RAPID_ANTIGEN_KIT_USE_COUNT: 5,
 }

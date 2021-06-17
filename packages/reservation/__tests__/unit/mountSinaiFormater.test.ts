@@ -1,7 +1,7 @@
 import MountSinaiSchema from '../../src/dbschemas/mount-sinai-result.schema'
 import {MountSinaiFormater} from '../../src/utils/mount-sinai-formater'
 import moment from 'moment'
-import {Gender, TestTypes} from '../../src/models/appointment'
+import {Gender, TestTypes, ThirdPartySyncSource} from '../../src/models/appointment'
 import {firestore} from 'firebase-admin'
 
 describe('Mount Sinai', () => {
@@ -22,6 +22,7 @@ describe('Mount Sinai', () => {
       postalCode: 'A1A1A1',
       country: 'test',
       testType: TestTypes.PCR,
+      source: ThirdPartySyncSource.ConfirmatoryRequest,
     }
 
     const mountSinaiFormater = new MountSinaiFormater(data)

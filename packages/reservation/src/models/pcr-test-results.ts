@@ -481,6 +481,9 @@ export type SinglePcrTestResultUi = {
   resultMetaData: TestResultsMetaData
   couponCode?: string
   status?: string
+  antibodySpecimenType?: string
+  methodology?: string
+  indication?: string
 }
 
 export const singlePcrTestResultDTO = (
@@ -550,6 +553,14 @@ export const singlePcrTestResultDTO = (
         : 'Re-Collection'
   }
 
+  const isAntibodyOrAntigen = [
+    TestTypes.Antibody_All,
+    TestTypes.Antibody_IgM,
+    TestTypes.RapidAntigen,
+    TestTypes.EmergencyRapidAntigen,
+    TestTypes.RapidAntigenAtHome,
+  ].includes(pcrTestResult.testType)
+
   return {
     email: appointment.email,
     firstName: appointment.firstName,
@@ -588,12 +599,22 @@ export const singlePcrTestResultDTO = (
     resultMetaData: pcrTestResult.resultMetaData,
     couponCode: pcrTestResult?.couponCode,
     status,
+    antibodySpecimenType: isAntibodyOrAntigen ? 'Serum' : 'N/A',
+    methodology: isAntibodyOrAntigen ? 'Chemiluminescence' : 'N/A',
+    indication: isAntibodyOrAntigen ? 'Suspected Exposure to COVID-19' : 'N/A',
   }
+}
+
+export enum AntiBodyFieldsToCheckResults {
+  IgAResult = 'IgAResult',
+  IgGResult = 'IgGResult',
+  IgMResult = 'IgMResult',
 }
 
 export enum AnalyseTypes {
   POSITIVE = 'POSITIVE',
   NEGATIVE = 'NEGATIVE',
+  INDETERMINATE = 'INDETERMINATE',
 }
 
 export type ActivityTracking = {
@@ -627,3 +648,14 @@ export type ActivityTrackingDb = ActivityTracking & {
 }
 // determine priority in test Order based on result
 export const getSortOrderByResult = (result: string): number => ResultOrder[result]
+
+export type PCRTestResultSubmitted = {
+  id: string
+  result: ResultTypes
+  date: string
+  userId: string
+  organizationId: string
+  actionType: PCRResultActions | EmailNotficationTypes
+  phone: string
+  firstName: string
+}

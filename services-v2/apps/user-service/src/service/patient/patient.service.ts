@@ -30,20 +30,20 @@ import {
   PatientHealthRepository,
   PatientRepository,
   PatientToDelegatesRepository,
-  PatientTravelRepository,
   PatientToOrganizationRepository,
+  PatientTravelRepository,
 } from '../../repository/patient.repository'
 
 import {FirebaseAuthService} from '@opn-services/common/services/firebase/firebase-auth.service'
 import {OpnConfigService} from '@opn-services/common/services'
-import {BadRequestException} from '@opn-services/common/exception'
+import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
 import {LogError} from '@opn-services/common/utils/logging'
-import {PubSubEvents, PubSubFunctions} from '@opn-services/common/types/activity-logs'
+import * as activityLogs from '@opn-services/common/types/activity-logs'
 
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import {OrganizationModel} from '@opn-enterprise-v1/repository/organization.repository'
 import DataStore from '@opn-common-v1/data/datastore'
-import {AuthUser, UserStatus} from '@opn-common-v1/data/user'
+import {AuthUser, UserStatus, UserCreator} from '@opn-common-v1/data/user'
 import {Registration} from '@opn-common-v1/data/registration'
 import {RegistrationService} from '@opn-common-v1/service/registry/registration-service'
 import {MessagingFactory} from '@opn-common-v1/service/messaging/messaging-service'
@@ -51,14 +51,13 @@ import {safeTimestamp} from '@opn-common-v1/utils/datetime-util'
 import {AuthShortCodeRepository} from '@opn-enterprise-v1/repository/auth-short-code.repository'
 import {AuthShortCode} from '@opn-enterprise-v1/models/auth'
 import * as _ from 'lodash'
-import {ResourceNotFoundException} from '@opn-services/common/exception'
 import {PCRTestResultsRepository} from '@opn-services/user/repository/test-result.repository'
 import {AppointmentsRepository} from '@opn-reservation-v1/respository/appointments-repository'
-import {AppointmentDBModel} from '@opn-reservation-v1/models/appointment'
-import {AppointmentActivityAction} from '@opn-reservation-v1/models/appointment'
+import {AppointmentActivityAction, AppointmentDBModel} from '@opn-reservation-v1/models/appointment'
 import {ActionStatus} from '@opn-services/common/model'
 import {OrganizationService} from '@opn-enterprise-v1/services/organization-service'
 import {Organization} from '@opn-enterprise-v1/models/organization'
+import {Platforms} from '@opn-common-v1/types/platform'
 
 @Injectable()
 export class PatientService {
@@ -177,14 +176,37 @@ export class PatientService {
       isEmailVerified: false,
       authUserId: data.authUserId,
       active: false,
-      organizationIds: [],
+      organizationIds: [this.configService.get('PUBLIC_ORG_ID')],
+      creator: UserCreator.syncFromSQL,
     } as AuthUser
 
     if (data.organizationId) {
       userData.organizationIds.push(data.organizationId)
     }
 
-    const firebaseUser = await this.userRepository.add(userData)
+    // Check if user already exist
+    const firestoreUsers = await this.userRepository
+      .getQueryFindWhereEqual('authUserId', data.authUserId)
+      .fetch()
+
+    if (firestoreUsers.length > 1) {
+      LogError(
+        activityLogs.PatientServiceFunctions.createHomePatientProfile,
+        activityLogs.PatientServiceEvents.duplicatedUserFound,
+        {
+          errorMessage: `Found duplicated authUserId: ${data.authUserId}`,
+        },
+      )
+    }
+
+    let firebaseUser = null
+    if (firestoreUsers.length === 0) {
+      firebaseUser = await this.userRepository.add(userData)
+    } else {
+      firebaseUser = firestoreUsers[0]
+    }
+
+    await this.addInPublicGroup(firebaseUser.id)
     data.firebaseKey = firebaseUser.id
     data.isEmailVerified = false
     const patient = await this.createPatient(data as PatientCreateDto)
@@ -216,12 +238,13 @@ export class PatientService {
       firstName: data.firstName,
       isEmailVerified: false,
       lastName: data.lastName,
-      registrationId: data.registrationId ?? null,
+      registrationId: await this.getRegistrationId(data),
       photo: data.photoUrl ?? null,
       phoneNumber: data.phoneNumber ?? null,
       authUserId: data.authUserId,
       active: false,
       organizationIds,
+      creator: UserCreator.syncFromSQL,
     } as AuthUser
 
     if (data.email) {
@@ -234,9 +257,33 @@ export class PatientService {
       }
     }
 
-    const firebaseUser = await this.userRepository.add(userData)
+    // Check if user already exist
+    const firestoreUsers = await this.userRepository
+      .getQueryFindWhereEqual('authUserId', data.authUserId)
+      .fetch()
+
+    if (firestoreUsers.length > 1) {
+      LogError(
+        activityLogs.PatientServiceFunctions.createProfile,
+        activityLogs.PatientServiceEvents.duplicatedUserFound,
+        {
+          errorMessage: `Found duplicated authUserId: ${data.authUserId}`,
+        },
+      )
+    }
+
+    let firebaseUser = null
+    if (firestoreUsers.length === 0) {
+      firebaseUser = await this.userRepository.add(userData)
+    } else {
+      firebaseUser = firestoreUsers[0]
+    }
+
     data.firebaseKey = firebaseUser.id
     data.isEmailVerified = false
+    if (hasPublicOrg) {
+      await this.addInPublicGroup(firebaseUser.id)
+    }
 
     const patient = await this.createPatient(data)
     data.idPatient = patient.idPatient
@@ -310,18 +357,18 @@ export class PatientService {
     const {travel, health, addresses, digitalConsent, auth} = patient
 
     if (auth && data.email && auth?.email !== data.email) {
-      this.firebaseAuthService.updateUser(auth.authUserId, data.email)
+      await this.firebaseAuthService.updateUser(auth.authUserId, {email: data.email})
       auth.email = data.email
       await this.patientAuthRepository.save(auth)
     }
 
     const userSync = {
-      email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      isEmailVerified: data.isEmailVerified,
-      ...(data.registrationId && {registrationId: data.registrationId}),
-      ...(data.photoUrl && {photo: data.photoUrl}),
+      email: auth.email,
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      isEmailVerified: patient.isEmailVerified,
+      registrationId: await this.getRegistrationId({...data, firebaseKey: patient.firebaseKey}),
+      ...(patient.photoUrl && {photo: patient.photoUrl}),
       phone: {
         diallingCode: 0,
       },
@@ -335,14 +382,32 @@ export class PatientService {
     Object.keys(userSync).forEach(key => userSync[key] === undefined && delete userSync[key])
     await this.userRepository.updateProperties(patient.firebaseKey, userSync)
 
-    const promises = await Promise.all([
-      this.patientRepository.save(patient),
+    await Promise.all([
       this.saveTravel(data, travel?.idPatientTravel),
       this.saveHealth(data, health?.idPatientTravel),
       this.saveAddress(data, addresses?.idPatientAddresses),
       this.saveConsent(data, digitalConsent?.idPatientDigitalConsent),
     ])
-    return promises[0]
+    delete patient.travel
+    delete patient.health
+    delete patient.addresses
+    delete patient.digitalConsent
+    return this.patientRepository.save(patient)
+  }
+
+  async setPatientAndUserEmail(patientId: number, data: PatientUpdateDto): Promise<void> {
+    const patient = await this.getProfilebyId(patientId)
+    if (!patient) {
+      throw new ResourceNotFoundException('User with given id not found')
+    }
+    const auth = patient.auth
+
+    if (auth && data.email && auth?.email !== data.email) {
+      auth.email = data.email
+      await this.patientAuthRepository.save(auth)
+    }
+
+    await this.userRepository.updateProperties(patient.firebaseKey, {email: data.email})
   }
 
   async connectOrganization(patientId: number, firebaseOrganizationId: string): Promise<void> {
@@ -390,7 +455,7 @@ export class PatientService {
     entity.phoneNumber = data.phoneNumber
     entity.dateOfBirth = data.dateOfBirth
     entity.photoUrl = data.photoUrl
-    entity.registrationId = data.registrationId
+    entity.registrationId = await this.getRegistrationId(data)
     entity.consentFileUrl = data.consentFileUrl
     entity.isEmailVerified = data.isEmailVerified || false
 
@@ -406,18 +471,24 @@ export class PatientService {
     delegateId: number,
     data: DependantCreateDto | DependantCreateAdminDto,
   ): Promise<Patient> {
+    const delegate = await this.getbyId(delegateId)
+
     const firebaseUser = await this.userRepository.add({
       firstName: data.firstName,
       lastName: data.lastName,
-      registrationId: data.registrationId ?? null,
+      registrationId: await this.getRegistrationId(data),
       photo: data.photoUrl ?? null,
       phone: {
         diallingCode: 0,
         number: Number(data.phoneNumber ?? 0),
       },
       active: false,
-      organizationIds: [],
+      organizationIds: [this.configService.get('PUBLIC_ORG_ID')],
+      creator: UserCreator.syncFromSQL,
+      delegates: [delegate.firebaseKey],
     } as AuthUser)
+
+    await this.addInPublicGroup(firebaseUser.id, delegate.firebaseKey)
 
     data.firebaseKey = firebaseUser.id
 
@@ -509,6 +580,26 @@ export class PatientService {
     organization.patientId = data.idPatient
     organization.firebaseOrganizationId = data.organizationId ?? publicOrg
     return this.patientToOrganizationRepository.save(organization)
+  }
+
+  async addInPublicGroup(firebaseKey: string, parentUserId?: string): Promise<void> {
+    try {
+      await this.organizationService.addUserToGroup(
+        this.configService.get('PUBLIC_ORG_ID'),
+        this.configService.get('PUBLIC_GROUP_ID'),
+        firebaseKey,
+        parentUserId,
+      )
+    } catch (e) {
+      const errorMessage = e.message
+      LogError(
+        activityLogs.PatientServiceFunctions.createHomePatientProfile,
+        activityLogs.PatientServiceEvents.errorAddingUserToOrg,
+        {
+          errorMessage,
+        },
+      )
+    }
   }
 
   async getUnconfirmedPatients(
@@ -669,20 +760,16 @@ export class PatientService {
   /**
    * Update or insert push token
    */
-  async upsertPushToken(
-    patientId: number,
-    registrationId: string,
-    registration: Omit<Registration, 'id'>,
-  ): Promise<void> {
+  async upsertPushToken(patientId: number, registration: Omit<Registration, 'id'>): Promise<void> {
     const {pushToken, osVersion, platform} = registration
 
     // validate if we get token
     if (pushToken) {
       await this.messaging.validatePushToken(pushToken)
     }
-
+    const patient = await this.patientRepository.findOne(patientId)
     // create or update token
-    const {id} = await this.registrationService.upsert(registrationId, {
+    const {id} = await this.registrationService.upsert(patient.firebaseKey, {
       osVersion,
       platform,
       pushToken,
@@ -694,9 +781,13 @@ export class PatientService {
   async updateProfileWithPubSub(data: AppointmentDBModel): Promise<void> {
     if (!data?.userId) {
       const errorMessage = `User/Patient id is missing`
-      LogError(PubSubFunctions.updateProfileWithPubSub, PubSubEvents.profileUpdateFailed, {
-        errorMessage,
-      })
+      LogError(
+        activityLogs.PubSubFunctions.updateProfileWithPubSub,
+        activityLogs.PubSubEvents.profileUpdateFailed,
+        {
+          errorMessage,
+        },
+      )
       throw new BadRequestException(errorMessage)
     }
 
@@ -707,9 +798,13 @@ export class PatientService {
 
     if (!patient) {
       const errorMessage = `Profile with ${userId} not exists`
-      LogError(PubSubFunctions.updateProfileWithPubSub, PubSubEvents.profileUpdateFailed, {
-        errorMessage,
-      })
+      LogError(
+        activityLogs.PubSubFunctions.updateProfileWithPubSub,
+        activityLogs.PubSubEvents.profileUpdateFailed,
+        {
+          errorMessage,
+        },
+      )
       throw new BadRequestException(errorMessage)
     }
 
@@ -737,5 +832,23 @@ export class PatientService {
     }
 
     await this.updateProfile(patient.idPatient, updateDto)
+  }
+
+  async getRegistrationId(userData: PatientUpdateDto): Promise<string> {
+    let registrationDb: Registration
+
+    if (
+      userData?.registration?.pushToken ||
+      userData?.registration?.osVersion ||
+      userData?.registration?.platform
+    ) {
+      registrationDb = await this.registrationService.upsert(userData.firebaseKey, {
+        platform: userData?.registration?.platform as Platforms,
+        osVersion: userData?.registration?.osVersion,
+        pushToken: userData?.registration?.pushToken,
+      })
+    }
+
+    return registrationDb?.id || null
   }
 }

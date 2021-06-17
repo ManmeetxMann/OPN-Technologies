@@ -47,16 +47,13 @@ export class UserCardDiscountService {
       discountedError: cartDB.error,
     }))
 
-    const couponCode = discountedCartItems.find(cartItem => cartItem?.discountData?.name)
     await this.userCartRepository.addOrUpdateCouponName(userOrgId, coupon)
 
     return {
       cartItems: cartItems,
       paymentSummary: this.userCardService.buildPaymentSummary(cartItems),
       cart: {
-        couponCode: couponCode?.discountData
-          ? couponCode.discountData.name
-          : await this.userCardService.getCouponName(userOrgId),
+        couponCode: coupon,
       },
     }
   }
@@ -100,7 +97,7 @@ export class UserCardDiscountService {
         discountData: {
           discountType: discount.discountType,
           discountAmount: discount.discountAmount,
-          name: discount.name,
+          name: discount.certificate,
           couponId: discount.couponID,
           expiration: discount.expiration,
         },

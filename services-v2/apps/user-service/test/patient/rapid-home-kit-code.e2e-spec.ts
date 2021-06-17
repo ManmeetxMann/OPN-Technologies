@@ -5,12 +5,18 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 import * as request from 'supertest'
 import {App} from '../../src/main'
 
-import {commonHeaders, createUser, deleteUserByIdTestDataCreator} from '@opn-services/test/utils'
+import {
+  commonHeaders,
+  createUser,
+  deleteUserByIdTestDataCreator,
+  getTestResultPayload,
+} from '@opn-services/test/utils'
 import {
   createRapidTestKitCode,
   deleteRapidCodeByIdTestDataCreator,
 } from '@opn-services/test/utils/rapid-home-code'
-import {deleteHomeKitAssocByKitCode} from '@opn-services/test/utils/home-kit-code-assoc'
+import {createKit} from '@opn-services/test/utils/home-kit-code'
+import {TestResultCreateDto} from '@opn-services/user/dto/test-result'
 
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
 jest.mock('@opn-services/common/services/google/captcha.service')
@@ -23,6 +29,7 @@ const rapidHomeKitCode = 'TEST_HOME_KIT_CODE'
 
 const rapidHome2CodeId = 'TEST_RAPID_HOME_CODE2'
 const rapidHome2KitCode = 'TEST_HOME_KIT_CODE2'
+const kitCode = 'ZZZZZZ'
 
 describe('RapidHomeKitCodeController (e2e)', () => {
   const url = '/api/v1'
@@ -37,12 +44,27 @@ describe('RapidHomeKitCodeController (e2e)', () => {
     authorization: `Bearer userId:${userId}`,
   }
 
+  const pcrTestResultCreatePayload = {
+    firstName: 'PATIENT_E2E',
+    lastName: 'PATIENT_E2E',
+    reportAs: 'Individual',
+    kitCode,
+  }
+
   beforeAll(async () => {
     await createUser(
       {
         id: userId,
         organizationIds: [organizationId],
         email: userEmail,
+      },
+      testDataCreator,
+    )
+
+    await createKit(
+      {
+        id: kitCode,
+        code: kitCode,
       },
       testDataCreator,
     )
@@ -132,27 +154,25 @@ describe('RapidHomeKitCodeController (e2e)', () => {
   })
 
   test('Coupon - / (POST)', async done => {
+    const payload = getTestResultPayload(pcrTestResultCreatePayload)
+    const pcrResponse = await request(server)
+      .post(`${url}/pcr-test-results`)
+      .set(headers)
+      .set(commonHeaders)
+      .send(payload as TestResultCreateDto)
+
+    console.log('pcrResponse', pcrResponse.body)
+    expect(pcrResponse.status).toBe(201)
+    const pcrId = pcrResponse.body.data.id
+
     const response = await request(server)
       .post(`${url}/home-test-patients/coupon`)
       .set(headers)
       .set(commonHeaders)
       .send({
+        id: pcrId,
         email: userEmail,
       })
-
-    expect(response.status).toBe(201)
-    done()
-  })
-
-  test('Coupon - / (POST)', async done => {
-    const response = await request(server)
-      .post(`${url}/home-test-patients/coupon`)
-      .set(headers)
-      .set(commonHeaders)
-      .send({
-        email: userEmail,
-      })
-
     expect(typeof response.body.data.couponCode).toBe('string')
     expect(response.status).toBe(201)
     done()
@@ -162,8 +182,6 @@ describe('RapidHomeKitCodeController (e2e)', () => {
     await Promise.all([
       deleteUserByIdTestDataCreator(userId, testDataCreator),
       deleteRapidCodeByIdTestDataCreator(rapidHomeCodeId, testDataCreator),
-      deleteHomeKitAssocByKitCode(rapidHomeKitCode),
-      deleteHomeKitAssocByKitCode(rapidHome2KitCode),
     ])
     await app.close()
   })

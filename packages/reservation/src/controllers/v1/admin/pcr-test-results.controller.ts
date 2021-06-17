@@ -53,7 +53,7 @@ class AdminPCRTestResultController implements IControllerBase {
   private pcrTestResultsService = new PCRTestResultsService()
   private testRunService = new TestRunsService()
   private commentService = new CommentService(new UserService())
-  private appoinmentService = new AppoinmentService()
+  private appointmentService = new AppoinmentService()
   public labService = new LabService()
   private testResultsService = new TestResultsService()
 
@@ -152,13 +152,6 @@ class AdminPCRTestResultController implements IControllerBase {
       listTestResultsAuth,
       this.replyComment,
     )
-
-    innerRouter.get(
-      this.path + '/test-results/list/failed-confirmatory-request',
-      listTestResultsAuth,
-      this.listFailedResultConfirmatory,
-    )
-
     this.router.use('/', innerRouter)
   }
 
@@ -170,6 +163,11 @@ class AdminPCRTestResultController implements IControllerBase {
     try {
       const adminId = getUserId(res.locals.authenticatedUser)
       const data = req.body as BulkTestResultRequest
+
+      if (!this.pcrTestResultsService.checkIsValidAntibodyAutoResults(data)) {
+        throw new BadRequestException(`autoResult is incorrect`)
+      }
+
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
         .tz(timeZone)
@@ -530,7 +528,7 @@ class AdminPCRTestResultController implements IControllerBase {
         throw new ResourceNotFoundException(`PCRTestResult with id ${id} not found`)
       }
 
-      const appointment = await this.appoinmentService.getAppointmentDBById(
+      const appointment = await this.appointmentService.getAppointmentDBById(
         pcrTestResult.appointmentId,
       )
 
@@ -601,6 +599,7 @@ class AdminPCRTestResultController implements IControllerBase {
       next(error)
     }
   }
+
   replyComment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {testResultId, commentId} = req.params as TestResultReplyCommentParamRequest
@@ -642,8 +641,10 @@ class AdminPCRTestResultController implements IControllerBase {
     try {
       const userId = getUserId(res.locals.authenticatedUser)
       const {testResultId} = req.params as {testResultId: string}
-      const {appointment, pcrTestResult} =
-        await this.pcrTestResultsService.getTestResultAndAppointment(testResultId, userId, true)
+      const {
+        appointment,
+        pcrTestResult,
+      } = await this.pcrTestResultsService.getTestResultAndAppointment(testResultId, userId, true)
 
       if (!this.pcrTestResultsService.isDownloadable(pcrTestResult)) {
         throw new BadRequestException(
@@ -671,20 +672,6 @@ class AdminPCRTestResultController implements IControllerBase {
       await this.pcrTestResultsService.resendReport(testResultId, userId)
 
       res.json(actionSucceed())
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  listFailedResultConfirmatory = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    try {
-      const failedResults = await this.pcrTestResultsService.getAllFailedResultConfirmatory()
-
-      res.json(actionSucceed(failedResults))
     } catch (error) {
       next(error)
     }

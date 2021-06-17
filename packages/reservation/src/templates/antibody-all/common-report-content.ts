@@ -112,7 +112,11 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
   }
 
   if (params.address) {
-    dataPersonal.push([{text: 'Home Address', bold: true}, params.address])
+    let address = params.address
+    if (params.city) {
+      address += ` ${params.city} ${params.province} ${params.country}`
+    }
+    dataPersonal.push([{text: 'Home Address', bold: true}, address])
   }
 
   if (params.addressUnit) {

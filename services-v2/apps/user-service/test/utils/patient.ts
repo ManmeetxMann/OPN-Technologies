@@ -98,6 +98,17 @@ export class PatientTestUtility {
     )
   }
 
+  async removeProfileByEmail(email: string): Promise<void> {
+    const patients = await this.authRepository.find({email})
+    const removedProfiles = patients.map(patient => this.findAndRemoveProfile(patient.patientId))
+    await Promise.all(removedProfiles)
+
+    const removedPatients = patients.map(patient =>
+      this.patientRepository.delete(patient.patientId),
+    )
+    await Promise.all(removedPatients)
+  }
+
   getProfilePayload(data: {email?: string; firstName?: string; lastName?: string}): unknown {
     return {
       ...(data.email ? {email: data.email} : {}),

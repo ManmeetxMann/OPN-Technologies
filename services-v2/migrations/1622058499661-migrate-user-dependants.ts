@@ -19,24 +19,12 @@ export class migrateUsersDependants1622058499661 implements MigrationInterface {
     try {
       console.log(`Migration Starting Time: ${new Date()}`)
       const results = await insertAllUsers()
-
-      results.forEach(result => {
-        totalCount += 1
-        if (result.status === ResultStatus.Fulfilled) {
-          if (result.value) {
-            successCount += 1
-          }
-        } else {
-          console.error(result.value)
-          failureCount += 1
-        }
-      })
-      console.log(`Successfully inserted ${successCount} `)
+      await insertData(results, 'patientToDelegates')
+      console.log(`Successfully inserted ${results.length} `)
     } catch (error) {
       console.error('Error running migration', error)
       throw error
     } finally {
-      console.warn(`Inserting Failed ${failureCount} `)
       console.log(`Total Results Processed: ${totalCount} `)
     }
   }
@@ -63,8 +51,8 @@ async function promiseAllSettled(promises: Promise<unknown>[]): Promise<Result[]
 async function insertAllUsers(): Promise<Result[]> {
   let offset = 0
   let hasMore = true
+  const delegatesData = []
 
-  const results: Result[] = []
   while (hasMore) {
     const userSnapshot = await database
       .collection('users')
@@ -76,26 +64,21 @@ async function insertAllUsers(): Promise<Result[]> {
     hasMore = !userSnapshot.empty
     //hasMore = false
 
-    const othersPromises = []
-
     for (const user of userSnapshot.docs) {
       const patient = await getPatientByKey(user.id)
 
       if (user.data().delegates && user.data().delegates.length) {
         const patientDelegates = await adaptPatientsDelegatesData(patient.idPatient, user.data())
-        othersPromises.push(insertData(patientDelegates, 'patientToDelegates'))
+        delegatesData.push(...patientDelegates)
       }
-
-      const othersResults = await promiseAllSettled(othersPromises)
-      results.push(...othersResults)
     }
   }
-  return results
+  return delegatesData
 }
 
 async function insertData(snapshot, modelName: string) {
   const insertUser = async snapshot => {
-    return await getConnection()
+    return getConnection()
       .createQueryBuilder()
       .insert()
       .into(modelName)

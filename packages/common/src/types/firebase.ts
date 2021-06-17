@@ -12,4 +12,5 @@ export enum FirebaseMessagingErrors {
   SenderIdMismatch = 'messaging/sender-id-mismatch',
   Unavailable = 'messaging/unavailable',
   Unregistered = 'messaging/unregistered',
+  TokenNotRegistered = 'messaging/registration-token-not-registered',
 }

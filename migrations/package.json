@@ -13,8 +13,6 @@
 				"migration:remove-admin-auth-id": "ts-node ./remove-admin-auth-id",
 				"migration:update-organizationids-for-users": "ts-node ./update-organizationids-for-users",
 				"migration:trim-firstname-lastname-and-fix-last-name": "ts-node ./trim-firstname-lastname-and-fix-last-name",
-				"tools:count-total-number-of-users": "ts-node ./tools/count-total-number-of-users",
-				"tools:users-with-multi-orgs": "ts-node ./tools/users-with-multi-orgs",
 				"migration:migrate-attestation-questionaireid-field": "ts-node ./add-questionnaireid-to-attestation",
 				"migration:test-results-to-pcr": "ts-node ./test-results-to-pcr",
 				"migration:migration-acuity-to-appointments": "ts-node ./acuity-to-appointments",
@@ -39,7 +37,8 @@
 				"migration:relocate-questionnaireId-organization": "ts-node ./relocate-questionnaireId-organization",
 				"migration:remove-questionnaireId-organization": "ts-node ./remove-questionnaireId-organization",
 				"migration:add-enablePaymentForBooking-field-to-all-organizations": "ts-node ./add-enablePaymentForBooking-field-to-all-organizations",
-				"migration:add-content-result-details": "ts-node ./add-result-details-content"
+				"migration:add-content-result-details": "ts-node ./add-result-details-content",
+				"migration:remove-duplicate-users": "ts-node ./remove-duplicate-users"
 		},
 		"author": "",
 		"license": "Appropriate",
