@@ -58,7 +58,7 @@ export type AppointmentDBModel = {
   city?: string
   province?: string
   country?: string
-  bookedFor?: string
+  patientId?: string
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard

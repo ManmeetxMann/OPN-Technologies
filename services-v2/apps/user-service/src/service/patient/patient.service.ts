@@ -782,7 +782,7 @@ export class PatientService {
   }
 
   async updateProfileWithPubSub(data: AppointmentDBModel): Promise<void> {
-    const userId = data?.bookedFor
+    const userId = data?.patientId
 
     if (!userId) {
       const errorMessage = `User/Patient id is missing`

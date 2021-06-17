@@ -481,7 +481,7 @@ export class AppoinmentService {
       couponCode?: string
       userId?: string
       labId?: string
-      bookedFor?: string
+      patientId?: string
     },
   ): Promise<AppointmentDBModel> {
     const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
@@ -552,7 +552,7 @@ export class AppoinmentService {
       couponCode?: string
       userId?: string
       labId?: string
-      bookedFor?: string
+      patientId?: string
     },
     appointmentDb?: AppointmentDBModel,
   ): Promise<Omit<AppointmentDBModel, 'id'>> {
@@ -585,7 +585,7 @@ export class AppoinmentService {
       couponCode = '',
       labId = null,
       userId,
-      bookedFor,
+      patientId,
     } = additionalData
 
     const currentUserId =
@@ -645,7 +645,7 @@ export class AppoinmentService {
       city: acuityAppointment.city,
       province: acuityAppointment.province,
       country: acuityAppointment.country,
-      bookedFor,
+      patientId,
     }
   }
 
@@ -1305,7 +1305,7 @@ export class AppoinmentService {
       organizationId: appointment.organizationId,
       couponCode: discountData?.name ? discountData.name : appointment.packageCode,
       userId,
-      bookedFor: patient.userId,
+      patientId: patient.userId,
     })
   }
 
