@@ -11,6 +11,6 @@ export type FHPushNotificationMessage = admin.messaging.Message & {
 
 export type FHPushNotificationMessageData = {
   resultId?: string
-  appointmentsId?: string
+  appointmentId?: string
   notificationType: PushNotificationType
 }

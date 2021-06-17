@@ -90,7 +90,7 @@ export const getPushNotificationType = (
       message.data.resultId = result.id
       break
 
-    case AppointmentStatus.ReCollectRequired:
+    case AppointmentStatus.ReRunRequired:
       message.data.notificationType = PushNotificationType.RESULT
       message.data.resultId = result.id
       break
