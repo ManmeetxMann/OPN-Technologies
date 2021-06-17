@@ -168,7 +168,10 @@ export class PatientService {
       .then(([data, totalItems]) => Page.of(data, page, perPage, totalItems))
   }
 
-  async createHomePatientProfile(data: HomeTestPatientDto, tokenSource: TokenSource): Promise<Patient> {
+  async createHomePatientProfile(
+    data: HomeTestPatientDto,
+    tokenSource: TokenSource,
+  ): Promise<Patient> {
     const userData = {
       firstName: data.firstName,
       lastName: data.lastName,
@@ -335,7 +338,11 @@ export class PatientService {
    * @param id
    * @param data
    */
-  async updateProfile(patientId: number, data: PatientUpdateDto, tokenSource: TokenSource): Promise<Patient> {
+  async updateProfile(
+    patientId: number,
+    data: PatientUpdateDto,
+    tokenSource: TokenSource,
+  ): Promise<Patient> {
     const patient = await this.getProfilebyId(patientId)
     data.idPatient = patientId
     patient.firstName = data.firstName || patient.firstName
@@ -368,7 +375,10 @@ export class PatientService {
       firstName: patient.firstName,
       lastName: patient.lastName,
       isEmailVerified: patient.isEmailVerified,
-      registrationId: await this.getRegistrationId({...data, firebaseKey: patient.firebaseKey}, tokenSource),
+      registrationId: await this.getRegistrationId(
+        {...data, firebaseKey: patient.firebaseKey},
+        tokenSource,
+      ),
       ...(patient.photoUrl && {photo: patient.photoUrl}),
       phone: {
         diallingCode: 0,
@@ -472,7 +482,7 @@ export class PatientService {
   async createDependant(
     delegateId: number,
     data: DependantCreateDto | DependantCreateAdminDto,
-    tokenSource: TokenSource
+    tokenSource: TokenSource,
   ): Promise<Patient> {
     const delegate = await this.getbyId(delegateId)
 
@@ -776,7 +786,7 @@ export class PatientService {
       osVersion,
       platform,
       pushToken,
-      tokenSource
+      tokenSource,
     })
 
     await this.patientRepository.update({idPatient: patientId}, {registrationId: id})
