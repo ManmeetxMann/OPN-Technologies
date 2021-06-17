@@ -5,13 +5,12 @@ export enum PushNotificationType {
   RESULT = 'RESULT',
 }
 
-
 export type FHPushNotificationMessage = admin.messaging.Message & {
-  data: FHPushNotificationMessageData,
+  data: FHPushNotificationMessageData
 }
 
 export type FHPushNotificationMessageData = {
-  resultId?: string,
-  appointmentsId?: string,
-  notificationType: PushNotificationType,
+  resultId?: string
+  appointmentsId?: string
+  notificationType: PushNotificationType
 }
