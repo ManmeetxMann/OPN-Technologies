@@ -4,8 +4,7 @@
  */
 import * as functions from 'firebase-functions'
 import {UserHandler} from './src/handlers'
-import {Config} from '../../../packages/common/src/utils/config'
-const timeZone = Config.get('DEFAULT_TIME_ZONE')
+const timeZone = process.env.DEFAULT_TIME_ZONE
 
 const checkUserSyncCoverage = functions.pubsub
   .schedule('0 11 * * *')

@@ -3,7 +3,7 @@ import {getCreateDatabaseConnection} from './connection'
 import * as patientEntries from '../../../../services-v2/apps/user-service/src/model/patient/patient.entity'
 import moment from 'moment'
 import {initializeApp, credential, firestore} from 'firebase-admin'
-import {safeTimestamp} from '../../../../packages/common/src/utils/datetime-util'
+import {fixTimestamp} from '../../../../packages/common/src/utils/timesTamp-util'
 import {In} from 'typeorm'
 const serviceAccount = JSON.parse(process.env.FIREBASE_CONFIG)
 const oneDayByHours = 24
@@ -96,8 +96,10 @@ class UserHandler {
         .where(
           'timestamps.createdAt',
           '>=',
-          safeTimestamp(
-            moment().subtract(oneDayByHours, 'hours').utc().format('YYYY-MM-DD HH:mm:ss'),
+          new Date(
+            fixTimestamp(
+              moment().subtract(oneDayByHours, 'hours').utc().format('YYYY-MM-DD HH:mm:ss'),
+            ),
           ),
         )
         .offset(offset)
