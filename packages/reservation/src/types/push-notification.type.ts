@@ -1,4 +1,4 @@
 export enum PushNotificationType {
-  LISTING = 'LISTING',
-  VIEW = 'VIEW',
+  APPOINTMENT = 'APPOINTMENT',
+  RESULT = 'RESULT',
 }

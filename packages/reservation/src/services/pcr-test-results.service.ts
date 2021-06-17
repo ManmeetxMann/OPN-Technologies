@@ -1125,9 +1125,12 @@ export class PCRTestResultsService {
     const message: admin.messaging.Message = {
       data: {
         resultId: '',
+        appointmentsId: '',
         notificationType: null as PushNotificationType,
+      },
+      notification: {
         title: getNotificationTitle(result),
-        content: getNotificationBody(result),
+        body: getNotificationBody(result),
       },
       token: registration.pushToken,
     }

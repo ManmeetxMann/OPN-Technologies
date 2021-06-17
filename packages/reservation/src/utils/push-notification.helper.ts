@@ -69,30 +69,30 @@ export const getPushNotificationType = (
 ): admin.messaging.Message => {
   switch (result.appointmentStatus) {
     case AppointmentStatus.Canceled:
-      message.data.notificationType = PushNotificationType.LISTING
+      message.data.notificationType = PushNotificationType.RESULT
       break
 
     case AppointmentStatus.Pending:
-      message.data.notificationType = PushNotificationType.LISTING
+      message.data.notificationType = PushNotificationType.RESULT
       break
 
     case AppointmentStatus.InProgress:
-      message.data.notificationType = PushNotificationType.VIEW
+      message.data.notificationType = PushNotificationType.RESULT
       message.data.resultId = result.id
       break
 
     case AppointmentStatus.Reported:
-      message.data.notificationType = PushNotificationType.VIEW
+      message.data.notificationType = PushNotificationType.RESULT
       message.data.resultId = result.id
       break
 
     case AppointmentStatus.ReCollectRequired:
-      message.data.notificationType = PushNotificationType.VIEW
+      message.data.notificationType = PushNotificationType.RESULT
       message.data.resultId = result.id
       break
 
     case AppointmentStatus.ReCollectRequired:
-      message.data.notificationType = PushNotificationType.VIEW
+      message.data.notificationType = PushNotificationType.RESULT
       message.data.resultId = result.id
       break
 
