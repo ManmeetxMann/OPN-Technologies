@@ -27,6 +27,7 @@ const organizationId = 'PATIENT_ORG_BASIC'
 const rapidHomeCodeId = 'TEST_RAPID_HOME_CODE'
 const rapidHomeKitCode = 'TEST_HOME_KIT_CODE'
 
+// eslint-disable-next-line max-lines-per-function
 describe('RapidHomeKitCodeController (e2e)', () => {
   const baseUrl = '/api/v1/'
   const url = `${baseUrl}rapid-home-kit-codes`
