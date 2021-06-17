@@ -2,9 +2,9 @@ import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {
+  OpnSources,
   Registration,
   RegistrationUpdate,
-  TokenSource,
 } from '../../../../common/src/data/registration'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {MessagingFactory} from '../../../../common/src/service/messaging/messaging-service'
@@ -39,7 +39,7 @@ class UserController implements IControllerBase {
         platform,
         osVersion,
         pushToken: pushToken ?? null,
-        tokenSource: TokenSource.OPN,
+        tokenSource: OpnSources.OPN_Android,
         userIds: [],
       })
 

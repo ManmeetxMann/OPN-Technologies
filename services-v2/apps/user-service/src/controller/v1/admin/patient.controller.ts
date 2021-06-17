@@ -1,9 +1,13 @@
-import {Body, Controller, Get, Param, Post, Put, Query, UseGuards} from '@nestjs/common'
+import {Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiResponse, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard} from '@opn-services/common/guard'
-import {OpnCommonHeaders, RequiredUserPermission} from '@opn-services/common/types/authorization'
+import {
+  OpnCommonHeaders,
+  OpnSources,
+  RequiredUserPermission,
+} from '@opn-services/common/types/authorization'
 import {UserFunctions, UserEvent} from '@opn-services/common/types/activity-logs'
 import {ApiCommonHeaders, OpnHeaders, Roles} from '@opn-services/common/decorator'
 import {AuthUser} from '@opn-services/common/model'
@@ -23,7 +27,7 @@ import {
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
 import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
-import {mapOpnSourceHeader} from '@opn-services/common/utils/registration'
+import {Request} from 'express'
 
 @ApiTags('Patients - Admin')
 @ApiBearerAuth()
@@ -102,7 +106,7 @@ export class AdminPatientController {
     const patient = await this.patientService.createProfile(
       patientDto,
       false,
-      mapOpnSourceHeader(opnHeaders.opnSourceHeader),
+      opnHeaders.opnSourceHeader,
     )
 
     LogInfo(UserFunctions.add, UserEvent.createPatient, {
@@ -115,14 +119,13 @@ export class AdminPatientController {
 
   @Put('/:patientId')
   @Roles([RequiredUserPermission.PatientsAdmin])
-  /*eslint-disable max-params*/
   async update(
     @AuthUserDecorator() authUser: AuthUser,
-    @Param('patientId') id: string,
-    @Body() patientUpdateDto: PatientUpdateAdminDto,
-    @OpnHeaders() opnHeaders: OpnCommonHeaders,
+    @Req() req: Request,
   ): Promise<ResponseWrapper> {
-    /*eslint-enable max-params*/
+    const patientUpdateDto = req.body as PatientUpdateAdminDto
+    const id = req.params.patientId
+    const opnSourceHeader = req.headers['opn-source'] as OpnSources
     const patientExists = await this.patientService.getbyId(Number(id))
 
     if (!patientExists) {
@@ -132,7 +135,7 @@ export class AdminPatientController {
     const updatedUser = await this.patientService.updateProfile(
       Number(id),
       patientUpdateDto,
-      mapOpnSourceHeader(opnHeaders.opnSourceHeader),
+      opnSourceHeader,
     )
 
     LogInfo(UserFunctions.update, UserEvent.updateProfile, {
@@ -160,7 +163,7 @@ export class AdminPatientController {
     const dependant = await this.patientService.createDependant(
       Number(delegateId),
       dependantBody,
-      mapOpnSourceHeader(opnHeaders.opnSourceHeader),
+      opnHeaders.opnSourceHeader,
     )
 
     return ResponseWrapper.actionSucceed(dependant)

@@ -44,7 +44,7 @@ import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import {OrganizationModel} from '@opn-enterprise-v1/repository/organization.repository'
 import DataStore from '@opn-common-v1/data/datastore'
 import {AuthUser, UserStatus, UserCreator} from '@opn-common-v1/data/user'
-import {Registration, TokenSource} from '@opn-common-v1/data/registration'
+import {Registration} from '@opn-common-v1/data/registration'
 import {RegistrationService} from '@opn-common-v1/service/registry/registration-service'
 import {MessagingFactory} from '@opn-common-v1/service/messaging/messaging-service'
 import {safeTimestamp} from '@opn-common-v1/utils/datetime-util'
@@ -58,6 +58,7 @@ import {ActionStatus} from '@opn-services/common/model'
 import {OrganizationService} from '@opn-enterprise-v1/services/organization-service'
 import {Organization} from '@opn-enterprise-v1/models/organization'
 import {Platforms} from '@opn-common-v1/types/platform'
+import {OpnSources} from '@opn-services/common/types/authorization'
 
 @Injectable()
 export class PatientService {
@@ -170,7 +171,7 @@ export class PatientService {
 
   async createHomePatientProfile(
     data: HomeTestPatientDto,
-    tokenSource: TokenSource,
+    tokenSource: OpnSources,
   ): Promise<Patient> {
     const userData = {
       firstName: data.firstName,
@@ -227,7 +228,7 @@ export class PatientService {
   async createProfile(
     data: PatientCreateDto | PatientCreateAdminDto,
     hasPublicOrg = false,
-    tokenSource: TokenSource,
+    tokenSource: OpnSources,
   ): Promise<Patient> {
     const organizationIds = []
     if (hasPublicOrg) {
@@ -341,7 +342,7 @@ export class PatientService {
   async updateProfile(
     patientId: number,
     data: PatientUpdateDto,
-    tokenSource: TokenSource,
+    tokenSource: OpnSources,
   ): Promise<Patient> {
     const patient = await this.getProfilebyId(patientId)
     data.idPatient = patientId
@@ -457,7 +458,7 @@ export class PatientService {
 
   async createPatient(
     data: PatientCreateDto | DependantCreateDto | PatientCreateAdminDto,
-    tokenSource: TokenSource,
+    tokenSource: OpnSources,
   ): Promise<Patient> {
     const entity = new Patient()
     entity.firebaseKey = data.firebaseKey
@@ -482,7 +483,7 @@ export class PatientService {
   async createDependant(
     delegateId: number,
     data: DependantCreateDto | DependantCreateAdminDto,
-    tokenSource: TokenSource,
+    tokenSource: OpnSources,
   ): Promise<Patient> {
     const delegate = await this.getbyId(delegateId)
 
@@ -792,7 +793,7 @@ export class PatientService {
     await this.patientRepository.update({idPatient: patientId}, {registrationId: id})
   }
 
-  async updateProfileWithPubSub(data: AppointmentDBModel, tokenSource: TokenSource): Promise<void> {
+  async updateProfileWithPubSub(data: AppointmentDBModel, tokenSource: OpnSources): Promise<void> {
     if (!data?.userId) {
       const errorMessage = `User/Patient id is missing`
       LogError(
@@ -848,7 +849,7 @@ export class PatientService {
     await this.updateProfile(patient.idPatient, updateDto, tokenSource)
   }
 
-  async getRegistrationId(userData: PatientUpdateDto, tokenSource: TokenSource): Promise<string> {
+  async getRegistrationId(userData: PatientUpdateDto, tokenSource: OpnSources): Promise<string> {
     let registrationDb: Registration
 
     if (

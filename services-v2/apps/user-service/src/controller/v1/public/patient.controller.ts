@@ -50,7 +50,6 @@ import {AuthShortCodeService} from '@opn-enterprise-v1/services/auth-short-code-
 import {OpnConfigService} from '@opn-services/common/services'
 import * as _ from 'lodash'
 import {ActionStatus} from '@opn-services/common/model'
-import {mapOpnSourceHeader} from '@opn-services/common/utils/registration'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -110,7 +109,7 @@ export class PatientController {
 
       patient = await this.patientService.createHomePatientProfile(
         patientDto as HomeTestPatientDto,
-        mapOpnSourceHeader(opnHeaders.opnSourceHeader),
+        opnHeaders.opnSourceHeader,
       )
     } else {
       const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
@@ -126,7 +125,7 @@ export class PatientController {
       patient = await this.patientService.createProfile(
         patientDto,
         hasPublicOrg,
-        mapOpnSourceHeader(opnHeaders.opnSourceHeader),
+        opnHeaders.opnSourceHeader,
       )
     }
 
@@ -186,7 +185,7 @@ export class PatientController {
     await this.patientService.updateProfile(
       Number(patientId),
       {isEmailVerified: true},
-      mapOpnSourceHeader(opnHeaders.opnSourceHeader),
+      opnHeaders.opnSourceHeader,
     )
     return ResponseWrapper.actionSucceed()
   }
@@ -236,14 +235,14 @@ export class PatientController {
         osVersion,
         platform: platform as Platform,
         pushToken,
-        tokenSource: mapOpnSourceHeader(opnHeaders.opnSourceHeader),
+        tokenSource: opnHeaders.opnSourceHeader,
       })
     }
 
     const updatedUser = await this.patientService.updateProfile(
       id,
       patientUpdateDto,
-      mapOpnSourceHeader(opnHeaders.opnSourceHeader),
+      opnHeaders.opnSourceHeader,
     )
     LogInfo(UserFunctions.update, UserEvent.updateProfile, {
       userId: patientExists.idPatient,
@@ -281,7 +280,7 @@ export class PatientController {
     const dependant = await this.patientService.createDependant(
       delegateId,
       dependantBody,
-      mapOpnSourceHeader(opnHeaders.opnSourceHeader),
+      opnHeaders.opnSourceHeader,
     )
     LogInfo(UserFunctions.addDependents, UserEvent.createPatient, {
       newUserId: dependant.idPatient,

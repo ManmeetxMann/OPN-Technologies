@@ -9,7 +9,6 @@ import {PatientService} from '@opn-services/user/service/patient/patient.service
 import {PubSubEvents, PubSubFunctions} from '@opn-services/common/types/activity-logs'
 import {OPNPubSub} from '@opn-common-v1/service/google/pub_sub'
 import {AppointmentDBModel} from '@opn-reservation-v1/models/appointment'
-import {mapOpnSourceHeader} from '@opn-services/common/utils/registration'
 
 @ApiTags('Patient PubSub')
 @Controller('/api/v1/internal/patients/pubsub')
@@ -39,10 +38,7 @@ export class PatientPubSubController {
       updatePayload, //TODO: remove: for now debugging purpose
     })
 
-    await this.patientService.updateProfileWithPubSub(
-      updatePayload,
-      mapOpnSourceHeader(opnHeaders.opnSourceHeader),
-    )
+    await this.patientService.updateProfileWithPubSub(updatePayload, opnHeaders.opnSourceHeader)
 
     return ResponseWrapper.actionSucceed()
   }
