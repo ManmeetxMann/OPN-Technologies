@@ -6,3 +6,5 @@ export type TestRunsPool = {
 }
 
 export type TestRunsPoolCreate = Omit<TestRunsPool, 'id'>
+
+export type TestRunsPoolUpdate = Partial<TestRunsPoolCreate>

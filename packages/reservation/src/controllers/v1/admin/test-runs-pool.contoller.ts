@@ -7,6 +7,7 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {TestRunsPoolCreate} from '../../../models/test-runs-pool'
 import {TestRunsPoolService} from '../../../services/test-runs-pool.service'
+import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 
 const testRunsPoolLimit = Config.getInt('TEST_RUNS_POOL_LIMIT')
 
@@ -27,6 +28,18 @@ class AdminTestRunsPoolController implements IControllerBase {
       this.addTestRunsPool,
     )
 
+    innerRouter.get(
+      this.path + '/test-runs-pools/:testRunsPoolId',
+      authorizationMiddleware([RequiredUserPermission.LabAdmin]),
+      this.getById,
+    )
+
+    innerRouter.put(
+      this.path + '/test-runs-pools/:testRunsPoolId',
+      authorizationMiddleware([RequiredUserPermission.LabAdmin]),
+      this.updateTestRunsPool,
+    )
+
     this.router.use('/', innerRouter)
   }
 
@@ -45,6 +58,46 @@ class AdminTestRunsPoolController implements IControllerBase {
       })
 
       res.json(actionSuccess({id: testRunPool.id}, 'Test run pool created successfully'))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const testRunPool = await this.testRunsPoolService.getById(req.params.testRunsPoolId)
+
+      if (!testRunPool) {
+        throw new ResourceNotFoundException('Test runs pool with given id not found')
+      }
+
+      res.json(actionSuccess(testRunPool))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  updateTestRunsPool = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const testRunPool = await this.testRunsPoolService.getById(req.params.testRunsPoolId)
+
+      if (!testRunPool) {
+        throw new ResourceNotFoundException('Test runs pool with given id not found')
+      }
+
+      const {appointmentIds, testRunId, well} = req.body
+
+      if (appointmentIds && appointmentIds.length > testRunsPoolLimit) {
+        throw new BadRequestException(`Number of samples are limited to ${testRunsPoolLimit}`)
+      }
+
+      const updatedPool = await this.testRunsPoolService.update(testRunPool.id, {
+        appointmentIds,
+        testRunId,
+        well,
+      })
+
+      res.json(actionSuccess(updatedPool, 'Test run pool has been updated successfully'))
     } catch (error) {
       next(error)
     }

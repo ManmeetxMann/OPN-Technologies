@@ -1302,6 +1302,38 @@ components:
             message:
               nullable: true
               type: string
+    TestRunsPoolResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            appointmentIds:
+              type: array
+              items:
+                type: string
+            testRunId:
+              type: string
+            well:
+              type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
 
 paths:
   /admin/api/v1/send-fax-for-positive:
@@ -4616,7 +4648,7 @@ paths:
       security:
         - bearerAuthJWT: []
       tags:
-        - Test Runs Pool
+        - Test Runs Pools
       requestBody:
         content:
           application/json:
@@ -4668,4 +4700,60 @@ paths:
                       message:
                         nullable: true
                         type: string
+  /reservation/admin/api/v1/test-runs-pools/{testRunsPoolId}:
+    get:
+      description: 'Get test runs pool by id'
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Test Runs Pools
+      parameters:
+      - in: path
+        name: testRunsPoolId
+        schema:
+          type: string
+        required: true
+      responses:
+        '200':
+          description: Succesfully fetched test runs pool
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestRunsPoolResponse'
+    put:
+      description: 'Update test runs pool'
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Test Runs Pools
+      parameters:
+      - in: path
+        name: testRunsPoolId
+        schema:
+          type: string
+        required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                appointmentIds:
+                  type: array
+                  items:
+                    type: string
+                testRunId:
+                  type: string
+                well:
+                  type: string
+      responses:
+        '200':
+          description: Succesfully updated test runs pool
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestRunsPoolResponse'
+
+
                 
