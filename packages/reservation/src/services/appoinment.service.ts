@@ -481,6 +481,7 @@ export class AppoinmentService {
       couponCode?: string
       userId?: string
       labId?: string
+      patientId?: string
     },
   ): Promise<AppointmentDBModel> {
     const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
@@ -551,6 +552,7 @@ export class AppoinmentService {
       couponCode?: string
       userId?: string
       labId?: string
+      patientId?: string
     },
     appointmentDb?: AppointmentDBModel,
   ): Promise<Omit<AppointmentDBModel, 'id'>> {
@@ -583,6 +585,7 @@ export class AppoinmentService {
       couponCode = '',
       labId = null,
       userId,
+      patientId,
     } = additionalData
 
     const currentUserId =
@@ -642,6 +645,7 @@ export class AppoinmentService {
       city: acuityAppointment.city,
       province: acuityAppointment.province,
       country: acuityAppointment.country,
+      patientId,
     }
   }
 
@@ -839,11 +843,17 @@ export class AppoinmentService {
       labId: data.labId ?? null,
     })
     const testResult = await this.createOrUpdatePCRResults(savedAppointment, data.userId)
-    await this.postPubSubForToSyncWithThirdParty(
-      savedAppointment,
-      testResult.id,
-      ThirdPartySyncSource.TransportRun,
-    )
+
+    // trigger PubSub only if sendORMRequest is enabled for lab
+    const isORMRequestEnabled = await this.labService.isORMRequestEnabled(data.labId)
+    if (isORMRequestEnabled) {
+      await this.postPubSubForToSyncWithThirdParty(
+        savedAppointment,
+        testResult.id,
+        ThirdPartySyncSource.TransportRun,
+      )
+    }
+
     await this.appointmentsRepository.addStatusHistoryById(
       appointmentId,
       AppointmentStatus.InTransit,
@@ -1301,6 +1311,7 @@ export class AppoinmentService {
       organizationId: appointment.organizationId,
       couponCode: discountData?.name ? discountData.name : appointment.packageCode,
       userId,
+      patientId: patient.userId,
     })
   }
 

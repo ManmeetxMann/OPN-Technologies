@@ -1245,7 +1245,7 @@ components:
             message:
               nullable: true
               type: string
-  
+
     DriverUpdateResponse:
       type: object
       additionalProperties: false
@@ -3515,7 +3515,7 @@ paths:
                         type: string
                   page:
                     type: number
-  /reservation/admin/api/v1/test-results/list/failed-confirmatory-request:
+  /reservation/admin/api/v1/appointments/list/failed-confirmatory-request:
     get:
       description: Retrieve list of Failed Confirmatory Request
       tags:
@@ -4438,7 +4438,7 @@ paths:
         '200':
           description: Success
 
-  /reservation/admin/api/v1/test-results/failed-confirmatory-request/sync:
+  /reservation/admin/api/v1/appointments/failed-confirmatory-request/sync:
     post:
       description: Add transport run to appointment
       tags:
@@ -4558,9 +4558,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DriversListResponse200'
     put:
-      description: Update driver's \'enabled\' property 
+      description: Update driver's \'enabled\' property
       security:
-        - bearerAuthJWT: [] 
+        - bearerAuthJWT: []
       tags:
         - Drivers
       requestBody:
@@ -4570,7 +4570,7 @@ paths:
               type: object
               additionalProperties: false
               properties:
-                name: 
+                name:
                   type: string
                 enabled:
                   type: boolean
@@ -4597,7 +4597,7 @@ paths:
               type: object
               additionalProperties: false
               properties:
-                name: 
+                name:
                   type: string
                   minLength: 1
               required:

@@ -7,6 +7,7 @@ import {
 } from '../../../__seeds__/pcr-test-results'
 import {createComment, deleteCommentByTestDataCreator} from '../../../__seeds__/comments'
 import {createUser} from '../../../__seeds__/user'
+import {createTestRun, deleteTestRunsByDataCreator} from '../../../__seeds__/test-runs'
 
 //jest.spyOn(global.console, 'error').mockImplementation()
 //jest.spyOn(global.console, 'info').mockImplementation()
@@ -24,6 +25,8 @@ const barCode = 'BAR1'
 const pcrTestId = `commentPcrTestId1`
 const commentTestId = 'commentTestId1'
 const userId = 'USER1'
+
+const testRunId = 'PCR_TEST_RUN_ID'
 
 describe('PCRTestResultController', () => {
   beforeAll(async () => {
@@ -87,6 +90,14 @@ describe('PCRTestResultController', () => {
         organizationId: organizationId,
         deadline: deadlineSameDay,
         testType: 'RapidAntigen',
+      },
+      testDataCreator,
+    )
+
+    await createTestRun(
+      {
+        id: testRunId,
+        createdAt: dateTimeForAppointment7AM,
       },
       testDataCreator,
     )
@@ -218,8 +229,43 @@ describe('PCRTestResultController', () => {
     })
   })
 
+  describe('add test run', () => {
+    test('add test run successfully', async () => {
+      const url = '/reservation/admin/api/v1/pcr-test-results/add-test-run'
+      const pcrTestResultIds = [pcrTestId]
+
+      const result = await request(server.app)
+        .put(url)
+        .set('Content-Type', 'application/json')
+        .set('authorization', 'Bearer LabUser')
+        .send({
+          pcrTestResultIds,
+          testRunId,
+        })
+
+      expect(result.statusCode).toBe(200)
+    })
+
+    test('add test run failed', async () => {
+      const url = '/reservation/admin/api/v1/pcr-test-results/add-test-run'
+      const pcrTestResultIds = [pcrTestId]
+
+      const result = await request(server.app)
+        .put(url)
+        .set('Content-Type', 'application/json')
+        .set('authorization', 'Bearer LabUser')
+        .send({
+          pcrTestResultIds,
+          testRunId: 'inexistent_run_id',
+        })
+
+      expect(result.statusCode).toBe(404)
+    })
+  })
+
   afterAll(async () => {
     await deletePCRTestResultByTestDataCreator(testDataCreator)
     await deleteCommentByTestDataCreator(pcrTestId)
+    await deleteTestRunsByDataCreator(testDataCreator)
   })
 })

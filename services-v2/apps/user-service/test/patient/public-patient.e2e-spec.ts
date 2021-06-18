@@ -22,6 +22,9 @@ jest.mock('@opn-enterprise-v1/repository/user.repository', () => {
         add: () => ({
           id: 'RandomFirebaseKeyPublicTest',
         }),
+        getQueryFindWhereEqual: () => ({
+          fetch: () => [],
+        }),
       }
     }),
   }
@@ -70,7 +73,10 @@ describe('PatientController (e2e)', () => {
     await new Promise(resolve => app.listen(81, resolve))
 
     patientTestUtility = new PatientTestUtility()
-    await patientTestUtility.removeProfileByEmail(userCreatePayload.email)
+    await Promise.all([
+      patientTestUtility.removeProfileByAuth({authUserId: userId}),
+      patientTestUtility.removeProfileByAuth({email: userCreatePayload.email}),
+    ])
   })
 
   test('Create patient - / (POST)', async done => {
@@ -87,6 +93,7 @@ describe('PatientController (e2e)', () => {
       deleteUserByIdTestDataCreator(userId, testDataCreator),
       deleteUserByEmail(userCreatePayload.email),
       patientTestUtility.findAndRemoveProfile({firstName: userCreatePayload.firstName}),
+      patientTestUtility.removeProfileByAuth({authUserId: userId}),
     ])
     await patientTestUtility.patientRepository.delete({firstName: userCreatePayload.firstName})
     await app.close()

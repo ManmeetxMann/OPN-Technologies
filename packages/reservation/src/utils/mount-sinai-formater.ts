@@ -1,36 +1,14 @@
 import moment from 'moment'
 import {Gender, ThirdPartySyncSource} from '../models/appointment'
 import {Config} from '../../../common/src/utils/config'
-
-enum SendingFacility {
-  MS112 = 'MS112',
-  MS117 = 'MS117',
-}
-
-enum GenderHL7 {
-  A = 'A', //Ambiguous
-  F = 'F', //Female
-  M = 'M', //Male
-  N = 'N', //Not applicable
-  O = 'O', //Other
-  U = 'U', //Unknown
-}
-
-enum SpecimenSource {
-  NASOP = 'NASOP', //Nasopharyngeal Swab
-  NASD = 'NASD', //Nasal Swab-Deep
-  NARES = 'NARES', //Nares
-  NTS = 'NTS', //Nasal and Throat Swab
-  TS = 'TS', //Throat Swab
-  VSALV = 'VSALV', //Saliva
-  NMT = 'NMT', //Nasal Mid-Turbinate
-}
+import {SpecimenSource, GenderHL7} from '../models/mount-sinai'
 
 type ORMDataRequest = {
   dateTime: FirebaseFirestore.Timestamp
   gender: Gender
   dateOfBirth: string
   source: ThirdPartySyncSource
+  healthCard: string
 }
 
 type ORMDataResponse = {
@@ -39,7 +17,7 @@ type ORMDataResponse = {
   specimenSource: SpecimenSource
   gender: GenderHL7
   clinicCode: string
-  sendingFacility: SendingFacility
+  healthCard: string
 }
 
 export class MountSinaiFormater {
@@ -80,11 +58,11 @@ export class MountSinaiFormater {
       specimenSource: SpecimenSource.NASOP,
       gender: this.gender(this.ormData.gender),
       dateOfBirth: this.dateOfBirth(this.ormData.dateOfBirth),
-      clinicCode: Config.get('CLINIC_CODE_MOUNT_SINAI_CONFIRMATORY'),
-      sendingFacility:
+      clinicCode:
         this.ormData.source === ThirdPartySyncSource.TransportRun
-          ? SendingFacility.MS117
-          : SendingFacility.MS112,
+          ? Config.get('CLINIC_CODE_FOR_MOUNT_SINAI_LAB')
+          : Config.get('CLINIC_CODE_MOUNT_SINAI_CONFIRMATORY'),
+      healthCard: this.ormData.healthCard ? this.ormData.healthCard.replace(/\D/g, '') : '',
     }
   }
 }

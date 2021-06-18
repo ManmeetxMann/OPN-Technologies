@@ -37,6 +37,8 @@ import {
 } from '../respository/test-results-reporting-tracker-repository'
 
 import {
+  AnalyseTypes,
+  AntiBodyFieldsToCheckResults,
   AppointmentReasons,
   CreateReportForPCRResultsResponse,
   EmailNotficationTypes,
@@ -61,6 +63,7 @@ import {
   Result,
   ResultReportStatus,
   resultToStyle,
+  Spec,
   TestResutsDTO,
 } from '../models/pcr-test-results'
 
@@ -89,15 +92,14 @@ import {AttestationService} from '../../../passport/src/services/attestation-ser
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {PulseOxygenService} from './pulse-oxygen.service'
 
-import {BulkTestResultRequest, TestResultsMetaData} from '../models/test-results'
+import {BulkTestResultRequest, TemplateTypes, TestResultsMetaData} from '../models/test-results'
 import {AntibodyAllPDFContent} from '../templates/antibody-all'
 import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 import {normalizeAnalysis} from '../utils/analysis.helper'
 import {CouponEnum} from '../models/coupons'
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
 import {FirebaseMessagingService} from '../../../common/src/service/messaging/firebase-messaging-service'
-import {PushNotificationType} from '../types/push-notification.type'
-import admin from 'firebase-admin'
+import {FHPushNotificationMessage} from '../types/push-notification.type'
 import {
   getNotificationBody,
   getNotificationTitle,
@@ -153,6 +155,27 @@ export class PCRTestResultsService {
     }
     const pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
     pubsub.publish(data)
+  }
+
+  private getAutoResult(data: Spec[]): ResultTypes {
+    if (
+      data.some(
+        (analyse) =>
+          Object.keys(AntiBodyFieldsToCheckResults).includes(analyse.label) &&
+          String(analyse.value).toLowerCase() === String(AnalyseTypes.POSITIVE).toLowerCase(),
+      )
+    ) {
+      return ResultTypes.Positive
+    } else if (
+      data.some(
+        (analyse) =>
+          Object.keys(AntiBodyFieldsToCheckResults).includes(analyse.label) &&
+          String(analyse.value).toLowerCase() === String(AnalyseTypes.INDETERMINATE).toLowerCase(),
+      )
+    ) {
+      return ResultTypes.Indeterminate
+    }
+    return ResultTypes.Negative
   }
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest): Promise<string> {
@@ -1014,7 +1037,7 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendNotification(
+  async sendEmailNotificationForResults(
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
     pcrId: string,
@@ -1071,11 +1094,15 @@ export class PCRTestResultsService {
         ) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Intermediate)
         } else {
-          LogWarning('sendNotification', 'FailedEmailSent BlockedBySystem', {
-            barCode: resultData.barCode,
-            notficationType,
-            resultSent: resultData.result,
-          })
+          LogWarning(
+            'PCRTestResultsService:sendEmailNotificationForResults',
+            'FailedEmailSent BlockedBySystem',
+            {
+              barCode: resultData.barCode,
+              notficationType,
+              resultSent: resultData.result,
+            },
+          )
         }
       }
     }
@@ -1098,12 +1125,13 @@ export class PCRTestResultsService {
 
     await this.firebaseMessagingService.validatePushToken(registration.pushToken)
 
-    const message: admin.messaging.Message = {
+    const message: FHPushNotificationMessage = {
       data: {
-        resultId: '',
-        notificationType: null as PushNotificationType,
+        notificationType: null
+      },
+      notification: {
         title: getNotificationTitle(result),
-        content: getNotificationBody(result),
+        body: getNotificationBody(result),
       },
       token: registration.pushToken,
     }
@@ -2140,5 +2168,15 @@ export class PCRTestResultsService {
         },
       )
     }
+  }
+
+  checkIsValidAntibodyAutoResults(data: BulkTestResultRequest): boolean {
+    if (data.templateId !== TemplateTypes.antiBody) {
+      return true
+    }
+
+    return !data.results.some(
+      (result) => result.autoResult !== this.getAutoResult(result.resultAnalysis),
+    )
   }
 }

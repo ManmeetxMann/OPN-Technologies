@@ -163,6 +163,11 @@ class AdminPCRTestResultController implements IControllerBase {
     try {
       const adminId = getUserId(res.locals.authenticatedUser)
       const data = req.body as BulkTestResultRequest
+
+      if (!this.pcrTestResultsService.checkIsValidAntibodyAutoResults(data)) {
+        throw new BadRequestException(`autoResult is incorrect`)
+      }
+
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
         .tz(timeZone)
