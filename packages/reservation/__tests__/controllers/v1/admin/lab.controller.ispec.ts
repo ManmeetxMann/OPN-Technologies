@@ -1,7 +1,7 @@
 import request from 'supertest'
 
 import {app as server} from '../../../../src/app'
-import {create, deleteLabsByTestDataCreator} from '../../../__seeds__/labs'
+import {create, deleteLabsByName, deleteLabsByTestDataCreator} from '../../../__seeds__/labs'
 
 const testDataCreator = __filename.split('/packages/')[1]
 jest.spyOn(global.console, 'error').mockImplementation()
@@ -12,6 +12,8 @@ jest.mock('../../../../../common/src/utils/logging-setup')
 const dateForCreation = '2020-04-05'
 const dateTimeForCreation1 = `${dateForCreation}T07:00:00`
 const labID1 = 'TEMP1'
+const labName = 'UNIT_TEST_LAB'
+
 describe('AdminLabController', () => {
   beforeAll(async () => {
     await create(
@@ -35,7 +37,6 @@ describe('AdminLabController', () => {
 
   describe('create New Lab', () => {
     test('create new lab successfully', async () => {
-      const labName = 'UNIT_TEST_LAB'
       const url = `/reservation/admin/api/v1/labs`
       await request(server.app)
         .post(url)
@@ -72,5 +73,6 @@ describe('AdminLabController', () => {
 
   afterAll(async () => {
     await deleteLabsByTestDataCreator(testDataCreator)
+    await deleteLabsByName(labName)
   })
 })
