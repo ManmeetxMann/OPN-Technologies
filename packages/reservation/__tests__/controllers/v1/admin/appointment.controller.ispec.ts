@@ -106,6 +106,8 @@ describe('AdminAppointmentController', () => {
         labId: laboratoryId,
         label: testDataCreator,
         createdAt: dateTimeForAppointment1,
+        transportDateTime: dateTimeForAppointment1,
+        transportDate: dateForAppointments,
       },
       testDataCreator,
     )
