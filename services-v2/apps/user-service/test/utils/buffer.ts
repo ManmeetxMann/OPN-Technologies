@@ -6,7 +6,7 @@ export class BufferTestUtility {
   }
   getAppointmentData(userId: string): Partial<AppointmentDBModel> {
     return {
-      userId: userId,
+      patientId: userId,
       gender: Gender.Male,
       phone: '3749999999',
       dateOfBirth: '02/02/2002',
