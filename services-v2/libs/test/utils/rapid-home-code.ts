@@ -28,6 +28,13 @@ export const createRapidTestKitCode = async (
     .set(data)
 }
 
+export const clearRapidCodeDataById = async (id: string): Promise<void> => {
+  const userCollection = database.collection(collectionName)
+  await userCollection.doc(id).update({
+    usedForUserIds: [],
+  })
+}
+
 export const deleteRapidCodeByIdTestDataCreator = async (
   id: string,
   testDataCreator: string,

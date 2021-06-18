@@ -18,6 +18,7 @@ export const cartItem = {
   readTermsAndConditions: true,
   receiveResultsViaEmail: true,
   receiveNotificationsFromGov: true,
+  userId: 'mockedId',
 }
 
 export const slotId = (data: {date: string; time: string}): unknown => ({

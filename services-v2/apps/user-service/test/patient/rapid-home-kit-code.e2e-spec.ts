@@ -12,10 +12,10 @@ import {
   getTestResultPayload,
 } from '@opn-services/test/utils'
 import {
+  clearRapidCodeDataById,
   createRapidTestKitCode,
   deleteRapidCodeByIdTestDataCreator,
 } from '@opn-services/test/utils/rapid-home-code'
-import {createKit} from '@opn-services/test/utils/home-kit-code'
 import {TestResultCreateDto} from '@opn-services/user/dto/test-result'
 import {PatientTestUtility} from '../utils/patient'
 
@@ -25,12 +25,10 @@ jest.setTimeout(10000)
 
 const organizationId = 'PATIENT_ORG_BASIC'
 
-const rapidHomeCodeId = 'TEST_RAPID_HOME_CODE'
-const rapidHomeKitCode = 'TEST_HOME_KIT_CODE'
+const kitCode = 'ZZZZZZ'
 
 const rapidHome2CodeId = 'TEST_RAPID_HOME_CODE2'
 const rapidHome2KitCode = 'TEST_HOME_KIT_CODE2'
-const kitCode = 'ZZZZZZ'
 const currentUserName = 'HomeKitPublicPatientTest'
 
 // eslint-disable-next-line max-lines-per-function
@@ -40,8 +38,18 @@ describe('RapidHomeKitCodeController (e2e)', () => {
   let server: HttpService
   let patientTestUtility: PatientTestUtility
 
+  const setHeadersByUserId = (userId: string) => {
+    return {
+      accept: 'application/json',
+      authorization: `Bearer userId:${userId}`,
+      ...commonHeaders,
+    }
+  }
+
   const userId = 'PATIENT_RAPID_HOME_KIT'
+  const secondUserId = 'PATIENT_RAPID_HOME_KIT_2'
   const userEmail = 'patientRapidHome@gmail.com'
+
   const testDataCreator = __filename.split('/services-v2/')[1]
   const headers = {
     accept: 'application/json',
@@ -65,7 +73,7 @@ describe('RapidHomeKitCodeController (e2e)', () => {
       testDataCreator,
     )
 
-    await createKit(
+    await createRapidTestKitCode(
       {
         id: kitCode,
         code: kitCode,
@@ -73,10 +81,10 @@ describe('RapidHomeKitCodeController (e2e)', () => {
       testDataCreator,
     )
 
-    await createRapidTestKitCode(
+    await createUser(
       {
-        id: rapidHomeCodeId,
-        code: rapidHomeKitCode,
+        id: secondUserId,
+        organizationIds: [organizationId],
       },
       testDataCreator,
     )
@@ -110,7 +118,7 @@ describe('RapidHomeKitCodeController (e2e)', () => {
 
   test('should verify rapid home kit code and link to account', async done => {
     const response = await request(server)
-      .get(`${url}/rapid-home-kit-codes/${rapidHomeKitCode}`)
+      .get(`${url}/rapid-home-kit-codes/${kitCode}`)
       .set(headers)
       .set(commonHeaders)
       .set({
@@ -134,11 +142,75 @@ describe('RapidHomeKitCodeController (e2e)', () => {
 
   test('should return BadRequest (400) without captcha token header', async done => {
     const response = await request(server)
-      .get(`${url}/rapid-home-kit-codes/${rapidHomeKitCode}`)
+      .get(`${url}/rapid-home-kit-codes/${kitCode}`)
       .set(headers)
       .set(commonHeaders)
 
     expect(response.status).toBe(400)
+    done()
+  })
+
+  test('user should use rapid home kit code 5 time successfully', async done => {
+    const payload = getTestResultPayload(pcrTestResultCreatePayload)
+    const result = []
+    let usedCount = 0
+
+    // now use kit 5 time
+    while (usedCount < 5) {
+      usedCount++
+      const promise = await request(server)
+        .post(`${url}/pcr-test-results`)
+        .set(setHeadersByUserId(userId))
+        .send(payload as TestResultCreateDto)
+
+      result.push(promise)
+    }
+
+    result.forEach(promise => {
+      expect(promise.status).toBe(201)
+    })
+    done()
+  }, 30000)
+
+  test('should return BadRequest (400) ', async done => {
+    const errorMessage = 'Error this kit has already recorded 5 test results against it.'
+    const payload = getTestResultPayload(pcrTestResultCreatePayload)
+
+    const promise = await request(server)
+      .post(`${url}/pcr-test-results`)
+      .set(setHeadersByUserId(userId))
+      .send(payload as TestResultCreateDto)
+
+    expect(promise.status).toBe(400)
+    expect(promise.body.message).toBe(errorMessage)
+
+    done()
+  })
+
+  test('associate same user second time should return error', async done => {
+    const error = {statusCode: 400, message: 'Kit Already Linked'}
+    // It already used more than 5 times, Clearing usage history to avoid getting another error
+    await clearRapidCodeDataById(kitCode)
+
+    const response = await request(server)
+      .post(`${url}/rapid-home-kit-codes`)
+      .set(setHeadersByUserId(userId))
+      .send({code: kitCode} as {code: string})
+
+    expect(response.status).toBe(error.statusCode)
+    expect(response.body.message).toBe(error.message)
+
+    done()
+  })
+
+  test('Link to many users', async done => {
+    // here its already linked to one account
+    const response = await request(server)
+      .post(`${url}/rapid-home-kit-codes`)
+      .set(setHeadersByUserId(secondUserId))
+      .send({code: kitCode} as {code: string})
+
+    expect(response.status).toBe(201)
     done()
   })
 
@@ -193,8 +265,9 @@ describe('RapidHomeKitCodeController (e2e)', () => {
   afterAll(async () => {
     await Promise.all([
       deleteUserByIdTestDataCreator(userId, testDataCreator),
-      deleteRapidCodeByIdTestDataCreator(rapidHomeCodeId, testDataCreator),
+      deleteRapidCodeByIdTestDataCreator(kitCode, testDataCreator),
       patientTestUtility.findAndRemoveProfile({firstName: currentUserName}),
+      patientTestUtility.findAndRemoveProfile({firebaseKey: userId}),
       patientTestUtility.findAndRemoveProfile({firstName: pcrTestResultCreatePayload.firstName}),
     ])
     await patientTestUtility.patientRepository.delete({firstName: currentUserName})
