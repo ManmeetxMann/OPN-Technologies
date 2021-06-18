@@ -1309,7 +1309,7 @@ components:
           type: object
           additionalProperties: false
           properties:
-            appointmentIds:
+            testResultIds:
               type: array
               items:
                 type: string
@@ -1317,6 +1317,8 @@ components:
               type: string
             well:
               type: string
+            numberOfSamples:
+              type: number
         status:
           type: object
           additionalProperties: false
@@ -4656,7 +4658,7 @@ paths:
               type: object
               additionalProperties: false
               properties:
-                appointmentIds:
+                testResultIds:
                   type: array
                   items:
                     type: string
@@ -4664,10 +4666,13 @@ paths:
                   type: string
                 well:
                   type: string
+                numberOfSamples:
+                  type: number
               required:
-                - appointmentIds
+                - testResultIds
                 - testRunId
                 - well
+                - numberOfSamples
       responses:
         '200':
           description: Succesfully create test runs pool
@@ -4719,7 +4724,43 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TestRunsPoolResponse'
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      testResultIds:
+                        type: array
+                        items:
+                          type: string
+                      testRunId:
+                        type: string
+                      well:
+                        type: string
+                      numberOfSamples:
+                        type: number
+                      testResults:
+                        type: array
+                        items:
+                          type: object
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
     put:
       description: 'Update test runs pool'
       security:
@@ -4739,7 +4780,7 @@ paths:
               type: object
               additionalProperties: false
               properties:
-                appointmentIds:
+                testResultIds:
                   type: array
                   items:
                     type: string
@@ -4747,6 +4788,8 @@ paths:
                   type: string
                 well:
                   type: string
+                numberOfSamples:
+                  type: number
       responses:
         '200':
           description: Succesfully updated test runs pool
@@ -4754,6 +4797,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestRunsPoolResponse'
+
+  /reservation/admin/api/v1/test-runs-pools/{testRunsPoolId}/add-test-result:
+    post:
+      description: Add new Test Result in Pool
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Test Runs Pools
+      parameters:
+      - in: path
+        name: testRunsPoolId
+        schema:
+          type: string
+        required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                testResultId:
+                  type: string
+              required:
+                - testResultId
+      responses:
+        '200':
+          description: Succesfully added test result in pool
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
 
 
                 

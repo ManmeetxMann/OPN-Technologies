@@ -20,9 +20,10 @@ describe('AdminTestRunsPoolContoller', () => {
       .post(url)
       .set(headers)
       .send({
-        appointmentIds: ['A1'],
+        testResultIds: ['A1'],
         testRunId: poolCreateTestRunId,
         well: 'TEST_POOL_WELL',
+        numberOfSamples: 5,
       })
 
     expect(response.status).toBe(200)

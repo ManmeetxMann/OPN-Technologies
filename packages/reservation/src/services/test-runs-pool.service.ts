@@ -11,12 +11,18 @@ export class TestRunsPoolService {
     return this.testRunPoolRepository.save(testRunPool)
   }
 
-  update(id: string, data: Partial<TestRunsPoolCreate>): Promise<TestRunsPool> {
-    const cleanData = cleanUndefinedKeys(data)
+  async update(id: string, data: TestRunsPoolUpdate): Promise<TestRunsPool> {
+    const cleanData = cleanUndefinedKeys(data) as TestRunsPoolUpdate
+
     return this.testRunPoolRepository.updateProperties(id, cleanData as TestRunsPoolUpdate)
   }
 
   getById(id: string): Promise<TestRunsPool> {
     return this.testRunPoolRepository.findOneById(id)
+  }
+
+  async addTestResultInPool(id: string, testResultId: string): Promise<TestRunsPool> {
+    const {testResultIds} = await this.getById(id)
+    return this.update(id, {testResultIds: [...testResultIds, testResultId]})
   }
 }

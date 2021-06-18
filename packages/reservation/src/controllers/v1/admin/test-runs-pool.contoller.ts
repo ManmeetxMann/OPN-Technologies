@@ -1,5 +1,4 @@
 import {NextFunction, Request, Response, Router} from 'express'
-import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
@@ -8,13 +7,13 @@ import {actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {TestRunsPoolCreate} from '../../../models/test-runs-pool'
 import {TestRunsPoolService} from '../../../services/test-runs-pool.service'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
-
-const testRunsPoolLimit = Config.getInt('TEST_RUNS_POOL_LIMIT')
+import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 
 class AdminTestRunsPoolController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
   public router = Router()
   private testRunsPoolService = new TestRunsPoolService()
+  private pcrTestResultsService = new PCRTestResultsService()
 
   constructor() {
     this.initRoutes()
@@ -40,21 +39,28 @@ class AdminTestRunsPoolController implements IControllerBase {
       this.updateTestRunsPool,
     )
 
+    innerRouter.post(
+      this.path + '/test-runs-pools/:testRunsPoolId/add-test-result',
+      authorizationMiddleware([RequiredUserPermission.LabAdmin]),
+      this.addTestResultInPool,
+    )
+
     this.router.use('/', innerRouter)
   }
 
   addTestRunsPool = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {appointmentIds, testRunId, well} = req.body as TestRunsPoolCreate
+      const {testResultIds, testRunId, well, numberOfSamples} = req.body as TestRunsPoolCreate
 
-      if (appointmentIds.length > testRunsPoolLimit) {
-        throw new BadRequestException(`Number of samples are limited to ${testRunsPoolLimit}`)
+      if (testResultIds.length > numberOfSamples) {
+        throw new BadRequestException(`Number of samples are limited to ${numberOfSamples}`)
       }
 
       const testRunPool = await this.testRunsPoolService.create({
-        appointmentIds,
+        testResultIds,
         testRunId,
         well,
+        numberOfSamples,
       })
 
       res.json(actionSuccess({id: testRunPool.id}, 'Test run pool created successfully'))
@@ -71,7 +77,16 @@ class AdminTestRunsPoolController implements IControllerBase {
         throw new ResourceNotFoundException('Test runs pool with given id not found')
       }
 
-      res.json(actionSuccess(testRunPool))
+      const testResults = await this.pcrTestResultsService.getTestResultsByIds(
+        testRunPool.testResultIds,
+      )
+
+      const responseDto = {
+        ...testRunPool,
+        testResults,
+      }
+
+      res.json(actionSuccess(responseDto))
     } catch (error) {
       next(error)
     }
@@ -85,19 +100,50 @@ class AdminTestRunsPoolController implements IControllerBase {
         throw new ResourceNotFoundException('Test runs pool with given id not found')
       }
 
-      const {appointmentIds, testRunId, well} = req.body
+      const {testResultIds, testRunId, well, numberOfSamples} = req.body
 
-      if (appointmentIds && appointmentIds.length > testRunsPoolLimit) {
-        throw new BadRequestException(`Number of samples are limited to ${testRunsPoolLimit}`)
+      if (testResultIds && testResultIds.length > testRunPool.numberOfSamples) {
+        throw new BadRequestException(
+          `Number of samples are limited to ${testRunPool.numberOfSamples}`,
+        )
       }
 
       const updatedPool = await this.testRunsPoolService.update(testRunPool.id, {
-        appointmentIds,
+        testResultIds,
         testRunId,
         well,
+        numberOfSamples,
       })
 
       res.json(actionSuccess(updatedPool, 'Test run pool has been updated successfully'))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  addTestResultInPool = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const testResultId = req.body.testResultId
+      const testRunPool = await this.testRunsPoolService.getById(req.params.testRunsPoolId)
+
+      if (!testRunPool) {
+        throw new ResourceNotFoundException('Test runs pool with given id not found')
+      }
+
+      const testResultExists = testRunPool.testResultIds.includes(testResultId)
+      if (testResultExists) {
+        throw new BadRequestException('Test result with given id already exists in pool')
+      }
+
+      if (testRunPool.testResultIds.length + 1 > testRunPool.numberOfSamples) {
+        throw new BadRequestException(
+          `Number of samples are limited to ${testRunPool.numberOfSamples}`,
+        )
+      }
+
+      await this.testRunsPoolService.addTestResultInPool(testRunPool.id, testResultId)
+
+      res.json(actionSuccess())
     } catch (error) {
       next(error)
     }

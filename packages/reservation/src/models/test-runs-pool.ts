@@ -1,8 +1,9 @@
 export type TestRunsPool = {
   id: string
-  appointmentIds: string[]
+  testResultIds: string[]
   testRunId: string
   well: string
+  numberOfSamples: number
 }
 
 export type TestRunsPoolCreate = Omit<TestRunsPool, 'id'>
