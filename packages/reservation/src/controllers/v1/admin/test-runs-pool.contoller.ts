@@ -39,7 +39,7 @@ class AdminTestRunsPoolController implements IControllerBase {
       this.updateTestRunsPool,
     )
 
-    innerRouter.post(
+    innerRouter.put(
       this.path + '/test-runs-pools/:testRunsPoolId/add-test-result',
       authorizationMiddleware([RequiredUserPermission.LabAdmin]),
       this.addTestResultInPool,

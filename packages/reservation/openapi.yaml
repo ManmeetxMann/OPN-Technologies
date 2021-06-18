@@ -4805,7 +4805,7 @@ paths:
                 $ref: '#/components/schemas/TestRunsPoolResponse'
 
   /reservation/admin/api/v1/test-runs-pools/{testRunsPoolId}/add-test-result:
-    post:
+    put:
       description: Add new Test Result in Pool
       security:
         - bearerAuthJWT: []
@@ -4837,4 +4837,3 @@ paths:
                 $ref: '#/components/schemas/Response'
 
 
-                
