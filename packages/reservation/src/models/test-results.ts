@@ -40,6 +40,7 @@ export type BulkTestResultRequest = {
   templateId: TemplateTypes
   labId: string
   fileName?: string
+  pooledResults?: boolean
 }
 
 type ResultSpecs = {

@@ -689,8 +689,10 @@ export class PCRTestResultsService {
     adminId: string,
   ): Promise<CreateReportForPCRResultsResponse> {
     let reportTrackerId: string
+    const pooledResults = testResultData?.pooledResults ?? false
+
     if (!testResultData.reportTrackerId) {
-      const reportTracker = await this.testResultsReportingTracker.save()
+      const reportTracker = await this.testResultsReportingTracker.save({pooledResults})
       reportTrackerId = reportTracker.id
     } else {
       reportTrackerId = testResultData.reportTrackerId
@@ -715,6 +717,7 @@ export class PCRTestResultsService {
         templateId,
         labId,
         fileName: fileName || null,
+        pooledResults,
       }
       if (result.comment) {
         data.comment = result.comment
