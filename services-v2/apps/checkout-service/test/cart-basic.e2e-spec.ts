@@ -19,6 +19,7 @@ jest.mock('@opn-services/checkout/service/stripe.service')
  * 1. User check
  * 2. Tests cross users and organizations
  */
+// eslint-disable-next-line max-lines-per-function
 describe('Cart basic', () => {
   const url = `/api/v1/cart`
   let app: NestFastifyApplication
