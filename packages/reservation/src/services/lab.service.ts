@@ -24,4 +24,9 @@ export class LabService {
   findOneById(id: string): Promise<Lab> {
     return this.labRepository.get(id)
   }
+
+  async isORMRequestEnabled(labId: string): Promise<boolean> {
+    const lab = await this.findOneById(labId)
+    return Boolean(lab?.sendORMRequest)
+  }
 }
