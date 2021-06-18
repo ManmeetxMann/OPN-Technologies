@@ -5,7 +5,7 @@ inputs:
     required: true
     default: ""
   secret_file_name:
-    description: 'Secret File Nmae'
+    description: 'Secret File Name'
     required: true
     default: ""
   trigger_topic:

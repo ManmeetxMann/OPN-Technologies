@@ -44,15 +44,16 @@ export class PatientTestUtility {
   }
 
   async createPatient(
-    data: {email: string; firstName?: string; status?: UserStatus},
-    options?: {withAuth?: boolean},
+    data: {email: string; firstName?: string; status?: UserStatus; firebaseKey?: string},
+    options?: {withAuth?: boolean; authUserId?: string},
   ): Promise<Patient> {
     const patient = await this.patientRepository.save({
-      firebaseKey:
-        'TestFirebaseKey' +
-        Math.random()
-          .toString(36)
-          .substring(7),
+      firebaseKey: data.firebaseKey
+        ? data.firebaseKey
+        : 'TestFirebaseKey' +
+          Math.random()
+            .toString(36)
+            .substring(7),
       email: data.email,
       firstName: data.firstName ? data.firstName : 'PATIENT_TEST_NAME',
       lastName: 'PATIENT_LNAME',
@@ -63,7 +64,7 @@ export class PatientTestUtility {
     if (options?.withAuth) {
       await this.authRepository.save({
         patientId: patient.idPatient,
-        authUserId: null,
+        authUserId: options.authUserId ? options.authUserId : null,
         email: data.email,
       })
     }
@@ -98,9 +99,11 @@ export class PatientTestUtility {
     )
   }
 
-  async removeProfileByEmail(email: string): Promise<void> {
-    const patients = await this.authRepository.find({email})
-    const removedProfiles = patients.map(patient => this.findAndRemoveProfile(patient.patientId))
+  async removeProfileByAuth(authCriteria: unknown): Promise<void> {
+    const patients = await this.authRepository.find(authCriteria)
+    const removedProfiles = patients.map(patient =>
+      this.findAndRemoveProfile({idPatient: patient.patientId}),
+    )
     await Promise.all(removedProfiles)
 
     const removedPatients = patients.map(patient =>
