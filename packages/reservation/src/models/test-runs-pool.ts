@@ -1,5 +1,6 @@
 export type TestRunsPool = {
   id: string
+  poolBarCode?: string
   testResultIds: string[]
   testRunId: string
   well: string

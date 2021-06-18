@@ -56,14 +56,14 @@ class AdminTestRunsPoolController implements IControllerBase {
         throw new BadRequestException(`Number of samples are limited to ${numberOfSamples}`)
       }
 
-      const testRunPool = await this.testRunsPoolService.create({
+      const {id, poolBarCode} = await this.testRunsPoolService.create({
         testResultIds,
         testRunId,
         well,
         numberOfSamples,
       })
 
-      res.json(actionSuccess({id: testRunPool.id}, 'Test run pool created successfully'))
+      res.json(actionSuccess({id, poolBarCode}, 'Test run pool created successfully'))
     } catch (error) {
       next(error)
     }

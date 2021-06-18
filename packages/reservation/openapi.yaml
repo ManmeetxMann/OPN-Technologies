@@ -1309,6 +1309,8 @@ components:
           type: object
           additionalProperties: false
           properties:
+            poolBarCode:
+              type: string
             testResultIds:
               type: array
               items:
@@ -4688,6 +4690,8 @@ paths:
                     properties:
                       id:
                         type: string
+                      poolBarCode:
+                        type: string
                   status:
                     type: object
                     additionalProperties: false
@@ -4730,6 +4734,8 @@ paths:
                     type: object
                     additionalProperties: false
                     properties:
+                      poolBarCode:
+                        type: string
                       testResultIds:
                         type: array
                         items:
