@@ -5,7 +5,7 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 
 import {App} from '../src/main'
 
-jest.setTimeout(7000)
+jest.setTimeout(10000)
 
 describe('CheckoutInternalController (e2e)', () => {
   const url = `/api/v1/internal/cart`
@@ -42,6 +42,6 @@ describe('CheckoutInternalController (e2e)', () => {
   })
 
   afterAll(async () => {
-    await Promise.all([await app.close()])
+    await Promise.all([app.close()])
   })
 })

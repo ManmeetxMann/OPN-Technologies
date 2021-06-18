@@ -11,6 +11,7 @@ export const createUser = async (
   dataOverwrite: {
     id: string
     organizationIds: string[]
+    email?: string
   },
   testDataCreator: string,
 ): Promise<void> => {
@@ -22,7 +23,7 @@ export const createUser = async (
     dateOfBirth: '2021-01-01',
     base64Photo: '',
     organizationIds: dataOverwrite.organizationIds,
-    email: 'Test@mail.com',
+    email: dataOverwrite.email ?? 'Test@mail.com',
     admin: null,
     authUserId: dataOverwrite.id,
     delegates: [],
@@ -41,6 +42,13 @@ export const createUser = async (
     .collection(collectionName)
     .doc(dataOverwrite.id)
     .set(data)
+}
+
+export const deleteUserByEmailTestDataCreator = async (email: string): Promise<void> => {
+  const userCollection = database.collection(collectionName)
+  const ref = await userCollection.where('email', '==', email).get()
+  const deleteDocs = ref.docs.map(doc => doc.ref.delete())
+  await Promise.all(deleteDocs)
 }
 
 export const deleteUserByIdTestDataCreator = async (
