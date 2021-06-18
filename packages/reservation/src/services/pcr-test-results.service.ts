@@ -99,8 +99,7 @@ import {normalizeAnalysis} from '../utils/analysis.helper'
 import {CouponEnum} from '../models/coupons'
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
 import {FirebaseMessagingService} from '../../../common/src/service/messaging/firebase-messaging-service'
-import {PushNotificationType} from '../types/push-notification.type'
-import admin from 'firebase-admin'
+import {FHPushNotificationMessage} from '../types/push-notification.type'
 import {
   getNotificationBody,
   getNotificationTitle,
@@ -1122,12 +1121,13 @@ export class PCRTestResultsService {
 
     await this.firebaseMessagingService.validatePushToken(registration.pushToken)
 
-    const message: admin.messaging.Message = {
+    const message: FHPushNotificationMessage = {
       data: {
-        resultId: '',
-        notificationType: null as PushNotificationType,
+        notificationType: null
+      },
+      notification: {
         title: getNotificationTitle(result),
-        content: getNotificationBody(result),
+        body: getNotificationBody(result),
       },
       token: registration.pushToken,
     }

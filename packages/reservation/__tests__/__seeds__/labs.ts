@@ -24,12 +24,16 @@ export const create = async (
 }
 
 export const deleteLabsByTestDataCreator = async (testDataCreator: string): Promise<void> => {
-  const appointments_query = database
-    .collection(collectionName)
-    .where('testDataCreator', '==', testDataCreator)
-  await appointments_query.get().then(function (querySnapshot) {
+  const query = database.collection(collectionName).where('testDataCreator', '==', testDataCreator)
+  await query.get().then(function (querySnapshot) {
     querySnapshot.forEach(function (doc) {
       doc.ref.delete()
     })
   })
+}
+
+export const deleteLabsByName = async (labName: string): Promise<void> => {
+  const snapshot = await database.collection(collectionName).where('name', '==', labName).get()
+  const deletePromises = snapshot.docs.map(async (doc) => doc.ref.delete())
+  await Promise.all(deletePromises)
 }

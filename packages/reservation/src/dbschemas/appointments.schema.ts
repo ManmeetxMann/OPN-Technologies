@@ -79,4 +79,5 @@ export default Joi.object({
   city: Joi.string(),
   province: Joi.string(),
   country: Joi.string(),
+  patientId: Joi.string(),
 })
