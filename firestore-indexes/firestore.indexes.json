@@ -979,6 +979,10 @@
           "arrayConfig": "CONTAINS"
         },
         {
+          "fieldPath": "tokenSource",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "timestamps.createdAt",
           "order": "DESCENDING"
         }

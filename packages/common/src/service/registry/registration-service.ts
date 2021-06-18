@@ -1,6 +1,6 @@
 import {LogInfo} from '../../utils/logging-setup'
 import DataStore from '../../data/datastore'
-import {Registration, RegistrationModel} from '../../data/registration'
+import {OpnSources, Registration, RegistrationModel} from '../../data/registration'
 
 export class RegistrationService {
   private repository = new RegistrationModel(new DataStore())
@@ -23,9 +23,10 @@ export class RegistrationService {
     return this.repository.findWhereArrayContainsAny('userIds', userIds)
   }
 
-  async findLastForUserId(userId: string): Promise<Registration> {
+  async findLastForUserId(userId: string, tokenSource: OpnSources[]): Promise<Registration> {
     const [registration] = await this.repository
       .getQueryFindWhereArrayContains('userIds', userId)
+      .where('tokenSource', 'in', tokenSource)
       //@ts-ignore
       .orderBy('timestamps.createdAt', 'desc')
       .limit(1)
@@ -46,9 +47,10 @@ export class RegistrationService {
   }
 
   async upsert(userId: string, registration: Omit<Registration, 'id'>): Promise<Registration> {
-    const {platform, osVersion, pushToken} = registration
-    const registrationFromDb = await this.findLastForUserId(userId)
-    const registrationExists = pushToken && registrationFromDb?.id
+    const {platform, osVersion, pushToken, tokenSource} = registration
+    const registrationFromDb = await this.findLastForUserId(userId, [tokenSource])
+    const registrationExists =
+      pushToken && registrationFromDb?.id && registrationFromDb.tokenSource === tokenSource
 
     LogInfo('upsert', 'UpsertPushToken', {
       registrationExists,
@@ -63,6 +65,7 @@ export class RegistrationService {
         osVersion,
         pushToken: pushToken ?? null,
         userIds: [userId],
+        tokenSource,
       })
     }
   }
