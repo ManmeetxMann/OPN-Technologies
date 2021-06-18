@@ -221,7 +221,6 @@ describe('Cart basic', () => {
       .get(url)
       .set(headers)
 
-    const [, , total] = cartAfter.body.data.paymentSummary
     expect(cartAfter.body.data.paymentSummary.find(({uid}) => uid === 'total').amount).toBe(0)
     expect(cartAfter.body.data.cartItems.length).toBe(0)
     done()
@@ -241,6 +240,6 @@ describe('Cart basic', () => {
   })
 
   afterAll(async () => {
-    await Promise.all([await app.close(), deleteUserByIdTestDataCreator(userId, testDataCreator)])
+    await Promise.all([deleteUserByIdTestDataCreator(userId, testDataCreator), app.close()])
   })
 })

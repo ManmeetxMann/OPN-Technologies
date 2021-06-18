@@ -14,7 +14,7 @@ import {
 
 import {Patient} from '../../src/model/patient/patient.entity'
 import {PatientTestUtility} from '../utils/patient'
-// import {PatientCreateDto, DependantCreateDto} from '../../src/dto/patient'
+import {PatientCreateDto, DependantCreateDto} from '../../src/dto/patient'
 import {BufferTestUtility} from '../utils/buffer'
 
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
@@ -22,9 +22,13 @@ jest.mock('@opn-enterprise-v1/repository/user.repository', () => {
   return {
     UserRepository: jest.fn().mockImplementation(() => {
       return {
-        add: () => ({
-          id: 'RandomFirebaseKeyAdminTest',
+        add: ({firstName}) => ({
+          id: `${firstName}RandomFirebaseKeyAdminTest`,
         }),
+        getQueryFindWhereEqual: () => ({
+          fetch: () => [],
+        }),
+        updateProperties: () => true,
       }
     }),
   }
@@ -41,6 +45,7 @@ const headers = {
   ...commonHeaders,
 }
 
+// eslint-disable-next-line max-lines-per-function
 describe('AdminPatientController (e2e)', () => {
   const url = '/admin/api/v1/patients'
   let app: NestFastifyApplication
@@ -83,8 +88,8 @@ describe('AdminPatientController (e2e)', () => {
     bufferTestUtility = new BufferTestUtility()
 
     await Promise.all([
-      patientTestUtility.removeProfileByEmail(userCreatePayload.email),
-      patientTestUtility.removeProfileByEmail(userMockedMail),
+      patientTestUtility.removeProfileByAuth({email: userCreatePayload.email}),
+      patientTestUtility.removeProfileByAuth({email: userMockedMail}),
     ])
 
     mockedUser = await patientTestUtility.createPatient({email: userMockedMail})
@@ -124,30 +129,30 @@ describe('AdminPatientController (e2e)', () => {
     done()
   })
 
-  // test('should create patient - / (POST)', async done => {
-  //   const payload = patientTestUtility.getProfilePayload(userCreatePayload)
-  //   const response = await request(server)
-  //     .post(url)
-  //     .set(headers)
-  //     .send(payload as PatientCreateDto)
-  //
-  //   createUserId = response.body.data.idPatient
-  //
-  //   expect(response.status).toBe(201)
-  //   done()
-  // })
+  test('should create patient - / (POST)', async done => {
+    const payload = patientTestUtility.getProfilePayload(userCreatePayload)
+    const response = await request(server)
+      .post(url)
+      .set(headers)
+      .send(payload as PatientCreateDto)
 
-  // test('should not allow create patient with same email - / (POST)', async done => {
-  //   const payload = patientTestUtility.getProfilePayload(userCreatePayload)
-  //   const response = await request(server)
-  //     .post(url)
-  //     .set(headers)
-  //     .send(payload as PatientCreateDto)
-  //
-  //   expect(response.body.message).toBe('User with given email already exists')
-  //   expect(response.status).toBe(400)
-  //   done()
-  // })
+    createUserId = response.body.data.idPatient
+
+    expect(response.status).toBe(201)
+    done()
+  })
+
+  test('should not allow create patient with same email - / (POST)', async done => {
+    const payload = patientTestUtility.getProfilePayload(userCreatePayload)
+    const response = await request(server)
+      .post(url)
+      .set(headers)
+      .send(payload as PatientCreateDto)
+
+    expect(response.body.message).toBe('User with given email already exists')
+    expect(response.status).toBe(400)
+    done()
+  })
 
   test('should get all patients - / (GET)', async done => {
     const response = await request(server)
@@ -159,115 +164,115 @@ describe('AdminPatientController (e2e)', () => {
     done()
   })
 
-  // test('should get single patient - /:patientId (GET)', async done => {
-  //   const response = await request(server)
-  //     .get(`${url}/${mockedUser.idPatient}`)
-  //     .set(headers)
-  //     .send()
-  //
-  //   expect(response.status).toBe(200)
-  //   done()
-  // })
-  //
-  // test('should update patient - /:patientId (PUT)', async done => {
-  //   const response = await request(server)
-  //     .put(`${url}/${createUserId}`)
-  //     .set(headers)
-  //     .send({
-  //       firstName: 'updatedName',
-  //     })
-  //
-  //   const revertResponse = await request(server)
-  //     .put(`${url}/${createUserId}`)
-  //     .set(headers)
-  //     .send({
-  //       firstName: userCreatePayload.firstName,
-  //     })
-  //
-  //   expect(response.status).toBe(200)
-  //   expect(revertResponse.status).toBe(200)
-  //   done()
-  // })
-  //
-  // test('should update patient - /:patientId (PUT)', async done => {
-  //   const response = await request(server)
-  //     .put(`${url}/${createUserId}`)
-  //     .set(headers)
-  //     .send({
-  //       firstName: 'updatedName',
-  //     })
-  //
-  //   const revertResponse = await request(server)
-  //     .put(`${url}/${createUserId}`)
-  //     .set(headers)
-  //     .send({
-  //       firstName: userCreatePayload.firstName,
-  //     })
-  //
-  //   expect(response.status).toBe(200)
-  //   expect(revertResponse.status).toBe(200)
-  //   done()
-  // })
-  //
-  // test('should add dependants - / (POST)', async done => {
-  //   const dependantPayload = patientTestUtility.getProfilePayload(dependantCreatePayload)
-  //   const response = await request(server)
-  //     .post(`${url}/${mockedUser.idPatient}/dependants`)
-  //     .set(headers)
-  //     .send(dependantPayload as DependantCreateDto)
-  //
-  //   expect(response.status).toBe(201)
-  //   expect(response.body.data.firstName).toBe(dependantCreatePayload.firstName)
-  //   expect(response.body.data.lastName).toBe(dependantCreatePayload.lastName)
-  //   done()
-  // })
-  //
-  // test('should update PubSub - / (POST)', async done => {
-  //   const pubsubPayload = {
-  //     message: {
-  //       attributes: {},
-  //       data: bufferTestUtility.toBase64Json(bufferTestUtility.getAppointmentData(createUserId)),
-  //     },
-  //   }
-  //   const response = await request(server)
-  //     .post(`/api/v1/internal/patients/pubsub/update`)
-  //     .set(headers)
-  //     .send(pubsubPayload)
-  //
-  //   expect(response.status).toBe(201)
-  //   done()
-  // })
-  //
-  // test('should update PubSub with appointmentData - / (POST)', async done => {
-  //   const pubsubPayload = {
-  //     message: {
-  //       attributes: {},
-  //       data: bufferTestUtility.toBase64Json({
-  //         appointment: bufferTestUtility.getAppointmentData(createUserId),
-  //       }),
-  //     },
-  //   }
-  //   const response = await request(server)
-  //     .post(`/api/v1/internal/patients/pubsub/update`)
-  //     .set(headers)
-  //     .send(pubsubPayload)
-  //
-  //   expect(response.status).toBe(201)
-  //   done()
-  // })
-  //
-  // test('should get dependants - /:patientId (GET)', async done => {
-  //   const response = await request(server)
-  //     .get(`${url}/${mockedUser.idPatient}/dependants`)
-  //     .set(headers)
-  //     .send()
-  //
-  //   expect(response.status).toBe(200)
-  //   expect(response.body.data.length).toBe(1)
-  //   expect(response.body.data[0].firstName).toBe(dependantCreatePayload.firstName)
-  //   expect(response.body.data[0].lastName).toBe(dependantCreatePayload.lastName)
-  //   done()
-  // })
+  test('should get single patient - /:patientId (GET)', async done => {
+    const response = await request(server)
+      .get(`${url}/${mockedUser.idPatient}`)
+      .set(headers)
+      .send()
+
+    expect(response.status).toBe(200)
+    done()
+  })
+
+  test('should update patient - /:patientId (PUT)', async done => {
+    const response = await request(server)
+      .put(`${url}/${createUserId}`)
+      .set(headers)
+      .send({
+        firstName: 'updatedName',
+      })
+
+    const revertResponse = await request(server)
+      .put(`${url}/${createUserId}`)
+      .set(headers)
+      .send({
+        firstName: userCreatePayload.firstName,
+      })
+
+    expect(response.status).toBe(200)
+    expect(revertResponse.status).toBe(200)
+    done()
+  })
+
+  test('should update patient - /:patientId (PUT)', async done => {
+    const response = await request(server)
+      .put(`${url}/${createUserId}`)
+      .set(headers)
+      .send({
+        firstName: 'updatedName',
+      })
+
+    const revertResponse = await request(server)
+      .put(`${url}/${createUserId}`)
+      .set(headers)
+      .send({
+        firstName: userCreatePayload.firstName,
+      })
+
+    expect(response.status).toBe(200)
+    expect(revertResponse.status).toBe(200)
+    done()
+  })
+
+  test('should add dependants - / (POST)', async done => {
+    const dependantPayload = patientTestUtility.getProfilePayload(dependantCreatePayload)
+    const response = await request(server)
+      .post(`${url}/${mockedUser.idPatient}/dependants`)
+      .set(headers)
+      .send(dependantPayload as DependantCreateDto)
+
+    expect(response.status).toBe(201)
+    expect(response.body.data.firstName).toBe(dependantCreatePayload.firstName)
+    expect(response.body.data.lastName).toBe(dependantCreatePayload.lastName)
+    done()
+  })
+
+  test('should update PubSub - / (POST)', async done => {
+    const pubsubPayload = {
+      message: {
+        attributes: {},
+        data: bufferTestUtility.toBase64Json(bufferTestUtility.getAppointmentData(createUserId)),
+      },
+    }
+    const response = await request(server)
+      .post(`/api/v1/internal/patients/pubsub/update`)
+      .set(headers)
+      .send(pubsubPayload)
+
+    expect(response.status).toBe(201)
+    done()
+  })
+
+  test('should update PubSub with appointmentData - / (POST)', async done => {
+    const pubsubPayload = {
+      message: {
+        attributes: {},
+        data: bufferTestUtility.toBase64Json({
+          appointment: bufferTestUtility.getAppointmentData(createUserId),
+        }),
+      },
+    }
+    const response = await request(server)
+      .post(`/api/v1/internal/patients/pubsub/update`)
+      .set(headers)
+      .send(pubsubPayload)
+
+    expect(response.status).toBe(201)
+    done()
+  })
+
+  test('should get dependants - /:patientId (GET)', async done => {
+    const response = await request(server)
+      .get(`${url}/${mockedUser.idPatient}/dependants`)
+      .set(headers)
+      .send()
+
+    expect(response.status).toBe(200)
+    expect(response.body.data.length).toBe(1)
+    expect(response.body.data[0].firstName).toBe(dependantCreatePayload.firstName)
+    expect(response.body.data[0].lastName).toBe(dependantCreatePayload.lastName)
+    done()
+  })
 
   afterAll(async () => {
     await Promise.all([
@@ -276,8 +281,8 @@ describe('AdminPatientController (e2e)', () => {
       deleteUserByEmail(userMockedMail),
       patientTestUtility.findAndRemoveProfile({firstName: userCreatePayload.firstName}),
       patientTestUtility.findAndRemoveProfile({idPatient: mockedUser.idPatient}),
-      // patientTestUtility.findAndRemoveProfile({firstName: userCreatePayload.firstName}),
-      // patientTestUtility.findAndRemoveProfileveProfile({firstName: dependantCreatePayload.firstName}),
+      patientTestUtility.findAndRemoveProfile({firstName: userCreatePayload.firstName}),
+      patientTestUtility.findAndRemoveProfile({firstName: dependantCreatePayload.firstName}),
     ])
     await Promise.all([
       patientTestUtility.patientRepository.delete({firstName: userCreatePayload.firstName}),

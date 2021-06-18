@@ -117,6 +117,6 @@ describe('Cart coupons', () => {
   })
 
   afterAll(async () => {
-    await Promise.all([await app.close(), deleteUserByIdTestDataCreator(userId, testDataCreator)])
+    await Promise.all([deleteUserByIdTestDataCreator(userId, testDataCreator), app.close()])
   })
 })

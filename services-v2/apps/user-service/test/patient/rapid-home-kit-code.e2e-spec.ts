@@ -17,6 +17,7 @@ import {
 } from '@opn-services/test/utils/rapid-home-code'
 import {createKit} from '@opn-services/test/utils/home-kit-code'
 import {TestResultCreateDto} from '@opn-services/user/dto/test-result'
+import {PatientTestUtility} from '../utils/patient'
 
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
 jest.mock('@opn-services/common/services/google/captcha.service')
@@ -30,11 +31,14 @@ const rapidHomeKitCode = 'TEST_HOME_KIT_CODE'
 const rapidHome2CodeId = 'TEST_RAPID_HOME_CODE2'
 const rapidHome2KitCode = 'TEST_HOME_KIT_CODE2'
 const kitCode = 'ZZZZZZ'
+const currentUserName = 'HomeKitPublicPatientTest'
 
+// eslint-disable-next-line max-lines-per-function
 describe('RapidHomeKitCodeController (e2e)', () => {
   const url = '/api/v1'
   let app: NestFastifyApplication
   let server: HttpService
+  let patientTestUtility: PatientTestUtility
 
   const userId = 'PATIENT_RAPID_HOME_KIT'
   const userEmail = 'patientRapidHome@gmail.com'
@@ -45,8 +49,8 @@ describe('RapidHomeKitCodeController (e2e)', () => {
   }
 
   const pcrTestResultCreatePayload = {
-    firstName: 'PATIENT_E2E',
-    lastName: 'PATIENT_E2E',
+    firstName: 'RAPID_HOME_KIT_PATIENT_E2E',
+    lastName: 'RAPID_HOME_KIT_PATIENT_E2E',
     reportAs: 'Individual',
     kitCode,
   }
@@ -92,6 +96,15 @@ describe('RapidHomeKitCodeController (e2e)', () => {
     app = testAppModule.createNestApplication(new FastifyAdapter())
 
     server = app.getHttpServer()
+
+    patientTestUtility = new PatientTestUtility()
+
+    await patientTestUtility.createPatient({
+      firstName: currentUserName,
+      email: userEmail,
+      firebaseKey: userId,
+    })
+
     await new Promise(resolve => app.listen(81, resolve))
   })
 
@@ -161,7 +174,6 @@ describe('RapidHomeKitCodeController (e2e)', () => {
       .set(commonHeaders)
       .send(payload as TestResultCreateDto)
 
-    console.log('pcrResponse', pcrResponse.body)
     expect(pcrResponse.status).toBe(201)
     const pcrId = pcrResponse.body.data.id
 
@@ -173,8 +185,8 @@ describe('RapidHomeKitCodeController (e2e)', () => {
         id: pcrId,
         email: userEmail,
       })
-    expect(typeof response.body.data.couponCode).toBe('string')
     expect(response.status).toBe(201)
+    expect(typeof response.body.data.couponCode).toBe('string')
     done()
   })
 
@@ -182,7 +194,13 @@ describe('RapidHomeKitCodeController (e2e)', () => {
     await Promise.all([
       deleteUserByIdTestDataCreator(userId, testDataCreator),
       deleteRapidCodeByIdTestDataCreator(rapidHomeCodeId, testDataCreator),
+      patientTestUtility.findAndRemoveProfile({firstName: currentUserName}),
+      patientTestUtility.findAndRemoveProfile({firstName: pcrTestResultCreatePayload.firstName}),
     ])
+    await patientTestUtility.patientRepository.delete({firstName: currentUserName})
+    await patientTestUtility.patientRepository.delete({
+      firstName: pcrTestResultCreatePayload.firstName,
+    })
     await app.close()
   })
 })

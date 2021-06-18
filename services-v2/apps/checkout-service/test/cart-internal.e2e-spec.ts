@@ -42,6 +42,6 @@ describe('CheckoutInternalController (e2e)', () => {
   })
 
   afterAll(async () => {
-    await Promise.all([await app.close()])
+    await Promise.all([app.close()])
   })
 })
