@@ -25,12 +25,15 @@ class PubsubController implements IControllerBase {
     const root = '/reservation/api/v1/pubsub'
     const route = innerRouter().use(
       '/',
-      innerRouter().post('/test-result', this.pcrTestResult).post('/test-result/test', this.test),
+      innerRouter()
+        .post('/pubsub/test-result/notify-by-email', this.notifyByEmail)
+        .post('/pubsub/test-result/notify-by-push-notification', this.notifyByPushNotification)
+        .post('/test-result/test', this.test),
     )
     this.router.use(root, route)
   }
 
-  pcrTestResult: Handler = async (req, res, next): Promise<void> => {
+  notifyByEmail: Handler = async (req, res, next): Promise<void> => {
     try {
       const data = (await OPNPubSub.getPublishedData(
         req.body.message.data,
@@ -54,6 +57,25 @@ class PubsubController implements IControllerBase {
           errorMessage: error.toString(),
         })
       }
+
+      res.sendStatus(200)
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  notifyByPushNotification: Handler = async (req, res, next): Promise<void> => {
+    try {
+      const data = (await OPNPubSub.getPublishedData(
+        req.body.message.data,
+      )) as PCRTestResultSubmitted
+
+      const testResult = await this.pcrTestResultsService.getPCRResultsById(data.id as string)
+
+      const [appointment, lab] = await Promise.all([
+        this.appoinmentService.getAppointmentDBById(testResult.appointmentId),
+        this.labService.findOneById(testResult.labId),
+      ])
 
       try {
         await this.pcrTestResultsService.sendPushNotification(
