@@ -16,6 +16,7 @@ import {
   dateToDateTime,
   formatDateRFC822Local,
   formatStringDateRFC822Local,
+  getDateFromDatetime,
   getFirestoreTimeStampDate,
   makeDeadlineForFilter,
 } from '../utils/datetime.helper'
@@ -240,7 +241,7 @@ export class PCRTestResultsService {
       recollected,
       resultMetaData:{
         notify: true,
-        resultDate: new Date(),
+        resultDate: getDateFromDatetime(new Date()),
         action: action,
         autoResult: finalResult
       }
