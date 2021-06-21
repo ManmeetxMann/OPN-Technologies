@@ -12,13 +12,14 @@ export const createUser = async (
     id: string
     organizationIds: string[]
     email?: string
+    firstName?: string
   },
   testDataCreator: string,
 ): Promise<void> => {
   const data = {
     id: dataOverwrite.id,
     registrationId: null,
-    firstName: 'Test',
+    firstName: dataOverwrite.firstName ?? 'Test',
     lastName: 'Test',
     dateOfBirth: '2021-01-01',
     base64Photo: '',

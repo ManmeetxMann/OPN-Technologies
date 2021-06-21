@@ -34,7 +34,7 @@ describe('AdminPatientController roles test with mocked AuthGlobalGuard: Patient
             authUser: {
               authUserId: 'AuthUserId',
               admin: {
-                isLabUser: true,
+                isLabUser: false,
                 isTestKitBatchAdmin: true,
                 isPatientsAdmin: true,
               },
