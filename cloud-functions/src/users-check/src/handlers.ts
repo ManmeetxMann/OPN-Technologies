@@ -17,11 +17,12 @@ class UserHandler {
   static limit = 10
 
   static async checkUserSyncCoverage() {
+    functions.logger.log('Running check users sync to patient')
+
     let hasMore = true
     let offset = 0
 
     const userRepository = await UserHandler.getRepositories()
-
     while (hasMore) {
       const patients = await UserHandler.getPatients(offset, userRepository)
       if (patients.length) {
@@ -29,13 +30,13 @@ class UserHandler {
         const firebaseUsers = await UserHandler.getFirebaseUsersByIds(patientIds)
         if (!firebaseUsers.docs.length) {
           patientIds.forEach((patientId) => {
-            functions.logger.log(`patient with this ${patientId} id doesn't exists in firebase`)
+            functions.logger.error(`patient with this ${patientId} id doesn't exists in firebase`)
           })
         } else {
           const firebaseUsersIds = firebaseUsers.docs.map((user) => user.id)
           patients.forEach((patient) => {
             if (!firebaseUsersIds.includes(patient.firebaseKey)) {
-              functions.logger.log(
+              functions.logger.error(
                 `patient with this ${patient.idPatient} idPatient doesn't exists in firebase`,
               )
             }
@@ -45,9 +46,13 @@ class UserHandler {
       offset += patients?.length
       hasMore = !!patients.length
     }
+
+    functions.logger.log(`Checked ${offset} users`)
   }
 
   static async checkPatientSyncCoverage() {
+    functions.logger.log('Running check patients sync to user')
+
     let offset = 0
     let hasMore = true
     const userRepository = await UserHandler.getRepositories()
@@ -63,13 +68,13 @@ class UserHandler {
 
         if (!patients.length) {
           firebaseUserIds.forEach((firebaseUserId) => {
-            functions.logger.log(`user with this ${firebaseUserId} id doesn't exists in mysql`)
+            functions.logger.error(`user with this ${firebaseUserId} id doesn't exists in mysql`)
           })
         } else {
           const patientFirebaseKeys = patients.map((patient) => patient.firebaseKey)
           firebaseUsers.docs.forEach((user) => {
             if (!patientFirebaseKeys.includes(user.id)) {
-              functions.logger.log(`user with this ${user.id} id doesn't exists in mysql`)
+              functions.logger.error(`user with this ${user.id} id doesn't exists in mysql`)
             }
           })
         }
@@ -77,6 +82,8 @@ class UserHandler {
       offset += firebaseUsers?.docs?.length
       hasMore = !firebaseUsers.empty
     }
+
+    functions.logger.log(`Checked ${offset} patients`)
   }
 
   /**
