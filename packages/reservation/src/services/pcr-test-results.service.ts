@@ -2197,4 +2197,8 @@ export class PCRTestResultsService {
       (result) => result.autoResult !== this.getAutoResult(result.resultAnalysis),
     )
   }
+
+  getTestResultsByIds(ids: string[]): Promise<PCRTestResultDBModel[]> {
+    return this.pcrTestResultsRepository.findWhereIdIn(ids)
+  }
 }

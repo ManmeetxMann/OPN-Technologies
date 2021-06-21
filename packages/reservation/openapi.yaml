@@ -1302,6 +1302,42 @@ components:
             message:
               nullable: true
               type: string
+    TestRunsPoolResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            poolBarCode:
+              type: string
+            testResultIds:
+              type: array
+              items:
+                type: string
+            testRunId:
+              type: string
+            well:
+              type: string
+            numberOfSamples:
+              type: number
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
 
 paths:
   /admin/api/v1/send-fax-for-positive:
@@ -4609,4 +4645,195 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DriverResponse'
+
+  /reservation/admin/api/v1/test-runs-pools:
+    post:
+      description: Create new Test Runs Pool
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Test Runs Pools
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                testResultIds:
+                  type: array
+                  items:
+                    type: string
+                testRunId:
+                  type: string
+                well:
+                  type: string
+                numberOfSamples:
+                  type: number
+              required:
+                - testResultIds
+                - testRunId
+                - well
+                - numberOfSamples
+      responses:
+        '200':
+          description: Succesfully create test runs pool
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: string
+                      poolBarCode:
+                        type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+  /reservation/admin/api/v1/test-runs-pools/{testRunsPoolId}:
+    get:
+      description: 'Get test runs pool by id'
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Test Runs Pools
+      parameters:
+      - in: path
+        name: testRunsPoolId
+        schema:
+          type: string
+        required: true
+      responses:
+        '200':
+          description: Succesfully fetched test runs pool
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      poolBarCode:
+                        type: string
+                      testResultIds:
+                        type: array
+                        items:
+                          type: string
+                      testRunId:
+                        type: string
+                      well:
+                        type: string
+                      numberOfSamples:
+                        type: number
+                      testResults:
+                        type: array
+                        items:
+                          type: object
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+    put:
+      description: 'Update test runs pool'
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Test Runs Pools
+      parameters:
+      - in: path
+        name: testRunsPoolId
+        schema:
+          type: string
+        required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                testResultIds:
+                  type: array
+                  items:
+                    type: string
+                testRunId:
+                  type: string
+                well:
+                  type: string
+                numberOfSamples:
+                  type: number
+      responses:
+        '200':
+          description: Succesfully updated test runs pool
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestRunsPoolResponse'
+
+  /reservation/admin/api/v1/test-runs-pools/{testRunsPoolId}/add-test-result:
+    put:
+      description: Add new Test Result in Pool
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Test Runs Pools
+      parameters:
+      - in: path
+        name: testRunsPoolId
+        schema:
+          type: string
+        required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                testResultId:
+                  type: string
+              required:
+                - testResultId
+      responses:
+        '200':
+          description: Succesfully added test result in pool
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
 

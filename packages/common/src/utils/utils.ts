@@ -8,7 +8,8 @@ export const encodeQueryParams = (params: Record<string, unknown>): string =>
     )
     .join('&')
 
-const emailRegex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+const emailRegex =
+  /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
 export const isEmail = (email: string): boolean => {
   return emailRegex.test(email)
@@ -30,4 +31,10 @@ export const makeSpaceOnTitleCase = (str: string): string => {
 export const cleanStringField = (str: string | null): string => {
   if (!str) return str
   return str.trim()
+}
+
+export const cleanUndefinedKeys = (obj: unknown): unknown => {
+  const clone = JSON.parse(JSON.stringify(obj))
+  Object.keys(obj).forEach((key) => obj[key] === undefined && delete obj[key])
+  return clone
 }
