@@ -23,7 +23,7 @@ import AdminRapidAntigenTestTesultsController from './controllers/v1/admin/rapid
 import AdminAppointmentAvailabilityController from './controllers/v1/admin/appointment-availability.controller'
 import PulseOxygenController from './controllers/v1/pulse-oxygen.controller'
 import AdminDriverController from './controllers/v1/admin/driver.controller'
-
+import AdminTestRunsPoolController from './controllers/v1/admin/test-runs-pool.contoller'
 import InternalRapidAntigenResultEmailSendController from './controllers/v1/internal/rapid-antigen-send-result-email.controller'
 import AdminClinicController from './controllers/v1/admin/clinic.controller'
 import AdminTestKitBatchController from './controllers/v1/admin/test-kit-batch.controller'
@@ -69,6 +69,7 @@ export const app = new App({
     new InternalConfirmatoryResultReceivedController(),
     new PubsubController(),
     new AdminDriverController(),
+    new AdminTestRunsPoolController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })

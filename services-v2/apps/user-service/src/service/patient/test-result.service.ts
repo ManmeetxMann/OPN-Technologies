@@ -13,7 +13,7 @@ import {pcrTestResultSchema} from '@opn-services/common/schemas'
 import {TestTypes} from '@opn-reservation-v1/models/appointment'
 import {TestTypes as TestResultTestTypes} from '@opn-services/user/dto/test-result'
 import {BadRequestException} from '@opn-services/common/exception'
-import {firestore} from 'firebase-admin'
+import {firestore} from '@opn-common-v1/utils/firebase'
 
 @Injectable()
 export class TestResultService {
@@ -38,12 +38,11 @@ export class TestResultService {
 
   async createPCRResults(data: TestResultCreateDto, userId: string): Promise<TestResultCreateDto> {
     const pcrTestResultTypesValidator = new JoiValidator(pcrTestResultSchema)
-    const isRunByJest = process.env.JEST_WORKER_ID
     const pcrTestResultTypes = await pcrTestResultTypesValidator.validate({
       testType: TestTypes.RapidAntigenAtHome,
       userId,
       displayInResult: true,
-      dateTime: isRunByJest ? new Date() : firestore.Timestamp.fromDate(new Date()),
+      dateTime: firestore.Timestamp.fromDate(new Date()),
       ...data,
     })
 

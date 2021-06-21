@@ -16,6 +16,7 @@ import {
   dateToDateTime,
   formatDateRFC822Local,
   formatStringDateRFC822Local,
+  getDateFromDatetime,
   getFirestoreTimeStampDate,
   makeDeadlineForFilter,
 } from '../utils/datetime.helper'
@@ -124,6 +125,7 @@ export class PCRTestResultsService {
     ResultTypes.Positive,
     ResultTypes.PresumptivePositive,
     ResultTypes.Indeterminate,
+    ResultTypes.Inconclusive,
   ]
   private testRunsService = new TestRunsService()
   private attestationService = new AttestationService()
@@ -197,21 +199,32 @@ export class PCRTestResultsService {
     let finalResult: ResultTypes = ResultTypes.Indeterminate
     let notificationType = EmailNotficationTypes.Indeterminate
     let recollected = false
+    let action = PCRResultActions.RecollectAsInconclusive
     switch (data.action) {
       case PCRResultActionsForConfirmation.MarkAsNegative: {
         finalResult = ResultTypes.Negative
         notificationType = EmailNotficationTypes.MarkAsConfirmedNegative
+        action = PCRResultActions.MarkAsNegative
         break
       }
       case PCRResultActionsForConfirmation.MarkAsPositive: {
         finalResult = ResultTypes.Positive
         notificationType = EmailNotficationTypes.MarkAsConfirmedPositive
+        action = PCRResultActions.MarkAsPositive
         break
       }
       case PCRResultActionsForConfirmation.Indeterminate: {
         finalResult = ResultTypes.Inconclusive
         notificationType = EmailNotficationTypes.Indeterminate
         recollected = true
+        action = PCRResultActions.RecollectAsInconclusive
+        break
+      }
+      case PCRResultActionsForConfirmation.MarkAsInvalid: {
+        finalResult = ResultTypes.Invalid
+        notificationType = EmailNotficationTypes.Indeterminate
+        recollected = true
+        action = PCRResultActions.RecollectAsInvalid
         break
       }
     }
@@ -226,6 +239,12 @@ export class PCRTestResultsService {
       previousResult: latestPCRResult.result,
       labId: labId,
       recollected,
+      resultMetaData:{
+        notify: true,
+        resultDate: getDateFromDatetime(new Date()),
+        action: action,
+        autoResult: finalResult
+      }
     })
 
     const lab = await this.labService.findOneById(labId)
@@ -2181,5 +2200,9 @@ export class PCRTestResultsService {
     return !data.results.some(
       (result) => result.autoResult !== this.getAutoResult(result.resultAnalysis),
     )
+  }
+
+  getTestResultsByIds(ids: string[]): Promise<PCRTestResultDBModel[]> {
+    return this.pcrTestResultsRepository.findWhereIdIn(ids)
   }
 }
