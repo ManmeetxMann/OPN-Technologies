@@ -62,6 +62,7 @@ export enum PCRResultActionsForConfirmation {
   Indeterminate = 'Indeterminate',
   MarkAsPositive = 'MarkAsPositive',
   MarkAsNegative = 'MarkAsNegative',
+  MarkAsInvalid = 'MarkAsInvalid'
 }
 
 export enum PCRResultActionsAllowedResend {
