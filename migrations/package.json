@@ -38,7 +38,8 @@
 				"migration:remove-questionnaireId-organization": "ts-node ./remove-questionnaireId-organization",
 				"migration:add-enablePaymentForBooking-field-to-all-organizations": "ts-node ./add-enablePaymentForBooking-field-to-all-organizations",
 				"migration:add-content-result-details": "ts-node ./add-result-details-content",
-				"migration:remove-duplicate-users": "ts-node ./remove-duplicate-users"
+				"migration:remove-duplicate-users": "ts-node ./remove-duplicate-users",
+				"migration:acuity-to-opn-users": "ts-node ./acuity-to-opn-users"
 		},
 		"author": "",
 		"license": "Appropriate",

@@ -1,9 +1,8 @@
-import admin from 'firebase-admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 import {AppointmentStatus} from '../models/appointment'
 import {PCRTestResultEmailDTO} from '../models/pcr-test-results'
-import {PushNotificationType} from '../types/push-notification.type'
+import {FHPushNotificationMessage, PushNotificationType} from '../types/push-notification.type'
 
 export const getNotificationBody = (testResult: PCRTestResultEmailDTO): string => {
   switch (testResult.appointmentStatus) {
@@ -65,34 +64,34 @@ export const getNotificationTitle = (testResult: PCRTestResultEmailDTO): string 
 
 export const getPushNotificationType = (
   result: PCRTestResultEmailDTO,
-  message: admin.messaging.Message,
-): admin.messaging.Message => {
+  message: FHPushNotificationMessage,
+): FHPushNotificationMessage => {
   switch (result.appointmentStatus) {
     case AppointmentStatus.Canceled:
-      message.data.notificationType = PushNotificationType.LISTING
+      message.data.notificationType = PushNotificationType.RESULT
       break
 
     case AppointmentStatus.Pending:
-      message.data.notificationType = PushNotificationType.LISTING
+      message.data.notificationType = PushNotificationType.RESULT
       break
 
     case AppointmentStatus.InProgress:
-      message.data.notificationType = PushNotificationType.VIEW
+      message.data.notificationType = PushNotificationType.RESULT
       message.data.resultId = result.id
       break
 
     case AppointmentStatus.Reported:
-      message.data.notificationType = PushNotificationType.VIEW
+      message.data.notificationType = PushNotificationType.RESULT
       message.data.resultId = result.id
       break
 
     case AppointmentStatus.ReCollectRequired:
-      message.data.notificationType = PushNotificationType.VIEW
+      message.data.notificationType = PushNotificationType.RESULT
       message.data.resultId = result.id
       break
 
-    case AppointmentStatus.ReCollectRequired:
-      message.data.notificationType = PushNotificationType.VIEW
+    case AppointmentStatus.ReRunRequired:
+      message.data.notificationType = PushNotificationType.RESULT
       message.data.resultId = result.id
       break
 

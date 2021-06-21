@@ -31,3 +31,9 @@ export const cleanStringField = (str: string | null): string => {
   if (!str) return str
   return str.trim()
 }
+
+export const cleanUndefinedKeys = (obj: unknown): unknown => {
+  const clone = JSON.parse(JSON.stringify(obj))
+  Object.keys(obj).forEach((key) => obj[key] === undefined && delete obj[key])
+  return clone
+}

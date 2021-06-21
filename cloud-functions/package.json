@@ -8,7 +8,13 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test:user-sync": "jest ./src/users-sync --config jest.json "
+    "test:user-sync": "jest ./src/users-sync --config jest.json ",
+    "test:user-check": "jest ./src/users-check --config jest.json ",
+    "install:users-check": "cd src/users-check && npm install",
+    "install:users-sync": "cd src/users-sync && npm install",
+    "install:hl7-egress": "cd src/hl7-egress && npm install",
+    "install:sms-notification": "cd src/sms-notification && npm install",
+    "install:all": "npm install && npm run install:users-sync && npm run install:users-check && npm run install:hl7-egress && npm run install:sms-notification"
   },
   "devDependencies": {
     "@google-cloud/functions-framework": "^1.7.1",

@@ -13,7 +13,8 @@ import {
   getTestResultPayload,
 } from '@opn-services/test/utils'
 import {TestResultCreateDto} from '@opn-services/user/dto/test-result'
-import {createKit, deleteHomeKitByIdTestDataCreator} from '@opn-services/test/utils/home-kit-code'
+import {deleteHomeKitByIdTestDataCreator} from '@opn-services/test/utils/home-kit-code'
+import {createRapidTestKitCode} from '@opn-services/test/utils/rapid-home-code'
 
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
 jest.setTimeout(10000)
@@ -50,7 +51,7 @@ describe('TestResultController (e2e)', () => {
       testDataCreator,
     )
 
-    await createKit(
+    await createRapidTestKitCode(
       {
         id: kitCode,
         code: kitCode,

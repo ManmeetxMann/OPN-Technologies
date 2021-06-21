@@ -27,7 +27,7 @@ export type TestResultRequestData = TestResultSpecsForSending & {
 
 export type TestResultsMetaData = {
   notify: boolean
-  resultDate: Date
+  resultDate: Date | string
   action: PCRResultActions
   autoResult: ResultTypes
   comment?: string

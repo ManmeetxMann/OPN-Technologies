@@ -19,6 +19,7 @@ jest.mock('@opn-services/checkout/service/stripe.service')
  * 1. User check
  * 2. Tests cross users and organizations
  */
+// eslint-disable-next-line max-lines-per-function
 describe('Cart basic', () => {
   const url = `/api/v1/cart`
   let app: NestFastifyApplication
@@ -61,6 +62,21 @@ describe('Cart basic', () => {
     expect(result.status).toBe(200)
     expect(Array.isArray(result.body.data.cartItems)).toBe(true)
     expect(Array.isArray(result.body.data.paymentSummary)).toBe(true)
+    done()
+  })
+
+  test('add to cart wrong payload', async done => {
+    const result = await request(server)
+      .post(url)
+      .set({
+        ...headers,
+        'Content-Type': 'application/json',
+      })
+      .send({items: [{}]})
+
+    expect(result.body.code).toBe('failed')
+    expect(result.status).toBe(400)
+
     done()
   })
 
@@ -109,6 +125,73 @@ describe('Cart basic', () => {
     done()
   })
 
+  test('add, read and get one item on the cart', async done => {
+    const result = await request(server)
+      .post(url)
+      .set({
+        ...headers,
+        'Content-Type': 'application/json',
+      })
+      .send({items: [cartItem]})
+
+    const listCart = await request(server)
+      .get(url)
+      .set(headers)
+
+    expect(result.status).toBe(201)
+    expect(listCart.status).toBe(200)
+
+    const oneCartItem = listCart.body.data.cartItems[0]
+
+    const getOneResult = await request(server)
+      .get(`${url}/${oneCartItem.cartItemId}`)
+      .set(headers)
+
+    expect(getOneResult.status).toBe(200)
+    expect(
+      `${getOneResult.body.data.patient.firstName} ${getOneResult.body.data.patient.lastName}`,
+    ).toBe(oneCartItem.patientName)
+    done()
+  })
+
+  test('update cart item', async done => {
+    const listCart = await request(server)
+      .get(url)
+      .set(headers)
+
+    expect(listCart.status).toBe(200)
+
+    const oneCartItem = listCart.body.data.cartItems[0]
+
+    const getOneResult = await request(server)
+      .get(`${url}/${oneCartItem.cartItemId}`)
+      .set(headers)
+
+    expect(getOneResult.status).toBe(200)
+
+    const updateItem = await request(server)
+      .put(`${url}`)
+      .set({
+        ...headers,
+        'Content-Type': 'application/json',
+      })
+      .send({
+        ...getOneResult.body,
+        slotId: cartItem.slotId,
+        cartItemId: oneCartItem.cartItemId,
+        firstName: 'UPDATEDFIRSTNAME',
+      })
+    expect(updateItem.status).toBe(200)
+
+    const updatedOneResult = await request(server)
+      .get(`${url}/${oneCartItem.cartItemId}`)
+      .set(headers)
+
+    expect(updatedOneResult.status).toBe(200)
+    expect(updatedOneResult.body.data.patient.firstName).toBe('UPDATEDFIRSTNAME')
+    done()
+  })
+
   test('add few card items and remove all', async done => {
     // should have added item
     await request(server)
@@ -139,8 +222,7 @@ describe('Cart basic', () => {
       .get(url)
       .set(headers)
 
-    const [, , total] = cartAfter.body.data.paymentSummary
-    expect(total.amount).toBe(0)
+    expect(cartAfter.body.data.paymentSummary.find(({uid}) => uid === 'total').amount).toBe(0)
     expect(cartAfter.body.data.cartItems.length).toBe(0)
     done()
   })
@@ -159,6 +241,6 @@ describe('Cart basic', () => {
   })
 
   afterAll(async () => {
-    await Promise.all([await app.close(), deleteUserByIdTestDataCreator(userId, testDataCreator)])
+    await Promise.all([deleteUserByIdTestDataCreator(userId, testDataCreator), app.close()])
   })
 })

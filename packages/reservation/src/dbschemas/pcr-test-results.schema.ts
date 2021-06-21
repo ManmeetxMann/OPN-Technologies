@@ -67,4 +67,10 @@ export default Joi.object({
     'ReCollectRequired',
     'Canceled',
   ),
+  resultMetaData: Joi.object({
+    action: Joi.string().required(),
+    autoResult: Joi.string().required(),
+    resultDate: Joi.string().required(),
+    notify: Joi.boolean().required(),
+  }),
 })

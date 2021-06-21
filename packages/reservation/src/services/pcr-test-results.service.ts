@@ -16,6 +16,7 @@ import {
   dateToDateTime,
   formatDateRFC822Local,
   formatStringDateRFC822Local,
+  getDateFromDatetime,
   getFirestoreTimeStampDate,
   makeDeadlineForFilter,
 } from '../utils/datetime.helper'
@@ -99,13 +100,13 @@ import {normalizeAnalysis} from '../utils/analysis.helper'
 import {CouponEnum} from '../models/coupons'
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
 import {FirebaseMessagingService} from '../../../common/src/service/messaging/firebase-messaging-service'
-import {PushNotificationType} from '../types/push-notification.type'
-import admin from 'firebase-admin'
+import {FHPushNotificationMessage} from '../types/push-notification.type'
 import {
   getNotificationBody,
   getNotificationTitle,
   getPushNotificationType,
 } from '../utils/push-notification.helper'
+import {OpnSources} from '../../../common/src/data/registration'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -124,6 +125,7 @@ export class PCRTestResultsService {
     ResultTypes.Positive,
     ResultTypes.PresumptivePositive,
     ResultTypes.Indeterminate,
+    ResultTypes.Inconclusive,
   ]
   private testRunsService = new TestRunsService()
   private attestationService = new AttestationService()
@@ -197,21 +199,32 @@ export class PCRTestResultsService {
     let finalResult: ResultTypes = ResultTypes.Indeterminate
     let notificationType = EmailNotficationTypes.Indeterminate
     let recollected = false
+    let action = PCRResultActions.RecollectAsInconclusive
     switch (data.action) {
       case PCRResultActionsForConfirmation.MarkAsNegative: {
         finalResult = ResultTypes.Negative
         notificationType = EmailNotficationTypes.MarkAsConfirmedNegative
+        action = PCRResultActions.MarkAsNegative
         break
       }
       case PCRResultActionsForConfirmation.MarkAsPositive: {
         finalResult = ResultTypes.Positive
         notificationType = EmailNotficationTypes.MarkAsConfirmedPositive
+        action = PCRResultActions.MarkAsPositive
         break
       }
       case PCRResultActionsForConfirmation.Indeterminate: {
         finalResult = ResultTypes.Inconclusive
         notificationType = EmailNotficationTypes.Indeterminate
         recollected = true
+        action = PCRResultActions.RecollectAsInconclusive
+        break
+      }
+      case PCRResultActionsForConfirmation.MarkAsInvalid: {
+        finalResult = ResultTypes.Invalid
+        notificationType = EmailNotficationTypes.Indeterminate
+        recollected = true
+        action = PCRResultActions.RecollectAsInvalid
         break
       }
     }
@@ -226,6 +239,12 @@ export class PCRTestResultsService {
       previousResult: latestPCRResult.result,
       labId: labId,
       recollected,
+      resultMetaData: {
+        notify: true,
+        resultDate: getDateFromDatetime(new Date()),
+        action: action,
+        autoResult: finalResult,
+      },
     })
 
     const lab = await this.labService.findOneById(labId)
@@ -1114,7 +1133,10 @@ export class PCRTestResultsService {
       return
     }
 
-    const registration = await this.registrationService.findLastForUserId(userId)
+    const registration = await this.registrationService.findLastForUserId(userId, [
+      OpnSources.FH_Android,
+      OpnSources.FH_IOS,
+    ])
 
     if (!registration?.pushToken) {
       throw new BadRequestException(`Registration information for this app not found`)
@@ -1122,12 +1144,13 @@ export class PCRTestResultsService {
 
     await this.firebaseMessagingService.validatePushToken(registration.pushToken)
 
-    const message: admin.messaging.Message = {
+    const message: FHPushNotificationMessage = {
       data: {
-        resultId: '',
-        notificationType: null as PushNotificationType,
+        notificationType: null,
+      },
+      notification: {
         title: getNotificationTitle(result),
-        content: getNotificationBody(result),
+        body: getNotificationBody(result),
       },
       token: registration.pushToken,
     }
@@ -2174,5 +2197,9 @@ export class PCRTestResultsService {
     return !data.results.some(
       (result) => result.autoResult !== this.getAutoResult(result.resultAnalysis),
     )
+  }
+
+  getTestResultsByIds(ids: string[]): Promise<PCRTestResultDBModel[]> {
+    return this.pcrTestResultsRepository.findWhereIdIn(ids)
   }
 }

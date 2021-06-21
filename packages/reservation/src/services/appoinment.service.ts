@@ -51,7 +51,6 @@ import {
   decodeBookingLocationId,
   encodeAvailableTimeId,
 } from '../utils/base64-converter'
-import {Enterprise} from '../adapter/enterprise'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {UserAddressService} from '../../../enterprise/src/services/user-address-service'
 import {LabService} from './lab.service'
@@ -116,7 +115,6 @@ export class AppoinmentService {
   private userAddressService = new UserAddressService()
   private labService = new LabService()
   private packageService = new PackageService()
-  private enterpriseAdapter = new Enterprise()
   private sqlService = new SqlService()
 
   private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
@@ -481,6 +479,7 @@ export class AppoinmentService {
       couponCode?: string
       userId?: string
       labId?: string
+      patientId?: string
     },
   ): Promise<AppointmentDBModel> {
     const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
@@ -551,6 +550,7 @@ export class AppoinmentService {
       couponCode?: string
       userId?: string
       labId?: string
+      patientId?: string
     },
     appointmentDb?: AppointmentDBModel,
   ): Promise<Omit<AppointmentDBModel, 'id'>> {
@@ -583,6 +583,7 @@ export class AppoinmentService {
       couponCode = '',
       labId = null,
       userId,
+      patientId,
     } = additionalData
 
     const currentUserId =
@@ -642,6 +643,7 @@ export class AppoinmentService {
       city: acuityAppointment.city,
       province: acuityAppointment.province,
       country: acuityAppointment.country,
+      patientId: patientId ?? null,
     }
   }
 
@@ -839,11 +841,17 @@ export class AppoinmentService {
       labId: data.labId ?? null,
     })
     const testResult = await this.createOrUpdatePCRResults(savedAppointment, data.userId)
-    await this.postPubSubForToSyncWithThirdParty(
-      savedAppointment,
-      testResult.id,
-      ThirdPartySyncSource.TransportRun,
-    )
+
+    // trigger PubSub only if sendORMRequest is enabled for lab
+    const isORMRequestEnabled = await this.labService.isORMRequestEnabled(data.labId)
+    if (isORMRequestEnabled) {
+      await this.postPubSubForToSyncWithThirdParty(
+        savedAppointment,
+        testResult.id,
+        ThirdPartySyncSource.TransportRun,
+      )
+    }
+
     await this.appointmentsRepository.addStatusHistoryById(
       appointmentId,
       AppointmentStatus.InTransit,
@@ -1301,6 +1309,7 @@ export class AppoinmentService {
       organizationId: appointment.organizationId,
       couponCode: discountData?.name ? discountData.name : appointment.packageCode,
       userId,
+      patientId: patient.userId,
     })
   }
 
@@ -1853,6 +1862,7 @@ export class AppoinmentService {
 
     return user.id
   }
+
   private async checkWithEmail(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
     const user = await this.userService.findOneByEmail(acuityAppointment.email)
     if (
