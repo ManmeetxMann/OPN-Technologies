@@ -533,6 +533,9 @@ components:
           type: string
         fileName:
           type: string
+        pooledResults:
+          type: boolean
+          default: false
         results:
           type: array
           items:

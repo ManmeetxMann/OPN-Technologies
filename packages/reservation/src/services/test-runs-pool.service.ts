@@ -61,4 +61,10 @@ export class TestRunsPoolService {
     const newBarCode = 1000000000
     return `P${newBarCode + Number(poolBarCodeNumber)}`
   }
+
+  async getByBarcode(barcode: string): Promise<TestRunsPool> {
+    const [pool] = await this.testRunPoolRepository.findWhereEqual('poolBarCode', barcode)
+
+    return pool
+  }
 }

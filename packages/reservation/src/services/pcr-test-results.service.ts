@@ -31,6 +31,7 @@ import {ReservationPushService} from './reservation-push.service'
 //repository
 import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
+import {TestRunsPoolRepository} from '../respository/test-runs-pool.repository'
 
 import {
   TestResultsReportingTrackerPCRResultsRepository,
@@ -113,6 +114,7 @@ export class PCRTestResultsService {
   private testResultsReportingTracker = new TestResultsReportingTrackerRepository(this.datastore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.datastore)
   private appointmentsRepository = new AppointmentsRepository(this.datastore)
+  private testRunsPoolRepository = new TestRunsPoolRepository(this.datastore)
 
   private appointmentService = new AppoinmentService()
   private organizationService = new OrganizationService()
@@ -263,6 +265,7 @@ export class PCRTestResultsService {
   }
 
   async processPCRTestResult(reportTrackerId: string, resultId: string): Promise<void> {
+    const reportTracker = await this.testResultsReportingTracker.get(reportTrackerId)
     const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
       this.datastore,
       reportTrackerId,
@@ -293,6 +296,8 @@ export class PCRTestResultsService {
       ResultReportStatus.Processing,
     )
     try {
+      const isPooledResults = reportTracker?.pooledResults ?? false
+
       const metaData: TestResultsMetaData = {
         notify: pcrResults.data.notify,
         resultDate: pcrResults.data.resultDate,
@@ -302,7 +307,8 @@ export class PCRTestResultsService {
       if (pcrResults.data.comment) {
         metaData.comment = pcrResults.data.comment
       }
-      const pcrTestResult = await this.handlePCRResultSaveAndSend({
+
+      const saveAndSendPayload = {
         metaData,
         resultAnalysis: pcrResults.data.resultAnalysis,
         barCode: pcrResults.data.barCode,
@@ -311,7 +317,32 @@ export class PCRTestResultsService {
         adminId: pcrResults.adminId,
         templateId: pcrResults.data.templateId,
         labId: pcrResults.data.labId,
-      })
+      }
+
+      /**
+       * If got pooled results
+       * - query pool by `poolBarcode` & fetch pooled tests results
+       * - Send test results one by one
+       */
+      const handleSaveAndSend = async () => {
+        if (isPooledResults) {
+          const pool = await this.testRunsPoolRepository.getByBarcode(pcrResults.data.barCode)
+          const poolTestResults = await this.getTestResultsByIds(pool.testResultIds)
+          const poolSaveAndSend = poolTestResults.map((result) =>
+            this.handlePCRResultSaveAndSend({
+              ...saveAndSendPayload,
+              barCode: result.barCode,
+            }),
+          )
+
+          const [result] = await Promise.all(poolSaveAndSend)
+          return result
+        } else {
+          return this.handlePCRResultSaveAndSend(saveAndSendPayload)
+        }
+      }
+
+      const pcrTestResult = await handleSaveAndSend()
 
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
         status: await this.getReportStatus(pcrResults.data.action, pcrTestResult.result),
