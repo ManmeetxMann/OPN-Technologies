@@ -241,12 +241,12 @@ export class PCRTestResultsService {
       previousResult: latestPCRResult.result,
       labId: labId,
       recollected,
-      resultMetaData:{
+      resultMetaData: {
         notify: true,
         resultDate: getDateFromDatetime(new Date()),
         action: action,
-        autoResult: finalResult
-      }
+        autoResult: finalResult,
+      },
     })
 
     const lab = await this.labService.findOneById(labId)
