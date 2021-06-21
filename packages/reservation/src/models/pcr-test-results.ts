@@ -230,6 +230,7 @@ export type ListPCRResultRequest = {
 
 export type TestResultsReportingTrackerDBModel = {
   id: string
+  pooledResults?: boolean
 }
 
 export type TestResultsReportingTrackerPCRResultsDBModel = {

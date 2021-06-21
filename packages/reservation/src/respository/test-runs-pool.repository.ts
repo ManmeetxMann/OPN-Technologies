@@ -15,4 +15,9 @@ export class TestRunsPoolRepository extends DataModel<TestRunsPool> {
     const validData = await DBSchema.validateAsync(data)
     return this.add(validData)
   }
+
+  async getByBarcode(barcode: string): Promise<TestRunsPool> {
+    const [pool] = await this.findWhereEqual('poolBarCode', barcode)
+    return pool
+  }
 }
