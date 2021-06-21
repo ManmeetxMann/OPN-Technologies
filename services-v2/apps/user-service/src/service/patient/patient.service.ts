@@ -10,6 +10,7 @@ import {
   PatientCreateAdminDto,
   PatientCreateDto,
   PatientFilter,
+  PatientOrganizationsDto,
   PatientUpdateDto,
 } from '../../dto/patient'
 import {HomeTestPatientDto} from '../../dto/home-patient'
@@ -115,6 +116,18 @@ export class PatientService {
 
   async getAuthByAuthUserId(authUserId: string): Promise<PatientAuth> {
     return this.patientAuthRepository.findOne({where: {authUserId}})
+  }
+
+  async getUserOrganizations(
+    patientToOrganization: PatientToOrganization[],
+  ): Promise<PatientOrganizationsDto[]> {
+    const organizations = await this.organizationModel.findWhereIdIn(
+      patientToOrganization.map(org => org.firebaseOrganizationId),
+    )
+    return organizations.map(organization => ({
+      key: organization.key,
+      name: organization.name,
+    }))
   }
 
   async getProfileByFirebaseKey(firebaseKey: string): Promise<Patient> {

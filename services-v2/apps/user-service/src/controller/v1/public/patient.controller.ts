@@ -38,6 +38,7 @@ import {
   unconfirmedPatientDto,
   UnconfirmedPatient,
   AttachOrganization,
+  PatientOrganizationsDto,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
@@ -50,6 +51,7 @@ import {AuthShortCodeService} from '@opn-enterprise-v1/services/auth-short-code-
 import {OpnConfigService} from '@opn-services/common/services'
 import * as _ from 'lodash'
 import {ActionStatus} from '@opn-services/common/model'
+import {PatientToOrganization} from '@opn-services/user/model/patient/patient-relations.entity'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -79,6 +81,24 @@ export class PatientController {
     const resultExitsForProvidedEmail = !!users.length
 
     return ResponseWrapper.actionSucceed(patientProfileDto(patient, {resultExitsForProvidedEmail}))
+  }
+
+  @Get('/organizations')
+  @UseGuards(AuthGuard)
+  @Roles([RequiredUserPermission.RegUser])
+  @ApiResponse({type: PatientOrganizationsDto, isArray: true})
+  async getUserOrganizations(@AuthUserDecorator() authUser: AuthUser): Promise<ResponseWrapper> {
+    const patient = await this.patientService.getProfileByFirebaseKey(authUser.id)
+    if (!patient) {
+      throw new ResourceNotFoundException('User with given id not found')
+    }
+
+    // It's casts as unknown because we've relation changed to firestore organizations temporary
+    const userOrganizations = await this.patientService.getUserOrganizations(
+      (patient.organizations as unknown) as PatientToOrganization[],
+    )
+
+    return ResponseWrapper.actionSucceed(userOrganizations)
   }
 
   @Post()
