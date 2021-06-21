@@ -239,12 +239,12 @@ export class PCRTestResultsService {
       previousResult: latestPCRResult.result,
       labId: labId,
       recollected,
-      resultMetaData:{
+      resultMetaData: {
         notify: true,
         resultDate: getDateFromDatetime(new Date()),
         action: action,
-        autoResult: finalResult
-      }
+        autoResult: finalResult,
+      },
     })
 
     const lab = await this.labService.findOneById(labId)
@@ -1146,7 +1146,7 @@ export class PCRTestResultsService {
 
     const message: FHPushNotificationMessage = {
       data: {
-        notificationType: null
+        notificationType: null,
       },
       notification: {
         title: getNotificationTitle(result),

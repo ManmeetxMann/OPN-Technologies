@@ -643,7 +643,7 @@ export class AppoinmentService {
       city: acuityAppointment.city,
       province: acuityAppointment.province,
       country: acuityAppointment.country,
-      patientId:(patientId)??null,
+      patientId: patientId ?? null,
     }
   }
 
