@@ -473,6 +473,8 @@ abstract class AcuityAdapter {
   private customFieldsToAppoinment(
     appointment: AppointmentAcuityResponse,
   ): AppointmentAcuityResponse {
+    let steeetAddress = null 
+    let addressOld = null 
     appointment.dateOfBirth = ''
     appointment.organizationId = Config.get('PUBLIC_ORG_ID')
     appointment.registeredNursePractitioner = ''
@@ -515,11 +517,11 @@ abstract class AcuityAdapter {
           }
           //Old Appointments
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS'))) {
-            appointment.address = field.value
+            addressOld = field.value
           }
           //New Field
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS_STREET'))) {
-            appointment.address = field.value
+            steeetAddress = field.value
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS_UNIT'))) {
             appointment.addressUnit = field.value
@@ -589,6 +591,7 @@ abstract class AcuityAdapter {
         })
       })
     }
+    appointment.address = !!(steeetAddress)?steeetAddress:addressOld
     return appointment
   }
 
