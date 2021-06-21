@@ -39,6 +39,7 @@ import {OpnConfigService} from '@opn-services/common/services'
 import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
 import {LogError} from '@opn-services/common/utils/logging'
 import * as activityLogs from '@opn-services/common/types/activity-logs'
+import {DefaultHttpException} from '@opn-services/common/exception'
 
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import {OrganizationModel} from '@opn-enterprise-v1/repository/organization.repository'
@@ -279,7 +280,11 @@ export class PatientService {
 
     let firebaseUser = null
     if (firestoreUsers.length === 0) {
-      firebaseUser = await this.userRepository.add(userData)
+      try {
+        firebaseUser = await this.userRepository.add(userData)
+      } catch (error) {
+        this.logUserSyncFailure(error)
+      }
     } else {
       firebaseUser = firestoreUsers[0]
     }
@@ -870,5 +875,17 @@ export class PatientService {
     }
 
     return registrationDb?.id || null
+  }
+
+  private logUserSyncFailure(error: Error) {
+    LogError(
+      activityLogs.PatientServiceFunctions.createProfile,
+      activityLogs.PatientServiceEvents.syncV2ToV1Failed,
+      {
+        errorMessage: `User sync failed: ${error?.message}`,
+      },
+    )
+
+    throw new DefaultHttpException('User v2 to v1 sync failed')
   }
 }

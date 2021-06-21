@@ -94,6 +94,7 @@ export enum PatientServiceFunctions {
 }
 
 export enum PatientServiceEvents {
+  syncV2ToV1Failed = 'syncV2ToV1Failed',
   duplicatedUserFound = 'duplicatedUserFound',
   errorAddingUserToOrg = 'errorAddingUserToOrg',
 }
