@@ -20,7 +20,7 @@ import DBSchema from '../dbschemas/pcr-test-results.schema'
 // Utils
 import {getFirestoreTimeStampDate} from '../utils/datetime.helper'
 import {findDifference} from '../utils/compare-objects'
-import { TestResultsMetaData } from '../models/test-results'
+import {TestResultsMetaData} from '../models/test-results'
 
 export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
   public rootPath = 'pcr-test-results'
@@ -112,7 +112,7 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
       labId: data.labId || null, //TODO: User from Appointment
       templateId: data.templateId || null,
       appointmentStatus: data.appointment.appointmentStatus,
-      resultMetaData:(data.resultMetaData)??null
+      resultMetaData: data.resultMetaData ?? null,
     }
     return await this.save(pcrResultDataForDb)
   }
