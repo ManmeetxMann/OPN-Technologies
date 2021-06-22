@@ -1,14 +1,14 @@
 import * as express from 'express'
 import {Handler, Router} from 'express'
 
-import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {OPNPubSub} from '../../../../common/src/service/google/pub_sub'
-import {LogError} from '../../../../common/src/utils/logging-setup'
-import {PCRTestResultsService} from '../../services/pcr-test-results.service'
-import {PCRTestResultSubmitted} from '../../models/pcr-test-results'
-import {AppoinmentService} from '../../services/appoinment.service'
-import {LabService} from '../../services/lab.service'
-import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
+import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
+import {OPNPubSub} from '../../../../../common/src/service/google/pub_sub'
+import {LogError} from '../../../../../common/src/utils/logging-setup'
+import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
+import {PCRTestResultSubmitted} from '../../../models/pcr-test-results'
+import {AppoinmentService} from '../../../services/appoinment.service'
+import {LabService} from '../../../services/lab.service'
+import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 
 class PubsubController implements IControllerBase {
   public router = express.Router()
@@ -22,13 +22,13 @@ class PubsubController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = () => Router({mergeParams: true})
-    const root = '/reservation/api/v1/pubsub'
+    const root = '/reservation/internal/api/v1/pubsub/test-result'
     const route = innerRouter().use(
       '/',
       innerRouter()
-        .post('/pubsub/test-result/notify-by-email', this.notifyByEmail)
-        .post('/pubsub/test-result/notify-by-push-notification', this.notifyByPushNotification)
-        .post('/test-result/test', this.test),
+        .post('/notify-by-email', this.notifyByEmail)
+        .post('/notify-by-push-notification', this.notifyByPushNotification)
+        .post('/test', this.test),
     )
     this.router.use(root, route)
   }

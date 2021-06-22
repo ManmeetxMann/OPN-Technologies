@@ -4506,7 +4506,7 @@ paths:
                         nullable: true
                         type: string
 
-  /reservation/api/v1/pubsub/test-result/notify-by-email:
+  /reservation/internal/api/v1/pubsub/test-result/notify-by-email:
     post:
       description: Pubsub result-result
       tags:
@@ -4520,7 +4520,7 @@ paths:
         '200':
           description: Success
 
-  /reservation/api/v1/pubsub/test-result/notify-by-push-notification:
+  /reservation/internal/api/v1/pubsub/test-result/notify-by-push-notification:
     post:
       description: Pubsub result-result
       tags:
@@ -4534,7 +4534,7 @@ paths:
         '200':
           description: Success
 
-  /reservation/api/v1/pubsub/test-result/test:
+  /reservation/internal/api/v1/pubsub/test-result/test:
     post:
       description: Test push notification
       tags:
