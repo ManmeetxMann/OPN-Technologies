@@ -50,6 +50,7 @@ import {
   PCRResultPDFType,
   PcrResultTestActivityAction,
   PCRSendResultDTO,
+  PCRTestConfirmationActionResult,
   PCRTestResultByDeadlineListDTO,
   PCRTestResultConfirmRequest,
   PCRTestResultDBModel,
@@ -196,38 +197,7 @@ export class PCRTestResultsService {
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
-    let finalResult: ResultTypes = ResultTypes.Indeterminate
-    let notificationType = EmailNotficationTypes.Indeterminate
-    let recollected = false
-    let action = PCRResultActions.RecollectAsInconclusive
-    switch (data.action) {
-      case PCRResultActionsForConfirmation.MarkAsNegative: {
-        finalResult = ResultTypes.Negative
-        notificationType = EmailNotficationTypes.MarkAsConfirmedNegative
-        action = PCRResultActions.MarkAsNegative
-        break
-      }
-      case PCRResultActionsForConfirmation.MarkAsPositive: {
-        finalResult = ResultTypes.Positive
-        notificationType = EmailNotficationTypes.MarkAsConfirmedPositive
-        action = PCRResultActions.MarkAsPositive
-        break
-      }
-      case PCRResultActionsForConfirmation.Indeterminate: {
-        finalResult = ResultTypes.Inconclusive
-        notificationType = EmailNotficationTypes.Indeterminate
-        recollected = true
-        action = PCRResultActions.RecollectAsInconclusive
-        break
-      }
-      case PCRResultActionsForConfirmation.MarkAsInvalid: {
-        finalResult = ResultTypes.Invalid
-        notificationType = EmailNotficationTypes.Indeterminate
-        recollected = true
-        action = PCRResultActions.RecollectAsInvalid
-        break
-      }
-    }
+    const {finalResult, notificationType, recollected, action} = this.getConfirmationResultForAction(data.action)
     const newPCRResult = await this.pcrTestResultsRepository.createNewTestResults({
       appointment,
       adminId: data.adminId,
@@ -256,6 +226,46 @@ export class PCRTestResultsService {
     )
 
     return newPCRResult.id
+  }
+
+  getConfirmationResultForAction(
+    action: PCRResultActionsForConfirmation,
+  ): PCRTestConfirmationActionResult {
+    const result: PCRTestConfirmationActionResult = {
+      finalResult: ResultTypes.Indeterminate,
+      notificationType: EmailNotficationTypes.Indeterminate,
+      recollected: false,
+      action: PCRResultActions.RecollectAsInconclusive,
+    }
+
+    switch (action) {
+      case PCRResultActionsForConfirmation.MarkAsNegative: {
+        result.finalResult = ResultTypes.Negative
+        result.notificationType = EmailNotficationTypes.MarkAsConfirmedNegative
+        result.action = PCRResultActions.MarkAsNegative
+        return result
+      }
+      case PCRResultActionsForConfirmation.MarkAsPositive: {
+        result.finalResult = ResultTypes.Positive
+        result.notificationType = EmailNotficationTypes.MarkAsConfirmedPositive
+        result.action = PCRResultActions.MarkAsPositive
+        return result
+      }
+      case PCRResultActionsForConfirmation.Indeterminate: {
+        result.finalResult = ResultTypes.Inconclusive
+        result.notificationType = EmailNotficationTypes.Indeterminate
+        result.recollected = true
+        result.action = PCRResultActions.RecollectAsInconclusive
+        return result
+      }
+      case PCRResultActionsForConfirmation.MarkAsInvalid: {
+        result.finalResult = ResultTypes.Invalid
+        result.notificationType = EmailNotficationTypes.Indeterminate
+        result.recollected = true
+        result.action = PCRResultActions.RecollectAsInvalid
+        return result
+      }
+    }
   }
 
   async deleteTestResults(id: string): Promise<void> {
@@ -921,10 +931,14 @@ export class PCRTestResultsService {
       const pcrResultDataForEmail = {
         adminId,
         resultId: testResult.id,
-        labAssay: lab.assay,
+        labAssay: lab?.assay ?? null,
         ...appointment,
         ...pcrResultDataForDbUpdate,
       }
+
+      LogInfo('handlePCRResultSaveAndSend', 'PostPubSubForResultSend', {
+        message: `Notify is on, send result for ${barCode}`,
+      })
 
       this.postPubSubForResultSend(pcrResultDataForEmail, metaData.action, pcrResultRecorded.id)
     } else {

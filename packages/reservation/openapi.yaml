@@ -4298,6 +4298,51 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+  /reservation/internal/api/v1/mount-sinai-results-received:
+    summary: Mount Sinai Results Received
+    post:
+      description: 'Mount Sinai Results Received Handler'
+      tags:
+        - Test Results Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                subscription:
+                  type: string
+                  description: subscription of the message.
+                message:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    data:
+                      type: string
+                      description: The base64 encoding of the payload
+                    messageId:
+                      type: string
+                      description: id of the message. Provided by GCP
+                    message_id:
+                      type: string
+                      description: id of the message, again. Provided by GCP
+                    publishTime:
+                      type: string
+                      description: ISO datetime for when the message was published. Provided by GCP
+                    publish_time:
+                      type: string
+                      description: ISO datetime for when the message was published, again. Provided by GCP
+                  required:
+                    - data
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
   /reservation/admin/api/v1/clinics:
     get:
       description: Get list of clinics

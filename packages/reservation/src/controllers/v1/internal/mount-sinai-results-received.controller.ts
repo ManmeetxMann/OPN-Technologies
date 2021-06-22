@@ -7,10 +7,7 @@ import {OPNPubSub} from '../../../../../common/src/service/google/pub_sub'
 
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 import {PCRTestResultConfirmRequest} from '../../../models/pcr-test-results'
-import {TestResultRequestData} from '../../../models/test-results'
-import {Config} from '../../../../../common/src/utils/config'
-import moment from 'moment'
-import {now} from '../../../../../common/src/utils/times'
+import {getDateFromDatetime} from '../../../utils/datetime.helper'
 
 class InternalMountSinaiResultReceivedController implements IControllerBase {
   public path = '/reservation/internal'
@@ -72,39 +69,24 @@ class InternalMountSinaiResultReceivedController implements IControllerBase {
         throw new BadRequestException(`data is missing from pub sub post`)
       }
       const result = (await OPNPubSub.getPublishedData(message.data)) as PCRTestResultConfirmRequest
-      await this.pcrTestResultsService.confirmPCRResults({
-        barCode: result.barCode,
-        action: result.action,
-        labId: null,
-        adminId: 'MOUNT_SINAI',
-        byPassValidation: true,
-      })
+      const confirmation = this.pcrTestResultsService.getConfirmationResultForAction(result.action)
 
-      const {barCode, resultAnalysis, sendUpdatedResults, templateId, labId, ...metaData} =
-        req.body as TestResultRequestData
-      const timeZone = Config.get('DEFAULT_TIME_ZONE')
-      const fromDate = moment(now())
-        .tz(timeZone)
-        .subtract(30, 'days')
-        .startOf('day')
-        .format('YYYY-MM-DD')
-      const toDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
+      const metaData = {
+        notify: true,
+        resultDate: getDateFromDatetime(new Date()),
+        action: confirmation.action,
+        autoResult: confirmation.finalResult,
+      }
 
-      // if (!moment(metaData.resultDate).isBetween(fromDate, toDate, undefined, '[]')) {
-      //   throw new BadRequestException(
-      //     `Date does not match the time range (from ${fromDate} - to ${toDate})`,
-      //   )
-      // }
-
-      await this.pcrTestResultsService.handlePCRResultSaveAndSend({
+      this.pcrTestResultsService.handlePCRResultSaveAndSend({
         metaData,
-        resultAnalysis,
-        barCode,
+        resultAnalysis: [],
+        barCode: result.barCode,
         isSingleResult: true,
-        sendUpdatedResults,
+        sendUpdatedResults: false,
         adminId: 'MOUNT_SINAI',
-        templateId,
-        labId,
+        templateId: null,
+        labId: null,
       })
 
       res.json(actionSucceed())
