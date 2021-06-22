@@ -887,7 +887,7 @@ export class PatientService {
 
   private logUserSyncFailure(error: Error) {
     LogError(
-      activityLogs.PatientServiceFunctions.createProfile,
+      activityLogs.PatientServiceFunctions.logUserSyncFailure,
       activityLogs.PatientServiceEvents.syncV2ToV1Failed,
       {
         errorMessage: `User v2 to v1 sync failed: ${error?.message}`,
