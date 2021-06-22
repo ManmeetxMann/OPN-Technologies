@@ -890,7 +890,7 @@ export class PatientService {
       activityLogs.PatientServiceFunctions.logUserSyncFailure,
       activityLogs.PatientServiceEvents.syncV2ToV1Failed,
       {
-        errorMessage: `User v2 to v1 sync failed: ${error?.message}`,
+        errorMessage: `User v2 to v1 sync failed: ${error}`,
       },
     )
   }
