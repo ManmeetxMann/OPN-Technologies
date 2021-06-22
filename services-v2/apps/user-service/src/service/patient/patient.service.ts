@@ -170,6 +170,15 @@ export class PatientService {
       .then(([data, totalItems]) => Page.of(data, page, perPage, totalItems))
   }
 
+  async createAuthUserInFirestore(user: AuthUser): Promise<AuthUser> {
+    try {
+      return await this.userRepository.add(user)
+    } catch (error) {
+      this.logUserSyncFailure(error)
+      throw new DefaultHttpException(error)
+    }
+  }
+
   async createHomePatientProfile(
     data: HomeTestPatientDto,
     tokenSource: OpnSources,
@@ -206,7 +215,7 @@ export class PatientService {
 
     let firebaseUser = null
     if (firestoreUsers.length === 0) {
-      firebaseUser = await this.userRepository.add(userData)
+      firebaseUser = await this.createAuthUserInFirestore(userData)
     } else {
       firebaseUser = firestoreUsers[0]
     }
@@ -280,11 +289,7 @@ export class PatientService {
 
     let firebaseUser = null
     if (firestoreUsers.length === 0) {
-      try {
-        firebaseUser = await this.userRepository.add(userData)
-      } catch (error) {
-        this.logUserSyncFailure(error)
-      }
+      firebaseUser = await this.createAuthUserInFirestore(userData)
     } else {
       firebaseUser = firestoreUsers[0]
     }
@@ -495,7 +500,7 @@ export class PatientService {
   ): Promise<Patient> {
     const delegate = await this.getbyId(delegateId)
 
-    const firebaseUser = await this.userRepository.add({
+    const authUserSync = {
       firstName: data.firstName,
       lastName: data.lastName,
       registrationId: await this.getRegistrationId(data, tokenSource),
@@ -508,7 +513,9 @@ export class PatientService {
       organizationIds: [this.configService.get('PUBLIC_ORG_ID')],
       creator: UserCreator.syncFromSQL,
       delegates: [delegate.firebaseKey],
-    } as AuthUser)
+    } as AuthUser
+
+    const firebaseUser = await this.createAuthUserInFirestore(authUserSync)
 
     await this.addInPublicGroup(firebaseUser.id, delegate.firebaseKey)
 
@@ -802,7 +809,8 @@ export class PatientService {
   }
 
   async updateProfileWithPubSub(data: AppointmentDBModel, tokenSource: OpnSources): Promise<void> {
-    const userId = data?.patientId
+    // fallback to userId if appointment is from web
+    const userId = data?.patientId ?? data?.userId
 
     if (!userId) {
       const errorMessage = `User/Patient id is missing`
@@ -882,10 +890,8 @@ export class PatientService {
       activityLogs.PatientServiceFunctions.createProfile,
       activityLogs.PatientServiceEvents.syncV2ToV1Failed,
       {
-        errorMessage: `User sync failed: ${error?.message}`,
+        errorMessage: `User v2 to v1 sync failed: ${error?.message}`,
       },
     )
-
-    throw new DefaultHttpException('User v2 to v1 sync failed')
   }
 }
