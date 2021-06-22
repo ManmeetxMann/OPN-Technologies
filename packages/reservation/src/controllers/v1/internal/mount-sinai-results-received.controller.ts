@@ -7,8 +7,9 @@ import {OPNPubSub} from '../../../../../common/src/service/google/pub_sub'
 
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 import {PCRTestResultConfirmRequest} from '../../../models/pcr-test-results'
+import {getDateFromDatetime} from '../../../utils/datetime.helper'
 
-class InternalConfirmatoryResultReceivedController implements IControllerBase {
+class InternalMountSinaiResultReceivedController implements IControllerBase {
   public path = '/reservation/internal'
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
@@ -23,6 +24,11 @@ class InternalConfirmatoryResultReceivedController implements IControllerBase {
     innerRouter.post(
       this.path + '/api/v1/confirmatory-results-received',
       this.confirmatoryResultHandler,
+    )
+
+    innerRouter.post(
+      this.path + '/api/v1/mount-sinai-results-received',
+      this.mountSinaiResultHandler,
     )
 
     this.router.use('/', innerRouter)
@@ -51,6 +57,43 @@ class InternalConfirmatoryResultReceivedController implements IControllerBase {
       next(error)
     }
   }
+
+  mountSinaiResultHandler = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {message} = req.body
+      if (!message || !message.data) {
+        throw new BadRequestException(`data is missing from pub sub post`)
+      }
+      const result = (await OPNPubSub.getPublishedData(message.data)) as PCRTestResultConfirmRequest
+      const confirmation = this.pcrTestResultsService.getConfirmationResultForAction(result.action)
+
+      const metaData = {
+        notify: true,
+        resultDate: getDateFromDatetime(new Date()),
+        action: confirmation.action,
+        autoResult: confirmation.finalResult,
+      }
+
+      this.pcrTestResultsService.handlePCRResultSaveAndSend({
+        metaData,
+        resultAnalysis: [],
+        barCode: result.barCode,
+        isSingleResult: true,
+        sendUpdatedResults: false,
+        adminId: 'MOUNT_SINAI',
+        templateId: null,
+        labId: null,
+      })
+
+      res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
 }
 
-export default InternalConfirmatoryResultReceivedController
+export default InternalMountSinaiResultReceivedController
