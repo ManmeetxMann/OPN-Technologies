@@ -6,6 +6,7 @@ export enum UserStatus {
 
 export enum UserCreator {
   syncFromSQL = 'syncFromSQL',
+  syncFromTests = 'syncFromTests',
   syncFromAcuity = 'syncFromAcuity',
   syncFromAcuityToOpnMigration = 'syncFromAcuityToOpnMigration',
 }
