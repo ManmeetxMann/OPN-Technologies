@@ -10,6 +10,7 @@ import {
   PatientCreateAdminDto,
   PatientCreateDto,
   PatientFilter,
+  PatientOrganizationsDto,
   PatientUpdateDto,
 } from '../../dto/patient'
 import {HomeTestPatientDto} from '../../dto/home-patient'
@@ -39,6 +40,7 @@ import {OpnConfigService} from '@opn-services/common/services'
 import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
 import {LogError} from '@opn-services/common/utils/logging'
 import * as activityLogs from '@opn-services/common/types/activity-logs'
+import {DefaultHttpException} from '@opn-services/common/exception'
 
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import {OrganizationModel} from '@opn-enterprise-v1/repository/organization.repository'
@@ -117,6 +119,18 @@ export class PatientService {
     return this.patientAuthRepository.findOne({where: {authUserId}})
   }
 
+  async getUserOrganizations(
+    patientToOrganization: PatientToOrganization[],
+  ): Promise<PatientOrganizationsDto[]> {
+    const organizations = await this.organizationModel.findWhereIdIn(
+      patientToOrganization.map(org => org.firebaseOrganizationId),
+    )
+    return organizations.map(organization => ({
+      key: organization.key,
+      name: organization.name,
+    }))
+  }
+
   async getProfileByFirebaseKey(firebaseKey: string): Promise<Patient> {
     return this.patientRepository.findOne(
       {firebaseKey},
@@ -169,6 +183,15 @@ export class PatientService {
       .then(([data, totalItems]) => Page.of(data, page, perPage, totalItems))
   }
 
+  async createAuthUserInFirestore(user: AuthUser): Promise<AuthUser> {
+    try {
+      return await this.userRepository.add(user)
+    } catch (error) {
+      this.logUserSyncFailure(error)
+      throw new DefaultHttpException(error)
+    }
+  }
+
   async createHomePatientProfile(
     data: HomeTestPatientDto,
     tokenSource: OpnSources,
@@ -205,7 +228,7 @@ export class PatientService {
 
     let firebaseUser = null
     if (firestoreUsers.length === 0) {
-      firebaseUser = await this.userRepository.add(userData)
+      firebaseUser = await this.createAuthUserInFirestore(userData)
     } else {
       firebaseUser = firestoreUsers[0]
     }
@@ -279,7 +302,7 @@ export class PatientService {
 
     let firebaseUser = null
     if (firestoreUsers.length === 0) {
-      firebaseUser = await this.userRepository.add(userData)
+      firebaseUser = await this.createAuthUserInFirestore(userData)
     } else {
       firebaseUser = firestoreUsers[0]
     }
@@ -490,7 +513,7 @@ export class PatientService {
   ): Promise<Patient> {
     const delegate = await this.getbyId(delegateId)
 
-    const firebaseUser = await this.userRepository.add({
+    const authUserSync = {
       firstName: data.firstName,
       lastName: data.lastName,
       registrationId: await this.getRegistrationId(data, tokenSource),
@@ -503,7 +526,9 @@ export class PatientService {
       organizationIds: [this.configService.get('PUBLIC_ORG_ID')],
       creator: UserCreator.syncFromSQL,
       delegates: [delegate.firebaseKey],
-    } as AuthUser)
+    } as AuthUser
+
+    const firebaseUser = await this.createAuthUserInFirestore(authUserSync)
 
     await this.addInPublicGroup(firebaseUser.id, delegate.firebaseKey)
 
@@ -797,7 +822,8 @@ export class PatientService {
   }
 
   async updateProfileWithPubSub(data: AppointmentDBModel, tokenSource: OpnSources): Promise<void> {
-    const userId = data?.patientId
+    // fallback to userId if appointment is from web
+    const userId = data?.patientId ?? data?.userId
 
     if (!userId) {
       const errorMessage = `User/Patient id is missing`
@@ -870,5 +896,15 @@ export class PatientService {
     }
 
     return registrationDb?.id || null
+  }
+
+  private logUserSyncFailure(error: Error) {
+    LogError(
+      activityLogs.PatientServiceFunctions.logUserSyncFailure,
+      activityLogs.PatientServiceEvents.syncV2ToV1Failed,
+      {
+        errorMessage: `User v2 to v1 sync failed: ${error}`,
+      },
+    )
   }
 }
