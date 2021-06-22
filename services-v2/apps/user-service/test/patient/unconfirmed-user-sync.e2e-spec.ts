@@ -48,6 +48,7 @@ describe('Check user sync (e2e)', () => {
         organizationIds: [organizationId],
         status: UserStatus.NEW,
         firstName: newUserFirstName,
+        syncUser: true,
       },
       testDataCreator,
     )
@@ -58,6 +59,7 @@ describe('Check user sync (e2e)', () => {
         organizationIds: [organizationId],
         status: UserStatus.CONFIRMED,
         firstName: confirmedUserFirstName,
+        syncUser: true,
       },
       testDataCreator,
     )
@@ -87,6 +89,7 @@ describe('Check user sync (e2e)', () => {
         .put(`${url}/email/verify`)
         .set(headers)
         .send()
+      console.log(111111, response.body)
       expect(response.status).toBe(200)
       done()
     }, 5000)
