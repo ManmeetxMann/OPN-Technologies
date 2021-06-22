@@ -37,7 +37,7 @@ runs:
       PREPROD_TAG_REF=refs/tags/preprod-
       PROD_TAG_REF=refs/tags/prod-
       echo "::group::Define Deployment Variables"
-      if [[ $GITHUB_REF == 'refs/heads/feature/users-sync' ]]; then
+      if [[ $GITHUB_REF == 'refs/heads/feature/users-check' ]]; then
         echo "Deploy to DEV"
         echo "PROJECT_ID=opn-platform-dev" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=dev_service_account" >> $GITHUB_ENV
