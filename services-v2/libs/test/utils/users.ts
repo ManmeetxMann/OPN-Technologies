@@ -13,6 +13,7 @@ export const createUser = async (
     organizationIds: string[]
     email?: string
     firstName?: string
+    status?: string
   },
   testDataCreator: string,
 ): Promise<void> => {
@@ -23,6 +24,7 @@ export const createUser = async (
     lastName: 'Test',
     dateOfBirth: '2021-01-01',
     base64Photo: '',
+    status: dataOverwrite.status ?? 'CONFIRMED',
     organizationIds: dataOverwrite.organizationIds,
     email: dataOverwrite.email ?? 'Test@mail.com',
     admin: null,
