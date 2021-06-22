@@ -89,6 +89,13 @@ export enum ResultReportStatus {
   Skipped = 'Skipped',
 }
 
+export type PCRTestConfirmationActionResult = {
+  action: PCRResultActions
+  finalResult: ResultTypes
+  notificationType: EmailNotficationTypes
+  recollected: boolean
+}
+
 export type PCRTestResultConfirmRequest = {
   barCode: string
   action: PCRResultActionsForConfirmation

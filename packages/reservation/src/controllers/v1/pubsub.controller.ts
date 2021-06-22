@@ -45,7 +45,7 @@ class PubsubController implements IControllerBase {
 
       try {
         await this.pcrTestResultsService.sendEmailNotificationForResults(
-          {...testResult, ...appointment, labAssay: lab.assay},
+          {...testResult, ...appointment, labAssay: lab?.assay ?? null},
           data.actionType,
           testResult.id,
         )
