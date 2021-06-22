@@ -837,10 +837,16 @@ components:
           type: string
         assay:
           type: string
+        poolingEnabled:
+          type: boolean
+        sendORMRequest:
+          type: boolean
       required:
         - name
         - templateId
         - assay
+        - poolingEnabled
+        - sendORMRequest
     LabResponse:
       type: object
       additionalProperties: false
