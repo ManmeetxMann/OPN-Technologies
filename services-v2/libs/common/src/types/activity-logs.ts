@@ -88,12 +88,14 @@ export enum PubSubEvents {
 }
 
 export enum PatientServiceFunctions {
+  logUserSyncFailure = 'logUserSyncFailure',
   addInPublicGroup = 'addInPublicGroup',
   createProfile = 'createProfile',
   createHomePatientProfile = 'createHomePatientProfile',
 }
 
 export enum PatientServiceEvents {
+  syncV2ToV1Failed = 'syncV2ToV1Failed',
   duplicatedUserFound = 'duplicatedUserFound',
   errorAddingUserToOrg = 'errorAddingUserToOrg',
 }
