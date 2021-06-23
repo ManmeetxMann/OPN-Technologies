@@ -5,11 +5,20 @@ import {
   createAppointment,
   deleteAppointmentByTestDataCreator,
 } from '../../../__seeds__/appointments'
-import {deleteAll} from '../../../__seeds__/admin-scan-history'
+import {bulkDelete, deleteAll} from '../../../__seeds__/admin-scan-history'
 import {
   createPCRTestResult,
   deletePCRTestResultByTestDataCreator,
 } from '../../../__seeds__/pcr-test-results'
+
+import { AppointmentStatus, TestTypes } from '../../../../src/models/appointment'
+import { AppointmentsRepository } from '../../../../src/respository/appointments-repository'
+import { PCRTestResultsRepository } from '../../../../src/respository/pcr-test-results-repository'
+
+import DataStore from '../../../../../common/src/data/datastore'
+
+const appointmentsRepository = new AppointmentsRepository(new DataStore())
+const pcrTestResultsRepository = new PCRTestResultsRepository(new DataStore())
 
 jest.spyOn(global.console, 'error').mockImplementation()
 jest.spyOn(global.console, 'info').mockImplementation()
@@ -24,6 +33,7 @@ const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
 const deadlineSameDay = `${dateForAppointments}T23:59:00`
 const aptID1 = 'RapidAPT1'
 const organizationId = 'TEST1'
+
 describe('AdminScanHistoryController', () => {
   beforeAll(async () => {
     await deletePCRTestResultByTestDataCreator(testDataCreator)
@@ -35,7 +45,7 @@ describe('AdminScanHistoryController', () => {
         dateOfAppointment: dateForAppointmentStr,
         appointmentStatus: 'InTransit',
         organizationId,
-        testType: 'RapidAntigen',
+        testType: TestTypes.RapidAntigen,
       },
       testDataCreator,
     )
@@ -58,12 +68,19 @@ describe('AdminScanHistoryController', () => {
         .set('Content-Type', 'application/json')
         .send({
           barCode: 'BAR1',
-          type: 'RapidAntigen',
+          type: TestTypes.RapidAntigen,
         })
 
       expect(result.status).toBe(200)
       expect(result.body.data.id).toBe(aptID1)
-      expect(result.body.data.status).toBe('InProgress')
+      expect(result.body.data.status).toBe(AppointmentStatus.InProgress)
+      const [appointment, pcrTestResult] = await Promise.all([
+        appointmentsRepository.findWhereEqual('barCode', 'BAR1'),
+        pcrTestResultsRepository.findWhereEqual('barCode', 'BAR1')
+      ])
+      console.log(pcrTestResult)
+      expect(appointment[0].appointmentStatus).toBe(AppointmentStatus.InProgress)
+      expect(pcrTestResult[0].appointmentStatus).toBe(AppointmentStatus.InProgress)
     })
 
     test('create new scan history record fails for bad barcode', async () => {
@@ -111,8 +128,9 @@ describe('AdminScanHistoryController', () => {
   })
 
   afterAll(async () => {
+    const appointment = await appointmentsRepository.findWhereEqual('barCode', 'BAR1')
     await deletePCRTestResultByTestDataCreator(testDataCreator)
     await deleteAppointmentByTestDataCreator(testDataCreator)
-    deleteAll()
+    bulkDelete(appointment.map(({id}) => id))
   })
 })

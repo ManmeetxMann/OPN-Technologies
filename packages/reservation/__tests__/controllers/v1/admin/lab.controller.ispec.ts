@@ -37,6 +37,7 @@ describe('AdminLabController', () => {
 
   describe('create New Lab', () => {
     test('create new lab successfully', async () => {
+      const labName = 'UNIT_TEST_LAB'
       const url = `/reservation/admin/api/v1/labs`
       await request(server.app)
         .post(url)

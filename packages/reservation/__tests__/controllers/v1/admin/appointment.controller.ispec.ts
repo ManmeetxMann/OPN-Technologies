@@ -26,91 +26,92 @@ const transportRunId = 'APPOINTMENT_TRANSPORT_RUN'
 describe('AdminAppointmentController', () => {
   beforeAll(async () => {
     await deleteAppointmentByTestDataCreator(testDataCreator)
-    await createAppointment(
-      {
-        id: 'APT1',
-        dateTime: dateTimeForAppointment1,
-        dateOfAppointment: dateForAppointmentStr,
-        appointmentStatus: 'InTransit',
-        labId: laboratoryId,
-      },
-      testDataCreator,
-    )
-    await createAppointment(
-      {
-        id: 'APT2',
-        dateTime: dateTimeForAppointment1,
-        dateOfAppointment: dateForAppointmentStr,
-        appointmentStatus: 'InProgress',
-        labId: laboratoryId,
-      },
-      testDataCreator,
-    )
-    await createAppointment(
-      {
-        id: 'APT3',
-        dateTime: dateTimeForAppointment1,
-        dateOfAppointment: dateForAppointmentStr,
-        organizationId: organizationId,
-        appointmentStatus: 'InProgress',
-        labId: laboratoryId,
-      },
-      testDataCreator,
-    )
-    await createAppointment(
-      {
-        id: 'APT4',
-        dateTime: dateTimeForAppointment1,
-        dateOfAppointment: dateForAppointmentStr,
-        organizationId: organizationId,
-      },
-      testDataCreator,
-    )
-    await createAppointment(
-      {
-        id: 'APT5',
-        dateTime: dateTimeForAppointment1,
-        dateOfAppointment: dateForAppointmentStr,
-      },
-      testDataCreator,
-    )
-    await createAppointment(
-      {
-        id: 'APT6',
-        dateTime: `2020-02-01T07:00:00`,
-        dateOfAppointment: 'February 01, 2020',
-      },
-      testDataCreator,
-    )
-    await createAppointment(
-      {
-        id: 'APT7',
-        dateTime: `2020-02-01T08:00:00`,
-        dateOfAppointment: 'February 01, 2020',
-      },
-      testDataCreator,
-    )
-    await createAppointment(
-      {
-        id: 'APT8',
-        dateTime: `2020-02-01T08:00:00`,
-        dateOfAppointment: 'February 01, 2020',
-        appointmentStatus: 'InProgress',
-      },
-      testDataCreator,
-    )
-
-    await createTransportRun(
-      {
-        id: transportRunId,
-        labId: laboratoryId,
-        label: testDataCreator,
-        createdAt: dateTimeForAppointment1,
-        transportDateTime: dateTimeForAppointment1,
-        transportDate: dateForAppointments,
-      },
-      testDataCreator,
-    )
+    await Promise.all([
+      await createAppointment(
+        {
+          id: 'APT1',
+          dateTime: dateTimeForAppointment1,
+          dateOfAppointment: dateForAppointmentStr,
+          appointmentStatus: 'InTransit',
+          labId: laboratoryId,
+        },
+        testDataCreator,
+      ),
+      createAppointment(
+        {
+          id: 'APT2',
+          dateTime: dateTimeForAppointment1,
+          dateOfAppointment: dateForAppointmentStr,
+          appointmentStatus: 'InProgress',
+          labId: laboratoryId,
+        },
+        testDataCreator,
+      ),
+      createAppointment(
+        {
+          id: 'APT3',
+          dateTime: dateTimeForAppointment1,
+          dateOfAppointment: dateForAppointmentStr,
+          organizationId: organizationId,
+          appointmentStatus: 'InProgress',
+          labId: laboratoryId,
+        },
+        testDataCreator,
+      ),
+      createAppointment(
+        {
+          id: 'APT4',
+          dateTime: dateTimeForAppointment1,
+          dateOfAppointment: dateForAppointmentStr,
+          organizationId: organizationId,
+        },
+        testDataCreator,
+      ),
+      createAppointment(
+        {
+          id: 'APT5',
+          dateTime: dateTimeForAppointment1,
+          dateOfAppointment: dateForAppointmentStr,
+        },
+        testDataCreator,
+      ),
+      createAppointment(
+        {
+          id: 'APT6',
+          dateTime: `2020-02-01T07:00:00`,
+          dateOfAppointment: 'February 01, 2020',
+        },
+        testDataCreator,
+      ),
+      createAppointment(
+        {
+          id: 'APT7',
+          dateTime: `2020-02-01T08:00:00`,
+          dateOfAppointment: 'February 01, 2020',
+        },
+        testDataCreator,
+      ),
+      createAppointment(
+        {
+          id: 'APT8',
+          dateTime: `2020-02-01T08:00:00`,
+          dateOfAppointment: 'February 01, 2020',
+          appointmentStatus: 'InProgress',
+        },
+        testDataCreator,
+      ),
+      await createTransportRun(
+        {
+          id: transportRunId,
+          labId: laboratoryId,
+          label: testDataCreator,
+          createdAt: dateTimeForAppointment1,
+          transportDateTime: dateTimeForAppointment1,
+          transportDate: dateForAppointments,
+        },
+        testDataCreator,
+      )
+    ])
   })
 
   describe('get appointment list', () => {

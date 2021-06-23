@@ -30,77 +30,72 @@ const testRunId = 'PCR_TEST_RUN_ID'
 
 describe('PCRTestResultController', () => {
   beforeAll(async () => {
-    await createUser({id: userId, organizationIds: [organizationId]}, testDataCreator)
     await deletePCRTestResultByTestDataCreator(testDataCreator)
-    await createPCRTestResult(
-      {
-        dateTime: dateTimeForAppointment7AM,
-        deadline: deadlineSameDay,
-        displayInResult: false,
-        testType: 'PCR',
-      },
-      testDataCreator,
-    )
-    await createPCRTestResult(
-      {
-        dateTime: dateTimeForAppointment7AM,
-        deadline: deadlineSameDay,
-        displayInResult: false,
-        testType: 'RapidAntigen',
-      },
-      testDataCreator,
-    )
-    await createPCRTestResult(
-      {
-        dateTime: dateTimeForAppointment7AM,
-        deadline: deadlineSameDay,
-        labId: labID1,
-      },
-      testDataCreator,
-    )
-    await createPCRTestResult(
-      {
-        dateTime: dateTimeForAppointment7AM,
-        deadline: deadlineSameDay,
-        labId: labID1,
-        id: pcrTestId,
-      },
-      testDataCreator,
-    )
-    await createComment({testResultId: pcrTestId, id: commentTestId}, testDataCreator)
-    await createPCRTestResult(
-      {
-        dateTime: dateTimeForAppointment7AM,
-        organizationId: organizationId,
-        deadline: deadlineSameDay,
-      },
-      testDataCreator,
-    )
-    await createPCRTestResult(
-      {
-        dateTime: dateTimeForAppointment7AM,
-        deadline: deadlineSameDay,
-        testType: 'PCR',
-      },
-      testDataCreator,
-    )
-    await createPCRTestResult(
-      {
-        dateTime: dateTimeForAppointment7AM,
-        organizationId: organizationId,
-        deadline: deadlineSameDay,
-        testType: 'RapidAntigen',
-      },
-      testDataCreator,
-    )
+    await Promise.all([
 
-    await createTestRun(
-      {
-        id: testRunId,
-        createdAt: dateTimeForAppointment7AM,
-      },
-      testDataCreator,
-    )
+      createUser({id: userId, organizationIds: [organizationId]}, testDataCreator),
+      createPCRTestResult(
+        {
+          dateTime: dateTimeForAppointment7AM,
+          deadline: deadlineSameDay,
+          displayInResult: false,
+          testType: 'PCR',
+        },
+        testDataCreator,
+      ),
+      createPCRTestResult(
+        {
+          dateTime: dateTimeForAppointment7AM,
+          deadline: deadlineSameDay,
+          displayInResult: false,
+          testType: 'RapidAntigen',
+        },
+        testDataCreator,
+      ),
+      createPCRTestResult(
+        {
+          dateTime: dateTimeForAppointment7AM,
+          deadline: deadlineSameDay,
+          labId: labID1,
+        },
+        testDataCreator,
+      ),
+      createPCRTestResult(
+        {
+          dateTime: dateTimeForAppointment7AM,
+          deadline: deadlineSameDay,
+          labId: labID1,
+          id: pcrTestId,
+        },
+        testDataCreator,
+      ),
+      createComment({testResultId: pcrTestId, id: commentTestId}, testDataCreator),
+      createPCRTestResult(
+        {
+          dateTime: dateTimeForAppointment7AM,
+          organizationId: organizationId,
+          deadline: deadlineSameDay,
+        },
+        testDataCreator,
+      ),
+      createPCRTestResult(
+        {
+          dateTime: dateTimeForAppointment7AM,
+          deadline: deadlineSameDay,
+          testType: 'PCR',
+        },
+        testDataCreator,
+      ),
+      createPCRTestResult(
+        {
+          dateTime: dateTimeForAppointment7AM,
+          organizationId: organizationId,
+          deadline: deadlineSameDay,
+          testType: 'RapidAntigen',
+        },
+        testDataCreator,
+      )
+    ]) 
   })
 
   describe('get result list', () => {

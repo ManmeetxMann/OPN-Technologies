@@ -23,7 +23,7 @@ const headers = {
 const userId = 'USER1'
 const aptID1 = 'APT10'
 const aptID2 = 'APT2'
-const dateForAppointments = '2020-01-05'
+const dateForAppointments = '2021-02-05'
 const dateTimeForAppointment7AM = `${dateForAppointments}T07:00:00`
 const deadlineSameDay = `${dateForAppointments}T23:59:00`
 
@@ -46,7 +46,7 @@ describe('listTestResults', () => {
       {
         id: aptID1,
         dateTime: dateTimeForAppointment7AM,
-        dateOfAppointment: 'February 05, 2020',
+        dateOfAppointment: 'February 05, 2021',
         appointmentStatus: 'InTransit',
         userId: userId,
         organizationId,
@@ -69,7 +69,7 @@ describe('listTestResults', () => {
       {
         id: aptID2,
         dateTime: dateTimeForAppointment7AM,
-        dateOfAppointment: 'February 05, 2020',
+        dateOfAppointment: 'February 05, 2021',
         appointmentStatus: 'Reported',
         userId: userId,
         organizationId,

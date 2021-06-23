@@ -18,7 +18,7 @@ jest.mock('../../../../../common/src/utils/logging-setup')
 jest.mock('../../../../../common/src/service/google/pub_sub')
 
 const testDataCreator = __filename.split('/packages/')[1]
-const dateForAppointments = '2020-03-05'
+const dateForAppointments = '2019-03-05'
 const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
 const deadlineSameDay = `${dateForAppointments}T23:59:00`
 const aptID1 = 'APT10'
@@ -31,7 +31,7 @@ describe('AdminScanHistoryController', () => {
       {
         id: aptID1,
         dateTime: dateTimeForAppointment1,
-        dateOfAppointment: 'February 05, 2020',
+        dateOfAppointment: 'February 05, 2019',
         appointmentStatus: 'InTransit',
         organizationId,
       },
