@@ -21,6 +21,7 @@ import {Access} from '../../../access/src/models/access'
 import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
+import {attestationAnswersFromLegacyToV1} from '../../../passport/src/models/attestation'
 import {AttestationService} from '../../../passport/src/services/attestation-service'
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {TemperatureService} from '../../../reservation/src/services/temperature.service'
@@ -333,7 +334,14 @@ export class ReportService {
     })
 
     const printableAttestations = attestations.map((attestation) => {
-      const answerCount = attestation.answers.length
+      let answerCount = attestation.answers.length
+
+      // if answers property is object it's legacy answers
+      if (!Array.isArray(attestation.answers)) {
+        attestation.answers = attestationAnswersFromLegacyToV1(attestation.answers)
+        answerCount = Object.entries(attestation.answers).length
+      }
+
       const questionnaire = questionnairesLookup[answerCount]
       if (!questionnaire) {
         console.warn(`no questionnaire found for attestation ${attestation.id}`)
