@@ -150,7 +150,7 @@ export class AuthGuard implements CanActivate {
 
     const labUserWithLabId = admin.isLabUser && !labId ? false : true
 
-    if ((seekLabAdmin && !admin.isLabUser) || !labUserWithLabId) {
+    if (seekLabAdmin && (!admin.isLabUser || !labUserWithLabId)) {
       console.warn(`Admin user ${userId} needs isLabUser`)
       return false
     }
