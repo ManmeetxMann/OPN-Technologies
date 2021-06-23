@@ -7,7 +7,7 @@ import {
 } from '../../../__seeds__/pcr-test-results'
 import {createComment, deleteCommentByTestDataCreator} from '../../../__seeds__/comments'
 import {createUser} from '../../../__seeds__/user'
-import {createTestRun, deleteTestRunsByDataCreator} from '../../../__seeds__/test-runs'
+import {deleteTestRunsByDataCreator} from '../../../__seeds__/test-runs'
 
 //jest.spyOn(global.console, 'error').mockImplementation()
 //jest.spyOn(global.console, 'info').mockImplementation()
@@ -32,7 +32,6 @@ describe('PCRTestResultController', () => {
   beforeAll(async () => {
     await deletePCRTestResultByTestDataCreator(testDataCreator)
     await Promise.all([
-
       createUser({id: userId, organizationIds: [organizationId]}, testDataCreator),
       createPCRTestResult(
         {
@@ -94,8 +93,8 @@ describe('PCRTestResultController', () => {
           testType: 'RapidAntigen',
         },
         testDataCreator,
-      )
-    ]) 
+      ),
+    ])
   })
 
   describe('get result list', () => {

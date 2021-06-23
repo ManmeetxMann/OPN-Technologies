@@ -5,15 +5,15 @@ import {
   createAppointment,
   deleteAppointmentByTestDataCreator,
 } from '../../../__seeds__/appointments'
-import {bulkDelete, deleteAll} from '../../../__seeds__/admin-scan-history'
+import {bulkDelete} from '../../../__seeds__/admin-scan-history'
 import {
   createPCRTestResult,
   deletePCRTestResultByTestDataCreator,
 } from '../../../__seeds__/pcr-test-results'
 
-import { AppointmentStatus, TestTypes } from '../../../../src/models/appointment'
-import { AppointmentsRepository } from '../../../../src/respository/appointments-repository'
-import { PCRTestResultsRepository } from '../../../../src/respository/pcr-test-results-repository'
+import {AppointmentStatus, TestTypes} from '../../../../src/models/appointment'
+import {AppointmentsRepository} from '../../../../src/respository/appointments-repository'
+import {PCRTestResultsRepository} from '../../../../src/respository/pcr-test-results-repository'
 
 import DataStore from '../../../../../common/src/data/datastore'
 
@@ -76,7 +76,7 @@ describe('AdminScanHistoryController', () => {
       expect(result.body.data.status).toBe(AppointmentStatus.InProgress)
       const [appointment, pcrTestResult] = await Promise.all([
         appointmentsRepository.findWhereEqual('barCode', 'BAR1'),
-        pcrTestResultsRepository.findWhereEqual('barCode', 'BAR1')
+        pcrTestResultsRepository.findWhereEqual('barCode', 'BAR1'),
       ])
       console.log(pcrTestResult)
       expect(appointment[0].appointmentStatus).toBe(AppointmentStatus.InProgress)

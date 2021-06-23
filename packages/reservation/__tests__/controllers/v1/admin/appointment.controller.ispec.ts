@@ -110,7 +110,7 @@ describe('AdminAppointmentController', () => {
           transportDate: dateForAppointments,
         },
         testDataCreator,
-      )
+      ),
     ])
   })
 
