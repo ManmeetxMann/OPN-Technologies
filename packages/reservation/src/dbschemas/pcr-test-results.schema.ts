@@ -72,5 +72,5 @@ export default Joi.object({
     autoResult: Joi.string().required(),
     resultDate: Joi.string().required(),
     notify: Joi.boolean().required(),
-  }),
+  }).allow(null),
 })
