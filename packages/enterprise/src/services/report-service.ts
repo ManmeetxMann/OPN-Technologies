@@ -125,7 +125,6 @@ export class ReportService {
     }
 
     const enteredAt = (status: PassportStatus, timestamp: string | null): string | null => {
-      console.log('Timestamp', timestamp)
       if (!timestamp) return null
       return nullOrISOString(status, timestamp)
     }
