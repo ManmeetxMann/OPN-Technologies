@@ -13,7 +13,7 @@ import {
 } from '@opn-services/test/utils'
 
 import {PatientTestUtility} from '../utils/patient'
-import {UserStatus} from '@opn-common-v1/data/user-status'
+import {UserCreator, UserStatus} from '@opn-common-v1/data/user-status'
 import {createOrganization, deleteOrganization} from '@opn-services/test/utils/organization'
 
 jest.mock('@opn-services/common/services/firebase/firebase-auth.service')
@@ -48,7 +48,7 @@ describe('Check user sync (e2e)', () => {
         organizationIds: [organizationId],
         status: UserStatus.NEW,
         firstName: newUserFirstName,
-        syncUser: true,
+        syncUser: UserCreator.syncFromTestsRequiredPatient,
       },
       testDataCreator,
     )
@@ -59,7 +59,7 @@ describe('Check user sync (e2e)', () => {
         organizationIds: [organizationId],
         status: UserStatus.CONFIRMED,
         firstName: confirmedUserFirstName,
-        syncUser: true,
+        syncUser: UserCreator.syncFromTestsRequiredPatient,
       },
       testDataCreator,
     )
@@ -89,7 +89,7 @@ describe('Check user sync (e2e)', () => {
         .put(`${url}/email/verify`)
         .set(headers)
         .send()
-      console.log(111111, response.body)
+
       expect(response.status).toBe(200)
       done()
     }, 5000)

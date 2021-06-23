@@ -15,7 +15,7 @@ export const createUser = async (
     email?: string
     firstName?: string
     status?: string
-    syncUser?: boolean
+    syncUser?: string
   },
   testDataCreator: string,
 ): Promise<void> => {
@@ -40,7 +40,7 @@ export const createUser = async (
       createdAt: firestore.Timestamp.fromDate(new Date()),
       updatedAt: null,
     },
-    creator: dataOverwrite.syncUser ? true : UserCreator.syncFromTests,
+    creator: dataOverwrite.syncUser ? dataOverwrite.syncUser : UserCreator.syncFromTests,
     testDataCreator,
   }
 
