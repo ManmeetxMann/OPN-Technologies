@@ -203,6 +203,7 @@ export class PatientService {
       isEmailVerified: false,
       authUserId: data.authUserId,
       active: false,
+      photo: data.photoUrl ?? this.configService.get('DEFAULT_USER_PHOTO'),
       organizationIds: [this.configService.get('PUBLIC_ORG_ID')],
       creator: UserCreator.syncFromSQL,
     } as AuthUser
@@ -236,6 +237,7 @@ export class PatientService {
     await this.addInPublicGroup(firebaseUser.id)
     data.firebaseKey = firebaseUser.id
     data.isEmailVerified = false
+    data.photoUrl = data.photoUrl ?? this.configService.get('DEFAULT_USER_PHOTO')
     const patient = await this.createPatient(data as PatientCreateDto, tokenSource)
     data.idPatient = patient.idPatient
 

@@ -24,4 +24,8 @@ export class HomeTestPatientDto {
   @ApiProperty()
   @IsBoolean()
   isEmailVerified?: boolean
+
+  @ApiProperty()
+  @IsString()
+  photoUrl?: string
 }
