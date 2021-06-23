@@ -13,7 +13,12 @@ import {AppoinmentService} from './appoinment.service'
 
 //Types
 import {ReservationPushTypes} from '../types/appointment-push'
-import {PushMessages, DbBatchAppointments} from '../../../common/src/types/push-notification'
+import {
+  PushMessages,
+  DbBatchAppointments,
+  PushNotificationType,
+  PushNotificationMessageData,
+} from '../../../common/src/types/push-notification'
 import {Registration} from '../../../common/src/data/registration'
 
 /**
@@ -169,7 +174,13 @@ export class ReservationPushService {
                 ),
               },
               data: {
+                title: this.messageTitle[appointmentPushType],
+                body: this.messagesBody[appointmentPushType](
+                  appointment.dateTime,
+                  appointment.locationName,
+                ),
                 appointmentId: appointment.id,
+                notificationType: PushNotificationType.APPOINTMENT,
               },
             })
           } else {
@@ -241,7 +252,7 @@ export class ReservationPushService {
   async sendPushByUserId(
     userId: string,
     messageType: ReservationPushTypes,
-    data?: {[key: string]: string},
+    data?: PushNotificationMessageData,
   ): Promise<unknown> {
     const tokens = await this.registrationService.findForUserIds([userId])
     const recentUserToken = this.getRecentUsersToken(tokens)
@@ -254,7 +265,11 @@ export class ReservationPushService {
           title: this.messageTitle[messageType],
           body: this.messagesBody[messageType](null, null),
         },
-        data,
+        data: {
+          ...data,
+          title: data.title || this.messageTitle[messageType],
+          body: data.body || this.messagesBody[messageType](null, null),
+        },
       }
       const pushResult = await sendBulkPushByToken([message])
       return pushResult
