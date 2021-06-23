@@ -21,6 +21,8 @@ describe('AdminLabController', () => {
         id: labID1,
         createdAt: dateTimeForCreation1,
         userID: 'USER1',
+        sendORMRequest: true,
+        poolingEnabled: true,
       },
       testDataCreator,
     )
@@ -46,6 +48,8 @@ describe('AdminLabController', () => {
           name: labName,
           templateId: '1',
           assay: 'TEST',
+          sendORMRequest: true,
+          poolingEnabled: true,
         })
         .then(async function () {
           const url = `/reservation/admin/api/v1/labs`
