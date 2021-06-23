@@ -110,6 +110,8 @@ import {
 } from '../utils/push-notification.helper'
 import {OpnSources} from '../../../common/src/data/registration'
 
+const POOL_BARCODE_FIRST_LETTER = 'P'
+
 export class PCRTestResultsService {
   private datastore = new DataStore()
   private testResultsReportingTracker = new TestResultsReportingTrackerRepository(this.datastore)
@@ -181,6 +183,10 @@ export class PCRTestResultsService {
       return ResultTypes.Indeterminate
     }
     return ResultTypes.Negative
+  }
+
+  private isPoolBarcode(resultId): boolean {
+    return resultId[0] === POOL_BARCODE_FIRST_LETTER
   }
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest): Promise<string> {
@@ -275,7 +281,6 @@ export class PCRTestResultsService {
   }
 
   async processPCRTestResult(reportTrackerId: string, resultId: string): Promise<void> {
-    const reportTracker = await this.testResultsReportingTracker.get(reportTrackerId)
     const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
       this.datastore,
       reportTrackerId,
@@ -306,7 +311,7 @@ export class PCRTestResultsService {
       ResultReportStatus.Processing,
     )
     try {
-      const isPooledResults = reportTracker?.pooledResults ?? false
+      const isPooledResults = this.isPoolBarcode(pcrResults.data.barCode)
 
       const metaData: TestResultsMetaData = {
         notify: pcrResults.data.notify,
@@ -749,10 +754,9 @@ export class PCRTestResultsService {
     adminId: string,
   ): Promise<CreateReportForPCRResultsResponse> {
     let reportTrackerId: string
-    const pooledResults = testResultData?.pooledResults ?? false
 
     if (!testResultData.reportTrackerId) {
-      const reportTracker = await this.testResultsReportingTracker.save({pooledResults})
+      const reportTracker = await this.testResultsReportingTracker.save()
       reportTrackerId = reportTracker.id
     } else {
       reportTrackerId = testResultData.reportTrackerId
@@ -777,7 +781,6 @@ export class PCRTestResultsService {
         templateId,
         labId,
         fileName: fileName || null,
-        pooledResults,
       }
       if (result.comment) {
         data.comment = result.comment
