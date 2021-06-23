@@ -3,16 +3,32 @@ import * as _ from 'lodash'
 
 import {PushMessages} from '../../types/push-notification'
 
-type Recipient = {
-  token: string
-  data?: Record<string, string | null | undefined>
+// type Recipient = {
+//   token: string
+//   data?: Record<string, string | null | undefined>
+// }
+
+export enum PushNotificationType {
+  APPOINTMENT = 'APPOINTMENT',
+  RESULT = 'RESULT',
+}
+
+export type PushNotificationMessage = admin.messaging.Message & {
+  data: PushNotificationMessageData
+  token?: string
+}
+
+export type PushNotificationMessageData = {
+  resultId?: string
+  appointmentId?: string
+  notificationType?: PushNotificationType
 }
 
 export const sendMessage = (
   title: string,
   body: string,
   imageUrl: string,
-  recipients: Recipient[],
+  recipients: PushNotificationMessage[],
 ): Promise<unknown> => {
   const messages = recipients.map(
     ({token, data}): admin.messaging.Message => ({

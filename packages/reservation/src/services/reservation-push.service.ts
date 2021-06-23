@@ -170,7 +170,6 @@ export class ReservationPushService {
               },
               data: {
                 appointmentId: appointment.id,
-                scheduledAppointmentType: appointmentPushType,
               },
             })
           } else {

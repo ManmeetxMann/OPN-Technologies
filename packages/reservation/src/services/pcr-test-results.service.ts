@@ -1195,6 +1195,8 @@ export class PCRTestResultsService {
     const message: FHPushNotificationMessage = {
       data: {
         notificationType: null,
+        title: getNotificationTitle(result),
+        body: getNotificationBody(result),
       },
       notification: {
         title: getNotificationTitle(result),
