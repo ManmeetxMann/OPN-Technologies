@@ -114,10 +114,20 @@ export class ReportService {
     })
     const nowMoment = moment(now())
     const nullOrISOString = (status: PassportStatus, timestamp: string | null): string | null => {
-      if (!timestamp) return null
       if (status !== PassportStatuses.Proceed) return null
-      if (nowMoment.isSameOrBefore(safeTimestamp(timestamp))) return null
       return safeTimestamp(timestamp).toISOString()
+    }
+
+    const exitAt = (status: PassportStatus, timestamp: string | null): string | null => {
+      if (!timestamp) return null
+      if (moment(safeTimestamp(nowMoment)).isSameOrBefore(safeTimestamp(timestamp))) return null
+      return nullOrISOString(status, timestamp)
+    }
+
+    const enteredAt = (status: PassportStatus, timestamp: string | null): string | null => {
+      console.log('Timestamp', timestamp)
+      if (!timestamp) return null
+      return nullOrISOString(status, timestamp)
     }
 
     const accesses = data.map(({user, status, access}) => ({
@@ -128,8 +138,8 @@ export class ReportService {
       dependants: access?.dependants,
       userId: user.id,
       // remove not-yet-exited exitAt
-      exitAt: nullOrISOString(status, access?.exitAt),
-      enteredAt: nullOrISOString(status, access?.enteredAt),
+      exitAt: exitAt(status, access?.exitAt),
+      enteredAt: enteredAt(status, access?.enteredAt),
       parentUserId: user.delegates?.length ? user.delegates[0] : null,
       status,
       user,
