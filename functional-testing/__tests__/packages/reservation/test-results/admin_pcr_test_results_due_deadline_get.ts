@@ -1,7 +1,9 @@
-const frisby = require('frisby');
+import frisby from 'frisby'
+import helpersCommon from '../../../../helpers/helpers_common'
+import testProfile from '../../../../test_data/test_profile'
+
 const Joi = frisby.Joi;
-const helpersCommon = require('helpers_common');
-const testProfile = require('test_profile');
+
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 const organizationId = testProfile.get().organizationId;
 

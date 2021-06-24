@@ -1,6 +1,7 @@
-const frisby = require('frisby');
-const moment = require('moment');
-const helpersCommon = require('helpers_common');
+import frisby from 'frisby'
+import helpersCommon from '../../../../helpers/helpers_common'
+import moment from 'moment';
+
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 const todaysDate = moment(new Date()).format('YYYY-MM-DD');
 

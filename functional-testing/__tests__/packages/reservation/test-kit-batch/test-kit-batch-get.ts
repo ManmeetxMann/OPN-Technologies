@@ -1,5 +1,5 @@
-const frisby = require('frisby');
-const helpersCommon = require('helpers_common');
+import frisby from 'frisby'
+import helpersCommon from '../../../../helpers/helpers_common'
 
 // Do setup first
 frisby.globalSetup({
@@ -11,13 +11,13 @@ const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 
 /**
  * @group reservation-service
- * @group /reservation/admin/api/v1/admin-scan-history
- * @group admin-scan-history-get
+ * @group /reservation/admin/api/v1/test-kit-batch
+ * @group test-kit-batch-get
  */
-describe('admin-scan-history-get', () => {
-  test('able to successfully get scan history', () => {
+describe('Get test-kit-batch', () => {
+  test('able to successfully get test-kit-batch', () => {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${reservationServiceUrl}/reservation/admin/api/v1/admin-scan-history?type=RapidAntigen`;
+      const url = `${reservationServiceUrl}/reservation/admin/api/v1/test-kit-batch`;
       return frisby
           .setup({
             request: {
@@ -27,7 +27,7 @@ describe('admin-scan-history-get', () => {
             },
           })
           .get(url)
-          .inspectBody()
+          // .inspectBody()
           .expect('status', 200);
     });
   });

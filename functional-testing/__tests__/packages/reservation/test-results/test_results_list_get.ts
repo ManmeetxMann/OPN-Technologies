@@ -1,9 +1,9 @@
-const frisby = require('frisby');
-const Joi = frisby.Joi;
-const helpersCommon = require('helpers_common');
+import frisby from 'frisby'
+import helpersCommon from '../../../../helpers/helpers_common'
+import testProfile from '../../../../test_data/test_profile'
 
-const testProfile = require('test_profile');
-const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
+const Joi = frisby.Joi
+const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL
 // const timeZone = process.env.DEFAULT_TIME_ZONE
 const organizationId = testProfile.get().organizationId;
 
@@ -46,12 +46,12 @@ beforeAll(function() {
 /**
  * @group reservation-service
  * @group /reservation/api/v1/test-results
- * @group get-test-result-details-for-user
+ * @group get-test-result-list-for-user
  */
-describe('Get: /reservation/api/v1/test-results details', () => {
+describe('Get: /reservation/api/v1/test-results', () => {
   test('Get Test Results for User should Success', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${reservationServiceUrl}/reservation/api/v1/test-results/VNaoFdu07w9Ak3208HRZ`;
+      const url = `${reservationServiceUrl}/reservation/api/v1/test-results`;
       console.log(url);
       return frisby
           .setup({

@@ -1,5 +1,6 @@
-const frisby = require('frisby');
-const helpersCommon = require('helpers_common');
+import frisby from 'frisby'
+import helpersCommon from '../../../../helpers/helpers_common'
+
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 
 // Do setup first
@@ -9,16 +10,15 @@ frisby.globalSetup({
   },
 });
 
-
 /**
  * @group reservation-service
- * @group /reservation/admin/api/v1/pcr-test-results/confirm
- * @group confirm-pcr-test-results
+ * @group /reservation/admin/api/v1/pcr-test-results/history
+ * @group get-pcr-results-history
  */
-describe('PCR TestResultsController', () => {
-  test('Should be able to create PCR test results Successfully', function() {
+describe('Get BarCode History', () => {
+  test('Get BarCode History', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${reservationServiceUrl}/reservation/admin/api/v1/pcr-test-results/confirm`;
+      const url = `${reservationServiceUrl}/reservation/admin/api/v1/pcr-test-results/history`;
       return frisby
           .setup({
             request: {
@@ -29,11 +29,8 @@ describe('PCR TestResultsController', () => {
           })
           .post(
               url,
-
               {
-                'barCode': 'TEST10000146',
-                'action': 'MarkAsPositive', // Indeterminate, MarkAsPositive, MarkAsNegative
-                'labId': 'k0qbPDqTwqitKUwlGHye',
+                'barcode': ['A1237', 'A1236', 'A1182', 'A1169', 'A1240'],
               },
           )
           .expect('status', 200)

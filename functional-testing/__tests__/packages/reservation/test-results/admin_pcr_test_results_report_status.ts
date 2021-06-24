@@ -1,6 +1,7 @@
-const frisby = require('frisby');
-const helpersCommon = require('helpers_common');
-// const testProfile = require('test_profile');
+import frisby from 'frisby'
+import helpersCommon from '../../../../helpers/helpers_common'
+
+const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 
 // Do setup first
 frisby.globalSetup({
@@ -9,17 +10,15 @@ frisby.globalSetup({
   },
 });
 
-const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
-// const organizationId = testProfile.get().organizationId
 /**
  * @group reservation-service
- * @group /reservation/admin/api/v1/appointments
- * @group get-my-appointment
+ * @group /reservation/admin/api/v1/pcr-test-results-bulk/report-status
+ * @group get-bulk-report-status
  */
-describe('get:appointments', () => {
-  test('get my appointments successfully', function() {
+describe('Get Report Status', () => {
+  test('Get Report Status', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${reservationServiceUrl}/reservation/api/v1/appointments/self`;
+      const url = `${reservationServiceUrl}/reservation/admin/api/v1/pcr-test-results-bulk/report-status?reportTrackerId=rXVZ2iTC4aNmlDJV8FHj`;
       return frisby
           .setup({
             request: {

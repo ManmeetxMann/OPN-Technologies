@@ -1,5 +1,6 @@
-const frisby = require('frisby');
-const helpersCommon = require('helpers_common');
+import frisby from 'frisby'
+import helpersCommon from '../../../../helpers/helpers_common'
+
 
 // Do setup first
 frisby.globalSetup({

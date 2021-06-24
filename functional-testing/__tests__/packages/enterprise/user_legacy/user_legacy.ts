@@ -1,6 +1,6 @@
-const frisby = require('frisby');
-const helpersCommon = require('helpers_common');
-const testProfile = require('test_profile');
+import frisby from 'frisby'
+import helpersCommon from '../../../../helpers/helpers_common'
+import testProfile from '../../../../test_data/test_profile'
 
 // Do setup first
 frisby.globalSetup({
@@ -16,7 +16,7 @@ const organizationId = testProfile.get().organizationId;
 describe('UserController', () => {
   describe('auth:confirmation', () => {
     test('should return success for auth confirmation', () => {
-      return helpers_common.runAuthenticatedTest(frisby).then(function(token) {
+      return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
         const url = `${enterpriseServiceUrl}/enterprise/api/v3/users/auth/confirmation`;
         return frisby
             .post(

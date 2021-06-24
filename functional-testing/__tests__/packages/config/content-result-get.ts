@@ -1,5 +1,5 @@
-const frisby = require('frisby');
-const helpersCommon = require('helpers_common');
+import frisby from 'frisby'
+import helpersCommon from '../../../helpers/helpers_common'
 
 // Do setup first
 frisby.globalSetup({
@@ -7,17 +7,17 @@ frisby.globalSetup({
     headers: helpersCommon.headers(),
   },
 });
-const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
+const serviceUrl = process.env.CONFIG_SERVICE_URL;
 
 /**
  * @group reservation-service
- * @group /reservation/admin/api/v1/test-kit-batch
- * @group test-kit-batch-get
+ * @group /config/api/v1/content/result
+ * @group content-result-get
  */
-describe('Get test-kit-batch', () => {
-  test('able to successfully get test-kit-batch', () => {
+describe('Get content-result-get', () => {
+  test('able to successfully get content-result-get', () => {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${reservationServiceUrl}/reservation/admin/api/v1/test-kit-batch`;
+      const url = `${serviceUrl}/config/api/v1/content/result?doctor=1&lang=en`;
       return frisby
           .setup({
             request: {
