@@ -2286,7 +2286,7 @@ export class PCRTestResultsService {
     const results = await this.getDBTestResultsByIds(ids)
 
     const updatedData = await Promise.all(
-      results.map(async (result) => {
+      results.map((result) => {
         return this.updatePoolBarcodeId(result.id, null)
       }),
     )
