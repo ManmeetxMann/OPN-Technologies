@@ -3,8 +3,8 @@ import {BadRequestException} from '../../../../../common/src/exceptions/bad-requ
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
+import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {getUserId} from '../../../../../common/src/utils/auth'
-import {actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {TestRunsPoolCreate} from '../../../models/test-runs-pool'
 import {TestRunsPoolService} from '../../../services/test-runs-pool.service'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
@@ -38,6 +38,12 @@ class AdminTestRunsPoolController implements IControllerBase {
       this.path + '/test-runs-pools/:testRunsPoolId',
       authorizationMiddleware([RequiredUserPermission.LabAdmin]),
       this.updateTestRunsPool,
+    )
+
+    innerRouter.delete(
+      this.path + '/test-runs-pools/:testRunsPoolId',
+      authorizationMiddleware([RequiredUserPermission.LabAdmin]),
+      this.deleteTestRunsPool,
     )
 
     innerRouter.put(
@@ -157,6 +163,25 @@ class AdminTestRunsPoolController implements IControllerBase {
       ])
 
       res.json(actionSuccess())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  deleteTestRunsPool = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const testRunPool = await this.testRunsPoolService.getById(req.params.testRunsPoolId)
+
+      if (!testRunPool) {
+        throw new ResourceNotFoundException('Test runs pool with given id not found')
+      }
+
+      if (testRunPool.testResultIds.length > 0) {
+        await this.pcrTestResultsService.removePoolIdFromResults(testRunPool.testResultIds)
+      }
+      await this.testRunsPoolService.deleteTestRunsPool(req.params.testRunsPoolId)
+
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }

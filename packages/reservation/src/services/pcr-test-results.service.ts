@@ -2278,7 +2278,19 @@ export class PCRTestResultsService {
     return this.pcrTestResultsWithAdditionalInfo(pcrResults, {testRunId})
   }
 
-  async updatePoolBarcodeId(id: string, barcodeId: string): Promise<PCRTestResultDBModel> {
+  async updatePoolBarcodeId(id: string, barcodeId: string | null): Promise<PCRTestResultDBModel> {
     return this.pcrTestResultsRepository.updateProperty(id, 'poolBarcodeId', barcodeId)
+  }
+
+  async removePoolIdFromResults(ids: string[]): Promise<PCRTestResultDBModel[]> {
+    const results = await this.getDBTestResultsByIds(ids)
+
+    const updatedData = await Promise.all(
+      results.map((result) => {
+        return this.updatePoolBarcodeId(result.id, null)
+      }),
+    )
+
+    return updatedData
   }
 }
