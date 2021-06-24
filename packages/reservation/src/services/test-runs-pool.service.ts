@@ -33,6 +33,7 @@ export class TestRunsPoolService {
 
   async addTestResultInPool(id: string, testResultId: string): Promise<TestRunsPool> {
     const testResult = await this.pcrTestResultsService.getPCRResultsById(testResultId)
+    const pool = await this.getById(id)
 
     if (!testResult) {
       throw new ResourceNotFoundException('Test result with given id not found')
@@ -53,6 +54,9 @@ export class TestRunsPoolService {
     }
 
     const {testResultIds} = await this.getById(id)
+
+    await this.pcrTestResultsService.updatePoolBarcodeId(testResult.id, pool.poolBarCode)
+
     return this.update(id, {testResultIds: [...testResultIds, testResultId]})
   }
 
