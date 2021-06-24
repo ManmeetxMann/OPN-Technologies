@@ -84,6 +84,7 @@ class AdminTestRunsPoolController implements IControllerBase {
 
       const testResults = await this.pcrTestResultsService.getTestResultsByIds(
         testRunPool.testResultIds,
+        testRunPool.testRunId,
       )
 
       const responseDto = {
