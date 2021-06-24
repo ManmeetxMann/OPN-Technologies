@@ -233,6 +233,7 @@ const isAllowed = (
     return true
   }
 
+  const seekLabAdmin = listOfRequiredPermissions.includes(RequiredUserPermission.LabAdmin)
   const seekLabOrOrgAppointment = listOfRequiredPermissions.includes(
     RequiredUserPermission.LabOrOrgAppointments,
   )
@@ -280,6 +281,10 @@ const isAllowed = (
 
   const labUserWithLabId = admin.isLabUser && !labId ? false : true
 
+  if (seekLabAdmin && (!admin.isLabUser || !labUserWithLabId)) {
+    console.warn(`Admin user ${userId} needs isLabUser`)
+    return false
+  }
   if (
     seekLabOrOrgAppointment &&
     ((!admin?.isLabAppointmentsAdmin && !admin?.isTestAppointmentsAdmin) || !labUserWithLabId)

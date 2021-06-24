@@ -51,7 +51,6 @@ import {
   decodeBookingLocationId,
   encodeAvailableTimeId,
 } from '../utils/base64-converter'
-import {Enterprise} from '../adapter/enterprise'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {UserAddressService} from '../../../enterprise/src/services/user-address-service'
 import {LabService} from './lab.service'
@@ -116,7 +115,6 @@ export class AppoinmentService {
   private userAddressService = new UserAddressService()
   private labService = new LabService()
   private packageService = new PackageService()
-  private enterpriseAdapter = new Enterprise()
   private sqlService = new SqlService()
 
   private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
@@ -645,7 +643,7 @@ export class AppoinmentService {
       city: acuityAppointment.city,
       province: acuityAppointment.province,
       country: acuityAppointment.country,
-      patientId,
+      patientId: patientId ?? null,
     }
   }
 
@@ -742,7 +740,7 @@ export class AppoinmentService {
   async makeCanceled(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
     await this.appointmentsRepository.addStatusHistoryById(
       appointmentId,
-      AppointmentStatus.InProgress,
+      AppointmentStatus.Canceled,
       userId,
     )
     const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
@@ -852,6 +850,7 @@ export class AppoinmentService {
         testResult.id,
         ThirdPartySyncSource.TransportRun,
       )
+      await this.makeInProgress(appointmentId, null, data.userId)
     }
 
     await this.appointmentsRepository.addStatusHistoryById(
@@ -1864,6 +1863,7 @@ export class AppoinmentService {
 
     return user.id
   }
+
   private async checkWithEmail(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
     const user = await this.userService.findOneByEmail(acuityAppointment.email)
     if (

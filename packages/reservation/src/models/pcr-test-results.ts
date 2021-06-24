@@ -62,6 +62,7 @@ export enum PCRResultActionsForConfirmation {
   Indeterminate = 'Indeterminate',
   MarkAsPositive = 'MarkAsPositive',
   MarkAsNegative = 'MarkAsNegative',
+  MarkAsInvalid = 'MarkAsInvalid',
 }
 
 export enum PCRResultActionsAllowedResend {
@@ -86,6 +87,13 @@ export enum ResultReportStatus {
   SentPreliminaryPositive = 'Sent "Preliminary Positive"',
   SentPresumptivePositive = 'Sent "Presumptive Positive"',
   Skipped = 'Skipped',
+}
+
+export type PCRTestConfirmationActionResult = {
+  action: PCRResultActions
+  finalResult: ResultTypes
+  notificationType: EmailNotficationTypes
+  recollected: boolean
 }
 
 export type PCRTestResultConfirmRequest = {

@@ -1,6 +1,7 @@
 import {FirebaseManager} from '@opn-services/common/services/firebase/firebase.service'
 
 import {firestore} from 'firebase-admin'
+import {UserCreator} from '@opn-common-v1/data/user'
 
 const collectionName = 'users'
 
@@ -12,13 +13,14 @@ export const createUser = async (
     id: string
     organizationIds: string[]
     email?: string
+    firstName?: string
   },
   testDataCreator: string,
 ): Promise<void> => {
   const data = {
     id: dataOverwrite.id,
     registrationId: null,
-    firstName: 'Test',
+    firstName: dataOverwrite.firstName ?? 'Test',
     lastName: 'Test',
     dateOfBirth: '2021-01-01',
     base64Photo: '',
@@ -35,6 +37,7 @@ export const createUser = async (
       createdAt: firestore.Timestamp.fromDate(new Date()),
       updatedAt: null,
     },
+    creator: UserCreator.syncFromTests,
     testDataCreator,
   }
 

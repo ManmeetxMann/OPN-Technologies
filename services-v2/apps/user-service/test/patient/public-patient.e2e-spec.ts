@@ -40,7 +40,7 @@ jest.mock('@opn-enterprise-v1/repository/user.repository', () => {
   }
 })
 
-jest.setTimeout(10000)
+jest.setTimeout(20000)
 
 const organizationId = 'PATIENT_ORG_BASIC'
 const newOrganizationId = 'NEW_PATIENT_ORG_BASIC'
@@ -135,7 +135,7 @@ describe('PatientController (e2e)', () => {
 
     const createdPatient = await patientTestUtility.createPatient(
       {
-        firstName: 'PublicPatientTest',
+        firstName: currentUserName,
         email: currentUserEmail,
         firebaseKey: userId,
       },

@@ -1,4 +1,5 @@
-import admin, {ServiceAccount} from 'firebase-admin'
+import admin, {ServiceAccount, firestore} from 'firebase-admin'
+
 import {FieldValue} from '@google-cloud/firestore'
 import {Config} from './config'
 
@@ -36,4 +37,5 @@ export class FirebaseManager {
 }
 
 export {admin as firebaseAdmin}
+export {firestore}
 export {FieldValue}

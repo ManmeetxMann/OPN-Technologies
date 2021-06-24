@@ -16,6 +16,7 @@ import {
   dateToDateTime,
   formatDateRFC822Local,
   formatStringDateRFC822Local,
+  getDateFromDatetime,
   getFirestoreTimeStampDate,
   makeDeadlineForFilter,
 } from '../utils/datetime.helper'
@@ -30,6 +31,7 @@ import {ReservationPushService} from './reservation-push.service'
 //repository
 import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
+import {TestRunsPoolRepository} from '../respository/test-runs-pool.repository'
 
 import {
   TestResultsReportingTrackerPCRResultsRepository,
@@ -49,6 +51,7 @@ import {
   PCRResultPDFType,
   PcrResultTestActivityAction,
   PCRSendResultDTO,
+  PCRTestConfirmationActionResult,
   PCRTestResultByDeadlineListDTO,
   PCRTestResultConfirmRequest,
   PCRTestResultDBModel,
@@ -107,11 +110,14 @@ import {
 } from '../utils/push-notification.helper'
 import {OpnSources} from '../../../common/src/data/registration'
 
+const POOL_BARCODE_FIRST_LETTER = 'P'
+
 export class PCRTestResultsService {
   private datastore = new DataStore()
   private testResultsReportingTracker = new TestResultsReportingTrackerRepository(this.datastore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.datastore)
   private appointmentsRepository = new AppointmentsRepository(this.datastore)
+  private testRunsPoolRepository = new TestRunsPoolRepository(this.datastore)
 
   private appointmentService = new AppoinmentService()
   private organizationService = new OrganizationService()
@@ -124,6 +130,7 @@ export class PCRTestResultsService {
     ResultTypes.Positive,
     ResultTypes.PresumptivePositive,
     ResultTypes.Indeterminate,
+    ResultTypes.Inconclusive,
   ]
   private testRunsService = new TestRunsService()
   private attestationService = new AttestationService()
@@ -178,6 +185,10 @@ export class PCRTestResultsService {
     return ResultTypes.Negative
   }
 
+  private isPoolBarcode(resultId): boolean {
+    return resultId[0] === POOL_BARCODE_FIRST_LETTER
+  }
+
   async confirmPCRResults(data: PCRTestResultConfirmRequest): Promise<string> {
     //Validate Result Exists for barCode and throws exception
     const pcrResultHistory = await this.getPCRResultsByBarCode(data.barCode)
@@ -194,27 +205,12 @@ export class PCRTestResultsService {
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
-    let finalResult: ResultTypes = ResultTypes.Indeterminate
-    let notificationType = EmailNotficationTypes.Indeterminate
-    let recollected = false
-    switch (data.action) {
-      case PCRResultActionsForConfirmation.MarkAsNegative: {
-        finalResult = ResultTypes.Negative
-        notificationType = EmailNotficationTypes.MarkAsConfirmedNegative
-        break
-      }
-      case PCRResultActionsForConfirmation.MarkAsPositive: {
-        finalResult = ResultTypes.Positive
-        notificationType = EmailNotficationTypes.MarkAsConfirmedPositive
-        break
-      }
-      case PCRResultActionsForConfirmation.Indeterminate: {
-        finalResult = ResultTypes.Inconclusive
-        notificationType = EmailNotficationTypes.Indeterminate
-        recollected = true
-        break
-      }
-    }
+    const {
+      finalResult,
+      notificationType,
+      recollected,
+      action,
+    } = this.getConfirmationResultForAction(data.action)
     const newPCRResult = await this.pcrTestResultsRepository.createNewTestResults({
       appointment,
       adminId: data.adminId,
@@ -226,6 +222,12 @@ export class PCRTestResultsService {
       previousResult: latestPCRResult.result,
       labId: labId,
       recollected,
+      resultMetaData: {
+        notify: true,
+        resultDate: getDateFromDatetime(new Date()),
+        action: action,
+        autoResult: finalResult,
+      },
     })
 
     const lab = await this.labService.findOneById(labId)
@@ -237,6 +239,46 @@ export class PCRTestResultsService {
     )
 
     return newPCRResult.id
+  }
+
+  getConfirmationResultForAction(
+    action: PCRResultActionsForConfirmation,
+  ): PCRTestConfirmationActionResult {
+    const result: PCRTestConfirmationActionResult = {
+      finalResult: ResultTypes.Indeterminate,
+      notificationType: EmailNotficationTypes.Indeterminate,
+      recollected: false,
+      action: PCRResultActions.RecollectAsInconclusive,
+    }
+
+    switch (action) {
+      case PCRResultActionsForConfirmation.MarkAsNegative: {
+        result.finalResult = ResultTypes.Negative
+        result.notificationType = EmailNotficationTypes.MarkAsConfirmedNegative
+        result.action = PCRResultActions.MarkAsNegative
+        return result
+      }
+      case PCRResultActionsForConfirmation.MarkAsPositive: {
+        result.finalResult = ResultTypes.Positive
+        result.notificationType = EmailNotficationTypes.MarkAsConfirmedPositive
+        result.action = PCRResultActions.MarkAsPositive
+        return result
+      }
+      case PCRResultActionsForConfirmation.Indeterminate: {
+        result.finalResult = ResultTypes.Inconclusive
+        result.notificationType = EmailNotficationTypes.Indeterminate
+        result.recollected = true
+        result.action = PCRResultActions.RecollectAsInconclusive
+        return result
+      }
+      case PCRResultActionsForConfirmation.MarkAsInvalid: {
+        result.finalResult = ResultTypes.Invalid
+        result.notificationType = EmailNotficationTypes.Indeterminate
+        result.recollected = true
+        result.action = PCRResultActions.RecollectAsInvalid
+        return result
+      }
+    }
   }
 
   async deleteTestResults(id: string): Promise<void> {
@@ -274,6 +316,8 @@ export class PCRTestResultsService {
       ResultReportStatus.Processing,
     )
     try {
+      const isPooledResults = this.isPoolBarcode(pcrResults.data.barCode)
+
       const metaData: TestResultsMetaData = {
         notify: pcrResults.data.notify,
         resultDate: pcrResults.data.resultDate,
@@ -283,7 +327,8 @@ export class PCRTestResultsService {
       if (pcrResults.data.comment) {
         metaData.comment = pcrResults.data.comment
       }
-      const pcrTestResult = await this.handlePCRResultSaveAndSend({
+
+      const saveAndSendPayload = {
         metaData,
         resultAnalysis: pcrResults.data.resultAnalysis,
         barCode: pcrResults.data.barCode,
@@ -292,7 +337,32 @@ export class PCRTestResultsService {
         adminId: pcrResults.adminId,
         templateId: pcrResults.data.templateId,
         labId: pcrResults.data.labId,
-      })
+      }
+
+      /**
+       * If got pooled results
+       * - query pool by `poolBarcode` & fetch pooled tests results
+       * - Send test results one by one
+       */
+      const handleSaveAndSend = async () => {
+        if (isPooledResults) {
+          const pool = await this.testRunsPoolRepository.getByBarcode(pcrResults.data.barCode)
+          const poolTestResults = await this.getTestResultsByIds(pool.testResultIds)
+          const poolSaveAndSend = poolTestResults.map((result) =>
+            this.handlePCRResultSaveAndSend({
+              ...saveAndSendPayload,
+              barCode: result.barCode,
+            }),
+          )
+
+          const [result] = await Promise.all(poolSaveAndSend)
+          return result
+        } else {
+          return this.handlePCRResultSaveAndSend(saveAndSendPayload)
+        }
+      }
+
+      const pcrTestResult = await handleSaveAndSend()
 
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
         status: await this.getReportStatus(pcrResults.data.action, pcrTestResult.result),
@@ -689,6 +759,7 @@ export class PCRTestResultsService {
     adminId: string,
   ): Promise<CreateReportForPCRResultsResponse> {
     let reportTrackerId: string
+
     if (!testResultData.reportTrackerId) {
       const reportTracker = await this.testResultsReportingTracker.save()
       reportTrackerId = reportTracker.id
@@ -902,10 +973,14 @@ export class PCRTestResultsService {
       const pcrResultDataForEmail = {
         adminId,
         resultId: testResult.id,
-        labAssay: lab.assay,
+        labAssay: lab?.assay ?? null,
         ...appointment,
         ...pcrResultDataForDbUpdate,
       }
+
+      LogInfo('handlePCRResultSaveAndSend', 'PostPubSubForResultSend', {
+        message: `Notify is on, send result for ${barCode}`,
+      })
 
       this.postPubSubForResultSend(pcrResultDataForEmail, metaData.action, pcrResultRecorded.id)
     } else {
@@ -2178,5 +2253,9 @@ export class PCRTestResultsService {
     return !data.results.some(
       (result) => result.autoResult !== this.getAutoResult(result.resultAnalysis),
     )
+  }
+
+  getTestResultsByIds(ids: string[]): Promise<PCRTestResultDBModel[]> {
+    return this.pcrTestResultsRepository.findWhereIdIn(ids)
   }
 }

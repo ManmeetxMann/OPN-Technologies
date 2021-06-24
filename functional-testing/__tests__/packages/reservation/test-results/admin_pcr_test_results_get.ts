@@ -1,6 +1,6 @@
-const frisby = require('frisby');
+import frisby from 'frisby'
+import helpersCommon from '../../../../helpers/helpers_common'
 const Joi = frisby.Joi;
-const helpersCommon = require('helpers_common');
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 
 // Do setup first
@@ -47,7 +47,7 @@ beforeAll(function() {
 describe('Get: /reservation/admin/api/v1/pcr-test-results', () => {
   test('Get PCR Results for Organization should succeed', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${reservationServiceUrl}/reservation/admin/api/v1/pcr-test-results?date=2021-01-13&labId=k0qbPDqTwqitKUwlGHye`;
+      const url = `${reservationServiceUrl}/reservation/admin/api/v1/pcr-test-results?date=2021-06-16`;
       console.log(url);
       return frisby
           .setup({

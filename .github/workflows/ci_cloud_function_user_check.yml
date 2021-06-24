@@ -24,7 +24,7 @@ jobs:
       - uses: ./.github/actions/deploy-functions
         with:
           function_name: 'users-check'
-          secret_file_name: 'CF_USERS_CHECK'
+          secret_file_name: 'CF_USERS_SYNC_CHECK'
         name: Build & Deploy to Cloud Functions
         env:
           dev_service_account: ${{ secrets.DEV_GCP_CLOUDBUILD_SA_KEY}}

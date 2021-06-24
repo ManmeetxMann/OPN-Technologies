@@ -99,6 +99,7 @@ export class AuthGuard implements CanActivate {
       return true
     }
 
+    const seekLabAdmin = listOfRequiredPermissions.includes(RequiredUserPermission.LabAdmin)
     const seekLabOrOrgAppointment = listOfRequiredPermissions.includes(
       RequiredUserPermission.LabOrOrgAppointments,
     )
@@ -149,6 +150,10 @@ export class AuthGuard implements CanActivate {
 
     const labUserWithLabId = admin.isLabUser && !labId ? false : true
 
+    if (seekLabAdmin && (!admin.isLabUser || !labUserWithLabId)) {
+      console.warn(`Admin user ${userId} needs isLabUser`)
+      return false
+    }
     if (
       seekLabOrOrgAppointment &&
       ((!admin?.isLabAppointmentsAdmin && !admin?.isTestAppointmentsAdmin) || !labUserWithLabId)
