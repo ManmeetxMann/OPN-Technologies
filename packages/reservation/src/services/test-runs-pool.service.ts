@@ -67,4 +67,8 @@ export class TestRunsPoolService {
 
     return pool
   }
+
+  async deleteTestRunsPool(id: string): Promise<void> {
+    return this.testRunPoolRepository.delete(id)
+  }
 }

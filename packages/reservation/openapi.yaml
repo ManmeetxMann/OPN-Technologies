@@ -4854,6 +4854,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestRunsPoolResponse'
+    delete:
+      description: 'delete test runs pool'
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Test Runs Pools
+      parameters:
+      - in: path
+        name: testRunsPoolId
+        schema:
+          type: string
+        required: true
+      responses:
+        '200':
+          description: Successfully Delete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse200'
 
   /reservation/admin/api/v1/test-runs-pools/{testRunsPoolId}/add-test-result:
     put:

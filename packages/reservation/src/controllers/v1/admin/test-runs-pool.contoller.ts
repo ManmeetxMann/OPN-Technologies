@@ -3,11 +3,13 @@ import {BadRequestException} from '../../../../../common/src/exceptions/bad-requ
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
-import {actionSuccess} from '../../../../../common/src/utils/response-wrapper'
+import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {TestRunsPoolCreate} from '../../../models/test-runs-pool'
 import {TestRunsPoolService} from '../../../services/test-runs-pool.service'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
+import {GetAdminScanHistoryRequest} from '../../../models/appointment'
+import {getUserId} from '../../../../../common/src/utils/auth'
 
 class AdminTestRunsPoolController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
@@ -37,6 +39,12 @@ class AdminTestRunsPoolController implements IControllerBase {
       this.path + '/test-runs-pools/:testRunsPoolId',
       authorizationMiddleware([RequiredUserPermission.LabAdmin]),
       this.updateTestRunsPool,
+    )
+
+    innerRouter.delete(
+      this.path + '/test-runs-pools/:testRunsPoolId',
+      authorizationMiddleware([RequiredUserPermission.LabAdmin]),
+      this.deleteTestRunsPool,
     )
 
     innerRouter.put(
@@ -150,6 +158,16 @@ class AdminTestRunsPoolController implements IControllerBase {
       await this.testRunsPoolService.addTestResultInPool(testRunPool.id, testResultId)
 
       res.json(actionSuccess())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  deleteTestRunsPool = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      await this.testRunsPoolService.deleteTestRunsPool(req.params.testRunsPoolId)
+
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }
