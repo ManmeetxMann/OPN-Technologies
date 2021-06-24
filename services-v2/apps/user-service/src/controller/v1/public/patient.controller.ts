@@ -193,7 +193,7 @@ export class PatientController {
     @Body() authenticateDto: AuthenticateDto,
     @OpnHeaders() opnHeaders: OpnCommonHeaders,
   ): Promise<ResponseWrapper> {
-    const {patientId, organizationId, code} = authenticateDto
+    const {organizationId, code} = authenticateDto
     const patientExists = await this.patientService.getAuthByAuthUserId(authUser.authUserId)
     if (!patientExists) {
       throw new NotFoundException('User with given id not found')
@@ -201,9 +201,9 @@ export class PatientController {
 
     const shortCode = await this.patientService.findShortCodeByPatientEmail(patientExists.email)
     await this.patientService.verifyCodeOrThrowError(shortCode.shortCode, code)
-    await this.patientService.connectOrganization(Number(patientId), organizationId)
+    await this.patientService.connectOrganization(Number(patientExists.patientId), organizationId)
     await this.patientService.updateProfile(
-      Number(patientId),
+      Number(patientExists.patientId),
       {isEmailVerified: true},
       opnHeaders.opnSourceHeader,
     )
