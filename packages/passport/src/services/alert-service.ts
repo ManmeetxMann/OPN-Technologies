@@ -11,6 +11,7 @@ import {UserService} from '../../../common/src/service/user/user-service'
 import {now} from '../../../common/src/utils/times'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {Config} from '../../../common/src/utils/config'
+import {PushMessages, PushNotificationType} from '../../../common/src/types/push-notification'
 
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
 const DEFAULT_IMAGE =
@@ -146,7 +147,18 @@ export class AlertService {
                 '⚠️ Potential Exposure',
                 formatString.replace('__GROUPNAME', name).replace('__ORGLABEL', organizationLabel),
                 icon,
-                tokens.map((token) => ({token, data: {}})),
+                tokens.map(
+                  (token): PushMessages => ({
+                    token,
+                    data: {
+                      title: '⚠️ Potential Exposure',
+                      body: formatString
+                        .replace('__GROUPNAME', name)
+                        .replace('__ORGLABEL', organizationLabel),
+                      notificationType: PushNotificationType.GROUP,
+                    },
+                  }),
+                ),
               ),
             )
           },

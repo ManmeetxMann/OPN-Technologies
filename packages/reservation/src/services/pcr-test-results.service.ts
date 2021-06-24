@@ -102,13 +102,13 @@ import {normalizeAnalysis} from '../utils/analysis.helper'
 import {CouponEnum} from '../models/coupons'
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
 import {FirebaseMessagingService} from '../../../common/src/service/messaging/firebase-messaging-service'
-import {FHPushNotificationMessage} from '../types/push-notification.type'
 import {
   getNotificationBody,
   getNotificationTitle,
   getPushNotificationType,
 } from '../utils/push-notification.helper'
 import {OpnSources} from '../../../common/src/data/registration'
+import {PushMessages} from '../../../common/src/types/push-notification'
 
 const POOL_BARCODE_FIRST_LETTER = 'P'
 
@@ -205,7 +205,12 @@ export class PCRTestResultsService {
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
-    const {finalResult, notificationType, recollected, action} = this.getConfirmationResultForAction(data.action)
+    const {
+      finalResult,
+      notificationType,
+      recollected,
+      action,
+    } = this.getConfirmationResultForAction(data.action)
     const newPCRResult = await this.pcrTestResultsRepository.createNewTestResults({
       appointment,
       adminId: data.adminId,
@@ -1195,9 +1200,11 @@ export class PCRTestResultsService {
 
     await this.firebaseMessagingService.validatePushToken(registration.pushToken)
 
-    const message: FHPushNotificationMessage = {
+    const message: PushMessages = {
       data: {
         notificationType: null,
+        title: getNotificationTitle(result),
+        body: getNotificationBody(result),
       },
       notification: {
         title: getNotificationTitle(result),
