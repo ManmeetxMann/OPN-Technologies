@@ -10,6 +10,13 @@ import {AppoinmentService} from '../../services/appoinment.service'
 import {LabService} from '../../services/lab.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 
+// TODO remove this
+enum EmailNotficationTypes {
+  Indeterminate = 'Indeterminate',
+  MarkAsConfirmedPositive = 'MarkAsConfirmedPositive',
+  MarkAsConfirmedNegative = 'MarkAsConfirmedNegative',
+}
+
 class PubsubController implements IControllerBase {
   public router = express.Router()
   private pcrTestResultsService = new PCRTestResultsService()
@@ -32,10 +39,13 @@ class PubsubController implements IControllerBase {
 
   pcrTestResult: Handler = async (req, res, next): Promise<void> => {
     try {
-      const data = (await OPNPubSub.getPublishedData(
-        req.body.message.data,
-      )) as PCRTestResultSubmitted
-
+      // const data = (await OPNPubSub.getPublishedData(
+      //   req.body.message.data,
+      // )) as PCRTestResultSubmitted
+      const data = {
+        id: '35DZmQ622xtUh5KtaRbu',
+        actionType: EmailNotficationTypes.MarkAsConfirmedNegative,
+      }
       const testResult = await this.pcrTestResultsService.getPCRResultsById(data.id as string)
 
       const [appointment, lab] = await Promise.all([

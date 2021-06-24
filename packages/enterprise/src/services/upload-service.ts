@@ -5,16 +5,35 @@ import {LogInfo} from '../../../common/src/utils/logging-setup'
 import DataStore from '../../../common/src/data/datastore'
 
 import {Stream} from 'stream'
+import {EncryptionService} from '../../../common/src/service/encryption/encryption-service'
 
-const bucketName = Config.get('REPORT_BUCKET_NAME')
+const reportBucketName = Config.get('REPORT_BUCKET_NAME')
+const pdfUploadEncryptionKey = Config.get('PDF_UPLOAD_ENCRYPTION_KEY')
+const testResultBucketName = Config.get('TEST_RESULTS_BUCKET_NAME')
 
 export default class {
-  private bucketService = new BucketService(bucketName)
+  private reportBucketService = new BucketService(reportBucketName)
+  private testResultBucketService = new BucketService(testResultBucketName)
   private identifiersModel = new IdentifiersModel(new DataStore())
+
   async uploadReport(stream: Stream): Promise<string> {
     const identifier = await this.identifiersModel.getUniqueValue('report')
     const fileName = `report-${identifier}.pdf`
-    LogInfo('uploadReport', 'ReportUpload', {fileName, bucketName})
-    return this.bucketService.uploadFile(fileName, stream)
+    LogInfo('uploadReport', 'ReportUpload', {fileName, reportBucketName})
+    return this.reportBucketService.uploadFile(fileName, stream)
+  }
+
+  async uploadPDFResult(stream: Stream, id: string): Promise<string> {
+    const key = id.concat(String(Date.now()))
+    const encryptionService = new EncryptionService(pdfUploadEncryptionKey)
+    const fileName = encryptionService.encrypt(key)
+
+    return this.testResultBucketService.uploadFile(fileName, stream)
+  }
+
+  // TODO remove this
+  async testSignedInUrl(): Promise<string> {
+    const fileName = 'fileName'
+    return this.testResultBucketService.generateV4ReadSignedUrl(fileName)
   }
 }

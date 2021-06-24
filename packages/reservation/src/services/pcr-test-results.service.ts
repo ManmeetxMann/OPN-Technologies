@@ -1,5 +1,6 @@
 import moment from 'moment'
 import {fromPairs, sortBy, union} from 'lodash'
+import {Readable} from 'stream'
 
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
@@ -109,6 +110,7 @@ import {
   getPushNotificationType,
 } from '../utils/push-notification.helper'
 import {OpnSources} from '../../../common/src/data/registration'
+import UploadService from '../../../enterprise/src/services/upload-service'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -122,6 +124,7 @@ export class PCRTestResultsService {
   private couponService = new CouponService()
   private reservationPushService = new ReservationPushService()
   private emailService = new EmailService()
+  private uploadService = new UploadService()
   private userService = new UserService()
   private whiteListedResultsTypes = [
     ResultTypes.Negative,
@@ -1274,11 +1277,18 @@ export class PCRTestResultsService {
         break
     }
 
+    const pdfStream = Buffer.from(pdfContent, 'base64')
+    const stream = Readable.from(pdfStream.toString())
+
+    await this.uploadService.uploadPDFResult(stream, resultData.id)
+    const v4ReadURL = await this.uploadService.testSignedInUrl()
+    console.log('v4ReadURL ', v4ReadURL)
+
     const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 
     await this.emailService.send({
       templateId: Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2,
-      to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
+      to: [{email: 'armondbaghumyan94@gmail.com', name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
         BARCODE: resultData.barCode,
         DATE_OF_RESULT: resultDate,
