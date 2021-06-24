@@ -109,7 +109,6 @@ import {
 } from '../utils/push-notification.helper'
 import {OpnSources} from '../../../common/src/data/registration'
 import {PushMessages} from '../../../common/src/types/push-notification'
-import {starWars} from 'unique-names-generator'
 
 const POOL_BARCODE_FIRST_LETTER = 'P'
 
