@@ -108,7 +108,7 @@ import {
   getPushNotificationType,
 } from '../utils/push-notification.helper'
 import {OpnSources} from '../../../common/src/data/registration'
-import {PushMessages} from 'packages/common/src/types/push-notification'
+import {PushMessages} from '../../../common/src/types/push-notification'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
