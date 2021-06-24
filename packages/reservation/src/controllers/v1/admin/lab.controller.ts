@@ -34,14 +34,23 @@ class AdminLabController implements IControllerBase {
 
   addLab = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {name, templateId, assay} = req.body as {
+      const {name, templateId, assay, poolingEnabled, sendORMRequest} = req.body as {
         name: string
         templateId: string
         assay: string
+        poolingEnabled: boolean
+        sendORMRequest: boolean
       }
 
       const createdBy = getUserId(res.locals.authenticatedUser)
-      const result = await this.labService.save({name, templateId, assay, createdBy})
+      const result = await this.labService.save({
+        name,
+        templateId,
+        assay,
+        createdBy,
+        poolingEnabled,
+        sendORMRequest,
+      })
 
       res.json(actionSuccess(result, 'Lab created successfully'))
     } catch (error) {
