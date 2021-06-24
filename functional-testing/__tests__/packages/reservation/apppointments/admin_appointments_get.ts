@@ -1,6 +1,6 @@
-const frisby = require('frisby');
-const helpersCommon = require('helpers_common');
-const testProfile = require('test_profile');
+import frisby from 'frisby'
+import helpersCommon from '../../../../helpers/helpers_common'
+import testProfile from '../../../../test_data/test_profile'
 
 // Do setup first
 frisby.globalSetup({
@@ -21,13 +21,13 @@ const labId = testProfile.get().labId;
 describe('get:admin:appointments', () => {
   test('Get appoinments booked?', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${reservationServiceUrl}/reservation/admin/api/v1/appointments?dateOfAppointment=2021-02-10`;
+      const url = `${reservationServiceUrl}/reservation/admin/api/v1/appointments?dateOfAppointment=2021-06-22`;
       return frisby
           .setup({
             request: {
               headers: {
                 'Authorization': `Bearer ${token}`,
-                'labid': labId,
+                //'labid': labId,
               },
             },
           })
@@ -38,7 +38,7 @@ describe('get:admin:appointments', () => {
           .inspectBody();
     });
   });
-
+/*
   test('Get appoinments booked for organization?', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
       const url = `${reservationServiceUrl}/reservation/admin/api/v1/appointments?dateOfAppointment=2021-02-23&organizationId=${organizationId}`;
@@ -75,5 +75,5 @@ describe('get:admin:appointments', () => {
           .expect('status', 200)
           .inspectBody();
     });
-  });
+  });*/
 });

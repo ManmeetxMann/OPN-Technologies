@@ -1,5 +1,5 @@
 const frisby = require('frisby');
-import helpersCommon from '../../../../../helpers/helpers_common'
+import helpersCommon from '../../../../helpers/helpers_common'
 
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 
