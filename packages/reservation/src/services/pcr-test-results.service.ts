@@ -109,6 +109,7 @@ import {
 } from '../utils/push-notification.helper'
 import {OpnSources} from '../../../common/src/data/registration'
 import {PushMessages} from '../../../common/src/types/push-notification'
+import {starWars} from 'unique-names-generator'
 
 const POOL_BARCODE_FIRST_LETTER = 'P'
 
@@ -2275,5 +2276,17 @@ export class PCRTestResultsService {
   ): Promise<PCRTestResultByDeadlineListDTO[]> {
     const pcrResults = await this.pcrTestResultsRepository.findWhereIdIn(ids)
     return this.pcrTestResultsWithAdditionalInfo(pcrResults, {testRunId})
+  }
+
+  async removePoolIdFromResults(ids: string[]): Promise<PCRTestResultDBModel[]> {
+    const results = await this.getDBTestResultsByIds(ids)
+
+    const updatedData = await Promise.all(
+      results.map(async (result) => {
+        return this.pcrTestResultsRepository.updateProperty(result.id, 'poolBarcode', null)
+      }),
+    )
+
+    return updatedData
   }
 }

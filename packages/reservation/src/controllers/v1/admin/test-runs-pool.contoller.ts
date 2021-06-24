@@ -8,8 +8,6 @@ import {TestRunsPoolCreate} from '../../../models/test-runs-pool'
 import {TestRunsPoolService} from '../../../services/test-runs-pool.service'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
-import {GetAdminScanHistoryRequest} from '../../../models/appointment'
-import {getUserId} from '../../../../../common/src/utils/auth'
 
 class AdminTestRunsPoolController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
@@ -165,6 +163,15 @@ class AdminTestRunsPoolController implements IControllerBase {
 
   deleteTestRunsPool = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const testRunPool = await this.testRunsPoolService.getById(req.params.testRunsPoolId)
+
+      if (!testRunPool) {
+        throw new ResourceNotFoundException('Test runs pool with given id not found')
+      }
+
+      if (testRunPool.testResultIds.length > 0) {
+        await this.pcrTestResultsService.removePoolIdFromResults(testRunPool.testResultIds)
+      }
       await this.testRunsPoolService.deleteTestRunsPool(req.params.testRunsPoolId)
 
       res.json(actionSucceed())
