@@ -26,6 +26,10 @@ import {AppoinmentService} from '@opn-reservation-v1/services/appoinment.service
 
 import {CartFunctions, CartEvent} from '@opn-services/common/types/activity-logs'
 import {LogInfo, LogWarning, LogError} from '@opn-services/common/utils/logging'
+import {
+  toEmailFormattedDateTime,
+  toEmailFormattedDateTimeWeekday,
+} from '@opn-services/common/utils/times'
 
 @ApiTags('Cart')
 @ApiBearerAuth()
@@ -267,6 +271,26 @@ export class CartController {
       userId,
       userEmail,
     )
+    console.log({
+      confirmed_date: toEmailFormattedDateTimeWeekday(new Date()),
+      location: 'Brampton',
+      street: 'Ontario',
+      country: 'Canada',
+      address_n_zip: cart.cartDdItems[0].patient.postalCode,
+      note: cart.cartDdItems[0],
+      rechedule_url: 'https://github.com/OPN-Technologies/services/issues/2550',
+      subtotal: '$600',
+      shipping: '$200',
+      total: '$800',
+      billing_name: paymentIntent.charges.data[0].billing_details.name,
+      billing_note: 'by credit card',
+      billing_address: paymentIntent.charges.data[0].billing_details.address,
+      billing_country: paymentIntent.charges.data[0].billing_details.email, // @FIXME Not have billing country
+      contact_name: 'Fax',
+      contact_email: 'tsovakh@gmail.com',
+      contact_phone: '+37441102090',
+      ending_with: paymentIntent.charges.data[0].payment_method_details.card.last4,
+    })
     result.cart.items = appointmentCreateStatuses
       .filter(status => status.isSuccess === false)
       .map(status => {
@@ -391,6 +415,14 @@ export class CartController {
             cartItemId: cartDdItem.cartItemId,
             appointmentId: newAppointment.id,
             isSuccess: true,
+            mailData: {
+              name: cartDdItem.appointmentType.name,
+              location: newAppointment.locationName,
+              patname: `${newAppointment.firstName} ${newAppointment.lastName}`,
+              date: toEmailFormattedDateTime(newAppointment.dateTime.toDate()),
+              quantity: 1,
+              total: cartDdItem.appointmentType.price,
+            },
           }
         } catch (e) {
           LogError(CartFunctions.cancelBulkAppointment, CartEvent.errorBookingAppointment, {
