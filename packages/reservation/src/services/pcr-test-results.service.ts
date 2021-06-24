@@ -234,6 +234,7 @@ export class PCRTestResultsService {
         pcrFiltered.push({
           id: pcr.id,
           barCode: pcr.barCode,
+          poolBarcodeId: pcr.poolBarcodeId ?? null,
           deadline: formatDateRFC822Local(pcr.deadline),
           status: appointment?.appointmentStatus,
           testRunId: pcr.testRunId,
@@ -2275,5 +2276,9 @@ export class PCRTestResultsService {
   ): Promise<PCRTestResultByDeadlineListDTO[]> {
     const pcrResults = await this.pcrTestResultsRepository.findWhereIdIn(ids)
     return this.pcrTestResultsWithAdditionalInfo(pcrResults, {testRunId})
+  }
+
+  async updatePoolBarcodeId(id: string, barcodeId: string): Promise<PCRTestResultDBModel> {
+    return this.pcrTestResultsRepository.updateProperty(id, 'poolBarcodeId', barcodeId)
   }
 }
