@@ -2282,7 +2282,7 @@ export class PCRTestResultsService {
 
     const updatedData = await Promise.all(
       results.map(async (result) => {
-        return this.pcrTestResultsRepository.updateProperty(result.id, 'poolBarcode', null)
+        return this.pcrTestResultsRepository.updateProperty(result.id, 'poolBarcodeId', null)
       }),
     )
 
