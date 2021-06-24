@@ -3,6 +3,7 @@ import {BadRequestException} from '../../../../../common/src/exceptions/bad-requ
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
+import {getUserId} from '../../../../../common/src/utils/auth'
 import {actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {TestRunsPoolCreate} from '../../../models/test-runs-pool'
 import {TestRunsPoolService} from '../../../services/test-runs-pool.service'
@@ -129,6 +130,8 @@ class AdminTestRunsPoolController implements IControllerBase {
 
   addTestResultInPool = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const adminId = getUserId(res.locals.authenticatedUser)
+
       const testResultId = req.body.testResultId
       const testRunPool = await this.testRunsPoolService.getById(req.params.testRunsPoolId)
 
@@ -148,6 +151,10 @@ class AdminTestRunsPoolController implements IControllerBase {
       }
 
       await this.testRunsPoolService.addTestResultInPool(testRunPool.id, testResultId)
+
+      await this.pcrTestResultsService.addTestRunToPCR(testRunPool.testRunId, adminId, [
+        testResultId,
+      ])
 
       res.json(actionSuccess())
     } catch (error) {
