@@ -2278,7 +2278,7 @@ export class PCRTestResultsService {
     return this.pcrTestResultsWithAdditionalInfo(pcrResults, {testRunId})
   }
 
-  async updatePoolBarcodeId(id: string, barcodeId: string): Promise<PCRTestResultDBModel> {
+  async updatePoolBarcodeId(id: string, barcodeId: string | null): Promise<PCRTestResultDBModel> {
     return this.pcrTestResultsRepository.updateProperty(id, 'poolBarcodeId', barcodeId)
   }
 
@@ -2287,7 +2287,7 @@ export class PCRTestResultsService {
 
     const updatedData = await Promise.all(
       results.map(async (result) => {
-        return this.pcrTestResultsRepository.updateProperty(result.id, 'poolBarcodeId', null)
+        return this.updatePoolBarcodeId(result.id, null)
       }),
     )
 
