@@ -1,8 +1,8 @@
+import {PushMessages, PushNotificationType} from '../../../common/src/types/push-notification'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 import {AppointmentStatus} from '../models/appointment'
 import {PCRTestResultEmailDTO} from '../models/pcr-test-results'
-import {FHPushNotificationMessage, PushNotificationType} from '../types/push-notification.type'
 
 export const getNotificationBody = (testResult: PCRTestResultEmailDTO): string => {
   switch (testResult.appointmentStatus) {
@@ -64,8 +64,8 @@ export const getNotificationTitle = (testResult: PCRTestResultEmailDTO): string 
 
 export const getPushNotificationType = (
   result: PCRTestResultEmailDTO,
-  message: FHPushNotificationMessage,
-): FHPushNotificationMessage => {
+  message: PushMessages,
+): PushMessages => {
   switch (result.appointmentStatus) {
     case AppointmentStatus.Canceled:
       message.data.notificationType = PushNotificationType.RESULT

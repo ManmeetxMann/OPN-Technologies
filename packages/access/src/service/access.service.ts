@@ -168,16 +168,12 @@ export class AccessService {
         enteredAt: serverTimestamp(),
       }
     }
-    const newAccess = access.includesGuardian
-      ? {
-          ...access,
-          enteredAt: serverTimestamp(),
-          dependants,
-        }
-      : {
-          ...access,
-          dependants,
-        }
+    const newAccess = {
+      ...access,
+      enteredAt: serverTimestamp(),
+      exitAt: null,
+      dependants,
+    }
     const activeUserId =
       access.includesGuardian || Object.keys(access.dependants).length > 1
         ? access.userId
@@ -259,16 +255,11 @@ export class AccessService {
       {},
     )
 
-    const newAccess = includesGuardian
-      ? {
-          ...access,
-          dependants: newDependants,
-          exitAt: serverTimestamp(),
-        }
-      : {
-          ...access,
-          dependants: newDependants,
-        }
+    const newAccess = {
+      ...access,
+      dependants: newDependants,
+      exitAt: serverTimestamp(),
+    }
     const count = dependantIds.length + (includesGuardian ? 1 : 0)
     const activeUserId =
       access.includesGuardian || Object.keys(access.dependants).length > 1

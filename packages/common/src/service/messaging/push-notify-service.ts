@@ -3,17 +3,12 @@ import * as _ from 'lodash'
 
 import {PushMessages} from '../../types/push-notification'
 
-type Recipient = {
-  token: string
-  data?: Record<string, string | null | undefined>
-}
-
 export const sendMessage = (
   title: string,
   body: string,
   imageUrl: string,
-  recipients: Recipient[],
-): Promise<unknown> => {
+  recipients: PushMessages[],
+): Promise<void> => {
   const messages = recipients.map(
     ({token, data}): admin.messaging.Message => ({
       token,
