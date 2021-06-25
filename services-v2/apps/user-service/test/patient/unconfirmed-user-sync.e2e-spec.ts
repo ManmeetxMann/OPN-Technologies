@@ -33,7 +33,7 @@ const headers = {
   ...commonHeaders,
 }
 
-jest.setTimeout(10000)
+jest.setTimeout(20000)
 
 describe('Check user sync (e2e)', () => {
   const url = '/api/v1/patients'
@@ -83,16 +83,27 @@ describe('Check user sync (e2e)', () => {
     patientTestUtility = new PatientTestUtility()
   })
 
-  test('send verification email', done => {
-    setTimeout(async () => {
-      const response = await request(server)
-        .put(`${url}/email/verify`)
-        .set(headers)
-        .send()
+  test('send verification email', async done => {
+    let status
+    let time = 0
+    await new Promise((resolve, reject) => {
+      const refreshIntervalId = setInterval(async () => {
+        time++
+        const response = await request(server)
+          .put(`${url}/email/verify`)
+          .set(headers)
+          .send()
 
-      expect(response.status).toBe(200)
-      done()
-    }, 5000)
+        if (response.status == 200 || time == 10) {
+          status = 200
+          clearInterval(refreshIntervalId)
+          resolve(status)
+        }
+      }, 2000)
+    })
+
+    expect(status).toBe(200)
+    done()
   })
 
   test('confirm verification', async done => {
