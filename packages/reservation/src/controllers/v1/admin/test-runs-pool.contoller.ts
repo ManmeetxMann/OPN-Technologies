@@ -114,7 +114,6 @@ class AdminTestRunsPoolController implements IControllerBase {
   getByPoolBarcodeId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const testRunPool = await this.testRunsPoolService.getByBarcode(req.params.poolBarcodeId)
-      console.log(req.params, testRunPool, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
       if (!testRunPool) {
         throw new ResourceNotFoundException('Test runs pool with given id not found')
