@@ -265,9 +265,11 @@ describe('RapidHomeKitCodeController (e2e)', () => {
   afterAll(async () => {
     await Promise.all([
       deleteUserByIdTestDataCreator(userId, testDataCreator),
+      deleteUserByIdTestDataCreator(secondUserId, testDataCreator),
       deleteRapidCodeByIdTestDataCreator(kitCode, testDataCreator),
       patientTestUtility.findAndRemoveProfile({firstName: currentUserName}),
       patientTestUtility.findAndRemoveProfile({firebaseKey: userId}),
+      patientTestUtility.findAndRemoveProfile({firebaseKey: secondUserId}),
       patientTestUtility.findAndRemoveProfile({firstName: pcrTestResultCreatePayload.firstName}),
     ])
     await patientTestUtility.patientRepository.delete({firstName: currentUserName})

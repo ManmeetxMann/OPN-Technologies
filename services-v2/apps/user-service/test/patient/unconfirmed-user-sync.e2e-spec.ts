@@ -22,7 +22,7 @@ const newUserId = 'NORMAL_PATIENT_BASIC_NEW'
 const confirmedUserId = 'NORMAL_PATIENT_BASIC_CONFIRMED'
 const newUserFirstName = 'NORMAL_PATIENT_E2E_NEW'
 const confirmedUserFirstName = 'NORMAL_PATIENT_E2E_CONFIRMED'
-const email = 'Test@mail.com'
+const email = 'SyncTest@mail.com'
 const organizationId = 'NORMAL_PATIENT_ORG_BASIC'
 const testDataCreator = __filename.split('/services-v2/')[1]
 
@@ -33,7 +33,7 @@ const headers = {
   ...commonHeaders,
 }
 
-jest.setTimeout(20000)
+jest.setTimeout(30000)
 
 describe('Check user sync (e2e)', () => {
   const url = '/api/v1/patients'
@@ -49,6 +49,7 @@ describe('Check user sync (e2e)', () => {
         status: UserStatus.NEW,
         firstName: newUserFirstName,
         syncUser: UserCreator.syncFromTestsRequiredPatient,
+        email,
       },
       testDataCreator,
     )
@@ -60,6 +61,7 @@ describe('Check user sync (e2e)', () => {
         status: UserStatus.CONFIRMED,
         firstName: confirmedUserFirstName,
         syncUser: UserCreator.syncFromTestsRequiredPatient,
+        email,
       },
       testDataCreator,
     )
@@ -86,21 +88,21 @@ describe('Check user sync (e2e)', () => {
   test('send verification email', async done => {
     let status
     let time = 0
-    await new Promise((resolve, reject) => {
-      const refreshIntervalId = setInterval(async () => {
-        time++
-        const response = await request(server)
-          .put(`${url}/email/verify`)
-          .set(headers)
-          .send()
+    const checkSync = async () => {
+      time++
+      const response = await request(server)
+        .put(`${url}/email/verify`)
+        .set(headers)
+        .send()
 
-        if (response.status == 200 || time == 10) {
-          status = 200
-          clearInterval(refreshIntervalId)
-          resolve(status)
-        }
-      }, 2000)
-    })
+      if (response.status == 200 || time == 10) {
+        status = response.status
+      } else {
+        await new Promise(resolve => setTimeout(() => resolve(1), 2000))
+        await checkSync()
+      }
+    }
+    await checkSync()
 
     expect(status).toBe(200)
     done()
@@ -135,12 +137,8 @@ describe('Check user sync (e2e)', () => {
 
   afterAll(async () => {
     await Promise.all([
-      deleteUserByIdTestDataCreator(newUserId, testDataCreator),
-      deleteUserByIdTestDataCreator(confirmedUserId, testDataCreator),
       patientTestUtility.findAndRemoveProfile({firstName: newUserFirstName}),
       patientTestUtility.findAndRemoveProfile({firstName: confirmedUserFirstName}),
-      patientTestUtility.removeProfileByAuth({authUserId: newUserId}),
-      patientTestUtility.removeProfileByAuth({authUserId: confirmedUserId}),
       deleteOrganization(organizationId),
     ])
     await patientTestUtility.patientRepository.delete({firstName: newUserFirstName})
