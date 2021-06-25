@@ -15,6 +15,7 @@ import {AppoinmentService} from './appoinment.service'
 import {ReservationPushTypes} from '../types/appointment-push'
 import {PushMessages, DbBatchAppointments} from '../../../common/src/types/push-notification'
 import {Registration} from '../../../common/src/data/registration'
+import { getDateDefaultHumanReadable } from '../utils/datetime.helper'
 
 /**
  * TODO:
@@ -77,9 +78,9 @@ export class ReservationPushService {
   }
   private messagesBody = {
     [ReservationPushTypes.before24hours]: (dateTime, clinicName) =>
-      `You have a Covid-19 test scheduled for ${dateTime} at our ${clinicName} location.`,
+      `You have a Covid-19 test scheduled for ${getDateDefaultHumanReadable(dateTime)} at our ${clinicName} location.`,
     [ReservationPushTypes.before3hours]: (dateTime, clinicName) =>
-      `Your Covid-19 test is scheduled for today at ${dateTime} at our ${clinicName} location.`,
+      `Your Covid-19 test is scheduled for today at ${getDateDefaultHumanReadable(dateTime)} at our ${clinicName} location.`,
     [ReservationPushTypes.ready]: () => `Your Covid-19 test result is ready. Tap here to view.`,
     [ReservationPushTypes.reSample]: () =>
       `We need another sample to complete your Covid-19 test. Please book another appointment.`,
