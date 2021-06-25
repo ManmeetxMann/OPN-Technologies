@@ -29,6 +29,12 @@ class AdminTestRunsPoolController implements IControllerBase {
     )
 
     innerRouter.get(
+      this.path + '/test-runs-pools/by-pool-barcode/:poolBarcodeId',
+      authorizationMiddleware([RequiredUserPermission.LabAdmin]),
+      this.getByPoolBarcodeId,
+    )
+
+    innerRouter.get(
       this.path + '/test-runs-pools/:testRunsPoolId',
       authorizationMiddleware([RequiredUserPermission.LabAdmin]),
       this.getById,
@@ -84,6 +90,30 @@ class AdminTestRunsPoolController implements IControllerBase {
   getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const testRunPool = await this.testRunsPoolService.getById(req.params.testRunsPoolId)
+
+      if (!testRunPool) {
+        throw new ResourceNotFoundException('Test runs pool with given id not found')
+      }
+
+      const testResults = await this.pcrTestResultsService.getTestResultsByIds(
+        testRunPool.testResultIds,
+        testRunPool.testRunId,
+      )
+
+      const responseDto = {
+        ...testRunPool,
+        testResults,
+      }
+
+      res.json(actionSuccess(responseDto))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getByPoolBarcodeId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const testRunPool = await this.testRunsPoolService.getByBarcode(req.params.poolBarcodeId)
 
       if (!testRunPool) {
         throw new ResourceNotFoundException('Test runs pool with given id not found')
