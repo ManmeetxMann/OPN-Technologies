@@ -5,12 +5,7 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 import * as request from 'supertest'
 import {App} from '../../src/main'
 
-import {
-  commonHeaders,
-  createUser,
-  deleteUserByIdTestDataCreator,
-  getAuthShortCodeByEmail,
-} from '@opn-services/test/utils'
+import {commonHeaders, createUser, getAuthShortCodeByEmail} from '@opn-services/test/utils'
 
 import {PatientTestUtility} from '../utils/patient'
 import {UserCreator, UserStatus} from '@opn-common-v1/data/user-status'
