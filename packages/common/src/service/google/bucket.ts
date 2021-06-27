@@ -14,7 +14,7 @@ export default class {
     this.initializeBucket()
   }
 
-  async generateV4ReadSignedUrl(fileName: string) {
+  async generateV4ReadSignedUrl(fileName: string): Promise<string> {
     const options = {
       version: Versions.v4,
       action: Actions.read,

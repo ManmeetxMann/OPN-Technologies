@@ -118,8 +118,7 @@ export class AppoinmentService {
   private sqlService = new SqlService()
 
   private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
-  // private cloudTasks = new OPNCloudTasks('acuity-appointments-sync')
-  private cloudTasks = {createTask: (...a: any) => true}
+  private cloudTasks = new OPNCloudTasks('acuity-appointments-sync')
   private postPubsub(appointment: AppointmentDBModel, action: string): void {
     if (Config.get('APPOINTMENTS_PUB_SUB_NOTIFY') !== 'enabled') {
       LogInfo('AppoinmentService:postPubsub', 'PubSubDisabled', {})

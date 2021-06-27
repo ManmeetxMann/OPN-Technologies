@@ -243,7 +243,7 @@ const conactDetailsForQuestions = (): Content => {
   }
 }
 
-const qrCode = (qr): Content => {
+const qrCode = (qr: string): Content => {
   return {
     image: qr,
     width: 200,
