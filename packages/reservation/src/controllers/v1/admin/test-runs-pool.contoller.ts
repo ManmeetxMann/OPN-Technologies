@@ -3,7 +3,8 @@ import {BadRequestException} from '../../../../../common/src/exceptions/bad-requ
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
-import {actionSuccess} from '../../../../../common/src/utils/response-wrapper'
+import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
+import {getUserId} from '../../../../../common/src/utils/auth'
 import {TestRunsPoolCreate} from '../../../models/test-runs-pool'
 import {TestRunsPoolService} from '../../../services/test-runs-pool.service'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
@@ -28,6 +29,12 @@ class AdminTestRunsPoolController implements IControllerBase {
     )
 
     innerRouter.get(
+      this.path + '/test-runs-pools/by-pool-barcode/:poolBarcodeId',
+      authorizationMiddleware([RequiredUserPermission.LabAdmin]),
+      this.getByPoolBarcodeId,
+    )
+
+    innerRouter.get(
       this.path + '/test-runs-pools/:testRunsPoolId',
       authorizationMiddleware([RequiredUserPermission.LabAdmin]),
       this.getById,
@@ -37,6 +44,12 @@ class AdminTestRunsPoolController implements IControllerBase {
       this.path + '/test-runs-pools/:testRunsPoolId',
       authorizationMiddleware([RequiredUserPermission.LabAdmin]),
       this.updateTestRunsPool,
+    )
+
+    innerRouter.delete(
+      this.path + '/test-runs-pools/:testRunsPoolId',
+      authorizationMiddleware([RequiredUserPermission.LabAdmin]),
+      this.deleteTestRunsPool,
     )
 
     innerRouter.put(
@@ -84,6 +97,31 @@ class AdminTestRunsPoolController implements IControllerBase {
 
       const testResults = await this.pcrTestResultsService.getTestResultsByIds(
         testRunPool.testResultIds,
+        testRunPool.testRunId,
+      )
+
+      const responseDto = {
+        ...testRunPool,
+        testResults,
+      }
+
+      res.json(actionSuccess(responseDto))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getByPoolBarcodeId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const testRunPool = await this.testRunsPoolService.getByBarcode(req.params.poolBarcodeId)
+
+      if (!testRunPool) {
+        throw new ResourceNotFoundException('Test runs pool with given id not found')
+      }
+
+      const testResults = await this.pcrTestResultsService.getTestResultsByIds(
+        testRunPool.testResultIds,
+        testRunPool.testRunId,
       )
 
       const responseDto = {
@@ -128,6 +166,8 @@ class AdminTestRunsPoolController implements IControllerBase {
 
   addTestResultInPool = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const adminId = getUserId(res.locals.authenticatedUser)
+
       const testResultId = req.body.testResultId
       const testRunPool = await this.testRunsPoolService.getById(req.params.testRunsPoolId)
 
@@ -148,7 +188,30 @@ class AdminTestRunsPoolController implements IControllerBase {
 
       await this.testRunsPoolService.addTestResultInPool(testRunPool.id, testResultId)
 
+      await this.pcrTestResultsService.addTestRunToPCR(testRunPool.testRunId, adminId, [
+        testResultId,
+      ])
+
       res.json(actionSuccess())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  deleteTestRunsPool = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const testRunPool = await this.testRunsPoolService.getById(req.params.testRunsPoolId)
+
+      if (!testRunPool) {
+        throw new ResourceNotFoundException('Test runs pool with given id not found')
+      }
+
+      if (testRunPool.testResultIds.length > 0) {
+        await this.pcrTestResultsService.removePoolIdFromResults(testRunPool.testResultIds)
+      }
+      await this.testRunsPoolService.deleteTestRunsPool(req.params.testRunsPoolId)
+
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }

@@ -194,6 +194,7 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   sortOrder: number
   appointmentStatus: AppointmentStatus
   couponCode?: string
+  poolBarcodeId?: string
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -237,7 +238,6 @@ export type ListPCRResultRequest = {
 
 export type TestResultsReportingTrackerDBModel = {
   id: string
-  pooledResults?: boolean
 }
 
 export type TestResultsReportingTrackerPCRResultsDBModel = {
@@ -352,6 +352,7 @@ export type PCRTestResultListDTO = {
 export type PCRTestResultByDeadlineListDTO = {
   id: string
   barCode: string
+  poolBarcodeId?: string
   vialLocation: string
   status: AppointmentStatus
   deadline: string

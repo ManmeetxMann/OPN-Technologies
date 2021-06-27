@@ -14,6 +14,8 @@ export const createUser = async (
     organizationIds: string[]
     email?: string
     firstName?: string
+    status?: string
+    syncUser?: string
   },
   testDataCreator: string,
 ): Promise<void> => {
@@ -24,6 +26,7 @@ export const createUser = async (
     lastName: 'Test',
     dateOfBirth: '2021-01-01',
     base64Photo: '',
+    status: dataOverwrite.status ?? 'CONFIRMED',
     organizationIds: dataOverwrite.organizationIds,
     email: dataOverwrite.email ?? 'Test@mail.com',
     admin: null,
@@ -37,7 +40,7 @@ export const createUser = async (
       createdAt: firestore.Timestamp.fromDate(new Date()),
       updatedAt: null,
     },
-    creator: UserCreator.syncFromTests,
+    creator: dataOverwrite.syncUser ? dataOverwrite.syncUser : UserCreator.syncFromTests,
     testDataCreator,
   }
 

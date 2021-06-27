@@ -741,7 +741,7 @@ export class AppoinmentService {
   async makeCanceled(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
     await this.appointmentsRepository.addStatusHistoryById(
       appointmentId,
-      AppointmentStatus.InProgress,
+      AppointmentStatus.Canceled,
       userId,
     )
     const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
@@ -851,6 +851,7 @@ export class AppoinmentService {
         testResult.id,
         ThirdPartySyncSource.TransportRun,
       )
+      await this.makeInProgress(appointmentId,null,data.userId)
     }
 
     await this.appointmentsRepository.addStatusHistoryById(

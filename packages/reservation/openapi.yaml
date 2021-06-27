@@ -533,9 +533,6 @@ components:
           type: string
         fileName:
           type: string
-        pooledResults:
-          type: boolean
-          default: false
         results:
           type: array
           items:
@@ -4763,6 +4760,64 @@ paths:
                       message:
                         nullable: true
                         type: string
+  /reservation/admin/api/v1/test-runs-pools/by-pool-barcode/{poolBarcodeId}:
+    get:
+      description: 'Get test runs pool by poolBarcodeId'
+      security:
+        - bearerAuthJWT: [ ]
+      tags:
+        - Test Runs Pools
+      parameters:
+        - in: path
+          name: poolBarcodeId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Succesfully fetched test runs pool
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      poolBarCode:
+                        type: string
+                      testResultIds:
+                        type: array
+                        items:
+                          type: string
+                      testRunId:
+                        type: string
+                      well:
+                        type: string
+                      numberOfSamples:
+                        type: number
+                      testResults:
+                        type: array
+                        items:
+                          type: object
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
   /reservation/admin/api/v1/test-runs-pools/{testRunsPoolId}:
     get:
       description: 'Get test runs pool by id'
@@ -4857,6 +4912,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestRunsPoolResponse'
+    delete:
+      description: 'delete test runs pool'
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Test Runs Pools
+      parameters:
+      - in: path
+        name: testRunsPoolId
+        schema:
+          type: string
+        required: true
+      responses:
+        '200':
+          description: Successfully Delete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse200'
 
   /reservation/admin/api/v1/test-runs-pools/{testRunsPoolId}/add-test-result:
     put:
