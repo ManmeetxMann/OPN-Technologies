@@ -1,6 +1,7 @@
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
 import {RapidAntigenEmailResultDTO} from '../../models/rapid-antigen-test-results'
 import commonPDFContent from './common-report-content'
+import {QrService} from '../../../../common/src/service/qr/qr-service'
 
 const pdfContent = (
   params: RapidAntigenEmailResultDTO,
@@ -36,7 +37,7 @@ const pdfContent = (
         lineHeight: 1,
       },
       commonPDFContent.conactDetailsForQuestions(),
-      commonPDFContent.qrCode(qr),
+      QrService.getQrDataForPDFReport(qr, 200, 200),
       commonPDFContent.documentFooter(),
     ],
   }

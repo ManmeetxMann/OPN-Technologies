@@ -198,15 +198,6 @@ const conactDetailsForQuestions = (): Content => {
   }
 }
 
-const qrCode = (qr: string): Content => {
-  return {
-    image: qr,
-    width: 200,
-    height: 200,
-    alignment: 'center',
-  }
-}
-
 const documentFooter = (): Content => {
   return {
     text:
@@ -308,5 +299,4 @@ export default {
   tableLayouts,
   conactDetailsForQuestions,
   testAnalysisTable,
-  qrCode,
 }
