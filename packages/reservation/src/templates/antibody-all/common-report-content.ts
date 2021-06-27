@@ -92,6 +92,15 @@ const getColorForResultsCell = (result: string): string => {
   return '#FFFFFF'
 }
 
+const qrCode = (qr): Content => {
+  return {
+    image: qr,
+    width: 200,
+    height: 200,
+    alignment: 'center',
+  }
+}
+
 const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: string): Content => {
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
   const dataPersonal = [
@@ -276,4 +285,5 @@ export default {
   documentFooter,
   tableLayouts,
   conactDetailsForQuestions,
+  qrCode,
 }

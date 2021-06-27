@@ -5,6 +5,7 @@ import commonPDFContent from './common-report-content'
 const pdfContent = (
   params: RapidAntigenEmailResultDTO,
   resultDate: string,
+  qr: string,
 ): {content: Content[]; tableLayouts: TableLayouts} => {
   return {
     tableLayouts: commonPDFContent.tableLayouts,
@@ -35,6 +36,7 @@ const pdfContent = (
         lineHeight: 1,
       },
       commonPDFContent.conactDetailsForQuestions(),
+      commonPDFContent.qrCode(qr),
       commonPDFContent.documentFooter(),
     ],
   }

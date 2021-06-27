@@ -23,17 +23,18 @@ export default class {
     return this.reportBucketService.uploadFile(fileName, stream)
   }
 
-  async uploadPDFResult(stream: Stream, id: string): Promise<string> {
-    const key = id.concat(String(Date.now()))
+  generateFileName(testResultId: string): string {
+    const key = testResultId.concat(String(Date.now()))
     const encryptionService = new EncryptionService(pdfUploadEncryptionKey)
-    const fileName = encryptionService.encrypt(key)
-
-    return this.testResultBucketService.uploadFile(fileName, stream)
+    return `${encryptionService.encrypt(key)}.pdf`
   }
 
-  // TODO remove this
-  async testSignedInUrl(): Promise<string> {
-    const fileName = 'fileName'
+  async uploadPDFResult(stream: Stream, fileName: string): Promise<void> {
+    LogInfo('uploadPDFResult', 'PDFResultUpload', {fileName, testResultBucketName})
+    this.testResultBucketService.uploadFile(fileName, stream)
+  }
+
+  async getSignedInUrl(fileName: string): Promise<string> {
     return this.testResultBucketService.generateV4ReadSignedUrl(fileName)
   }
 }

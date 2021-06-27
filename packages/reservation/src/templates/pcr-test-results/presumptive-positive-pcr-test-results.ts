@@ -5,6 +5,7 @@ import commonPDFContent from './common-report-content'
 const pdfContent = (
   params: PCRTestResultEmailDTO,
   resultDate: string,
+  qr: string,
 ): {content: Content[]; tableLayouts: TableLayouts} => {
   return {
     tableLayouts: commonPDFContent.tableLayouts,
@@ -18,6 +19,7 @@ const pdfContent = (
       messageBody2Page(),
       commonPDFContent.testAnalysisTable(params),
       commonPDFContent.conactDetailsForQuestions(),
+      commonPDFContent.qrCode(qr),
       commonPDFContent.documentFooter(),
     ],
   }

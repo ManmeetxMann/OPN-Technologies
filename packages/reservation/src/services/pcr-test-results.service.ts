@@ -111,6 +111,7 @@ import {
 import {OpnSources} from '../../../common/src/data/registration'
 import {PushMessages} from '../../../common/src/types/push-notification'
 import UploadService from '../../../enterprise/src/services/upload-service'
+import {QrService} from '../../../common/src/service/qr/qr-service'
 
 const POOL_BARCODE_FIRST_LETTER = 'P'
 
@@ -1356,31 +1357,32 @@ export class PCRTestResultsService {
     resultData: PCRTestResultEmailDTO,
     pcrResultPDFType: PCRResultPDFType,
   ): Promise<void> {
+    const fileName = this.uploadService.generateFileName(resultData.id)
+    const v4ReadURL = await this.uploadService.getSignedInUrl(fileName)
+    const qr = await QrService.generateQrCode(v4ReadURL)
+
     let pdfContent = ''
     switch (resultData.testType) {
       case 'Antibody_All':
-        pdfContent = await AntibodyAllPDFContent(resultData, pcrResultPDFType)
+        pdfContent = await AntibodyAllPDFContent(resultData, pcrResultPDFType, qr)
         break
       case 'Antibody_IgM':
-        pdfContent = await AntibodyIgmPDFContent(resultData, pcrResultPDFType)
+        pdfContent = await AntibodyIgmPDFContent(resultData, pcrResultPDFType, qr)
         break
       default:
-        pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType)
+        pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType, qr)
         break
     }
 
     const pdfStream = Buffer.from(pdfContent, 'base64')
-    const stream = Readable.from(pdfStream.toString())
-
-    await this.uploadService.uploadPDFResult(stream, resultData.id)
-    const v4ReadURL = await this.uploadService.testSignedInUrl()
-    console.log('v4ReadURL ', v4ReadURL)
+    const stream = Readable.from(pdfStream)
+    await this.uploadService.uploadPDFResult(stream, fileName)
 
     const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 
     await this.emailService.send({
       templateId: Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2,
-      to: [{email: 'armondbaghumyan94@gmail.com', name: `${resultData.firstName} ${resultData.lastName}`}],
+      to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
         BARCODE: resultData.barCode,
         DATE_OF_RESULT: resultDate,
