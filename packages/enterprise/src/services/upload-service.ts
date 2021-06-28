@@ -29,12 +29,12 @@ export default class {
     return `${encryptionService.encrypt(key)}.pdf`
   }
 
-  async uploadPDFResult(stream: Stream, fileName: string): Promise<void> {
+  uploadPDFResult(stream: Stream, fileName: string): Promise<string> {
     LogInfo('uploadPDFResult', 'PDFResultUpload', {fileName, testResultBucketName})
-    this.testResultBucketService.uploadFile(fileName, stream)
+    return this.testResultBucketService.uploadFile(fileName, stream)
   }
 
-  async getSignedInUrl(fileName: string): Promise<string> {
+  getSignedInUrl(fileName: string): Promise<string> {
     return this.testResultBucketService.generateV4ReadSignedUrl(fileName)
   }
 }
