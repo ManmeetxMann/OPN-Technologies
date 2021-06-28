@@ -23,6 +23,18 @@ const tableLayouts: TableLayouts = {
     paddingTop: (): number => 5,
     paddingBottom: (): number => 5,
   },
+  lineAsTable: {
+    hLineWidth: (): number => 0.5,
+    vLineWidth: (): number => 0.5,
+    hLineColor: (): string => '#B7B7B7',
+    vLineColor: (): string => '#B7B7B7',
+  },
+  infoTable: {
+    hLineWidth: (): number => 0.5,
+    vLineWidth: (): number => 0.5,
+    hLineColor: (): string => '#B7B7B7',
+    vLineColor: (): string => '#B7B7B7',
+  },
 }
 
 const leftMarginX = 20
@@ -167,8 +179,10 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
       margin: [0, 0, 0, 20],
     },
     {
+      layout: 'infoTable',
       table: {
         widths: [90, 90],
+        heights: 19.7,
         headerRows: 0,
         body: [
           [
@@ -264,17 +278,138 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
               bold: true,
               style: ['black'],
               fontSize: smallFontSize,
-              border: [true, false, false, true],
+              border: [true, false, false, false],
             },
             {
               text: '',
-              border: [false, false, true, true],
+              border: [false, false, true, false],
             },
           ],
         ],
       },
       absolutePosition: {x: 595 / 2 - 10, y: 84},
-      margin: [20, 50, 50, 100],
+      margin: [20, 50, 0, 100],
+    },
+    {
+      layout: 'mainTable',
+      table: {
+        headerRows: 1,
+        widths: [140, 40, 50, 50, 90],
+        body: [
+          [
+            {text: 'Type', bold: true},
+            {text: 'Antibody IgG, IgM Test', bold: true, colSpan: 4},
+          ],
+          [
+            {text: 'Antibody Specimen Type', bold: true},
+            {text: 'Serum', colSpan: 4},
+          ],
+          [
+            {text: 'Methodology', bold: true},
+            {text: 'Chemiluminescence', colSpan: 4},
+          ],
+          /*[
+            {text: 'Test Equipment', bold: true},
+            {text: 'Approved by Health Canada (IO authorization 312782)', colSpan: 4},
+          ],*/
+          [
+            {text: 'Indication', bold: true},
+            {text: 'Suspected Exposure to COVID-19', colSpan: 4},
+          ],
+        ],
+      },
+      margin: [0, 10, 0, 0],
+    },
+    {
+      layout: 'infoTable',
+      table: {
+        widths: [90, 90],
+        headerRows: 0,
+        body: [
+          [
+            {
+              text: 'DATE OF BIRTH',
+              bold: true,
+              style: ['grey-text'],
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+            },
+          ],
+          [
+            {
+              text: params.dateOfBirth || '',
+              bold: true,
+              style: ['black'],
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+            },
+          ],
+          [
+            {
+              text: 'PASSPORT NO.',
+              bold: true,
+              style: ['grey-text'],
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+            },
+          ],
+          [
+            {
+              // Add passport
+              text: ' ',
+              bold: true,
+              style: ['black'],
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+            },
+          ],
+          [
+            {
+              text: 'ISSUING COUNTRY',
+              bold: true,
+              style: ['grey-text'],
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+            },
+          ],
+          [
+            {
+              text: params.travelIDIssuingCountry || ' ',
+              bold: true,
+              style: ['black'],
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+            },
+          ],
+          [
+            {
+              text: ' ',
+              bold: true,
+              style: ['black'],
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+            },
+          ],
+        ],
+      },
+      absolutePosition: {x: 485, y: 84},
+      margin: [0, 50, 0, 100],
+    },
+    {
+      layout: 'lineAsTable',
+      table: {
+        headerRows: 1,
+        widths: [595],
+        body: [
+          [
+            {
+              text: '',
+              border: [false, true, false, false],
+            },
+          ],
+        ],
+      },
+      absolutePosition: {x: 0, y: 595 / 2 - 50},
     },
     {
       layout: 'mainTable',

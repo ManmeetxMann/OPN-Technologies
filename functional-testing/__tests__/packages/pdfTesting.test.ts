@@ -121,7 +121,7 @@ const data4: AppointmentDBModel = {
   addressUnit: 'Suite 5053',
   // couponCode?: string
   // travelID?: string
-  // travelIDIssuingCountry?: string
+  travelIDIssuingCountry: 'Canada',
   // ohipCard?: string
   // swabMethod?: string
   shareTestResultWithEmployer: true,

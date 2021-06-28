@@ -168,16 +168,14 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
 
 const conactDetailsForQuestions = (): Content => {
   return {
-    text:
-      '\n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 484-0042.\n\n',
+    text: '\n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 484-0042.\n\n',
     style: ['gray-text'],
   }
 }
 
 const documentFooter = (): Content => {
   return {
-    text:
-      'This document contains personal identifiable information that must be treated confidentially. Any unauthorized use or disclosure is prohibited.',
+    text: 'This document contains personal identifiable information that must be treated confidentially. Any unauthorized use or disclosure is prohibited.',
     style: ['footer'],
     margin: [0, 50, 0, 0],
   }
