@@ -47,6 +47,7 @@ import {OPNPubSub} from '@opn-common-v1/service/google/pub_sub'
 import {MailAppointmentDataModel} from '@opn-services/checkout/model/appointment'
 import {EmailService} from '@opn-common-v1/service/messaging/email-service'
 import {Config} from '@opn-common-v1/utils/config'
+import {ClinicLocationsRepository} from '@opn-services/checkout/repository/clinic-locations.repository'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -59,6 +60,7 @@ export class UserCardService {
   private userCartRepository = new UserCartRepository(this.dataStore)
   private userOrderRepository = new UserOrderRepository(this.dataStore)
   private acuityTypesRepository = new AcuityTypesRepository(this.dataStore)
+  private clinicLocationsRepository = new ClinicLocationsRepository(this.dataStore)
   private pubsub = new OPNPubSub(Config.get('APPOINTMENT_CONFIRMATION_TOPIC'))
 
   private emailService = new EmailService()
@@ -524,11 +526,11 @@ export class UserCardService {
     })
   }
 
-  pushAppointmentConrimationEmail(
+  async pushAppointmentConfirmationEmail(
     cartDdItems: CardItemDBModel[],
     appointmentCreateStatuses: CartItemStatus[],
     paymentIntent: Stripe.PaymentIntent | null,
-  ): void {
+  ): Promise<void> {
     const paymentSummary = this.buildPaymentSummary(
       cartDdItems.map(cartDB => ({
         cartItemId: cartDB.cartItemId,
@@ -552,6 +554,12 @@ export class UserCardService {
       paymentIntent?.charges?.data && paymentIntent.charges.data.length
         ? paymentIntent.charges.data[0]
         : null
+
+    const [cartItem] = await this.clinicLocationsRepository.findWhereEqual(
+      'appointmentLocationAddress',
+      mainAppointment.locationAddress,
+    )
+
     this.pubsub.publish({
       appointmentData: {
         confirmed_date: toEmailFormattedDateTimeWeekday(new Date()),
@@ -559,15 +567,22 @@ export class UserCardService {
         street: mainAppointment.address,
         country: mainAppointment.addressUnit,
         address_n_zip: cartDdItems[0].patient.postalCode,
-        note: cartDdItems[0],
+        lat: cartItem.locationLat,
+        lng: cartItem.locationLong,
         tests: appointmentCreateStatuses.map(
           appointmentCreateStatus => appointmentCreateStatus.mailData,
         ),
-        subtotal: `$${paymentSummary.find(
-          paymentSummaryRow => paymentSummaryRow.uid === 'subTotal',
-        )}`,
-        tax: `$${paymentSummary.find(paymentSummaryRow => paymentSummaryRow.uid === 'tax')}`,
-        total: `$${paymentSummary.find(paymentSummaryRow => paymentSummaryRow.uid === 'total')}`,
+        subtotal: `${
+          paymentSummary.find(paymentSummaryRow => paymentSummaryRow.uid === 'subTotal').amount
+        } ${
+          paymentSummary.find(paymentSummaryRow => paymentSummaryRow.uid === 'subTotal').currency
+        }`,
+        tax: `${paymentSummary.find(paymentSummaryRow => paymentSummaryRow.uid === 'tax').amount} ${
+          paymentSummary.find(paymentSummaryRow => paymentSummaryRow.uid === 'tax').currency
+        }`,
+        total: `${
+          paymentSummary.find(paymentSummaryRow => paymentSummaryRow.uid === 'total').amount
+        } ${paymentSummary.find(paymentSummaryRow => paymentSummaryRow.uid === 'total').currency}`,
         billing_name: currentPaymentIntent ? currentPaymentIntent.billing_details.name : null,
         billing_note: 'by credit card',
         billing_address: currentPaymentIntent ? currentPaymentIntent.billing_details.address : null,

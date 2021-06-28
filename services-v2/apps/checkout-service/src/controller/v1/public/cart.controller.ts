@@ -27,9 +27,7 @@ import {AppoinmentService} from '@opn-reservation-v1/services/appoinment.service
 
 import {CartFunctions, CartEvent} from '@opn-services/common/types/activity-logs'
 import {LogInfo, LogWarning, LogError} from '@opn-services/common/utils/logging'
-import {
-  toEmailFormattedDateTime,
-} from '@opn-services/common/utils/times'
+import {toEmailFormattedDateTime} from '@opn-services/common/utils/times'
 
 @ApiTags('Cart')
 @ApiBearerAuth()
@@ -271,7 +269,7 @@ export class CartController {
       userId,
       userEmail,
     )
-    this.userCardService.pushAppointmentConrimationEmail(
+    this.userCardService.pushAppointmentConfirmationEmail(
       cart.cartDdItems,
       appointmentCreateStatuses,
       paymentIntent,
@@ -361,7 +359,7 @@ export class CartController {
       userId,
       userEmail,
     )
-    this.userCardService.pushAppointmentConrimationEmail(
+    this.userCardService.pushAppointmentConfirmationEmail(
       cart.cartDdItems,
       appointmentCreateStatuses,
       null,
