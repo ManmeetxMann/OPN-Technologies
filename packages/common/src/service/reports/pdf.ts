@@ -40,8 +40,9 @@ export class PdfService {
     password?: string,
     pageSize?: {height: number; width: number},
     pageMargin?: number,
+    background?: Content,
   ): Stream {
-    const generatedParams = this.getPDF(params, password, pageSize, pageMargin)
+    const generatedParams = this.getPDF(params, password, pageSize, pageMargin, background)
     const stream = new Stream.PassThrough()
     const pdfDoc = this.printer.createPdfKitDocument(generatedParams, {tableLayouts})
     pdfDoc.on('data', (chunk) => stream.push(chunk))
@@ -75,6 +76,7 @@ export class PdfService {
     password?: string,
     PageSize?: {height: number; width: number},
     pageMargin?: number,
+    background?: Content,
   ): TDocumentDefinitions {
     const docDefinition: TDocumentDefinitions = {
       pageSize: PageSize || 'A4',
@@ -102,6 +104,7 @@ export class PdfService {
         font: 'Cambria',
         fontSize: 11,
       },
+      background,
       content,
     }
 

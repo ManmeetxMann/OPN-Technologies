@@ -1,3 +1,4 @@
+import {SpecLabel} from './../../models/pcr-test-results'
 import path from 'path'
 
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
@@ -24,56 +25,16 @@ const tableLayouts: TableLayouts = {
   },
 }
 
-const companyInfoHeader = (): Content => {
-  return {
-    columns: [
-      {
-        stack: [
-          {
-            image: path.join(__dirname, '../../static/images/fh-logo.png'),
-            width: 96,
-            height: 88,
-            style: 'logo',
-          },
-        ],
-        width: '50%',
-      },
-      {
-        stack: [
-          {
-            text: 'FH Health',
-            bold: true,
-            fontSize: 11,
-            lineHeight: 1.2,
-          },
-          {
-            text: 'COVID-19 Screening Test Centre',
-            fontSize: 11,
-            lineHeight: 1.2,
-          },
-          {
-            text: '413 Spadina Road',
-            margin: [0, 12, 0, 0],
-            fontSize: 10,
-            lineHeight: 1.1,
-          },
-          {
-            text: 'info@fhhealth.ca',
-            fontSize: 10,
-            lineHeight: 1.1,
-          },
-          {
-            text: 'www.FHHealth.ca',
-            fontSize: 10,
-            lineHeight: 1.1,
-          },
-        ],
-        alignment: 'right',
-        margin: [0, 5, 0, 0],
-        style: ['black'],
-      },
-    ],
+const leftMarginX = 20
+const smallFontSize = 8
+
+const getResult = (result: string): {result: string; resultText: string} => {
+  if (result && (result.toUpperCase() === 'POSITIVE' || result === '+')) {
+    return {result: 'POSITIVE', resultText: 'asd'}
+  } else if (result && result.toUpperCase() === 'INDETERMINATE') {
+    return {result: 'NEGATIVE', resultText: 'qqwe'}
   }
+  return {result: 'idk', resultText: 'hey'}
 }
 
 const getFillColorForResultsCell = (result: string): string => {
@@ -148,32 +109,172 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
   const data = [...dataPersonal, ...dataAppointment]
 
   const resultAnalysis = (analysis: Spec[], keyName): Spec => {
-    return analysis.find((analys) => analys.label === keyName)
+    return analysis.find((analys) => {
+      analys.label === keyName
+    })
   }
 
   return [
+    // {
+    //   text: 'The following client completed a SARS-CoV-2 Antibody screening test:',
+    //   margin: [0, 20, 0, 0],
+    //   style: ['gray-text'],
+    //   lineHeight: 1.2,
+    // },
+    // {
+    //   layout: 'mainTable',
+    //   table: {
+    //     headerRows: 1,
+    //     widths: [183, 240],
+    //     body: data,
+    //   },
+    //   margin: [0, 10, 0, 10],
+    // },
     {
-      text: 'The following client completed a SARS-CoV-2 Antibody screening test:',
-      margin: [0, 20, 0, 0],
-      style: ['gray-text'],
-      lineHeight: 1.2,
+      columns: [
+        {
+          stack: [
+            {
+              text: 'FIRST NAME',
+              bold: true,
+              style: ['grey-text'],
+              fontSize: smallFontSize,
+            },
+            {
+              text: params.firstName,
+              bold: true,
+              style: ['black'],
+              fontSize: 25,
+            },
+            {
+              text: 'LAST NAME',
+              bold: true,
+              style: ['grey-text'],
+              fontSize: smallFontSize,
+            },
+            {
+              text: params.lastName,
+              bold: true,
+              style: ['black'],
+              fontSize: 25,
+            },
+          ],
+          alignment: 'left',
+          width: '100%',
+          absolutePosition: {x: leftMarginX, y: 100},
+        },
+      ],
+      margin: [0, 0, 0, 20],
     },
     {
-      layout: 'mainTable',
       table: {
-        headerRows: 1,
-        widths: [183, 240],
-        body: data,
+        widths: [90, 90],
+        headerRows: 0,
+        body: [
+          [
+            {
+              text: 'ADDRESS',
+              bold: true,
+              style: ['grey-text'],
+              fontSize: smallFontSize,
+              border: [true, false, false, false],
+            },
+            {
+              text: '',
+              border: [false, false, true, false],
+            },
+          ],
+          [
+            {
+              text:
+                params.address +
+                '\n' +
+                params.addressUnit +
+                '\n' +
+                params.city +
+                ', ' +
+                params.province +
+                '\n' +
+                params.postalCode,
+              colSpan: 2,
+              alignment: 'left',
+              bold: true,
+              style: ['black'],
+              fontSize: smallFontSize,
+              border: [true, false, true, false],
+            },
+            {
+              text: '',
+              border: [false, false, false, false],
+            },
+          ],
+          [
+            {
+              text: 'COUNTRY',
+              bold: true,
+              style: ['grey-text'],
+              fontSize: smallFontSize,
+              alignment: 'left',
+              border: [true, false, false, false],
+            },
+            {
+              text: 'PHONE',
+              bold: true,
+              style: ['grey-text'],
+              fontSize: smallFontSize,
+              alignment: 'left',
+              border: [false, false, true, false],
+            },
+          ],
+          [
+            {
+              text: params.country,
+              bold: true,
+              style: ['black'],
+              fontSize: smallFontSize,
+              alignment: 'left',
+              border: [true, false, false, false],
+            },
+            {
+              text: params.phone,
+              bold: true,
+              style: ['black'],
+              fontSize: smallFontSize,
+              alignment: 'left',
+              border: [false, false, true, false],
+            },
+          ],
+          [
+            {
+              text: 'OHIP',
+              bold: true,
+              style: ['grey-text'],
+              fontSize: smallFontSize,
+              alignment: 'left',
+              border: [true, false, false, false],
+            },
+            {
+              text: '',
+              border: [false, false, true, false],
+            },
+          ],
+          [
+            {
+              text: params.ohipCard || '',
+              bold: true,
+              style: ['black'],
+              fontSize: smallFontSize,
+              border: [true, false, false, true],
+            },
+            {
+              text: '',
+              border: [false, false, true, true],
+            },
+          ],
+        ],
       },
-      margin: [0, 10, 0, 10],
-    },
-    {
-      text: 'Antibody Test Details:',
-      decoration: 'underline',
-      bold: true,
-      lineHeight: 1.2,
-      margin: [0, 10, 0, 10],
-      style: ['gray-text'],
+      absolutePosition: {x: 595 / 2 - 10, y: 84},
+      margin: [20, 50, 50, 100],
     },
     {
       layout: 'mainTable',
@@ -255,19 +356,70 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
 
 const conactDetailsForQuestions = (): Content => {
   return {
-    text:
-      '\n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 484-0042.\n\n',
+    text: '\n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 484-0042.\n\n',
     style: ['gray-text'],
   }
 }
 
 const documentFooter = (): Content => {
   return {
-    text:
-      'This document contains personal identifiable information that must be treated confidentially. Any unauthorized use or disclosure is prohibited.',
+    text: 'This document contains personal identifiable information that must be treated confidentially. Any unauthorized use or disclosure is prohibited.',
     style: ['footer'],
     margin: [0, 50, 0, 0],
   }
+}
+
+const companyInfoHeader = (params: RapidAntigenEmailResultDTO): Content => {
+  const resultAnalysis = (analysis: Spec[], keyName): Spec => {
+    return analysis.find((analys) => {
+      analys.label === keyName
+    })
+  }
+  return [
+    {
+      image: path.join(__dirname, '../Assets/Banner/Positive_Banner@3x.png'),
+      absolutePosition: {x: 0, y: 0},
+      width: 595,
+      opacity: 1,
+      margin: [0, 0, 0, 20],
+    },
+    {
+      columns: [
+        {
+          stack: [
+            {
+              text: getResult(resultAnalysis(params.resultAnalysis, 'IgGResult')?.value as string)
+                .result,
+              font: 'BrutalType',
+              color: '#FFFFFF',
+              fontSize: 20,
+              absolutePosition: {x: leftMarginX, y: 20},
+            },
+            {
+              text: 'Tested POSITIVE for SARS-COV-2 (ANTIBODY)',
+              color: '#FFFFFF',
+              fontSize: 10,
+              absolutePosition: {x: leftMarginX, y: 50},
+            },
+          ],
+          // width: '100%',
+        },
+        {
+          stack: [
+            {
+              image: path.join(__dirname, '../Assets/FH_Logo/FH-Logo_White@3x.png'),
+              width: 225,
+              height: 225 / 4.2,
+              absolutePosition: {x: (595 * 3) / 4 - 100, y: 15},
+            },
+          ],
+          margin: [50, 0, 0, 0],
+          style: ['black'],
+        },
+      ],
+      margin: [0, 0, 0, 50],
+    },
+  ]
 }
 
 export default {

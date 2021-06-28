@@ -1,13 +1,19 @@
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
 import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
 import commonPDFContent from './common-report-content'
+import path from 'path'
 
 const pdfContent = (
   params: PCRTestResultEmailDTO,
   resultDate: string,
-): {content: Content[]; tableLayouts: TableLayouts} => {
+): {content: Content[]; background: Content; tableLayouts: TableLayouts} => {
   return {
     tableLayouts: commonPDFContent.tableLayouts,
+    background: [
+      {
+        image: path.join(__dirname, '../Assets/Overlay/FH_Forge_Overlay@3x.png'),
+      },
+    ],
     content: [
       commonPDFContent.companyInfoHeader(),
       {text: resultDate, margin: [0, 30, 0, 0]},
