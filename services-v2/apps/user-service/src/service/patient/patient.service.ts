@@ -689,7 +689,7 @@ export class PatientService {
     }))
   }
 
-  async attachOrganization(organizationCode: string, authUserId: string): Promise<void> {
+  async attachOrganization(organizationCode: string, authUserId: string): Promise<string> {
     const organization = await this.organizationService.findOrganizationByKey(
       parseInt(organizationCode),
     )
@@ -701,6 +701,7 @@ export class PatientService {
     })
 
     await this.connectOrganizationWithInstances(currentPatient, organization)
+    return organization.name
   }
 
   async migratePatient(currentUserId: string, migration: Migration): Promise<ActionStatus> {
