@@ -39,6 +39,7 @@ import {
   UnconfirmedPatient,
   AttachOrganization,
   PatientOrganizationsDto,
+  AttachOrganizationResponse,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
@@ -347,12 +348,13 @@ export class PatientController {
   @Put('/patient/organization')
   @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
+  @ApiResponse({type: AttachOrganizationResponse, status: 200})
   async attachOrganization(
     @AuthUserDecorator() authUser: AuthUser,
     @Body() {organizationCode}: AttachOrganization,
-  ): Promise<ResponseWrapper<void>> {
-    await this.patientService.attachOrganization(organizationCode, authUser.id)
+  ): Promise<ResponseWrapper<AttachOrganizationResponse>> {
+    const name = await this.patientService.attachOrganization(organizationCode, authUser.id)
 
-    return ResponseWrapper.actionSucceed()
+    return ResponseWrapper.actionSucceed({name})
   }
 }
