@@ -5,12 +5,7 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify'
 import * as request from 'supertest'
 import {App} from '../../src/main'
 
-import {
-  commonHeaders,
-  createUser,
-  deleteUserByIdTestDataCreator,
-  getAuthShortCodeByEmail,
-} from '@opn-services/test/utils'
+import {commonHeaders, createUser, getAuthShortCodeByEmail} from '@opn-services/test/utils'
 
 import {PatientTestUtility} from '../utils/patient'
 import {UserCreator, UserStatus} from '@opn-common-v1/data/user-status'
@@ -22,7 +17,7 @@ const newUserId = 'NORMAL_PATIENT_BASIC_NEW'
 const confirmedUserId = 'NORMAL_PATIENT_BASIC_CONFIRMED'
 const newUserFirstName = 'NORMAL_PATIENT_E2E_NEW'
 const confirmedUserFirstName = 'NORMAL_PATIENT_E2E_CONFIRMED'
-const email = 'Test@mail.com'
+const email = 'SyncTest@mail.com'
 const organizationId = 'NORMAL_PATIENT_ORG_BASIC'
 const testDataCreator = __filename.split('/services-v2/')[1]
 
@@ -33,7 +28,7 @@ const headers = {
   ...commonHeaders,
 }
 
-jest.setTimeout(10000)
+jest.setTimeout(30000)
 
 describe('Check user sync (e2e)', () => {
   const url = '/api/v1/patients'
@@ -49,6 +44,7 @@ describe('Check user sync (e2e)', () => {
         status: UserStatus.NEW,
         firstName: newUserFirstName,
         syncUser: UserCreator.syncFromTestsRequiredPatient,
+        email,
       },
       testDataCreator,
     )
@@ -60,6 +56,7 @@ describe('Check user sync (e2e)', () => {
         status: UserStatus.CONFIRMED,
         firstName: confirmedUserFirstName,
         syncUser: UserCreator.syncFromTestsRequiredPatient,
+        email,
       },
       testDataCreator,
     )
@@ -83,16 +80,27 @@ describe('Check user sync (e2e)', () => {
     patientTestUtility = new PatientTestUtility()
   })
 
-  test('send verification email', done => {
-    setTimeout(async () => {
+  test('send verification email', async done => {
+    let status
+    let time = 0
+    const checkSync = async () => {
+      time++
       const response = await request(server)
         .put(`${url}/email/verify`)
         .set(headers)
         .send()
 
-      expect(response.status).toBe(200)
-      done()
-    }, 5000)
+      if (response.status == 200 || time == 10) {
+        status = response.status
+      } else {
+        await new Promise(resolve => setTimeout(() => resolve(1), 2000))
+        await checkSync()
+      }
+    }
+    await checkSync()
+
+    expect(status).toBe(200)
+    done()
   })
 
   test('confirm verification', async done => {
@@ -124,12 +132,8 @@ describe('Check user sync (e2e)', () => {
 
   afterAll(async () => {
     await Promise.all([
-      deleteUserByIdTestDataCreator(newUserId, testDataCreator),
-      deleteUserByIdTestDataCreator(confirmedUserId, testDataCreator),
       patientTestUtility.findAndRemoveProfile({firstName: newUserFirstName}),
       patientTestUtility.findAndRemoveProfile({firstName: confirmedUserFirstName}),
-      patientTestUtility.removeProfileByAuth({authUserId: newUserId}),
-      patientTestUtility.removeProfileByAuth({authUserId: confirmedUserId}),
       deleteOrganization(organizationId),
     ])
     await patientTestUtility.patientRepository.delete({firstName: newUserFirstName})
