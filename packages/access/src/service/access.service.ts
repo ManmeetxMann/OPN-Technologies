@@ -478,7 +478,7 @@ export class AccessService {
     const query = this.accessRepository
       .collection()
       .where(`userId`, '==', userId)
-      .orderBy('exitAt', 'desc')
+      .orderBy('createdAt', 'desc')
       .limit(1)
     const allAccesses = await query.fetch()
     return allAccesses.length > 0 ? allAccesses[0] : null
@@ -494,8 +494,8 @@ export class AccessService {
       .collection()
       .where(`userId`, '==', userId)
       .where(`locationId`, '==', locationId)
-      .where(`exitAt`, '>=', after)
-      .where(`exitAt`, '<=', before)
+      .where(`enteredAt`, '>=', after)
+      .where(`enteredAt`, '<=', before)
       .orderBy('exitAt', 'desc')
       .limit(1)
     const allAccesses = await query.fetch()
@@ -506,9 +506,9 @@ export class AccessService {
     const query = this.accessRepository
       .collection()
       .where(`userId`, '==', userId)
-      .where(`exitAt`, '>=', after)
-      .where(`exitAt`, '<=', before)
-      .orderBy('exitAt', 'desc')
+      .where(`enteredAt`, '>=', after)
+      .where(`enteredAt`, '<=', before)
+      .orderBy('enteredAt', 'desc')
       .limit(1)
     const allAccesses = await query.fetch()
     return allAccesses.length > 0 ? allAccesses[0] : null
@@ -519,7 +519,7 @@ export class AccessService {
       .collection()
       .where(`userId`, '==', userId)
       .where(`locationId`, '==', locationId)
-      .orderBy('exitAt', 'desc')
+      .orderBy('enteredAt', 'desc')
       .limit(1)
     const allAccesses = await query.fetch()
     return allAccesses.length > 0 ? allAccesses[0] : null
