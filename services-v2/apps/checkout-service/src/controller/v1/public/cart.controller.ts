@@ -14,7 +14,6 @@ import {
   CartUpdateRequestDto,
   CouponRequestDto,
   CartItemResponse,
-  CartItemDto,
 } from '@opn-services/checkout/dto'
 import {
   UserCardService,
