@@ -32,6 +32,7 @@ export type RolesData = {
 
 export enum InternalAuthTypes {
   OpnSchedulerKey = 'OpnSchedulerKey',
+  OpnPubSub = 'OpnPubSub',
 }
 
 export enum OpnSources {

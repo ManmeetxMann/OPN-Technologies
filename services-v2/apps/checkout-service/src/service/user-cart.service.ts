@@ -37,12 +37,16 @@ import {firestoreTimeStampToUTC} from '@opn-reservation-v1/utils/datetime.helper
 import {OpnConfigService} from '@opn-services/common/services'
 
 import {CartEvent, CartFunctions} from '@opn-services/common/types/activity-logs'
-import {LogError} from '@opn-services/common/utils/logging'
+import {LogError, LogInfo} from '@opn-services/common/utils/logging'
 
 import {JoiValidator} from '@opn-services/common/utils/joi-validator'
 import {acuityTypesSchema, cartItemSchema} from '@opn-services/common/schemas'
-import {toFormattedIso} from '@opn-services/common/utils/times'
+import {toEmailFormattedDateTimeWeekday, toFormattedIso} from '@opn-services/common/utils/times'
 import {UserCardDiscountService} from '@opn-services/checkout/service'
+import {OPNPubSub} from '@opn-common-v1/service/google/pub_sub'
+import {MailAppointmentDataModel} from '@opn-services/checkout/model/appointment'
+import {EmailService} from '@opn-common-v1/service/messaging/email-service'
+import {Config} from '@opn-common-v1/utils/config'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -55,6 +59,9 @@ export class UserCardService {
   private userCartRepository = new UserCartRepository(this.dataStore)
   private userOrderRepository = new UserOrderRepository(this.dataStore)
   private acuityTypesRepository = new AcuityTypesRepository(this.dataStore)
+  private pubsub = new OPNPubSub(Config.get('APPOINTMENT_CONFIRMATION_TOPIC'))
+
+  private emailService = new EmailService()
 
   private hstTax = 0.13
   public timeSlotNotAvailMsg = 'Time Slot Unavailable: Book Another Slot'
@@ -241,6 +248,22 @@ export class UserCardService {
         time: toFormattedIso(cartItemExist.appointment.time),
       },
     }
+  }
+
+  async sendConfirmationEmail(data: string): Promise<void> {
+    const {appointmentData} = (await OPNPubSub.getPublishedData(data)) as {
+      appointmentData: MailAppointmentDataModel
+    }
+
+    const emailSendStatus = await this.emailService.send({
+      to: [{email: appointmentData.contact_email, name: appointmentData.contact_name}],
+      templateId: this.configService.get('TEST_RESULT_CONFIRMED_TEMPLATE_ID'),
+      params: (appointmentData as unknown) as Record<string, unknown>,
+    })
+
+    LogInfo('UserCardService: sendConfirmationEmail', 'EmailSendSuccess', {
+      emailSendStatus,
+    })
   }
 
   async cartItemsCount(userId: string, organizationId: string): Promise<number> {
@@ -497,6 +520,63 @@ export class UserCardService {
             _.pick(charge, ['amount', 'amount_captured', 'amount_refunded', 'created', 'status']),
           ),
         },
+      },
+    })
+  }
+
+  pushAppointmentConrimationEmail(
+    cartDdItems: CardItemDBModel[],
+    appointmentCreateStatuses: CartItemStatus[],
+    paymentIntent: Stripe.PaymentIntent | null,
+  ): void {
+    const paymentSummary = this.buildPaymentSummary(
+      cartDdItems.map(cartDB => ({
+        cartItemId: cartDB.cartItemId,
+        label: cartDB.appointmentType.name,
+        subLabel: cartDB.appointment.calendarName,
+        patientName: `${cartDB.patient.firstName} ${cartDB.patient.lastName}`,
+        date: toFormattedIso(cartDB.appointment.time),
+        price: parseFloat(cartDB.appointmentType.price),
+        discountedPrice: this.userCardDiscountService.countDiscount(
+          parseFloat(cartDB.appointmentType.price),
+          cartDB.discountData?.discountType,
+          cartDB.discountData?.discountAmount,
+        ),
+        userId: cartDB.patient.userId,
+        discountedError: cartDB.discountData?.error,
+      })),
+    )
+
+    const mainAppointment = appointmentCreateStatuses[0].appointment
+    const currentPaymentIntent =
+      paymentIntent?.charges?.data && paymentIntent.charges.data.length
+        ? paymentIntent.charges.data[0]
+        : null
+    this.pubsub.publish({
+      appointmentData: {
+        confirmed_date: toEmailFormattedDateTimeWeekday(new Date()),
+        location: mainAppointment.locationName,
+        street: mainAppointment.address,
+        country: mainAppointment.addressUnit,
+        address_n_zip: cartDdItems[0].patient.postalCode,
+        note: cartDdItems[0],
+        tests: appointmentCreateStatuses.map(
+          appointmentCreateStatus => appointmentCreateStatus.mailData,
+        ),
+        subtotal: `$${paymentSummary.find(
+          paymentSummaryRow => paymentSummaryRow.uid === 'subTotal',
+        )}`,
+        tax: `$${paymentSummary.find(paymentSummaryRow => paymentSummaryRow.uid === 'tax')}`,
+        total: `$${paymentSummary.find(paymentSummaryRow => paymentSummaryRow.uid === 'total')}`,
+        billing_name: currentPaymentIntent ? currentPaymentIntent.billing_details.name : null,
+        billing_note: 'by credit card',
+        billing_address: currentPaymentIntent ? currentPaymentIntent.billing_details.address : null,
+        contact_name: `${mainAppointment.firstName} ${mainAppointment.lastName}`,
+        contact_email: mainAppointment.email,
+        contact_phone: mainAppointment.phone,
+        ending_with: currentPaymentIntent
+          ? currentPaymentIntent.payment_method_details.card.last4
+          : null,
       },
     })
   }

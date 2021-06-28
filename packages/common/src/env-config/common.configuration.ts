@@ -51,6 +51,7 @@ export const commonConfig: Record<string, string | string[] | number | boolean> 
 
   EMAIL_FROM_NAME: 'StayOPN Team',
 
+  APPOINTMENT_CONFIRMATION_TOPIC: 'appointment-confirmation-topic',
   TEST_APPOINTMENT_TOPIC: 'test-appointment-topic',
   PCR_TEST_TOPIC: 'pcr-test-topic',
   PASSPORT_TOPIC: 'passport-topic',
