@@ -84,7 +84,7 @@ class PubsubController implements IControllerBase {
         )
       } catch (error) {
         LogError('PubsubController:pcrTestResult', 'FailedToSendPushNotification', {
-          errorMessage: error.toStrinmg(),
+          errorMessage: error.toString(),
         })
       }
 
