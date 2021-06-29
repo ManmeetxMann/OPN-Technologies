@@ -473,8 +473,8 @@ abstract class AcuityAdapter {
   private customFieldsToAppoinment(
     appointment: AppointmentAcuityResponse,
   ): AppointmentAcuityResponse {
-    let steeetAddress = null 
-    let addressOld = null 
+    let steeetAddress = null
+    let addressOld = null
     appointment.dateOfBirth = ''
     appointment.organizationId = Config.get('PUBLIC_ORG_ID')
     appointment.registeredNursePractitioner = ''
@@ -591,7 +591,7 @@ abstract class AcuityAdapter {
         })
       })
     }
-    appointment.address = !!(steeetAddress)?steeetAddress:addressOld
+    appointment.address = !!steeetAddress ? steeetAddress : addressOld
     return appointment
   }
 

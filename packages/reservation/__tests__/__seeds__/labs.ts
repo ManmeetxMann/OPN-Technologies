@@ -7,6 +7,8 @@ export const create = async (
     id: string
     createdAt: string
     userID: string
+    sendORMRequest?: boolean
+    poolingEnabled?: boolean
   },
   testDataCreator: string,
 ): Promise<void> => {
@@ -17,6 +19,8 @@ export const create = async (
       updatedAt: null,
     },
     testDataCreator,
+    sendORMRequest: dataOverwrite.sendORMRequest ?? false,
+    poolingEnabled: dataOverwrite.poolingEnabled ?? false,
   }
 
   await database.collection(collectionName).doc(dataOverwrite.id).set(data)

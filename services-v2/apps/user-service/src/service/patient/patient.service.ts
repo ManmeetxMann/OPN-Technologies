@@ -203,6 +203,7 @@ export class PatientService {
       isEmailVerified: false,
       authUserId: data.authUserId,
       active: false,
+      photo: data.photoUrl ?? this.configService.get('DEFAULT_USER_PHOTO'),
       organizationIds: [this.configService.get('PUBLIC_ORG_ID')],
       creator: UserCreator.syncFromSQL,
     } as AuthUser
@@ -236,6 +237,7 @@ export class PatientService {
     await this.addInPublicGroup(firebaseUser.id)
     data.firebaseKey = firebaseUser.id
     data.isEmailVerified = false
+    data.photoUrl = data.photoUrl ?? this.configService.get('DEFAULT_USER_PHOTO')
     const patient = await this.createPatient(data as PatientCreateDto, tokenSource)
     data.idPatient = patient.idPatient
 
@@ -687,7 +689,7 @@ export class PatientService {
     }))
   }
 
-  async attachOrganization(organizationCode: string, authUserId: string): Promise<void> {
+  async attachOrganization(organizationCode: string, authUserId: string): Promise<string> {
     const organization = await this.organizationService.findOrganizationByKey(
       parseInt(organizationCode),
     )
@@ -699,6 +701,7 @@ export class PatientService {
     })
 
     await this.connectOrganizationWithInstances(currentPatient, organization)
+    return organization.name
   }
 
   async migratePatient(currentUserId: string, migration: Migration): Promise<ActionStatus> {

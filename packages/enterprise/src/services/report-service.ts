@@ -21,6 +21,7 @@ import {Access} from '../../../access/src/models/access'
 import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
+import {attestationAnswersFromLegacyToV1} from '../../../passport/src/models/attestation'
 import {AttestationService} from '../../../passport/src/services/attestation-service'
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {TemperatureService} from '../../../reservation/src/services/temperature.service'
@@ -113,10 +114,19 @@ export class ReportService {
     })
     const nowMoment = moment(now())
     const nullOrISOString = (status: PassportStatus, timestamp: string | null): string | null => {
-      if (!timestamp) return null
       if (status !== PassportStatuses.Proceed) return null
-      if (nowMoment.isSameOrBefore(safeTimestamp(timestamp))) return null
       return safeTimestamp(timestamp).toISOString()
+    }
+
+    const exitAt = (status: PassportStatus, timestamp: string | null): string | null => {
+      if (!timestamp) return null
+      if (moment(safeTimestamp(nowMoment)).isSameOrBefore(safeTimestamp(timestamp))) return null
+      return nullOrISOString(status, timestamp)
+    }
+
+    const enteredAt = (status: PassportStatus, timestamp: string | null): string | null => {
+      if (!timestamp) return null
+      return nullOrISOString(status, timestamp)
     }
 
     const accesses = data.map(({user, status, access}) => ({
@@ -127,8 +137,8 @@ export class ReportService {
       dependants: access?.dependants,
       userId: user.id,
       // remove not-yet-exited exitAt
-      exitAt: nullOrISOString(status, access?.exitAt),
-      enteredAt: nullOrISOString(status, access?.enteredAt),
+      exitAt: exitAt(status, access?.exitAt),
+      enteredAt: enteredAt(status, access?.enteredAt),
       parentUserId: user.delegates?.length ? user.delegates[0] : null,
       status,
       user,
@@ -333,7 +343,14 @@ export class ReportService {
     })
 
     const printableAttestations = attestations.map((attestation) => {
-      const answerCount = attestation.answers.length
+      let answerCount = attestation.answers.length
+
+      // if answers property is object it's legacy answers
+      if (!Array.isArray(attestation.answers)) {
+        attestation.answers = attestationAnswersFromLegacyToV1(attestation.answers)
+        answerCount = Object.entries(attestation.answers).length
+      }
+
       const questionnaire = questionnairesLookup[answerCount]
       if (!questionnaire) {
         console.warn(`no questionnaire found for attestation ${attestation.id}`)

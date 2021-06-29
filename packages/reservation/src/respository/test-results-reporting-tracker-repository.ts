@@ -13,10 +13,8 @@ export class TestResultsReportingTrackerRepository extends DataModel<TestResults
     super(dataStore)
   }
 
-  public async save(
-    reportTracker: Omit<TestResultsReportingTrackerDBModel, 'id'>,
-  ): Promise<TestResultsReportingTrackerDBModel> {
-    return this.add(reportTracker)
+  public async save(): Promise<TestResultsReportingTrackerDBModel> {
+    return this.add({})
   }
 }
 
