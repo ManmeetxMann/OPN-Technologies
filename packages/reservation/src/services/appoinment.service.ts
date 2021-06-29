@@ -850,7 +850,7 @@ export class AppoinmentService {
         testResult.id,
         ThirdPartySyncSource.TransportRun,
       )
-      await this.makeInProgress(appointmentId,null,data.userId)
+      await this.makeInProgress(appointmentId, null, data.userId)
     }
 
     await this.appointmentsRepository.addStatusHistoryById(
