@@ -587,7 +587,7 @@ export class AppoinmentService {
     } = additionalData
 
     const currentUserId =
-      userId || appointmentDb?.userId || (await this.checkWithPhone(acuityAppointment))
+      userId || appointmentDb?.userId || (await this.getCreateUser(acuityAppointment))
 
     return {
       acuityAppointmentId: Number(acuityAppointment.id),
@@ -715,9 +715,10 @@ export class AppoinmentService {
       //Update Appointment DB to be Canceled
       await this.makeCanceled(appointmentId, userId)
       try {
-        const pcrTestResult = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
-          appointmentFromDB.id,
-        )
+        const pcrTestResult =
+          await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
+            appointmentFromDB.id,
+          )
         if (pcrTestResult) {
           //Remove any Results
           //Only one Waiting Result is Expected
@@ -1210,13 +1211,8 @@ export class AppoinmentService {
     receiveNotificationsFromGov,
     userId,
   }: CreateAppointmentRequest & {email: string}): Promise<AppointmentDBModel> {
-    const {
-      time,
-      appointmentTypeId,
-      calendarId,
-      packageCode,
-      organizationId,
-    } = decodeAvailableTimeId(slotId)
+    const {time, appointmentTypeId, calendarId, packageCode, organizationId} =
+      decodeAvailableTimeId(slotId)
     const utcDateTime = moment(time).utc()
     const dateTime = utcDateTime.tz(timeZone).format()
     const barCodeNumber = await this.getNextBarCodeNumber()
@@ -1420,9 +1416,7 @@ export class AppoinmentService {
     )
   }
 
-  async checkDuplicatedAndMissedAppointments(
-    appointmentIds: string[],
-  ): Promise<{
+  async checkDuplicatedAndMissedAppointments(appointmentIds: string[]): Promise<{
     failed: BulkOperationResponse[]
     filtredAppointmentIds: string[]
   }> {
@@ -1542,9 +1536,7 @@ export class AppoinmentService {
     return updatedAppoinment
   }
 
-  async getAppointmentsStats(
-    queryParams: AppointmentByOrganizationRequest,
-  ): Promise<{
+  async getAppointmentsStats(queryParams: AppointmentByOrganizationRequest): Promise<{
     appointmentStatusArray: Filter[]
     orgIdArray: Filter[]
     appointmentStatsByLabIdArr: Filter[]
@@ -1838,7 +1830,14 @@ export class AppoinmentService {
     }
     return linkedBarcodes
   }
+
   private async createUser(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
+    const featureCreateUser = Config.get('FEATURE_CREATE_USER_ON_ENTERPRISE')
+    if (featureCreateUser !== 'enabled') {
+      LogInfo('AppoinmentService:createUser', 'UserCreationSkipped', null)
+      return null
+    }
+
     const publicOrgId = Config.get('PUBLIC_ORG_ID')
     const publicGroupId = Config.get('PUBLIC_GROUP_ID')
     const user = await this.userService.create({
@@ -1864,7 +1863,7 @@ export class AppoinmentService {
     return user.id
   }
 
-  private async checkWithEmail(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
+  private async getCreateByEmail(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
     const user = await this.userService.findOneByEmail(acuityAppointment.email)
     if (
       user &&
@@ -1877,10 +1876,10 @@ export class AppoinmentService {
     }
   }
 
-  private async checkWithPhone(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
+  private async getCreateUser(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
     const user = await this.userService.findOneByPhone(acuityAppointment.phone)
     if (!user) {
-      return await this.checkWithEmail(acuityAppointment)
+      return await this.getCreateByEmail(acuityAppointment)
     } else {
       if (
         user.firstName === acuityAppointment.firstName &&
@@ -1888,7 +1887,7 @@ export class AppoinmentService {
       ) {
         return user.id
       } else {
-        return await this.checkWithEmail(acuityAppointment)
+        return await this.getCreateByEmail(acuityAppointment)
       }
     }
   }
