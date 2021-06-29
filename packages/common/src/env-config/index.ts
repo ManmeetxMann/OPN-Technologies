@@ -7,6 +7,7 @@ import {localConfig} from './local.configuration'
 export enum ProjectEnv {
   Prod = 'opn-platform-ca-prod',
   PreProd = 'opn-platform-preprod',
+  Dev = 'opn-platform-dev',
   Local = 'opn-platform-local',
 }
 
@@ -21,9 +22,9 @@ export const envConfig = (): Record<string, string | string[] | number | boolean
       return {...commonConfig, ...prodConfig}
     case ProjectEnv.PreProd:
       return {...commonConfig, ...preprodConfig}
-    case ProjectEnv.Local:
-      return {...commonConfig, ...localConfig}
-    default:
+    case ProjectEnv.Dev:
       return {...commonConfig, ...devConfig}
+    default:
+      return {...commonConfig, ...localConfig}
   }
 }

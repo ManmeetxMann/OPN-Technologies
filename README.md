@@ -134,14 +134,6 @@ OR a specific project
 lerna run --scope @opn/registry build --stream
 ```
 
-#### Make configs to read from local configuration file to make PDF work
-``` 
-Add prefix GOOGLE_CLOUD_PROJECT=opn-platform-local
-to package.json on dev command like
-
-"dev": "GOOGLE_CLOUD_PROJECT=opn-platform-local ts-node src/server.ts",
-```
-
 #### Run Distro
 ```
 cd packages/registry/dist
