@@ -180,6 +180,14 @@ class AdminTestRunsPoolController implements IControllerBase {
         throw new BadRequestException('Test result with given id already exists in pool')
       }
 
+      const testResultExistOtherPool = await this.testRunsPoolService.getByTestResultId(
+        testResultId,
+      )
+
+      if (testResultExistOtherPool) {
+        throw new BadRequestException('Test result with given id already exists in other pool')
+      }
+
       if (testRunPool.testResultIds.length + 1 > testRunPool.numberOfSamples) {
         throw new BadRequestException(
           `Number of samples are limited to ${testRunPool.numberOfSamples}`,

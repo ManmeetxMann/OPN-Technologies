@@ -72,6 +72,16 @@ export class TestRunsPoolService {
     return pool
   }
 
+  async getByTestResultId(testResultId: string): Promise<TestRunsPool> {
+    const [pool] = await this.testRunPoolRepository.findWhereArrayContainsWithMax(
+      'testResultIds',
+      testResultId,
+      'testRunId',
+    )
+
+    return pool
+  }
+
   deleteTestRunsPool(id: string): Promise<void> {
     return this.testRunPoolRepository.delete(id)
   }
