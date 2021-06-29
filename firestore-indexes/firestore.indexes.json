@@ -1041,6 +1041,28 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dateOfAppointment",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "displayInResult",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "testType",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [
