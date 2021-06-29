@@ -169,12 +169,16 @@ export class RapidAntigenTestResultsService {
       const waitingResult = waitingResults[0] //Only One results is expected
       return this.saveResult(action, notify, reqeustedBy, waitingResult)
     } else if (sendAgain) {
+      const oldResultList = await this.pcrTestResultsRepository.getPCRResultsByAppointmentId(
+        appointment.id,
+      )
+      const [previousResult] = oldResultList.filter((result) => result.displayInResult)
       const newResult = await this.pcrTestResultsRepository.createNewTestResults({
         appointment,
         adminId: reqeustedBy,
         runNumber: 0,
         reCollectNumber: 0,
-        previousResult: ResultTypes.Pending,
+        previousResult: previousResult ? previousResult.result : ResultTypes.Pending,
       })
       return this.saveResult(action, notify, reqeustedBy, newResult)
     } else {
