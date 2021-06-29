@@ -13,8 +13,14 @@ import {AppoinmentService} from './appoinment.service'
 
 //Types
 import {ReservationPushTypes} from '../types/appointment-push'
-import {PushMessages, DbBatchAppointments} from '../../../common/src/types/push-notification'
+import {
+  PushMessages,
+  DbBatchAppointments,
+  PushNotificationType,
+  PushNotificationMessageData,
+} from '../../../common/src/types/push-notification'
 import {Registration} from '../../../common/src/data/registration'
+import { getDateDefaultHumanReadable } from '../utils/datetime.helper'
 
 /**
  * TODO:
@@ -77,9 +83,9 @@ export class ReservationPushService {
   }
   private messagesBody = {
     [ReservationPushTypes.before24hours]: (dateTime, clinicName) =>
-      `You have a Covid-19 test scheduled for ${dateTime} at our ${clinicName} location.`,
+      `You have a Covid-19 test scheduled for ${getDateDefaultHumanReadable(dateTime)} at our ${clinicName} location.`,
     [ReservationPushTypes.before3hours]: (dateTime, clinicName) =>
-      `Your Covid-19 test is scheduled for today at ${dateTime} at our ${clinicName} location.`,
+      `Your Covid-19 test is scheduled for today at ${getDateDefaultHumanReadable(dateTime)} at our ${clinicName} location.`,
     [ReservationPushTypes.ready]: () => `Your Covid-19 test result is ready. Tap here to view.`,
     [ReservationPushTypes.reSample]: () =>
       `We need another sample to complete your Covid-19 test. Please book another appointment.`,
@@ -169,8 +175,13 @@ export class ReservationPushService {
                 ),
               },
               data: {
+                title: this.messageTitle[appointmentPushType],
+                body: this.messagesBody[appointmentPushType](
+                  appointment.dateTime,
+                  appointment.locationName,
+                ),
                 appointmentId: appointment.id,
-                scheduledAppointmentType: appointmentPushType,
+                notificationType: PushNotificationType.APPOINTMENT,
               },
             })
           } else {
@@ -242,7 +253,7 @@ export class ReservationPushService {
   async sendPushByUserId(
     userId: string,
     messageType: ReservationPushTypes,
-    data?: {[key: string]: string},
+    data?: PushNotificationMessageData,
   ): Promise<unknown> {
     const tokens = await this.registrationService.findForUserIds([userId])
     const recentUserToken = this.getRecentUsersToken(tokens)
@@ -255,7 +266,11 @@ export class ReservationPushService {
           title: this.messageTitle[messageType],
           body: this.messagesBody[messageType](null, null),
         },
-        data,
+        data: {
+          ...data,
+          title: data.title || this.messageTitle[messageType],
+          body: data.body || this.messagesBody[messageType](null, null),
+        },
       }
       const pushResult = await sendBulkPushByToken([message])
       return pushResult

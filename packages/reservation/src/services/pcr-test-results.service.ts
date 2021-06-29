@@ -102,13 +102,13 @@ import {normalizeAnalysis} from '../utils/analysis.helper'
 import {CouponEnum} from '../models/coupons'
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
 import {FirebaseMessagingService} from '../../../common/src/service/messaging/firebase-messaging-service'
-import {FHPushNotificationMessage} from '../types/push-notification.type'
 import {
   getNotificationBody,
   getNotificationTitle,
   getPushNotificationType,
 } from '../utils/push-notification.helper'
 import {OpnSources} from '../../../common/src/data/registration'
+import {PushMessages} from '../../../common/src/types/push-notification'
 
 const POOL_BARCODE_FIRST_LETTER = 'P'
 
@@ -187,6 +187,68 @@ export class PCRTestResultsService {
 
   private isPoolBarcode(resultId): boolean {
     return resultId[0] === POOL_BARCODE_FIRST_LETTER
+  }
+
+  private async pcrTestResultsWithAdditionalInfo(
+    pcrResults,
+    queryParams,
+  ): Promise<PCRTestResultByDeadlineListDTO[]> {
+    const appointmentIds = []
+    const testRunIds = []
+    const organizationIds = []
+    const pcrFiltered = []
+
+    pcrResults.forEach(({appointmentId, testRunId, organizationId}) => {
+      appointmentIds.push(appointmentId)
+      if (testRunId) testRunIds.push(testRunId)
+      if (organizationId) organizationIds.push(organizationId)
+    })
+
+    const [appointments, testRuns, organizations] = await Promise.all([
+      this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds),
+      this.testRunsService.getTestRunByTestRunIds(union(testRunIds)),
+      this.organizationService.getAllByIds(union(organizationIds)),
+    ])
+
+    const finalOrganization = fromPairs(
+      organizations.map((organization) => [organization.id, organization.name]),
+    )
+
+    pcrResults.map((pcr) => {
+      const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
+      const allowedAppointmentStatus = [
+        AppointmentStatus.InProgress,
+        AppointmentStatus.ReRunRequired,
+        AppointmentStatus.Received,
+      ]
+
+      const {appointmentStatus, testRunId} = queryParams
+      if (
+        appointment &&
+        ((!appointmentStatus && allowedAppointmentStatus.includes(appointment.appointmentStatus)) ||
+          appointmentStatus === appointment.appointmentStatus ||
+          testRunId)
+      ) {
+        const testRun = testRuns?.find(({testRunId}) => pcr.testRunId === testRunId)
+
+        pcrFiltered.push({
+          id: pcr.id,
+          barCode: pcr.barCode,
+          poolBarcodeId: pcr.poolBarcodeId ?? null,
+          deadline: formatDateRFC822Local(pcr.deadline),
+          status: appointment?.appointmentStatus,
+          testRunId: pcr.testRunId,
+          vialLocation: appointment?.vialLocation,
+          runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
+          reCollectNumber: pcr.reCollectNumber ? `S${pcr.reCollectNumber}` : null,
+          dateTime: formatDateRFC822Local(appointment.dateTime),
+          testRunLabel: testRun?.name,
+          organizationName: pcr.organizationId ? finalOrganization[pcr.organizationId] : 'None',
+        })
+      }
+    })
+
+    return sortBy(pcrFiltered, ['status'])
   }
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest): Promise<string> {
@@ -339,6 +401,25 @@ export class PCRTestResultsService {
         labId: pcrResults.data.labId,
       }
 
+      // specific metadata for pooling results
+      const getMetaData = (pcrResult: PCRTestResultDBModel, sendMetaData: TestResultsMetaData) => {
+        if (pcrResult.result == ResultTypes.Negative) {
+          return {
+            resultDate: sendMetaData.resultDate,
+            notify: true,
+            action: PCRResultActions.SendThisResult,
+            autoResult: ResultTypes.Negative,
+          }
+        } else {
+          return {
+            resultDate: sendMetaData.resultDate,
+            notify: false,
+            action: PCRResultActions.ReRunToday,
+            autoResult: sendMetaData.autoResult,
+          }
+        }
+      }
+
       /**
        * If got pooled results
        * - query pool by `poolBarcode` & fetch pooled tests results
@@ -347,10 +428,11 @@ export class PCRTestResultsService {
       const handleSaveAndSend = async () => {
         if (isPooledResults) {
           const pool = await this.testRunsPoolRepository.getByBarcode(pcrResults.data.barCode)
-          const poolTestResults = await this.getTestResultsByIds(pool.testResultIds)
+          const poolTestResults = await this.getDBTestResultsByIds(pool.testResultIds)
           const poolSaveAndSend = poolTestResults.map((result) =>
             this.handlePCRResultSaveAndSend({
               ...saveAndSendPayload,
+              metaData: getMetaData(result, metaData),
               barCode: result.barCode,
             }),
           )
@@ -1200,9 +1282,11 @@ export class PCRTestResultsService {
 
     await this.firebaseMessagingService.validatePushToken(registration.pushToken)
 
-    const message: FHPushNotificationMessage = {
+    const message: PushMessages = {
       data: {
         notificationType: null,
+        title: getNotificationTitle(result),
+        body: getNotificationBody(result),
       },
       notification: {
         title: getNotificationTitle(result),
@@ -1826,61 +1910,8 @@ export class PCRTestResultsService {
     queryParams: PcrTestResultsListByDeadlineRequest,
   ): Promise<PCRTestResultByDeadlineListDTO[]> {
     const pcrResults = await this.getPCRResultsFromDB(queryParams)
-    const appointmentIds = []
-    const testRunIds = []
-    const pcrFiltred = []
-    const organizationIds = []
 
-    pcrResults.forEach(({appointmentId, testRunId, organizationId}) => {
-      appointmentIds.push(appointmentId)
-      if (testRunId) testRunIds.push(testRunId)
-      if (organizationId) organizationIds.push(organizationId)
-    })
-
-    const [appointments, testRuns, organizations] = await Promise.all([
-      this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds),
-      this.testRunsService.getTestRunByTestRunIds(union(testRunIds)),
-      this.organizationService.getAllByIds(union(organizationIds)),
-    ])
-
-    const finalOrganization = fromPairs(
-      organizations.map((organization) => [organization.id, organization.name]),
-    )
-
-    pcrResults.map((pcr) => {
-      const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
-      const allowedAppointmentStatus = [
-        AppointmentStatus.InProgress,
-        AppointmentStatus.ReRunRequired,
-        AppointmentStatus.Received,
-      ]
-
-      const {appointmentStatus, testRunId} = queryParams
-      if (
-        appointment &&
-        ((!appointmentStatus && allowedAppointmentStatus.includes(appointment.appointmentStatus)) ||
-          appointmentStatus === appointment.appointmentStatus ||
-          testRunId)
-      ) {
-        const testRun = testRuns?.find(({testRunId}) => pcr.testRunId === testRunId)
-
-        pcrFiltred.push({
-          id: pcr.id,
-          barCode: pcr.barCode,
-          deadline: formatDateRFC822Local(pcr.deadline),
-          status: appointment?.appointmentStatus,
-          testRunId: pcr.testRunId,
-          vialLocation: appointment?.vialLocation,
-          runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
-          reCollectNumber: pcr.reCollectNumber ? `S${pcr.reCollectNumber}` : null,
-          dateTime: formatDateRFC822Local(appointment.dateTime),
-          testRunLabel: testRun?.name,
-          organizationName: pcr.organizationId ? finalOrganization[pcr.organizationId] : 'None',
-        })
-      }
-    })
-
-    return sortBy(pcrFiltred, ['status'])
+    return this.pcrTestResultsWithAdditionalInfo(pcrResults, queryParams)
   }
 
   async getReportStatus(action: PCRResultActions, result: ResultTypes): Promise<string> {
@@ -2255,7 +2286,31 @@ export class PCRTestResultsService {
     )
   }
 
-  getTestResultsByIds(ids: string[]): Promise<PCRTestResultDBModel[]> {
+  getDBTestResultsByIds(ids: string[]): Promise<PCRTestResultDBModel[]> {
     return this.pcrTestResultsRepository.findWhereIdIn(ids)
+  }
+
+  async getTestResultsByIds(
+    ids: string[],
+    testRunId: string,
+  ): Promise<PCRTestResultByDeadlineListDTO[]> {
+    const pcrResults = await this.pcrTestResultsRepository.findWhereIdIn(ids)
+    return this.pcrTestResultsWithAdditionalInfo(pcrResults, {testRunId})
+  }
+
+  async updatePoolBarcodeId(id: string, barcodeId: string | null): Promise<PCRTestResultDBModel> {
+    return this.pcrTestResultsRepository.updateProperty(id, 'poolBarcodeId', barcodeId)
+  }
+
+  async removePoolIdFromResults(ids: string[]): Promise<PCRTestResultDBModel[]> {
+    const results = await this.getDBTestResultsByIds(ids)
+
+    const updatedData = await Promise.all(
+      results.map((result) => {
+        return this.updatePoolBarcodeId(result.id, null)
+      }),
+    )
+
+    return updatedData
   }
 }

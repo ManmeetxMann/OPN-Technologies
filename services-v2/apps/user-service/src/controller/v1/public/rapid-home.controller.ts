@@ -107,7 +107,7 @@ export class RapidHomeController {
       throw new ResourceNotFoundException('pcr-test-result with given id not found')
     }
 
-    if (authUser.id !== pcrTestResult.userId) {
+    if (authUser.id !== pcrTestResult.parentUserId) {
       throw new ForbiddenException('pcr test result does not belong to user')
     }
 

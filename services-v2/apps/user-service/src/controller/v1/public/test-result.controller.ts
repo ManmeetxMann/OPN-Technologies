@@ -51,8 +51,8 @@ export class TestResultController {
       : null
 
     const props = isOrgIdValid
-      ? {...testResult, homeKitId: homeKit.id, organizationId}
-      : {...testResult, homeKitId: homeKit.id}
+      ? {...testResult, parentUserId: authUser.id, homeKitId: homeKit.id, organizationId}
+      : {...testResult, parentUserId: authUser.id, homeKitId: homeKit.id}
 
     const result = await this.testResultService.createPCRResults({...props}, userId)
     const validatedUserData = this.testResultService.validateUserData(testResult)

@@ -48,7 +48,7 @@ class PubsubController implements IControllerBase {
 
       try {
         await this.pcrTestResultsService.sendEmailNotificationForResults(
-          {...testResult, ...appointment, labAssay: lab?.assay ?? null},
+          {...testResult, ...appointment, id: testResult.id, labAssay: lab?.assay ?? null},
           data.actionType,
           testResult.id,
         )
@@ -79,7 +79,7 @@ class PubsubController implements IControllerBase {
 
       try {
         await this.pcrTestResultsService.sendPushNotification(
-          {...testResult, ...appointment, labAssay: lab?.assay},
+          {...testResult, ...appointment, id: testResult.id, labAssay: lab?.assay},
           testResult.userId,
         )
       } catch (error) {
@@ -112,7 +112,7 @@ class PubsubController implements IControllerBase {
       }
 
       await this.pcrTestResultsService.sendPushNotification(
-        {...testResult, ...appointment, labAssay: lab?.assay},
+        {...testResult, ...appointment, id: testResult.id, labAssay: lab?.assay},
         userId,
       )
 

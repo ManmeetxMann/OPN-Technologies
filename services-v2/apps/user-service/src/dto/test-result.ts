@@ -34,6 +34,11 @@ export class TestResultCreateDto {
   @IsNotEmpty()
   homeKitCode?: string
 
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  parentUserId: string
+
   @IsString()
   @IsOptional()
   generatedCouponCode?: string

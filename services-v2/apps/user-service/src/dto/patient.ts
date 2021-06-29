@@ -426,6 +426,12 @@ export class AttachOrganization {
   organizationCode?: string
 }
 
+export class AttachOrganizationResponse {
+  @ApiProperty()
+  @IsString()
+  name: string
+}
+
 export class DependantCreateDto extends OmitType(PatientCreateDto, ['email'] as const) {}
 
 export class DependantCreateAdminDto extends OmitType(PatientCreateAdminDto, ['email'] as const) {}
