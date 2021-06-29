@@ -1143,7 +1143,6 @@ export class AppoinmentService {
         }
       }
     } catch (err) {
-      console.log({err})
       LogError('AdminAppointmentController:copyAppointment', 'FailedToCreateOnAcuity', {
         appointmentID: appointmentId,
         appointmentDateTime: dateTime,
