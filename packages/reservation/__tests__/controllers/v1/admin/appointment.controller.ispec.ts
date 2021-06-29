@@ -14,12 +14,16 @@ jest.mock('../../../../../common/src/middlewares/authorization')
 jest.mock('../../../../../common/src/utils/logging-setup')
 
 const testDataCreator = __filename.split('/packages/')[1]
+const oneDay = 86400000
 const dateForAppointments = '2020-06-05'
 const dateForAppointmentStr = 'June 05, 2020'
 const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
 const organizationId = 'TEST1'
 const laboratoryId = 'Lab1'
 const barCode = 'BAR1'
+const barCode2 = 'BAR2'
+
+const vialLocation = 'TestLocation'
 
 const transportRunId = 'APPOINTMENT_TRANSPORT_RUN'
 
@@ -97,6 +101,16 @@ describe('AdminAppointmentController', () => {
           dateTime: `2020-02-01T08:00:00`,
           dateOfAppointment: 'February 01, 2020',
           appointmentStatus: 'InProgress',
+        },
+        testDataCreator,
+      ),
+      createAppointment(
+        {
+          id: 'APT9',
+          dateTime: `2020-02-01T08:00:00`,
+          dateOfAppointment: 'February 01, 2020',
+          appointmentStatus: 'InProgress',
+          barCode: barCode2,
         },
         testDataCreator,
       ),
@@ -218,6 +232,54 @@ describe('AdminAppointmentController', () => {
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBeGreaterThanOrEqual(1)
+    })
+  })
+
+  describe('Appointment vial location', () => {
+    test('add vialLocation to appointment', async () => {
+      const url = `/reservation/admin/api/v1/appointments/receive`
+      const result = await request(server.app)
+        .put(url)
+        .set('Content-Type', 'application/json')
+        .set('authorization', 'Bearer LabUser')
+        .send({
+          appointmentIds: ['APT9'],
+          vialLocation,
+        })
+
+      expect(result.status).toBe(200)
+      expect(result.body.data.length).toBeGreaterThanOrEqual(1)
+      expect(result.body.data[0].updatedData.vialLocation).toBe(vialLocation)
+    })
+  })
+
+  describe('Appointment add label', () => {
+    test('add label to appointment', async () => {
+      const url = `/reservation/admin/api/v2/appointments/add-labels`
+      const result = await request(server.app)
+        .put(url)
+        .set('Content-Type', 'application/json')
+        .set('authorization', 'Bearer LabUser')
+        .send({
+          appointmentIds: ['APT9'],
+          label: 'SameDay',
+        })
+
+      const resultAfter = await request(server.app)
+        .put(url)
+        .set('Content-Type', 'application/json')
+        .set('authorization', 'Bearer LabUser')
+        .send({
+          appointmentIds: ['APT9'],
+          label: 'NextDay',
+        })
+
+      expect(result.body.data.length).toBeGreaterThanOrEqual(1)
+      expect(
+        new Date(resultAfter.body.data[0].updatedData.deadline).getTime() -
+          new Date(result.body.data[0].updatedData.deadline).getTime(),
+      ).toBe(oneDay)
+      expect(result.status).toBe(200)
     })
   })
 

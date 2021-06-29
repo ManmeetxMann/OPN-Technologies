@@ -12,6 +12,7 @@ export const createAppointment = async (
     labId?: string
     testType?: string
     userId?: string
+    barCode?: string
   },
   testDataCreator: string,
 ): Promise<void> => {
@@ -22,7 +23,7 @@ export const createAppointment = async (
     agreeToConductFHHealthAssessment: true,
     appointmentStatus: 'Pending',
     appointmentTypeID: 111,
-    barCode: 'BAR1',
+    barCode: dataOverwrite.barCode ?? 'BAR1',
     calendarID: 1,
     canceled: false,
     dateOfAppointment: dataOverwrite.dateOfAppointment,
