@@ -1118,13 +1118,19 @@ export class AppoinmentService {
         calendarID: appointment.calendarID,
         fields: {
           dateOfBirth: appointment.dateOfBirth,
+          gender: appointment?.gender ?? Gender.PreferNotToSay,
           address: appointment.address,
           addressUnit: appointment.addressUnit,
+          city: appointment?.city ?? 'N/A',
+          province: appointment?.province ?? 'N/A',
+          country: appointment?.country ?? 'N/A',
+          postalCode: appointment?.postalCode ?? 'N/A',
           shareTestResultWithEmployer: appointment.shareTestResultWithEmployer,
           readTermsAndConditions: appointment.readTermsAndConditions,
           agreeToConductFHHealthAssessment: appointment.agreeToConductFHHealthAssessment,
           receiveResultsViaEmail: appointment.receiveResultsViaEmail,
           receiveNotificationsFromGov: appointment.receiveNotificationsFromGov,
+          agreeCancellationRefund: appointment?.agreeCancellationRefund ?? true,
           barCodeNumber,
         },
       })
@@ -1137,6 +1143,7 @@ export class AppoinmentService {
         }
       }
     } catch (err) {
+      console.log({err})
       LogError('AdminAppointmentController:copyAppointment', 'FailedToCreateOnAcuity', {
         appointmentID: appointmentId,
         appointmentDateTime: dateTime,
