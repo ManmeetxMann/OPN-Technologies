@@ -89,6 +89,24 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "enteredAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "access",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "locationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "timestamps.createdAt",
           "order": "DESCENDING"
         }
@@ -132,6 +150,20 @@
         },
         {
           "fieldPath": "exitAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "access",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "enteredAt",
           "order": "DESCENDING"
         }
       ]
