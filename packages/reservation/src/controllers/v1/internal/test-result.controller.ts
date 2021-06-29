@@ -22,13 +22,13 @@ class PubsubController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = () => Router({mergeParams: true})
-    const root = '/reservation/internal/api/v1/pubsub/test-result'
+    const root = '/reservation/internal/api/v1/test-result'
     const route = innerRouter().use(
       '/',
       innerRouter()
         .post('/notify-by-email', this.notifyByEmail)
         .post('/notify-by-push-notification', this.notifyByPushNotification)
-        .post('/test', this.test),
+        .post('/test-push-notification', this.test),
     )
     this.router.use(root, route)
   }
