@@ -13,6 +13,9 @@ frisby.globalSetup({
     }
 });
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL
+
+const resultId = testProfile.get().resultId;
+
 /**
  * @group reservation-service
  * @group /reservation/internal/api/v1/test-result/notify-by-email
@@ -22,7 +25,7 @@ describe('test results notify-by-email', () => {
     test('Succcessfully notify by email', async () => {
         const url = `${reservationServiceUrl}/reservation/internal/api/v1/test-result/notify-by-email`
         const data = {
-            id: 'J3xibYMIbBaFhDIxm7S3',
+            id: resultId,
             result: 'Positive',
             date: '2021-07-11',
             userId: 'string',
