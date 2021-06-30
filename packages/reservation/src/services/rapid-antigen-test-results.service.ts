@@ -23,6 +23,8 @@ import {
 
 import {RapidAntigenPDFContent} from '../templates/rapid-antigen'
 import {PcrResultTestActivityAction, PCRTestResultDBModel} from '../models/pcr-test-results'
+import {QrService} from '../../../common/src/service/qr/qr-service'
+import TestResultUploadService from '../../../enterprise/src/services/test-result-upload-service'
 
 export class RapidAntigenTestResultsService {
   private dataStore = new DataStore()
@@ -31,6 +33,7 @@ export class RapidAntigenTestResultsService {
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private emailService = new EmailService()
   private pubSub = new OPNPubSub('rapid-antigen-test-result-topic')
+  private testResultUploadService = new TestResultUploadService()
 
   private getResultBasedOnAction = (action: RapidAntigenResultTypes) => {
     switch (action) {
@@ -227,6 +230,9 @@ export class RapidAntigenTestResultsService {
       return
     }
 
+    const fileName = this.testResultUploadService.generateFileName(testResults.id)
+    const v4ReadURL = await this.testResultUploadService.getSignedInUrl(fileName)
+    const qr = await QrService.generateQrCode(v4ReadURL)
     const rapidAntigenAllowedResults = [
       ResultTypes.Negative,
       ResultTypes.Positive,
@@ -246,7 +252,7 @@ export class RapidAntigenTestResultsService {
     }
 
     const emailSendStatus = await this.emailService.send(
-      await this.getEmailData(appointment, testResults.result),
+      await this.getEmailData(appointment, testResults.result, qr),
     )
 
     LogInfo('RapidAntigenTestResultsService: sendTestResultEmail', 'EmailSendSuccess', {
@@ -254,7 +260,11 @@ export class RapidAntigenTestResultsService {
     })
   }
 
-  async getEmailData(appointment: AppointmentDBModel, result: ResultTypes): Promise<EmailMessage> {
+  async getEmailData(
+    appointment: AppointmentDBModel,
+    result: ResultTypes,
+    qr: string,
+  ): Promise<EmailMessage> {
     const resultDate = moment(appointment.dateTime.toDate()).format('LL')
     const templateId =
       result === ResultTypes.Invalid
@@ -279,6 +289,7 @@ export class RapidAntigenTestResultsService {
       const pdfContent = await RapidAntigenPDFContent(
         appointment,
         await this.getPDFType(appointment.id, result),
+        qr,
       )
       const attachment = [
         {

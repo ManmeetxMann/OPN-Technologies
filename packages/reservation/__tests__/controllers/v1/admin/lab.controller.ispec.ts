@@ -23,6 +23,7 @@ describe('AdminLabController', () => {
         userID: 'USER1',
         sendORMRequest: true,
         poolingEnabled: true,
+        displayNameOnReport: true,
       },
       testDataCreator,
     )
@@ -50,6 +51,7 @@ describe('AdminLabController', () => {
           assay: 'TEST',
           sendORMRequest: true,
           poolingEnabled: true,
+          displayNameOnReport: true,
         })
         .then(async function () {
           const url = `/reservation/admin/api/v1/labs`
