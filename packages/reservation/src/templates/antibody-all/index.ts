@@ -9,6 +9,13 @@ import {PCRResultPDFType, PCRTestResultEmailDTO} from '../../models/pcr-test-res
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {Stream} from 'stream'
 
+const pageSize = {
+  height: 1816,
+  width: 1224,
+}
+
+const pageMargin = 0
+
 export const AntibodyAllPDFContent = async (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
@@ -37,8 +44,8 @@ export const AntibodyAllPDFStream = (
     data.content,
     data.tableLayouts,
     undefined,
-    undefined,
-    undefined,
+    pageSize,
+    pageMargin,
     data.background,
   )
 }

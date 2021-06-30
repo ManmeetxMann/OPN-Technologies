@@ -15,10 +15,17 @@ import negativePCRResultTemplate from './negative'
 
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 
+const pageSize = {
+  height: 1816,
+  width: 1224,
+}
+
+const pageMargin = 0
+
 const getRapidAntigenTemplate = (
   resultData: RapidAntigenEmailResultDTO,
   pdfType: RapidAntigenResultPDFType,
-): {content: Content; tableLayouts: TableLayouts} => {
+): {content: Content; background: Content; tableLayouts: TableLayouts} => {
   const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 
   switch (pdfType) {
@@ -63,5 +70,12 @@ export const RapidAntigenPDFStream = (
     throw new BadRequestException(`Not supported result ${pdfType}`)
   }
 
-  return pdfService.generatePDFStream(data.content, data.tableLayouts)
+  return pdfService.generatePDFStream(
+    data.content,
+    data.tableLayouts,
+    undefined,
+    pageSize,
+    pageMargin,
+    data.background,
+  )
 }

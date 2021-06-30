@@ -1,20 +1,27 @@
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
 import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
 import commonPDFContent from './common-report-content'
+import path from 'path'
 
 const pdfContent = (
   params: PCRTestResultEmailDTO,
   resultDate: string,
-): {content: Content[]; tableLayouts: TableLayouts} => {
+): {content: Content[]; background: Content; tableLayouts: TableLayouts} => {
   return {
     tableLayouts: commonPDFContent.tableLayouts,
+    background: [
+      {
+        image: path.join(__dirname, '../Assets/Overlay/FH_Forge_Overlay@3x.png'),
+        width: 1224,
+        height: 1816,
+      },
+    ],
     content: [
-      commonPDFContent.companyInfoHeader(),
-      {text: resultDate, margin: [0, 30, 0, 0]},
+      commonPDFContent.companyInfoHeader(params),
       commonPDFContent.clientInformation(params, resultDate),
-      messageBody(),
-      commonPDFContent.conactDetailsForQuestions(),
-      commonPDFContent.documentFooter(),
+      commonPDFContent.testAnalysisTable(params),
+      commonPDFContent.importantInfo(),
+      commonPDFContent.legalNotice(),
     ],
   }
 }
@@ -40,8 +47,7 @@ const messageBody = (): Content => {
       ],
     },
     {
-      text:
-        'If you are the patron receiving the test and require further information, please visit the City of Toronto Public Health: ',
+      text: 'If you are the patron receiving the test and require further information, please visit the City of Toronto Public Health: ',
     },
     {
       text: 'https://www.toronto.ca/home/covid-19',

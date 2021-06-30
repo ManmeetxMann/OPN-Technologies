@@ -1,9 +1,8 @@
-import {SpecLabel} from './../../models/pcr-test-results'
-import path from 'path'
-
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
 import {Config} from '../../../../common/src/utils/config'
 import {RapidAntigenEmailResultDTO} from '../../models/rapid-antigen-test-results'
+import {ResultTypes} from '../../models/appointment'
+import path from 'path'
 import {Spec} from '../../models/pcr-test-results'
 
 const tableLayouts: TableLayouts = {
@@ -37,111 +36,20 @@ const tableLayouts: TableLayouts = {
   },
 }
 
-const leftMarginX = 20
-const smallFontSize = 8
-
-const getResult = (result: string): {result: string; resultText: string} => {
-  if (result && (result.toUpperCase() === 'POSITIVE' || result === '+')) {
-    return {result: 'POSITIVE', resultText: 'asd'}
-  } else if (result && result.toUpperCase() === 'INDETERMINATE') {
-    return {result: 'NEGATIVE', resultText: 'qqwe'}
-  }
-  return {result: 'idk', resultText: 'hey'}
-}
-
-const getFillColorForResultsCell = (result: string): string => {
-  if (result && (result.toUpperCase() === 'POSITIVE' || result === '+')) {
-    return '#FF0000'
-  } else if (result && result.toUpperCase() === 'INDETERMINATE') {
-    return '#B7B7B7'
-  }
-  return '#6AA84F'
-}
-
-const getColorForResultsCell = (result: string): string => {
-  if (result && result.toUpperCase() === 'INDETERMINATE') {
-    return '#000000'
-  }
-  return '#FFFFFF'
-}
+const leftMarginX = 30
+const topMargin = 100
+// const smallx2FontSize = 8
+const smallFontSize = 23 - 5
+const legalNoticeFontSize = smallFontSize + 5
+const smallFontSizeHeader = smallFontSize - 5
+const pdfWidth = 1224
+const pdfHeight = 1816
+const bigFontSize = 55
 
 const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: string): Content => {
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
-  const dataPersonal = [
-    [
-      {text: 'Client Name ', bold: true},
-      {
-        text: `${params.firstName} ${params.lastName}`,
-        bold: true,
-      },
-    ],
-    [{text: 'Date of Birth', bold: true}, params.dateOfBirth],
-    [{text: 'Mobile Number', bold: true}, params.phone],
-  ]
-
-  if (params.gender) {
-    // if gender exists add as second field
-    dataPersonal.splice(1, 0, [{text: 'Gender', bold: true}, params.gender])
-  }
-
-  if (params.address) {
-    let address = params.address
-    if (params.city) {
-      address += ` ${params.city} ${params.province} ${params.country}`
-    }
-    dataPersonal.push([{text: 'Home Address', bold: true}, address])
-  }
-
-  if (params.addressUnit) {
-    dataPersonal.push([{text: 'Home Address (unit number, etc)', bold: true}, params.addressUnit])
-  }
-
-  if (params.postalCode) {
-    dataPersonal.push([{text: 'Postal Code', bold: true}, params.postalCode])
-  }
-
-  if (params.travelID) {
-    dataPersonal.push([{text: 'Travel ID', bold: true}, params.travelID])
-  }
-
-  if (params.travelIDIssuingCountry) {
-    dataPersonal.push([{text: 'Travel Country', bold: true}, params.travelIDIssuingCountry])
-  }
-
-  const dataAppointment = [
-    [
-      {text: 'Date of Test (Sample Collection)', bold: true},
-      `${params.dateOfAppointment} at ${params.timeOfAppointment}`,
-    ],
-    [{text: 'Date of Result', bold: true}, resultDate],
-    [{text: 'Registered Practical Nurse', bold: true}, params.registeredNursePractitioner],
-    [{text: 'Ordering Physician', bold: true}, requisitionDoctor],
-  ]
-
-  const data = [...dataPersonal, ...dataAppointment]
-
-  const resultAnalysis = (analysis: Spec[], keyName): Spec => {
-    return analysis.find((analys) => {
-      analys.label === keyName
-    })
-  }
 
   return [
-    // {
-    //   text: 'The following client completed a SARS-CoV-2 Antibody screening test:',
-    //   margin: [0, 20, 0, 0],
-    //   style: ['gray-text'],
-    //   lineHeight: 1.2,
-    // },
-    // {
-    //   layout: 'mainTable',
-    //   table: {
-    //     headerRows: 1,
-    //     widths: [183, 240],
-    //     body: data,
-    //   },
-    //   margin: [0, 10, 0, 10],
-    // },
     {
       columns: [
         {
@@ -149,53 +57,61 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
             {
               text: 'FIRST NAME',
               bold: true,
-              style: ['grey-text'],
-              fontSize: smallFontSize,
+              style: ['gray'],
+              font: 'DMSans',
+              fontSize: smallFontSizeHeader,
             },
             {
               text: params.firstName,
               bold: true,
               style: ['black'],
-              fontSize: 25,
+              fontSize: bigFontSize,
+              font: 'PTSerif',
+              margin: [0, 0, 0, 30],
             },
             {
               text: 'LAST NAME',
               bold: true,
-              style: ['grey-text'],
-              fontSize: smallFontSize,
+              font: 'DMSans',
+              style: ['gray'],
+              fontSize: smallFontSizeHeader,
             },
             {
               text: params.lastName,
               bold: true,
               style: ['black'],
-              fontSize: 25,
+              font: 'PTSerif',
+              fontSize: bigFontSize,
             },
           ],
           alignment: 'left',
           width: '100%',
-          absolutePosition: {x: leftMarginX, y: 100},
+          absolutePosition: {x: leftMarginX, y: 100 + topMargin},
         },
       ],
-      margin: [0, 0, 0, 20],
+      margin: [0, 0, 0, topMargin],
     },
     {
       layout: 'infoTable',
       table: {
-        widths: [90, 90],
-        heights: 19.7,
+        widths: [180, 180],
+        heights: [10, 10, 10, 10],
         headerRows: 0,
         body: [
           [
             {
               text: 'ADDRESS',
               bold: true,
-              style: ['grey-text'],
-              fontSize: smallFontSize,
+              font: 'DMSans',
+              style: ['gray'],
+              fontSize: smallFontSizeHeader,
               border: [true, false, false, false],
+              margin: [10, 30, 0, 0],
             },
             {
               text: '',
               border: [false, false, true, false],
+              margin: [10, 30, 0, 0],
             },
           ],
           [
@@ -214,30 +130,37 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
               alignment: 'left',
               bold: true,
               style: ['black'],
+              font: 'PTSerif',
               fontSize: smallFontSize,
               border: [true, false, true, false],
+              margin: [10, 5, 0, 0],
             },
             {
               text: '',
               border: [false, false, false, false],
+              margin: [10, 5, 0, 0],
             },
           ],
           [
             {
               text: 'COUNTRY',
               bold: true,
-              style: ['grey-text'],
-              fontSize: smallFontSize,
+              font: 'DMSans',
+              style: ['gray'],
+              fontSize: smallFontSizeHeader,
               alignment: 'left',
               border: [true, false, false, false],
+              margin: [10, 15, 0, 0],
             },
             {
               text: 'PHONE',
               bold: true,
-              style: ['grey-text'],
-              fontSize: smallFontSize,
+              font: 'DMSans',
+              style: ['gray'],
+              fontSize: smallFontSizeHeader,
               alignment: 'left',
               border: [false, false, true, false],
+              margin: [10, 15, 0, 0],
             },
           ],
           [
@@ -246,130 +169,120 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
               bold: true,
               style: ['black'],
               fontSize: smallFontSize,
+              font: 'PTSerif',
               alignment: 'left',
               border: [true, false, false, false],
+              margin: [10, 5, 0, 0],
             },
             {
               text: params.phone,
               bold: true,
               style: ['black'],
               fontSize: smallFontSize,
+              font: 'PTSerif',
               alignment: 'left',
               border: [false, false, true, false],
+              margin: [10, 5, 0, 0],
             },
           ],
           [
             {
               text: 'OHIP',
               bold: true,
-              style: ['grey-text'],
-              fontSize: smallFontSize,
+              font: 'DMSans',
+              style: ['gray'],
+              fontSize: smallFontSizeHeader,
               alignment: 'left',
               border: [true, false, false, false],
+              margin: [10, 15, 0, 0],
             },
             {
               text: '',
               border: [false, false, true, false],
+              margin: [10, 15, 0, 0],
             },
           ],
           [
             {
-              text: params.ohipCard || '',
+              text: params.ohipCard || 'N/A',
               bold: true,
               style: ['black'],
               fontSize: smallFontSize,
+              font: 'PTSerif',
               border: [true, false, false, false],
+              margin: [10, 5, 0, 10],
             },
             {
               text: '',
               border: [false, false, true, false],
+              margin: [10, 5, 0, 10],
             },
           ],
         ],
       },
-      absolutePosition: {x: 595 / 2 - 10, y: 84},
-      margin: [20, 50, 0, 100],
-    },
-    {
-      layout: 'mainTable',
-      table: {
-        headerRows: 1,
-        widths: [140, 40, 50, 50, 90],
-        body: [
-          [
-            {text: 'Type', bold: true},
-            {text: 'Antibody IgG, IgM Test', bold: true, colSpan: 4},
-          ],
-          [
-            {text: 'Antibody Specimen Type', bold: true},
-            {text: 'Serum', colSpan: 4},
-          ],
-          [
-            {text: 'Methodology', bold: true},
-            {text: 'Chemiluminescence', colSpan: 4},
-          ],
-          /*[
-            {text: 'Test Equipment', bold: true},
-            {text: 'Approved by Health Canada (IO authorization 312782)', colSpan: 4},
-          ],*/
-          [
-            {text: 'Indication', bold: true},
-            {text: 'Suspected Exposure to COVID-19', colSpan: 4},
-          ],
-        ],
-      },
-      margin: [0, 10, 0, 0],
+      absolutePosition: {x: pdfWidth / 2 + 10, y: 73 + topMargin},
+      margin: [20, 50, 0, 70 + topMargin],
     },
     {
       layout: 'infoTable',
       table: {
-        widths: [90, 90],
+        widths: [180],
         headerRows: 0,
         body: [
           [
             {
               text: 'DATE OF BIRTH',
               bold: true,
-              style: ['grey-text'],
-              fontSize: smallFontSize,
+              style: ['gray'],
+              font: 'DMSans',
+              fontSize: smallFontSizeHeader,
               border: [false, false, false, false],
+              margin: [10, 30, 0, 0],
             },
           ],
           [
             {
-              text: params.dateOfBirth || '',
+              text: params.dateOfBirth || 'N/A',
               bold: true,
               style: ['black'],
+              font: 'PTSerif',
               fontSize: smallFontSize,
               border: [false, false, false, false],
+              margin: [10, 5, 0, 0],
             },
           ],
           [
             {
               text: 'PASSPORT NO.',
               bold: true,
-              style: ['grey-text'],
-              fontSize: smallFontSize,
+              style: ['gray'],
+              font: 'DMSans',
+              fontSize: smallFontSizeHeader,
               border: [false, false, false, false],
+              margin: [10, 15, 0, 0],
             },
           ],
           [
             {
               // Add passport
-              text: ' ',
+              text: params.travelID,
               bold: true,
               style: ['black'],
+              font: 'PTSerif',
               fontSize: smallFontSize,
               border: [false, false, false, false],
+              margin: [10, 5, 0, 0],
             },
           ],
           [
             {
               text: 'ISSUING COUNTRY',
               bold: true,
-              style: ['grey-text'],
-              fontSize: smallFontSize,
+              style: ['gray'],
+              font: 'DMSans',
+              fontSize: smallFontSizeHeader,
               border: [false, false, false, false],
+              margin: [10, 15, 0, 0],
             },
           ],
           [
@@ -377,29 +290,22 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
               text: params.travelIDIssuingCountry || ' ',
               bold: true,
               style: ['black'],
+              font: 'PTSerif',
               fontSize: smallFontSize,
               border: [false, false, false, false],
-            },
-          ],
-          [
-            {
-              text: ' ',
-              bold: true,
-              style: ['black'],
-              fontSize: smallFontSize,
-              border: [false, false, false, false],
+              margin: [10, 5, 0, 0],
             },
           ],
         ],
       },
-      absolutePosition: {x: 485, y: 84},
-      margin: [0, 50, 0, 100],
+      absolutePosition: {x: (1224 * 3) / 4 + 100, y: 73 + topMargin},
+      margin: [0, 50, 0, 100 + topMargin],
     },
     {
       layout: 'lineAsTable',
       table: {
         headerRows: 1,
-        widths: [595],
+        widths: [pdfWidth],
         body: [
           [
             {
@@ -409,113 +315,574 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
           ],
         ],
       },
-      absolutePosition: {x: 0, y: 595 / 2 - 50},
+      absolutePosition: {x: 0, y: pdfWidth / 2 - 75},
     },
     {
-      layout: 'mainTable',
+      layout: 'lineAsTable',
       table: {
         headerRows: 1,
-        widths: [140, 40, 50, 50, 90],
+        widths: [pdfWidth],
         body: [
           [
-            {text: 'Type', bold: true},
-            {text: 'Antibody IgG, IgM Test', bold: true, colSpan: 4},
-          ],
-          [
-            {text: 'Antibody Specimen Type', bold: true},
-            {text: 'Serum', colSpan: 4},
-          ],
-          [
-            {text: 'Methodology', bold: true},
-            {text: 'Chemiluminescence', colSpan: 4},
-          ],
-          /*[
-            {text: 'Test Equipment', bold: true},
-            {text: 'Approved by Health Canada (IO authorization 312782)', colSpan: 4},
-          ],*/
-          [
-            {text: 'Indication', bold: true},
-            {text: 'Suspected Exposure to COVID-19', colSpan: 4},
+            {
+              text: '',
+              border: [false, true, false, false],
+            },
           ],
         ],
       },
-      margin: [0, 10, 0, 0],
+      absolutePosition: {x: 0, y: pdfWidth / 2 + 235},
     },
     {
-      layout: 'mainTable',
+      layout: 'lineAsTable',
       table: {
-        headerRows: 2,
-        widths: [140, 25, 30, 70, 105],
+        headerRows: 1,
+        widths: [pdfWidth],
         body: [
           [
-            {text: 'Antibody Cut-off Index Values', bold: true, rowSpan: 2},
-            {text: 'IgG'},
-            {text: resultAnalysis(params.resultAnalysis, 'IgG')?.value},
             {
-              text: resultAnalysis(params.resultAnalysis, 'IgGResult')?.value,
-              fillColor: getFillColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'IgGResult')?.value as string,
-              ),
-              color: getColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'IgGResult')?.value as string,
-              ),
-            },
-            {
-              text:
-                'Reference Cut-off Index\n' +
-                '0.8 - < 1.0 = Indeterminate \n' +
-                '≥ 1.0 = Positive\n' +
-                '< 0.8 = Negative',
-              rowSpan: 2,
-            },
-          ],
-          [
-            {},
-            {text: 'IgM'},
-            {text: resultAnalysis(params.resultAnalysis, 'IgM')?.value},
-            {
-              text: resultAnalysis(params.resultAnalysis, 'IgMResult')?.value,
-              fillColor: getFillColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'IgMResult')?.value as string,
-              ),
-              color: getColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'IgMResult')?.value as string,
-              ),
+              text: '',
+              border: [false, true, false, false],
             },
           ],
         ],
       },
+      absolutePosition: {x: 0, y: pdfWidth / 2 + 1000},
+    },
+    {
+      layout: 'lineAsTable',
+      table: {
+        headerRows: 1,
+        widths: [1],
+        heights: [600],
+        body: [
+          [
+            {
+              text: '',
+              border: [false, false, true, false],
+            },
+          ],
+        ],
+      },
+      absolutePosition: {x: pdfWidth / 2, y: 400},
+    },
+    {
+      layout: 'lineAsTable',
+      table: {
+        headerRows: 1,
+        widths: [1],
+        heights: [199],
+        body: [
+          [
+            {
+              text: '',
+              border: [false, false, true, false],
+            },
+          ],
+        ],
+      },
+      absolutePosition: {x: pdfWidth / 2, y: pdfWidth / 2 + 1000},
+    },
+    {
+      layout: 'lineAsTable',
+      table: {
+        headerRows: 1,
+        widths: [1],
+        heights: [120],
+        body: [
+          [
+            {
+              text: '',
+              border: [false, false, true, false],
+            },
+          ],
+        ],
+      },
+      absolutePosition: {x: (pdfWidth * 3) / 4 + 100, y: 30},
+    },
+    {
+      layout: 'infoTable',
+      table: {
+        widths: [270, 270],
+        heights: [10, 10, 10, 10],
+        headerRows: 0,
+        body: [
+          [
+            {
+              text: 'DATE OF TEST',
+              bold: true,
+              style: ['gray'],
+              font: 'DMSans',
+              fontSize: smallFontSizeHeader,
+              border: [false, false, false, false],
+              margin: [10, 30, 0, 0],
+            },
+            {
+              text: 'DATE OF RESULT',
+              bold: true,
+              style: ['gray'],
+              font: 'DMSans',
+              fontSize: smallFontSizeHeader,
+              border: [false, false, false, false],
+              margin: [10, 30, 0, 0],
+            },
+          ],
+          [
+            {
+              text: params.dateOfAppointment + ', ' + params.timeOfAppointment,
+              alignment: 'left',
+              bold: true,
+              style: ['black'],
+              font: 'PTSerif',
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+              margin: [10, 5, 0, 0],
+            },
+            {
+              text: resultDate,
+              alignment: 'left',
+              bold: true,
+              style: ['black'],
+              font: 'PTSerif',
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+              margin: [10, 5, 0, 0],
+            },
+          ],
+          [
+            {
+              text: 'TEST-TYPE',
+              bold: true,
+              style: ['gray'],
+              font: 'DMSans',
+              fontSize: smallFontSizeHeader,
+              alignment: 'left',
+              border: [false, false, false, false],
+              margin: [10, 15, 0, 0],
+            },
+            {
+              text: 'ANTIBODY SPECIMEN TYPE',
+              bold: true,
+              style: ['gray'],
+              font: 'DMSans',
+              fontSize: smallFontSizeHeader,
+              alignment: 'left',
+              border: [false, false, false, false],
+              margin: [10, 15, 0, 0],
+            },
+          ],
+          [
+            {
+              text: 'SARS-COV-2 Total Antibody\n' + '(IgG, IgA, IgM)',
+              bold: true,
+              style: ['black'],
+              font: 'PTSerif',
+              fontSize: smallFontSize,
+              alignment: 'left',
+              border: [false, false, false, false],
+              margin: [10, 5, 0, 0],
+            },
+            {
+              text: 'Serum',
+              bold: true,
+              style: ['black'],
+              font: 'PTSerif',
+              fontSize: smallFontSize,
+              alignment: 'left',
+              border: [false, false, false, false],
+              margin: [10, 5, 0, 0],
+            },
+          ],
+          [
+            {
+              text: 'INDICATION',
+              bold: true,
+              style: ['gray'],
+              font: 'DMSans',
+              fontSize: smallFontSizeHeader,
+              alignment: 'left',
+              border: [false, false, false, false],
+              margin: [10, 10, 0, 0],
+            },
+            {
+              text: 'METHODOLOGY',
+              bold: true,
+              style: ['gray'],
+              font: 'DMSans',
+              fontSize: smallFontSizeHeader,
+              alignment: 'left',
+              border: [false, false, false, false],
+              margin: [10, 10, 0, 0],
+            },
+          ],
+          [
+            {
+              text: 'Suspected Exposure to \n COVID-19. Patron specified \nthat they are vaccinated.',
+              bold: true,
+              style: ['black'],
+              font: 'PTSerif',
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+              margin: [10, 2, 0, 30],
+            },
+            {
+              text: 'ELISA',
+              bold: true,
+              style: ['black'],
+              font: 'PTSerif',
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+              margin: [10, 5, 0, 30],
+            },
+          ],
+        ],
+      },
+      absolutePosition: {x: leftMarginX, y: 420 + topMargin},
+      margin: [20, 50, 0, 100 + topMargin],
+    },
+    {
+      layout: 'infoTable',
+      table: {
+        widths: [270, 270],
+        heights: [10, 10, 10, 10],
+        headerRows: 0,
+        body: [
+          [
+            {
+              text: 'COLLECTION NURSE',
+              bold: true,
+              style: ['gray'],
+              font: 'DMSans',
+              fontSize: smallFontSizeHeader,
+              border: [false, false, false, false],
+              margin: [10, 30, 0, 0],
+            },
+            {
+              text: 'ORDERING PHYSICIAN',
+              bold: true,
+              style: ['gray'],
+              font: 'DMSans',
+              fontSize: smallFontSizeHeader,
+              border: [false, false, false, false],
+              margin: [10, 30, 0, 0],
+            },
+          ],
+          [
+            {
+              text: params.registeredNursePractitioner,
+              alignment: 'left',
+              bold: true,
+              style: ['black'],
+              font: 'PTSerif',
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+              margin: [10, 5, 0, 0],
+            },
+            {
+              text: requisitionDoctor,
+              alignment: 'left',
+              bold: true,
+              style: ['black'],
+              font: 'PTSerif',
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+              margin: [10, 5, 0, 0],
+            },
+          ],
+          [
+            {
+              text: 'TESTING CLINIC',
+              bold: true,
+              style: ['gray'],
+              font: 'DMSans',
+              fontSize: smallFontSizeHeader,
+              alignment: 'left',
+              border: [false, false, false, false],
+              margin: [10, 15, 0, 0],
+            },
+            {
+              text: 'LOCATION',
+              bold: true,
+              style: ['gray'],
+              font: 'DMSans',
+              fontSize: smallFontSizeHeader,
+              alignment: 'left',
+              border: [false, false, false, false],
+              margin: [10, 15, 0, 0],
+            },
+          ],
+          [
+            {
+              text: params.locationName,
+              alignment: 'left',
+              bold: true,
+              style: ['black'],
+              font: 'PTSerif',
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+              margin: [10, 5, 0, 0],
+            },
+            {
+              text: params.locationAddress,
+              alignment: 'left',
+              bold: true,
+              style: ['black'],
+              font: 'PTSerif',
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+              margin: [10, 5, 0, 0],
+            },
+          ],
+          [
+            {
+              text: 'TESTING LAB',
+              bold: true,
+              style: ['gray'],
+              font: 'DMSans',
+              fontSize: smallFontSizeHeader,
+              alignment: 'left',
+              border: [false, false, false, false],
+              margin: [10, 15, 0, 0],
+            },
+            {
+              text: '',
+              alignment: 'left',
+              bold: true,
+              style: ['black'],
+              font: 'PTSerif',
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+              margin: [10, 5, 0, 0],
+            },
+          ],
+          [
+            {
+              text: 'FH Buffalo',
+              alignment: 'left',
+              bold: true,
+              style: ['black'],
+              font: 'PTSerif',
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+              margin: [10, 5, 0, 0],
+            },
+            {
+              text: '',
+              alignment: 'left',
+              bold: true,
+              style: ['black'],
+              font: 'PTSerif',
+              fontSize: smallFontSize,
+              border: [false, false, false, false],
+              margin: [10, 5, 0, 0],
+            },
+          ],
+        ],
+      },
+      absolutePosition: {x: pdfWidth / 2 + 10, y: 420 + topMargin},
+      margin: [20, 50, 0, 100 + topMargin],
+    },
+    {
+      columns: [
+        {
+          stack: [
+            {
+              text: 'Test Analysis',
+              bold: true,
+              fontSize: 30,
+              style: ['black'],
+              margin: [30, 0, 0, 10],
+            },
+            {
+              text: 'ANTIBODY CUT-OFF INDEX VALUES',
+              bold: true,
+              color: '#FFA500',
+              fontSize: 20,
+              margin: [30, 0, 0, 10],
+            },
+          ],
+          alignment: 'left',
+          width: '100%',
+          absolutePosition: {x: pdfWidth / 2 + 10, y: 1224 / 2 + 300},
+        },
+      ],
+      margin: [30, 0, 0, topMargin],
+    },
+
+    {
+      layout: 'lineAsTable',
+      table: {
+        headerRows: 1,
+        widths: [1],
+        heights: [pdfHeight / 2 + 380],
+        body: [
+          [
+            {
+              text: '',
+              border: [false, false, true, false],
+            },
+          ],
+        ],
+      },
+      absolutePosition: {x: pdfWidth / 2, y: 523},
     },
   ]
 }
 
-const conactDetailsForQuestions = (): Content => {
+const legalNotice = (): Content => {
   return {
-    text: '\n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 484-0042.\n\n',
-    style: ['gray-text'],
+    columns: [
+      {
+        stack: [
+          {
+            text: 'Legal Notice\n',
+            bold: false,
+            fontSize: 30,
+            font: 'SFPro',
+            style: ['black'],
+            margin: [30, 10, 0, 10],
+          },
+          {
+            text:
+              'You have consented to the collection, use or disclosure of your personal health information\n' +
+              'by FH Health and to receiving electronic communications from FH Health in accordance with\n' +
+              'FH Health’s Privacy Policy (https://www.fhhealth.ca/privacy-policy) and Terms of Service\n' +
+              '(https://www.fhhealth.ca/terms-of-service). The information contained in this report is confidential\n' +
+              'and includes information protected by Ontario privacy laws. You are solely responsible for protecting\n' +
+              'the confidentiality and security of the information in this report and agree to release, indenify and hold\n' +
+              'harmless FH Health from and against any claim or liability associated with the loss,\n' +
+              'theft or breach of privacy or security involving your personal information.',
+            bold: false,
+            style: ['black'],
+            font: 'SFPro',
+            fontSize: smallFontSize - 5,
+            margin: [30, 0, 0, 10],
+          },
+        ],
+        alignment: 'left',
+        width: '100%',
+        absolutePosition: {x: 0, y: 1224 / 2 + 1000},
+      },
+    ],
+    margin: [30, 0, 0, topMargin],
   }
 }
 
-const documentFooter = (): Content => {
+const importantInfo = (): Content => {
+  const smallFontSize = 12
+  const textInfo: Content = [
+    {
+      text: 'Important Information',
+      font: 'SFPro',
+      bold: true,
+      fontSize: 30,
+      style: ['black'],
+    },
+    {
+      text:
+        ' \n\nThe human immune system antibody response has been studied for decades. In general, IgM' +
+        ' isotype antibodies develop in 5 to 7 days and  usually remain in circulation for 2 to 4 months.' +
+        ' IgG isotype antibodies develop after 10 days and remain in circulation longer. The onset and' +
+        ' persistence of IgA isotype antibodies is variable.',
+      lineHeight: 1.1,
+      fontSize: smallFontSize,
+      style: ['black'],
+    },
+    {
+      text:
+        ' \n\nStudies of the antibody response to SARS-CoV-2 also known as COVID-19 are limited as the first' +
+        ' cases were only reported toward the end of  2019. Antibody levels in these patients have been' +
+        ' monitored for less than 6 months. In the first COVID-19 studies published, antibody isotype' +
+        ' occurrence varies widely, likely impacted by lack of standardization. Guo et al reported that IgM' +
+        ' and IgA antibodies were detected in COVID' +
+        ' 19 infected patients 5 days after onset of symptoms and IgG at 14 days. In this study the' +
+        ' antibody positive rate in clinical COVID-19 cases was  85.4% for IgM, 92.7% for IgA and 77.9%' +
+        ' for IgG. Another study reported that IgM antibodies started increasing around day 9 and peaked' +
+        ' at  day 18. IgG began increasing from day 9 to 15 and slowly increased from day 15 to 39. The' +
+        ' positive rate for IgG reached 100% 20 days after  onset of symptoms (Zheng, 2020). Long et al.,' +
+        ' reported that the median day of seroconversion for both IgG and IgM was 13 days after' +
+        ' symptoms onset. Seroconversion of IgM occurred at the same time, or earlier, or later than that ' +
+        ' of IgG. IgG levels were seen in 100% of  patients (19/19) and reached a plateau within 6 days' +
+        ' after seroconversion.',
+      lineHeight: 1.1,
+      fontSize: smallFontSize,
+      style: ['black'],
+    },
+    {
+      text:
+        ' \n\n Positive results for IgG, IgA and IgM antibodies against SARS-CoV-2 are generally indicative of an ' +
+        ' individual’s current or prior infection with  the COVID-19 virus, however, the duration these' +
+        ' antibodies remain in circulation is not yet established, however, these test results should  always ' +
+        ' be considered in the context of a patient’s clinical history, physical examination, and ' +
+        ' epidemiologic exposures when making the final  diagnosis.' +
+        ' Measurement Uncertainty for SARS-CoV-2 IgA is 0.12 with an average control value of 1.57.' +
+        ' Measurement Uncertainty for SARS-CoV-2 IgG is 2.82 with an average control value of 43.70.' +
+        ' Measurement Uncertainty for SARS-CoV-2 IgM is 0.83 with an average control value of 6.90. ' +
+        '\n\n',
+      lineHeight: 1.1,
+      fontSize: smallFontSize,
+      style: ['black'],
+    },
+    {
+      text: 'References:',
+      bold: true,
+      fontSize: 23,
+      style: ['black'],
+    },
+    {
+      text:
+        '\n\n Guo, L., Ren, L., Yang, S., Xiao, M., Chang, D., Yang, F., ... & Zhang, L. (2020). Profiling early humoral' +
+        ' Guo, L., Ren, L., Yang, S., Xiao, M., Chang, D., Yang, F., ... & Zhang, L. (2020). Profiling early humoral' +
+        ' response to diagnose novel  coronavirus disease (COVID-19). Clinical Infectious Diseases.' +
+        ' Long, Q et al. (2020). Antibody responses to SARS-CoV-2 in COVID-19 patients: the perspective' +
+        ' application of serological tests in clinical  practice. 10.1101/2020.03.18.20038018.',
+      lineHeight: 1.1,
+      style: ['black'],
+    },
+  ]
+
   return {
-    text: 'This document contains personal identifiable information that must be treated confidentially. Any unauthorized use or disclosure is prohibited.',
-    style: ['footer'],
-    margin: [0, 50, 0, 0],
+    table: {
+      headerRows: 1,
+      widths: [1224 / 2 - 30],
+      body: [
+        [
+          {
+            text: textInfo,
+            lineHeight: 1.5,
+            border: [false, false, false, false],
+          },
+        ],
+      ],
+    },
+    absolutePosition: {x: 30, y: 1224 / 2 + 300},
+    margin: [0, 0, 0, 50],
   }
+}
+
+const resultText = (result: ResultTypes): string => {
+  if (result === ResultTypes.PresumptivePositive) {
+    return 'Positive'
+  } else if (result === ResultTypes.Positive) {
+    return 'Positive'
+  } else if (result === ResultTypes.Negative) {
+    return 'Negative'
+  } else if (result === ResultTypes.Inconclusive) {
+    return 'Inconclusive'
+  }
+  return 'Indeterminate'
 }
 
 const companyInfoHeader = (params: RapidAntigenEmailResultDTO): Content => {
-  const resultAnalysis = (analysis: Spec[], keyName): Spec => {
-    return analysis.find((analys) => {
-      analys.label === keyName
-    })
-  }
   return [
     {
-      image: path.join(__dirname, '../Assets/Banner/Positive_Banner@3x.png'),
+      image: path.join(
+        __dirname,
+        '../Assets/Banner/' + resultText(params.result) + '_Banner@3x.png',
+      ),
       absolutePosition: {x: 0, y: 0},
-      width: 595,
-      opacity: 1,
+      width: 1224,
+      opacity: 0.9,
       margin: [0, 0, 0, 20],
     },
     {
@@ -523,33 +890,46 @@ const companyInfoHeader = (params: RapidAntigenEmailResultDTO): Content => {
         {
           stack: [
             {
-              text: getResult(resultAnalysis(params.resultAnalysis, 'IgGResult')?.value as string)
-                .result,
-              font: 'BrutalType',
+              text: resultText(params.result),
+              font: 'SFPro',
               color: '#FFFFFF',
-              fontSize: 20,
-              absolutePosition: {x: leftMarginX, y: 20},
+              fontSize: 65,
+              bold: true,
+              absolutePosition: {x: 30, y: 30},
             },
             {
-              text: 'Tested POSITIVE for SARS-COV-2 (ANTIBODY)',
+              text:
+                'Tested ' + resultText(params.result).toUpperCase() + ' for SARS-COV-2 (ANTIBODY)',
               color: '#FFFFFF',
-              fontSize: 10,
-              absolutePosition: {x: leftMarginX, y: 50},
+              fontSize: 18,
+              font: 'SFPro',
+              absolutePosition: {x: 30, y: 110},
             },
           ],
-          // width: '100%',
         },
         {
           stack: [
             {
-              image: path.join(__dirname, '../Assets/FH_Logo/FH-Logo_White@3x.png'),
-              width: 225,
-              height: 225 / 4.2,
-              absolutePosition: {x: (595 * 3) / 4 - 100, y: 15},
+              image: path.join(__dirname, '../Assets/FH_Logo/FH_Health_Logos_Hor_White.png'),
+              width: 275,
+              height: 275 / 3.6,
+              absolutePosition: {x: (1224 * 3) / 4 - 180, y: 50},
             },
           ],
           margin: [50, 0, 0, 0],
           style: ['black'],
+        },
+        {
+          text:
+            '2637 Yonge Street\n' +
+            'Toronto, ON \n\n' +
+            'info@fnhealth.com\n\n' +
+            'www.fnhealth.com',
+          font: 'SFPro',
+          color: '#FFFFFF',
+          fontSize: 15,
+          bold: true,
+          absolutePosition: {x: (1224 * 3) / 4 + 150, y: 35},
         },
       ],
       margin: [0, 0, 0, 50],
@@ -557,10 +937,177 @@ const companyInfoHeader = (params: RapidAntigenEmailResultDTO): Content => {
   ]
 }
 
+const resultAnalysis = (analysis: Spec[], keyName): Spec => {
+  return analysis.find((analys) => {
+    analys.label === keyName
+  })
+}
+
+const testAnalysisTable = (params: RapidAntigenEmailResultDTO): Content => {
+  let data = []
+  if (params.result == ResultTypes.Positive) {
+    data.push(
+      {
+        layout: 'infoTable',
+        table: {
+          widths: [70, 400],
+          headerRows: 0,
+          body: [
+            [
+              {
+                text: 'IgG',
+                bold: false,
+                style: ['black'],
+                fontSize: 30,
+                border: [true, true, true, true],
+                margin: [0, 10, 0, 10],
+                alignment: 'center',
+              },
+              {
+                text: 'Positive',
+                bold: false,
+                fontSize: 30,
+                border: [true, true, true, true],
+                margin: [0, 10, 0, 10],
+                alignment: 'center',
+                fillColor: '#FF0000',
+                color: '#FFFFFF',
+              },
+            ],
+          ],
+        },
+        absolutePosition: {x: 1224 / 2 + 40, y: 1224 / 2 + 400},
+        margin: [20, 50, 0, 200],
+      },
+      {
+        layout: 'infoTable',
+        table: {
+          widths: [70, 400],
+          headerRows: 0,
+          body: [
+            [
+              {
+                text: 'IgM',
+                bold: false,
+                style: ['black'],
+                fontSize: 30,
+                border: [true, true, true, true],
+                margin: [0, 10, 0, 10],
+                alignment: 'center',
+              },
+              {
+                text: 'Positive',
+                bold: false,
+                fontSize: 30,
+                border: [true, true, true, true],
+                margin: [0, 10, 0, 10],
+                alignment: 'center',
+                fillColor: '#FF0000',
+                color: '#FFFFFF',
+              },
+            ],
+          ],
+        },
+        absolutePosition: {x: 1224 / 2 + 40, y: 1224 / 2 + 500},
+        margin: [20, 50, 0, 200],
+      },
+    )
+  } else if (params.result == ResultTypes.Negative) {
+    data.push(
+      {
+        layout: 'infoTable',
+        table: {
+          widths: [70, 70, 330],
+          headerRows: 0,
+          body: [
+            [
+              {
+                text: 'IgG',
+                bold: false,
+                style: ['black'],
+                fontSize: 30,
+                border: [true, true, true, true],
+                margin: [0, 10, 0, 10],
+                alignment: 'center',
+              },
+              {
+                text: resultAnalysis(params.resultAnalysis, 'IgG')?.value || 'N/A',
+                bold: false,
+                style: ['black'],
+                fontSize: 30,
+                border: [true, true, true, true],
+                margin: [0, 10, 0, 10],
+                alignment: 'center',
+              },
+              {
+                text: 'Negative',
+                bold: false,
+                fontSize: 30,
+                border: [true, true, true, true],
+                margin: [0, 10, 0, 10],
+                alignment: 'center',
+                fillColor: '#008000',
+                color: '#FFFFFF',
+              },
+            ],
+          ],
+        },
+        absolutePosition: {x: 1224 / 2 + 40, y: 1224 / 2 + 400},
+        margin: [20, 50, 0, 200],
+      },
+      {
+        layout: 'infoTable',
+        table: {
+          widths: [70, 70, 330],
+          headerRows: 0,
+          body: [
+            [
+              {
+                text: 'IgM',
+                bold: false,
+                style: ['black'],
+                fontSize: 30,
+                border: [true, true, true, true],
+                margin: [0, 10, 0, 10],
+                alignment: 'center',
+              },
+              {
+                text: resultAnalysis(params.resultAnalysis, 'IgM')?.value || 'N/A',
+                bold: false,
+                style: ['black'],
+                fontSize: 30,
+                border: [true, true, true, true],
+                margin: [0, 10, 0, 10],
+                alignment: 'center',
+              },
+              {
+                text: 'Negative',
+                bold: false,
+                fontSize: 30,
+                border: [true, true, true, true],
+                margin: [0, 10, 0, 10],
+                alignment: 'center',
+                fillColor: '#008000',
+                color: '#FFFFFF',
+              },
+            ],
+          ],
+        },
+        absolutePosition: {x: 1224 / 2 + 40, y: 1224 / 2 + 500},
+        margin: [20, 50, 0, 200],
+      },
+    )
+  } else {
+    return
+  }
+  return data
+}
+
 export default {
-  companyInfoHeader,
   clientInformation,
-  documentFooter,
+  importantInfo,
+  legalNotice,
+  companyInfoHeader,
+  testAnalysisTable,
   tableLayouts,
-  conactDetailsForQuestions,
 }

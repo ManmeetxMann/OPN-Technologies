@@ -1,20 +1,27 @@
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
 import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
 import commonPDFContent from './common-report-content'
+import path from 'path'
 
 const pdfContent = (
   params: PCRTestResultEmailDTO,
   resultDate: string,
-): {content: Content[]; tableLayouts: TableLayouts} => {
+): {content: Content[]; background: Content; tableLayouts: TableLayouts} => {
   return {
     tableLayouts: commonPDFContent.tableLayouts,
+    background: [
+      {
+        image: path.join(__dirname, '../Assets/Overlay/FH_Forge_Overlay@3x.png'),
+        width: 1224,
+        height: 1816,
+      },
+    ],
     content: [
-      commonPDFContent.companyInfoHeader(),
-      {text: resultDate, margin: [0, 30, 0, 0]},
+      commonPDFContent.companyInfoHeader(params),
       commonPDFContent.clientInformation(params, resultDate),
-      messageBody(),
-      commonPDFContent.conactDetailsForQuestions(),
-      commonPDFContent.documentFooter(),
+      commonPDFContent.testAnalysisTable(params),
+      commonPDFContent.importantInfo(),
+      commonPDFContent.legalNotice(),
     ],
   }
 }
@@ -44,14 +51,11 @@ const messageBody = (): Content => {
       background: '#FFFF33',
     },
     {
-      text:
-        'You should continue to  follow the Public Health guidelines for "Have COVID-19", which can be found here:\n',
+      text: 'You should continue to  follow the Public Health guidelines for "Have COVID-19", which can be found here:\n',
     },
     {
-      text:
-        'https://www.toronto.ca/home/covid-19/covid-19-what-you-should-do/covid-19-have symptoms-or-been-exposed/',
-      link:
-        'https://www.toronto.ca/home/covid-19/covid-19-what-you-should-do/covid-19-have symptoms-or-been-exposed/',
+      text: 'https://www.toronto.ca/home/covid-19/covid-19-what-you-should-do/covid-19-have symptoms-or-been-exposed/',
+      link: 'https://www.toronto.ca/home/covid-19/covid-19-what-you-should-do/covid-19-have symptoms-or-been-exposed/',
       color: '#1155CC',
       decoration: 'underline',
       lineHeight: 1,
