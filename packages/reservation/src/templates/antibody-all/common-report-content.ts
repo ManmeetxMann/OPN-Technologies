@@ -762,9 +762,9 @@ const legalNotice = (): Content => {
         stack: [
           {
             text: 'Legal Notice\n',
-            bold: false,
-            fontSize: 30,
             font: 'SFPro',
+            bold: true,
+            fontSize: 30,
             style: ['black'],
             margin: [30, 10, 0, 10],
           },
@@ -970,8 +970,75 @@ const resultAnalysis = (analysis: Spec[], keyName): Spec => {
 }
 
 const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
-  let data = []
-  if (params.result == ResultTypes.Positive) {
+  const data = []
+  if (params.result == ResultTypes.Inconclusive) {
+    data.push(
+      {
+        layout: 'infoTable',
+        table: {
+          widths: [70, 400],
+          headerRows: 0,
+          body: [
+            [
+              {
+                text: 'IgG',
+                bold: false,
+                style: ['black'],
+                fontSize: 30,
+                border: [true, true, true, true],
+                margin: [0, 10, 0, 10],
+                alignment: 'center',
+              },
+              {
+                text: 'Inconclusive',
+                bold: false,
+                fontSize: 30,
+                border: [true, true, true, true],
+                margin: [0, 10, 0, 10],
+                alignment: 'center',
+                fillColor: '#0000FF',
+                color: '#FFFFFF',
+              },
+            ],
+          ],
+        },
+        absolutePosition: {x: 1224 / 2 + 40, y: 1224 / 2 + 400},
+        margin: [20, 50, 0, 200],
+      },
+      {
+        layout: 'infoTable',
+        table: {
+          widths: [70, 400],
+          headerRows: 0,
+          body: [
+            [
+              {
+                text: 'IgM',
+                bold: false,
+                style: ['black'],
+                fontSize: 30,
+                border: [true, true, true, true],
+                margin: [0, 10, 0, 10],
+                alignment: 'center',
+              },
+              {
+                text: 'Inconclusive',
+                bold: false,
+                fontSize: 30,
+                border: [true, true, true, true],
+                margin: [0, 10, 0, 10],
+                alignment: 'center',
+                fillColor: '#0000FF',
+                color: '#FFFFFF',
+              },
+            ],
+          ],
+        },
+        absolutePosition: {x: 1224 / 2 + 40, y: 1224 / 2 + 500},
+        margin: [20, 50, 0, 200],
+      },
+    )
+  } else if (params.result == ResultTypes.Positive) {
     data.push(
       {
         layout: 'infoTable',
@@ -1149,7 +1216,7 @@ const placeQRCode = (qrCode: Content): Content => {
         margin: [30, 0, 0, 10],
       },
       {
-        text: 'Tap on QR code to scan to verify \n authenticy of pass\n\n',
+        text: 'Scan the QR Code to verify authenticity of the pass\n QR Code will expire 7 days after sample was taken\n\n',
         absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 1040},
         bold: false,
         color: '#a1a1a1',
@@ -1167,7 +1234,7 @@ const placeQRCode = (qrCode: Content): Content => {
         margin: [30, 0, 0, 10],
       },
       {
-        text: 'FN HEALTHPASS',
+        text: 'FH HEALTHPASS',
         absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 1150},
         bold: true,
         color: '#000000',

@@ -1180,9 +1180,9 @@ const legalNotice = (): Content => {
         stack: [
           {
             text: 'Legal Notice\n',
-            bold: false,
-            fontSize: 30,
             font: 'SFPro',
+            bold: true,
+            fontSize: 30,
             style: ['black'],
             margin: [30, 10, 0, 10],
           },
@@ -1256,7 +1256,7 @@ const placeQRCode = (qrCode: Content): Content => {
         margin: [30, 0, 0, 10],
       },
       {
-        text: 'Tap on QR code to scan to verify \n authenticy of pass\n\n',
+        text: 'Scan the QR Code to verify authenticity of the pass\n QR Code will expire 7 days after sample was taken\n\n',
         absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 1040},
         bold: false,
         color: '#a1a1a1',
@@ -1274,7 +1274,7 @@ const placeQRCode = (qrCode: Content): Content => {
         margin: [30, 0, 0, 10],
       },
       {
-        text: 'FN HEALTHPASS',
+        text: 'FH HEALTHPASS',
         absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 1150},
         bold: true,
         color: '#000000',
