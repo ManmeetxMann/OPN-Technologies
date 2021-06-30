@@ -15,6 +15,7 @@ import {LogInfo} from '../../../../common/src/utils/logging-setup'
 const getPCRTemplate = (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
+  qr: string,
 ): {content: Content; tableLayouts: TableLayouts} => {
   const resultDateRaw =
     resultData.resultMetaData && resultData.resultMetaData.resultDate
@@ -25,19 +26,19 @@ const getPCRTemplate = (
 
   switch (pdfType) {
     case PCRResultPDFType.ConfirmedNegative: {
-      return confirmedNegativePCRResultsTemplate(resultData, resultDate)
+      return confirmedNegativePCRResultsTemplate(resultData, resultDate, qr)
     }
     case PCRResultPDFType.ConfirmedPositive: {
-      return confirmedPositivePCRResultsTemplate(resultData, resultDate)
+      return confirmedPositivePCRResultsTemplate(resultData, resultDate, qr)
     }
     case PCRResultPDFType.Positive: {
-      return positivePCRResultTemplate(resultData, resultDate)
+      return positivePCRResultTemplate(resultData, resultDate, qr)
     }
     case PCRResultPDFType.Negative: {
-      return negativePCRResultTemplate(resultData, resultDate)
+      return negativePCRResultTemplate(resultData, resultDate, qr)
     }
     case PCRResultPDFType.PresumptivePositive: {
-      return presumptivePositivePCRResultTemplate(resultData, resultDate)
+      return presumptivePositivePCRResultTemplate(resultData, resultDate, qr)
     }
     default: {
       LogInfo('getPCRTemplate', 'InavldiPCRResultPDFType', {
@@ -51,9 +52,10 @@ const getPCRTemplate = (
 export const PCRResultPDFContent = async (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
+  qr: string,
 ): Promise<string> => {
   const pdfService = new PdfService()
-  const data = getPCRTemplate(resultData, pdfType)
+  const data = getPCRTemplate(resultData, pdfType, qr)
 
   if (!data) {
     return
@@ -65,9 +67,10 @@ export const PCRResultPDFContent = async (
 export const PCRResultPDFStream = (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
+  qr: string,
 ): Stream => {
   const pdfService = new PdfService()
-  const data = getPCRTemplate(resultData, pdfType)
+  const data = getPCRTemplate(resultData, pdfType, qr)
 
   if (!data) {
     throw new BadRequestException(`Not supported result ${pdfType}`)

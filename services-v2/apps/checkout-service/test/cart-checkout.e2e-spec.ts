@@ -155,9 +155,9 @@ describe('Cart checkout', () => {
 
   afterAll(async () => {
     await Promise.all([
-      await app.close(),
       deleteUserByIdTestDataCreator(userId, testDataCreator),
       deleteAppointmentsById(userId),
+      app.close(),
     ])
   })
 })

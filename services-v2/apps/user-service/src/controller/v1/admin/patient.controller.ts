@@ -1,11 +1,15 @@
-import {Body, Controller, Get, Param, Post, Put, Query, UseGuards} from '@nestjs/common'
+import {Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards} from '@nestjs/common'
 import {ApiBearerAuth, ApiResponse, ApiTags} from '@nestjs/swagger'
 
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard} from '@opn-services/common/guard'
-import {RequiredUserPermission} from '@opn-services/common/types/authorization'
+import {
+  OpnCommonHeaders,
+  OpnSources,
+  RequiredUserPermission,
+} from '@opn-services/common/types/authorization'
 import {UserFunctions, UserEvent} from '@opn-services/common/types/activity-logs'
-import {ApiCommonHeaders, Roles} from '@opn-services/common/decorator'
+import {ApiCommonHeaders, OpnHeaders, Roles} from '@opn-services/common/decorator'
 import {AuthUser} from '@opn-services/common/model'
 
 import {assignWithoutUndefined, ResponseStatusCodes} from '@opn-services/common/dto'
@@ -23,6 +27,7 @@ import {
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
 import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
+import {Request} from 'express'
 
 @ApiTags('Patients - Admin')
 @ApiBearerAuth()
@@ -90,6 +95,7 @@ export class AdminPatientController {
   async add(
     @Body() patientDto: PatientCreateAdminDto,
     @AuthUserDecorator() authUser: AuthUser,
+    @OpnHeaders() opnHeaders: OpnCommonHeaders,
   ): Promise<ResponseWrapper<Patient>> {
     const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
 
@@ -97,7 +103,11 @@ export class AdminPatientController {
       throw new BadRequestException('User with given email already exists')
     }
 
-    const patient = await this.patientService.createProfile(patientDto)
+    const patient = await this.patientService.createProfile(
+      patientDto,
+      false,
+      opnHeaders.opnSourceHeader,
+    )
 
     LogInfo(UserFunctions.add, UserEvent.createPatient, {
       newUser: patient,
@@ -111,16 +121,22 @@ export class AdminPatientController {
   @Roles([RequiredUserPermission.PatientsAdmin])
   async update(
     @AuthUserDecorator() authUser: AuthUser,
-    @Param('patientId') id: string,
-    @Body() patientUpdateDto: PatientUpdateAdminDto,
+    @Req() req: Request,
   ): Promise<ResponseWrapper> {
+    const patientUpdateDto = req.body as PatientUpdateAdminDto
+    const id = req.params.patientId
+    const opnSourceHeader = req.headers['opn-source'] as OpnSources
     const patientExists = await this.patientService.getbyId(Number(id))
 
     if (!patientExists) {
       throw new ResourceNotFoundException('User with given id not found')
     }
 
-    const updatedUser = await this.patientService.updateProfile(Number(id), patientUpdateDto)
+    const updatedUser = await this.patientService.updateProfile(
+      Number(id),
+      patientUpdateDto,
+      opnSourceHeader,
+    )
 
     LogInfo(UserFunctions.update, UserEvent.updateProfile, {
       oldUser: patientExists,
@@ -136,6 +152,7 @@ export class AdminPatientController {
   async addDependents(
     @Param('patientId') delegateId: string,
     @Body() dependantBody: DependantCreateAdminDto,
+    @OpnHeaders() opnHeaders: OpnCommonHeaders,
   ): Promise<ResponseWrapper<Patient>> {
     const delegateExists = await this.patientService.getbyId(Number(delegateId))
 
@@ -143,7 +160,11 @@ export class AdminPatientController {
       throw new ResourceNotFoundException('Delegate with given id not found')
     }
 
-    const dependant = await this.patientService.createDependant(Number(delegateId), dependantBody)
+    const dependant = await this.patientService.createDependant(
+      Number(delegateId),
+      dependantBody,
+      opnHeaders.opnSourceHeader,
+    )
 
     return ResponseWrapper.actionSucceed(dependant)
   }

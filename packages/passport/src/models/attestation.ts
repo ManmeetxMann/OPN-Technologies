@@ -27,3 +27,14 @@ export class AttestationModel extends DataModel<Attestation> {
   public readonly rootPath = 'attestations'
   readonly zeroSet = []
 }
+
+export const attestationAnswersFromLegacyToV1 = (legacyAnswers: AttestationAnswers): AnswerV1[] => {
+  const answersV1 = Object.entries(legacyAnswers).map(([, answer]) => {
+    answer['0'] = answer['1']
+    answer['1'] = answer['2']
+
+    return answer as AnswerV1
+  })
+
+  return answersV1
+}

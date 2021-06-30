@@ -51,7 +51,6 @@ import {
   decodeBookingLocationId,
   encodeAvailableTimeId,
 } from '../utils/base64-converter'
-import {Enterprise} from '../adapter/enterprise'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {UserAddressService} from '../../../enterprise/src/services/user-address-service'
 import {LabService} from './lab.service'
@@ -116,7 +115,6 @@ export class AppoinmentService {
   private userAddressService = new UserAddressService()
   private labService = new LabService()
   private packageService = new PackageService()
-  private enterpriseAdapter = new Enterprise()
   private sqlService = new SqlService()
 
   private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
@@ -481,6 +479,7 @@ export class AppoinmentService {
       couponCode?: string
       userId?: string
       labId?: string
+      patientId?: string
     },
   ): Promise<AppointmentDBModel> {
     const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
@@ -551,6 +550,7 @@ export class AppoinmentService {
       couponCode?: string
       userId?: string
       labId?: string
+      patientId?: string
     },
     appointmentDb?: AppointmentDBModel,
   ): Promise<Omit<AppointmentDBModel, 'id'>> {
@@ -583,10 +583,11 @@ export class AppoinmentService {
       couponCode = '',
       labId = null,
       userId,
+      patientId,
     } = additionalData
 
     const currentUserId =
-      userId || appointmentDb?.userId || (await this.checkWithPhone(acuityAppointment))
+      userId || appointmentDb?.userId || (await this.getCreateUser(acuityAppointment))
 
     return {
       acuityAppointmentId: Number(acuityAppointment.id),
@@ -642,6 +643,7 @@ export class AppoinmentService {
       city: acuityAppointment.city,
       province: acuityAppointment.province,
       country: acuityAppointment.country,
+      patientId: patientId ?? null,
     }
   }
 
@@ -738,7 +740,7 @@ export class AppoinmentService {
   async makeCanceled(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
     await this.appointmentsRepository.addStatusHistoryById(
       appointmentId,
-      AppointmentStatus.InProgress,
+      AppointmentStatus.Canceled,
       userId,
     )
     const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
@@ -839,11 +841,18 @@ export class AppoinmentService {
       labId: data.labId ?? null,
     })
     const testResult = await this.createOrUpdatePCRResults(savedAppointment, data.userId)
-    await this.postPubSubForToSyncWithThirdParty(
-      savedAppointment,
-      testResult.id,
-      ThirdPartySyncSource.TransportRun,
-    )
+
+    // trigger PubSub only if sendORMRequest is enabled for lab
+    const isORMRequestEnabled = await this.labService.isORMRequestEnabled(data.labId)
+    if (isORMRequestEnabled) {
+      await this.postPubSubForToSyncWithThirdParty(
+        savedAppointment,
+        testResult.id,
+        ThirdPartySyncSource.TransportRun,
+      )
+      await this.makeInProgress(appointmentId, null, data.userId)
+    }
+
     await this.appointmentsRepository.addStatusHistoryById(
       appointmentId,
       AppointmentStatus.InTransit,
@@ -1109,13 +1118,19 @@ export class AppoinmentService {
         calendarID: appointment.calendarID,
         fields: {
           dateOfBirth: appointment.dateOfBirth,
+          gender: appointment?.gender ?? Gender.PreferNotToSay,
           address: appointment.address,
           addressUnit: appointment.addressUnit,
+          city: appointment?.city ?? 'N/A',
+          province: appointment?.province ?? 'N/A',
+          country: appointment?.country ?? 'N/A',
+          postalCode: appointment?.postalCode ?? 'N/A',
           shareTestResultWithEmployer: appointment.shareTestResultWithEmployer,
           readTermsAndConditions: appointment.readTermsAndConditions,
           agreeToConductFHHealthAssessment: appointment.agreeToConductFHHealthAssessment,
           receiveResultsViaEmail: appointment.receiveResultsViaEmail,
           receiveNotificationsFromGov: appointment.receiveNotificationsFromGov,
+          agreeCancellationRefund: appointment?.agreeCancellationRefund ?? false,
           barCodeNumber,
         },
       })
@@ -1301,6 +1316,7 @@ export class AppoinmentService {
       organizationId: appointment.organizationId,
       couponCode: discountData?.name ? discountData.name : appointment.packageCode,
       userId,
+      patientId: patient.userId,
     })
   }
 
@@ -1828,7 +1844,14 @@ export class AppoinmentService {
     }
     return linkedBarcodes
   }
+
   private async createUser(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
+    const featureCreateUser = Config.get('FEATURE_CREATE_USER_ON_ENTERPRISE')
+    if (featureCreateUser !== 'enabled') {
+      LogInfo('AppoinmentService:createUser', 'UserCreationSkipped', null)
+      return null
+    }
+
     const publicOrgId = Config.get('PUBLIC_ORG_ID')
     const publicGroupId = Config.get('PUBLIC_GROUP_ID')
     const user = await this.userService.create({
@@ -1853,7 +1876,8 @@ export class AppoinmentService {
 
     return user.id
   }
-  private async checkWithEmail(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
+
+  private async getCreateByEmail(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
     const user = await this.userService.findOneByEmail(acuityAppointment.email)
     if (
       user &&
@@ -1866,10 +1890,10 @@ export class AppoinmentService {
     }
   }
 
-  private async checkWithPhone(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
+  private async getCreateUser(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
     const user = await this.userService.findOneByPhone(acuityAppointment.phone)
     if (!user) {
-      return await this.checkWithEmail(acuityAppointment)
+      return await this.getCreateByEmail(acuityAppointment)
     } else {
       if (
         user.firstName === acuityAppointment.firstName &&
@@ -1877,7 +1901,7 @@ export class AppoinmentService {
       ) {
         return user.id
       } else {
-        return await this.checkWithEmail(acuityAppointment)
+        return await this.getCreateByEmail(acuityAppointment)
       }
     }
   }

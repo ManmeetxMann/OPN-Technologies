@@ -20,4 +20,4 @@ https://jestjs.io/docs/en/ecmascript-modules
 
 
 Running TESTS
-npm test -- --group=rapid-antigen-create
+npm run test_lab -- --group=admin-self

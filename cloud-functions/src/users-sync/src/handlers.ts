@@ -16,6 +16,12 @@ class UserHandler {
       )
       return
     }
+    if (newValue.creator == UserCreator.syncFromTests) {
+      functions.logger.log(
+        `createUser skipped authUserId:${newValue.authUserId} creator:${UserCreator.syncFromTests}`,
+      )
+      return
+    }
 
     functions.logger.log(`createUser authUserId:${newValue.authUserId}`)
 

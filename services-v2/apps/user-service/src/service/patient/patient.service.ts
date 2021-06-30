@@ -10,6 +10,7 @@ import {
   PatientCreateAdminDto,
   PatientCreateDto,
   PatientFilter,
+  PatientOrganizationsDto,
   PatientUpdateDto,
 } from '../../dto/patient'
 import {HomeTestPatientDto} from '../../dto/home-patient'
@@ -39,6 +40,7 @@ import {OpnConfigService} from '@opn-services/common/services'
 import {BadRequestException, ResourceNotFoundException} from '@opn-services/common/exception'
 import {LogError} from '@opn-services/common/utils/logging'
 import * as activityLogs from '@opn-services/common/types/activity-logs'
+import {DefaultHttpException} from '@opn-services/common/exception'
 
 import {UserRepository} from '@opn-enterprise-v1/repository/user.repository'
 import {OrganizationModel} from '@opn-enterprise-v1/repository/organization.repository'
@@ -58,6 +60,7 @@ import {ActionStatus} from '@opn-services/common/model'
 import {OrganizationService} from '@opn-enterprise-v1/services/organization-service'
 import {Organization} from '@opn-enterprise-v1/models/organization'
 import {Platforms} from '@opn-common-v1/types/platform'
+import {OpnSources} from '@opn-services/common/types/authorization'
 
 @Injectable()
 export class PatientService {
@@ -116,6 +119,18 @@ export class PatientService {
     return this.patientAuthRepository.findOne({where: {authUserId}})
   }
 
+  async getUserOrganizations(
+    patientToOrganization: PatientToOrganization[],
+  ): Promise<PatientOrganizationsDto[]> {
+    const organizations = await this.organizationModel.findWhereIdIn(
+      patientToOrganization.map(org => org.firebaseOrganizationId),
+    )
+    return organizations.map(organization => ({
+      key: organization.key,
+      name: organization.name,
+    }))
+  }
+
   async getProfileByFirebaseKey(firebaseKey: string): Promise<Patient> {
     return this.patientRepository.findOne(
       {firebaseKey},
@@ -168,7 +183,19 @@ export class PatientService {
       .then(([data, totalItems]) => Page.of(data, page, perPage, totalItems))
   }
 
-  async createHomePatientProfile(data: HomeTestPatientDto): Promise<Patient> {
+  async createAuthUserInFirestore(user: AuthUser): Promise<AuthUser> {
+    try {
+      return await this.userRepository.add(user)
+    } catch (error) {
+      this.logUserSyncFailure(error)
+      throw new DefaultHttpException(error)
+    }
+  }
+
+  async createHomePatientProfile(
+    data: HomeTestPatientDto,
+    tokenSource: OpnSources,
+  ): Promise<Patient> {
     const userData = {
       firstName: data.firstName,
       lastName: data.lastName,
@@ -176,6 +203,7 @@ export class PatientService {
       isEmailVerified: false,
       authUserId: data.authUserId,
       active: false,
+      photo: data.photoUrl ?? this.configService.get('DEFAULT_USER_PHOTO'),
       organizationIds: [this.configService.get('PUBLIC_ORG_ID')],
       creator: UserCreator.syncFromSQL,
     } as AuthUser
@@ -201,7 +229,7 @@ export class PatientService {
 
     let firebaseUser = null
     if (firestoreUsers.length === 0) {
-      firebaseUser = await this.userRepository.add(userData)
+      firebaseUser = await this.createAuthUserInFirestore(userData)
     } else {
       firebaseUser = firestoreUsers[0]
     }
@@ -209,7 +237,8 @@ export class PatientService {
     await this.addInPublicGroup(firebaseUser.id)
     data.firebaseKey = firebaseUser.id
     data.isEmailVerified = false
-    const patient = await this.createPatient(data as PatientCreateDto)
+    data.photoUrl = data.photoUrl ?? this.configService.get('DEFAULT_USER_PHOTO')
+    const patient = await this.createPatient(data as PatientCreateDto, tokenSource)
     data.idPatient = patient.idPatient
 
     await Promise.all([this.saveAuth(data), this.saveAddress(data), this.saveOrganization(data)])
@@ -224,6 +253,7 @@ export class PatientService {
   async createProfile(
     data: PatientCreateDto | PatientCreateAdminDto,
     hasPublicOrg = false,
+    tokenSource: OpnSources,
   ): Promise<Patient> {
     const organizationIds = []
     if (hasPublicOrg) {
@@ -238,7 +268,7 @@ export class PatientService {
       firstName: data.firstName,
       isEmailVerified: false,
       lastName: data.lastName,
-      registrationId: await this.getRegistrationId(data),
+      registrationId: await this.getRegistrationId(data, tokenSource),
       photo: data.photoUrl ?? null,
       phoneNumber: data.phoneNumber ?? null,
       authUserId: data.authUserId,
@@ -274,7 +304,7 @@ export class PatientService {
 
     let firebaseUser = null
     if (firestoreUsers.length === 0) {
-      firebaseUser = await this.userRepository.add(userData)
+      firebaseUser = await this.createAuthUserInFirestore(userData)
     } else {
       firebaseUser = firestoreUsers[0]
     }
@@ -285,7 +315,7 @@ export class PatientService {
       await this.addInPublicGroup(firebaseUser.id)
     }
 
-    const patient = await this.createPatient(data)
+    const patient = await this.createPatient(data, tokenSource)
     data.idPatient = patient.idPatient
 
     await Promise.all([
@@ -334,7 +364,11 @@ export class PatientService {
    * @param id
    * @param data
    */
-  async updateProfile(patientId: number, data: PatientUpdateDto): Promise<Patient> {
+  async updateProfile(
+    patientId: number,
+    data: PatientUpdateDto,
+    tokenSource: OpnSources,
+  ): Promise<Patient> {
     const patient = await this.getProfilebyId(patientId)
     data.idPatient = patientId
     patient.firstName = data.firstName || patient.firstName
@@ -363,15 +397,21 @@ export class PatientService {
     }
 
     const userSync = {
-      email: auth.email,
       firstName: patient.firstName,
       lastName: patient.lastName,
       isEmailVerified: patient.isEmailVerified,
-      registrationId: await this.getRegistrationId({...data, firebaseKey: patient.firebaseKey}),
+      registrationId: await this.getRegistrationId(
+        {...data, firebaseKey: patient.firebaseKey},
+        tokenSource,
+      ),
       ...(patient.photoUrl && {photo: patient.photoUrl}),
       phone: {
         diallingCode: 0,
       },
+    }
+
+    if (auth?.email) {
+      userSync['email'] = auth.email
     }
 
     if (data.phoneNumber) {
@@ -446,6 +486,7 @@ export class PatientService {
 
   async createPatient(
     data: PatientCreateDto | DependantCreateDto | PatientCreateAdminDto,
+    tokenSource: OpnSources,
   ): Promise<Patient> {
     const entity = new Patient()
     entity.firebaseKey = data.firebaseKey
@@ -455,7 +496,7 @@ export class PatientService {
     entity.phoneNumber = data.phoneNumber
     entity.dateOfBirth = data.dateOfBirth
     entity.photoUrl = data.photoUrl
-    entity.registrationId = await this.getRegistrationId(data)
+    entity.registrationId = await this.getRegistrationId(data, tokenSource)
     entity.consentFileUrl = data.consentFileUrl
     entity.isEmailVerified = data.isEmailVerified || false
 
@@ -470,13 +511,14 @@ export class PatientService {
   async createDependant(
     delegateId: number,
     data: DependantCreateDto | DependantCreateAdminDto,
+    tokenSource: OpnSources,
   ): Promise<Patient> {
     const delegate = await this.getbyId(delegateId)
 
-    const firebaseUser = await this.userRepository.add({
+    const authUserSync = {
       firstName: data.firstName,
       lastName: data.lastName,
-      registrationId: await this.getRegistrationId(data),
+      registrationId: await this.getRegistrationId(data, tokenSource),
       photo: data.photoUrl ?? null,
       phone: {
         diallingCode: 0,
@@ -486,7 +528,9 @@ export class PatientService {
       organizationIds: [this.configService.get('PUBLIC_ORG_ID')],
       creator: UserCreator.syncFromSQL,
       delegates: [delegate.firebaseKey],
-    } as AuthUser)
+    } as AuthUser
+
+    const firebaseUser = await this.createAuthUserInFirestore(authUserSync)
 
     await this.addInPublicGroup(firebaseUser.id, delegate.firebaseKey)
 
@@ -496,7 +540,7 @@ export class PatientService {
       firebaseUser.organizationIds.push(data.organizationId)
     }
 
-    const dependant = await this.createPatient(data)
+    const dependant = await this.createPatient(data, tokenSource)
     data.idPatient = dependant.idPatient
 
     await Promise.all([
@@ -645,7 +689,7 @@ export class PatientService {
     }))
   }
 
-  async attachOrganization(organizationCode: string, authUserId: string): Promise<void> {
+  async attachOrganization(organizationCode: string, authUserId: string): Promise<string> {
     const organization = await this.organizationService.findOrganizationByKey(
       parseInt(organizationCode),
     )
@@ -657,6 +701,7 @@ export class PatientService {
     })
 
     await this.connectOrganizationWithInstances(currentPatient, organization)
+    return organization.name
   }
 
   async migratePatient(currentUserId: string, migration: Migration): Promise<ActionStatus> {
@@ -761,7 +806,7 @@ export class PatientService {
    * Update or insert push token
    */
   async upsertPushToken(patientId: number, registration: Omit<Registration, 'id'>): Promise<void> {
-    const {pushToken, osVersion, platform} = registration
+    const {pushToken, osVersion, platform, tokenSource} = registration
 
     // validate if we get token
     if (pushToken) {
@@ -773,13 +818,17 @@ export class PatientService {
       osVersion,
       platform,
       pushToken,
+      tokenSource,
     })
 
     await this.patientRepository.update({idPatient: patientId}, {registrationId: id})
   }
 
-  async updateProfileWithPubSub(data: AppointmentDBModel): Promise<void> {
-    if (!data?.userId) {
+  async updateProfileWithPubSub(data: AppointmentDBModel, tokenSource: OpnSources): Promise<void> {
+    // fallback to userId if appointment is from web
+    const userId = data?.patientId ?? data?.userId
+
+    if (!userId) {
       const errorMessage = `User/Patient id is missing`
       LogError(
         activityLogs.PubSubFunctions.updateProfileWithPubSub,
@@ -791,7 +840,6 @@ export class PatientService {
       throw new BadRequestException(errorMessage)
     }
 
-    const {userId} = data
     const patient = await this.patientRepository.findOne({
       where: [{idPatient: userId}, {firebaseKey: userId}],
     })
@@ -831,10 +879,10 @@ export class PatientService {
       updateDto.lastAppointment = safeTimestamp(data.dateOfAppointment)
     }
 
-    await this.updateProfile(patient.idPatient, updateDto)
+    await this.updateProfile(patient.idPatient, updateDto, tokenSource)
   }
 
-  async getRegistrationId(userData: PatientUpdateDto): Promise<string> {
+  async getRegistrationId(userData: PatientUpdateDto, tokenSource: OpnSources): Promise<string> {
     let registrationDb: Registration
 
     if (
@@ -846,9 +894,20 @@ export class PatientService {
         platform: userData?.registration?.platform as Platforms,
         osVersion: userData?.registration?.osVersion,
         pushToken: userData?.registration?.pushToken,
+        tokenSource,
       })
     }
 
     return registrationDb?.id || null
+  }
+
+  private logUserSyncFailure(error: Error) {
+    LogError(
+      activityLogs.PatientServiceFunctions.logUserSyncFailure,
+      activityLogs.PatientServiceEvents.syncV2ToV1Failed,
+      {
+        errorMessage: `User v2 to v1 sync failed: ${error}`,
+      },
+    )
   }
 }

@@ -10,6 +10,7 @@ export const prodConfig: Record<string, string | string[] | number | boolean> = 
   ACUITY_FIELD_ADDRESS_FOR_TESTING: 8621731,
   ACUITY_FIELD_ADDRESS_UNIT: 8738661,
   ACUITY_FIELD_ADDRESS: 8738660,
+  ACUITY_FIELD_ADDRESS_STREET: 8738660,
   ACUITY_FIELD_CITY: 9947843,
   ACUITY_FIELD_PROVINCE: 9947845,
   ACUITY_FIELD_COUNTRY: 9947849,
@@ -54,6 +55,9 @@ export const prodConfig: Record<string, string | string[] | number | boolean> = 
   DOMAIN_USER: 'https://user.services.ca.stayopn.net/user/',
 
   AUTH_EMAIL_TEMPLATE_ID: 3,
+
+  TEST_RESULTS_BUCKET_NAME: 'opn-platform-ca-prod-test-results',
+  QR_LINK_EXPIRATION_TIME: 60 * 24 * 7 * 60 * 1000,
 
   // APPOINTMENTS_PUSH_NOTIFY: 'enabled',
   // APPOINTMENTS_PUB_SUB_NOTIFY: 'enabled',

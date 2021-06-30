@@ -106,6 +106,8 @@ describe('AdminAppointmentController', () => {
         labId: laboratoryId,
         label: testDataCreator,
         createdAt: dateTimeForAppointment1,
+        transportDateTime: dateTimeForAppointment1,
+        transportDate: dateForAppointments,
       },
       testDataCreator,
     )
@@ -232,7 +234,7 @@ describe('AdminAppointmentController', () => {
           transportRunId,
         })
 
-      expect(result.statusCode).toBe(200)
+      expect(result.status).toBe(200)
     })
 
     test('add transport run failed', async () => {
@@ -247,7 +249,7 @@ describe('AdminAppointmentController', () => {
           appointmentIds: appointments,
         })
 
-      expect(result.statusCode).toBe(400)
+      expect(result.status).toBe(400)
     })
   })
 

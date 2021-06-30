@@ -1,8 +1,8 @@
 import {Controller, Post, Body} from '@nestjs/common'
 import {ApiTags} from '@nestjs/swagger'
 import {ResponseWrapper} from '@opn-services/common/dto'
-import {ApiAuthType} from '@opn-services/common'
-import {AuthTypes} from '@opn-services/common/types/authorization'
+import {ApiAuthType, OpnHeaders} from '@opn-services/common'
+import {AuthTypes, OpnCommonHeaders} from '@opn-services/common/types/authorization'
 import {LogInfo} from '@opn-services/common/utils/logging'
 import {PatientUpdatePubSubPayload} from '@opn-services/user/dto/patient'
 import {PatientService} from '@opn-services/user/service/patient/patient.service'
@@ -17,7 +17,10 @@ export class PatientPubSubController {
 
   @Post('/update')
   @ApiAuthType(AuthTypes.Internal)
-  async updateProfile(@Body() payload: PatientUpdatePubSubPayload): Promise<ResponseWrapper> {
+  async updateProfile(
+    @Body() payload: PatientUpdatePubSubPayload,
+    @OpnHeaders() opnHeaders: OpnCommonHeaders,
+  ): Promise<ResponseWrapper> {
     const {data, attributes} = payload.message
     const publishedData = await OPNPubSub.getPublishedData(data)
     const appointmentData = publishedData['appointment'] as AppointmentDBModel
@@ -35,7 +38,7 @@ export class PatientPubSubController {
       updatePayload, //TODO: remove: for now debugging purpose
     })
 
-    await this.patientService.updateProfileWithPubSub(updatePayload)
+    await this.patientService.updateProfileWithPubSub(updatePayload, opnHeaders.opnSourceHeader)
 
     return ResponseWrapper.actionSucceed()
   }

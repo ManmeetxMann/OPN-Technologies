@@ -38,6 +38,8 @@ import {
   unconfirmedPatientDto,
   UnconfirmedPatient,
   AttachOrganization,
+  PatientOrganizationsDto,
+  AttachOrganizationResponse,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
@@ -50,6 +52,7 @@ import {AuthShortCodeService} from '@opn-enterprise-v1/services/auth-short-code-
 import {OpnConfigService} from '@opn-services/common/services'
 import * as _ from 'lodash'
 import {ActionStatus} from '@opn-services/common/model'
+import {PatientToOrganization} from '@opn-services/user/model/patient/patient-relations.entity'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -81,6 +84,24 @@ export class PatientController {
     return ResponseWrapper.actionSucceed(patientProfileDto(patient, {resultExitsForProvidedEmail}))
   }
 
+  @Get('/organizations')
+  @UseGuards(AuthGuard)
+  @Roles([RequiredUserPermission.RegUser])
+  @ApiResponse({type: PatientOrganizationsDto, isArray: true})
+  async getUserOrganizations(@AuthUserDecorator() authUser: AuthUser): Promise<ResponseWrapper> {
+    const patient = await this.patientService.getProfileByFirebaseKey(authUser.id)
+    if (!patient) {
+      throw new ResourceNotFoundException('User with given id not found')
+    }
+
+    // It's casts as unknown because we've relation changed to firestore organizations temporary
+    const userOrganizations = await this.patientService.getUserOrganizations(
+      (patient.organizations as unknown) as PatientToOrganization[],
+    )
+
+    return ResponseWrapper.actionSucceed(userOrganizations)
+  }
+
   @Post()
   @ApiBody({
     schema: {
@@ -107,7 +128,10 @@ export class PatientController {
     if (opnHeaders.opnSourceHeader == OpnSources.FH_RapidHome_Web) {
       patientDto.phoneNumber = firebaseAuthUser.phoneNumber
 
-      patient = await this.patientService.createHomePatientProfile(patientDto as HomeTestPatientDto)
+      patient = await this.patientService.createHomePatientProfile(
+        patientDto as HomeTestPatientDto,
+        opnHeaders.opnSourceHeader,
+      )
     } else {
       const patientExists = await this.patientService.getAuthByEmail(patientDto.email)
       if (patientExists) {
@@ -119,7 +143,11 @@ export class PatientController {
       if (!patientDto.phoneNumber) {
         patientDto.phoneNumber = firebaseAuthUser.phoneNumber
       }
-      patient = await this.patientService.createProfile(patientDto, hasPublicOrg)
+      patient = await this.patientService.createProfile(
+        patientDto,
+        hasPublicOrg,
+        opnHeaders.opnSourceHeader,
+      )
     }
 
     let resultExitsForProvidedEmail = false
@@ -164,8 +192,9 @@ export class PatientController {
   async authenticate(
     @AuthUserDecorator() authUser: AuthUser,
     @Body() authenticateDto: AuthenticateDto,
+    @OpnHeaders() opnHeaders: OpnCommonHeaders,
   ): Promise<ResponseWrapper> {
-    const {patientId, organizationId, code} = authenticateDto
+    const {organizationId, code} = authenticateDto
     const patientExists = await this.patientService.getAuthByAuthUserId(authUser.authUserId)
     if (!patientExists) {
       throw new NotFoundException('User with given id not found')
@@ -173,8 +202,12 @@ export class PatientController {
 
     const shortCode = await this.patientService.findShortCodeByPatientEmail(patientExists.email)
     await this.patientService.verifyCodeOrThrowError(shortCode.shortCode, code)
-    await this.patientService.connectOrganization(Number(patientId), organizationId)
-    await this.patientService.updateProfile(Number(patientId), {isEmailVerified: true})
+    await this.patientService.connectOrganization(Number(patientExists.patientId), organizationId)
+    await this.patientService.updateProfile(
+      Number(patientExists.patientId),
+      {isEmailVerified: true},
+      opnHeaders.opnSourceHeader,
+    )
     return ResponseWrapper.actionSucceed()
   }
 
@@ -205,6 +238,7 @@ export class PatientController {
   async update(
     @Body() patientUpdateDto: PatientUpdateDto,
     @AuthUserDecorator() authUser: AuthUser,
+    @OpnHeaders() opnHeaders: OpnCommonHeaders,
   ): Promise<ResponseWrapper> {
     const patientExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
     if (!patientExists) {
@@ -222,10 +256,15 @@ export class PatientController {
         osVersion,
         platform: platform as Platform,
         pushToken,
+        tokenSource: opnHeaders.opnSourceHeader,
       })
     }
 
-    const updatedUser = await this.patientService.updateProfile(id, patientUpdateDto)
+    const updatedUser = await this.patientService.updateProfile(
+      id,
+      patientUpdateDto,
+      opnHeaders.opnSourceHeader,
+    )
     LogInfo(UserFunctions.update, UserEvent.updateProfile, {
       userId: patientExists.idPatient,
       updatedBy: id,
@@ -243,6 +282,7 @@ export class PatientController {
   async addDependents(
     @Body() dependantBody: DependantCreateDto,
     @AuthUserDecorator() authUser: AuthUser,
+    @OpnHeaders() opnHeaders: OpnCommonHeaders,
   ): Promise<ResponseWrapper> {
     const delegateExists = await this.patientService.getProfileByFirebaseKey(authUser.id)
     if (!delegateExists) {
@@ -258,7 +298,11 @@ export class PatientController {
       throw new ForbiddenException('Permission not found for this resource')
     }
 
-    const dependant = await this.patientService.createDependant(delegateId, dependantBody)
+    const dependant = await this.patientService.createDependant(
+      delegateId,
+      dependantBody,
+      opnHeaders.opnSourceHeader,
+    )
     LogInfo(UserFunctions.addDependents, UserEvent.createPatient, {
       newUserId: dependant.idPatient,
       createdBy: authUser.id,
@@ -304,12 +348,13 @@ export class PatientController {
   @Put('/patient/organization')
   @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
+  @ApiResponse({type: AttachOrganizationResponse, status: 200})
   async attachOrganization(
     @AuthUserDecorator() authUser: AuthUser,
     @Body() {organizationCode}: AttachOrganization,
-  ): Promise<ResponseWrapper<void>> {
-    await this.patientService.attachOrganization(organizationCode, authUser.id)
+  ): Promise<ResponseWrapper<AttachOrganizationResponse>> {
+    const name = await this.patientService.attachOrganization(organizationCode, authUser.id)
 
-    return ResponseWrapper.actionSucceed()
+    return ResponseWrapper.actionSucceed({name})
   }
 }

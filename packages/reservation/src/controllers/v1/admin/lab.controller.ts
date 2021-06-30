@@ -3,8 +3,11 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
-import {LabService} from '../../../services/lab.service'
 import {getUserId} from '../../../../../common/src/utils/auth'
+
+import {LabService} from '../../../services/lab.service'
+
+import {Lab} from '../../../models/lab'
 
 class AdminLabController implements IControllerBase {
   public path = '/reservation/admin'
@@ -34,14 +37,10 @@ class AdminLabController implements IControllerBase {
 
   addLab = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {name, templateId, assay} = req.body as {
-        name: string
-        templateId: string
-        assay: string
-      }
+      const lab = req.body as Lab
 
       const createdBy = getUserId(res.locals.authenticatedUser)
-      const result = await this.labService.save({name, templateId, assay, createdBy})
+      const result = await this.labService.save({...lab, createdBy})
 
       res.json(actionSuccess(result, 'Lab created successfully'))
     } catch (error) {

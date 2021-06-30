@@ -19,6 +19,8 @@ export const createTransportRun = async (
     labId?: string
     label?: string
     createdAt: string
+    transportDate: string
+    transportDateTime: string
   },
   testDataCreator: string,
 ): Promise<void> => {
@@ -26,6 +28,8 @@ export const createTransportRun = async (
     name: 'transportRun_1',
     transportRunId: dataOverwrite.id,
     driverName: 'transportRun_driver',
+    transportDateTime: firestore.Timestamp.fromDate(new Date(dataOverwrite.transportDateTime)),
+    transportDate: dataOverwrite.transportDate,
     label: dataOverwrite.label ?? 'transportRun_label',
     labId: dataOverwrite.labId ?? 'testRun_labId',
     timestamps: {

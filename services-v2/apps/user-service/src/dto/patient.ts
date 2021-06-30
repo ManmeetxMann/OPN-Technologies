@@ -162,6 +162,16 @@ export class PatientCreateDto {
   updatedBy?: string
 }
 
+export class PatientOrganizationsDto {
+  @ApiProperty()
+  @IsNumber()
+  key: number
+
+  @ApiProperty()
+  @IsString()
+  name: string
+}
+
 export class PatientCreateAdminDto {
   idPatient: number
   firebaseKey: string // Firestore ID
@@ -414,6 +424,12 @@ export class AttachOrganization {
   @ApiProperty()
   @IsString()
   organizationCode?: string
+}
+
+export class AttachOrganizationResponse {
+  @ApiProperty()
+  @IsString()
+  name: string
 }
 
 export class DependantCreateDto extends OmitType(PatientCreateDto, ['email'] as const) {}

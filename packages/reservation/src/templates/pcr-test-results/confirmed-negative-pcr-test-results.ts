@@ -2,10 +2,12 @@ import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-
 import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
 import commonPDFContent from './common-report-content'
 import path from 'path'
+import {QrService} from '../../../../common/src/service/qr/qr-service'
 
 const pdfContent = (
   params: PCRTestResultEmailDTO,
   resultDate: string,
+  qr: string,
 ): {content: Content[]; background: Content; tableLayouts: TableLayouts} => {
   return {
     tableLayouts: commonPDFContent.tableLayouts,
@@ -22,6 +24,7 @@ const pdfContent = (
       commonPDFContent.testAnalysisTable(params),
       commonPDFContent.importantInfo(),
       commonPDFContent.legalNotice(),
+      QrService.getQrDataForPDFReport(qr, 200, 200),
     ],
   }
 }

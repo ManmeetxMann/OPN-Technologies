@@ -19,9 +19,10 @@ const pageMargin = 0
 export const AntibodyAllPDFContent = async (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
+  qr: string,
 ): Promise<string> => {
   const pdfService = new PdfService()
-  const data = getAntibodyAllTemplate(resultData, pdfType)
+  const data = getAntibodyAllTemplate(resultData, pdfType, qr)
 
   if (!data) {
     return
@@ -33,9 +34,10 @@ export const AntibodyAllPDFContent = async (
 export const AntibodyAllPDFStream = (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
+  qr: string,
 ): Stream => {
   const pdfService = new PdfService()
-  const data = getAntibodyAllTemplate(resultData, pdfType)
+  const data = getAntibodyAllTemplate(resultData, pdfType, qr)
 
   if (!data) {
     throw new BadRequestException(`Not supported result ${pdfType}`)
@@ -53,18 +55,19 @@ export const AntibodyAllPDFStream = (
 const getAntibodyAllTemplate = (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
+  qr: string,
 ): {content: Content; background: Content; tableLayouts: TableLayouts} => {
   const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 
   switch (pdfType) {
     case PCRResultPDFType.Positive: {
-      return positiveTemplate(resultData, resultDate)
+      return positiveTemplate(resultData, resultDate, qr)
     }
     case PCRResultPDFType.Negative: {
-      return negativeTemplate(resultData, resultDate)
+      return negativeTemplate(resultData, resultDate, qr)
     }
     case PCRResultPDFType.Intermediate: {
-      return intermediateTemplate(resultData, resultDate)
+      return intermediateTemplate(resultData, resultDate, qr)
     }
     default: {
       LogInfo('getAntibodyAllTemplate', 'InavalidAntibodyAllResultPDFType', {

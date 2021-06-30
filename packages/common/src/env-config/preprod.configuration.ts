@@ -8,6 +8,7 @@ export const preprodConfig: Record<string, string | string[] | number | boolean>
   ACUITY_COUPON_ID_FOR_RAPIDHOME: 1142351,
   ACUITY_FIELD_ADDITIONAL_ADDRESS_NOTES: 9112814,
   ACUITY_FIELD_ADDRESS_FOR_TESTING: 9112811,
+  ACUITY_FIELD_ADDRESS_STREET: 9414661,
   ACUITY_FIELD_ADDRESS_UNIT: 9414662,
   ACUITY_FIELD_ADDRESS: 9414661,
   ACUITY_FIELD_CITY: 9891184,
@@ -52,6 +53,9 @@ export const preprodConfig: Record<string, string | string[] | number | boolean>
   DOMAIN_USER: 'https://user-service-dot-opn-platform-preprod.nn.r.appspot.com/user/',
 
   AUTH_EMAIL_TEMPLATE_ID: 3,
+
+  TEST_RESULTS_BUCKET_NAME: 'opn-platform-preprod-test-results',
+  QR_LINK_EXPIRATION_TIME: 60 * 24 * 7 * 60 * 1000,
 
   APPOINTMENTS_PUSH_NOTIFY: 'enabled',
   APPOINTMENTS_PUB_SUB_NOTIFY: 'enabled',

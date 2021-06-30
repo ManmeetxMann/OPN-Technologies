@@ -7,15 +7,20 @@ import {
   PatientDigitalConsentRepository,
   PatientHealthRepository,
   PatientRepository,
+  PatientToDelegatesRepository,
   PatientToOrganizationRepository,
   PatientTravelRepository,
 } from '../../src/repository/patient.repository'
-import {PatientToOrganization} from '@opn-services/user/model/patient/patient-relations.entity'
+import {
+  PatientToDelegates,
+  PatientToOrganization,
+} from '@opn-services/user/model/patient/patient-relations.entity'
 import {
   PatientDigitalConsent,
   PatientHealth,
   PatientTravel,
 } from '../../src/model/patient/patient-profile.entity'
+import {UserStatus} from '@opn-common-v1/data/user-status'
 
 export class PatientTestUtility {
   patientRepository: PatientRepository
@@ -25,6 +30,7 @@ export class PatientTestUtility {
   travelRepository: PatientTravelRepository
   consentRepository: PatientDigitalConsentRepository
   patientToOrgRepository: PatientToOrganizationRepository
+  patientToDelegatesRepository: PatientToDelegatesRepository
 
   constructor() {
     this.patientRepository = getRepository(Patient)
@@ -34,44 +40,70 @@ export class PatientTestUtility {
     this.travelRepository = getRepository(PatientTravel)
     this.consentRepository = getRepository(PatientDigitalConsent)
     this.patientToOrgRepository = getRepository(PatientToOrganization)
+    this.patientToDelegatesRepository = getRepository(PatientToDelegates)
   }
 
-  createPatient(data: {email: string}): Promise<Patient> {
-    return this.patientRepository.save({
-      firebaseKey:
-        'TestFirebaseKey' +
-        Math.random()
-          .toString(36)
-          .substring(7),
+  async createPatient(
+    data: {email: string; firstName?: string; status?: UserStatus; firebaseKey?: string},
+    options?: {withAuth?: boolean; authUserId?: string},
+  ): Promise<Patient> {
+    const patient = await this.patientRepository.save({
+      firebaseKey: data.firebaseKey
+        ? data.firebaseKey
+        : 'TestFirebaseKey' +
+          Math.random()
+            .toString(36)
+            .substring(7),
       email: data.email,
-      firstName: 'PATIENT_TEST_NAME',
+      firstName: data.firstName ? data.firstName : 'PATIENT_TEST_NAME',
       lastName: 'PATIENT_LNAME',
       phoneNumber: '111222333',
       isEmailVerified: true,
+      status: data.status ? data.status : UserStatus.CONFIRMED,
     })
+    if (options?.withAuth) {
+      await this.authRepository.save({
+        patientId: patient.idPatient,
+        authUserId: options.authUserId ? options.authUserId : null,
+        email: data.email,
+      })
+    }
+    return patient
   }
 
   async findAndRemoveProfile(criteria: unknown): Promise<void> {
-    const patient = await this.patientRepository.findOne(criteria)
+    const patients = await this.patientRepository.find(criteria)
 
-    if (patient?.firebaseKey) {
-      await deleteUserById(patient?.firebaseKey)
-    }
+    await Promise.all(
+      patients.map(async patient => {
+        if (patient?.firebaseKey) {
+          await deleteUserById(patient?.firebaseKey)
+        }
 
-    const deleteCriteria = {patientId: patient?.idPatient}
-    await Promise.all([
-      this.authRepository.delete(deleteCriteria),
-      this.addressesRepository.delete(deleteCriteria),
-      this.healthRepository.delete(deleteCriteria),
-      this.travelRepository.delete(deleteCriteria),
-      this.consentRepository.delete(deleteCriteria),
-      this.patientToOrgRepository.delete(deleteCriteria),
-    ])
+        const deleteCriteria = {patientId: patient?.idPatient}
+        await Promise.all([
+          this.authRepository.delete(deleteCriteria),
+          this.addressesRepository.delete(deleteCriteria),
+          this.healthRepository.delete(deleteCriteria),
+          this.travelRepository.delete(deleteCriteria),
+          this.consentRepository.delete(deleteCriteria),
+          this.patientToOrgRepository.delete(deleteCriteria),
+          this.patientToDelegatesRepository.delete({
+            dependantId: deleteCriteria.patientId,
+          }),
+          this.patientToDelegatesRepository.delete({
+            delegateId: deleteCriteria.patientId,
+          }),
+        ])
+      }),
+    )
   }
 
   async removeProfileByAuth(authCriteria: unknown): Promise<void> {
     const patients = await this.authRepository.find(authCriteria)
-    const removedProfiles = patients.map(patient => this.findAndRemoveProfile(patient.patientId))
+    const removedProfiles = patients.map(patient =>
+      this.findAndRemoveProfile({idPatient: patient.patientId}),
+    )
     await Promise.all(removedProfiles)
 
     const removedPatients = patients.map(patient =>
@@ -80,9 +112,9 @@ export class PatientTestUtility {
     await Promise.all(removedPatients)
   }
 
-  getProfilePayload(data: {email: string; firstName?: string; lastName?: string}): unknown {
+  getProfilePayload(data: {email?: string; firstName?: string; lastName?: string}): unknown {
     return {
-      email: data.email,
+      ...(data.email ? {email: data.email} : {}),
       firstName: data.firstName ?? 'TestFirstName',
       lastName: data.lastName ?? 'TestLastName',
       registrationId: 'T_111',
