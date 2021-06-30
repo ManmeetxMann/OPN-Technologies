@@ -23,9 +23,9 @@ const pdfContent = (
       commonPDFContent.companyInfoHeader(params),
       commonPDFContent.clientInformation(params, resultDate),
       commonPDFContent.testAnalysisTable(params),
-      commonPDFContent.importantInfo(),
+      commonPDFContent.importantInfo(params),
       commonPDFContent.legalNotice(),
-      QrService.getQrDataForPDFReport(qr, 200, 200),
+      // QrService.getQrDataForPDFReport(qr, 200, 200),
     ],
   }
 }

@@ -118,8 +118,8 @@ const companyInfoHeader = (params: RapidAntigenEmailResultDTO): Content => {
           text:
             '2637 Yonge Street\n' +
             'Toronto, ON \n\n' +
-            'info@fnhealth.com\n\n' +
-            'www.fnhealth.com',
+            'info@fhhealth.com\n\n' +
+            'www.fhhealth.com',
           font: 'SFPro',
           color: '#FFFFFF',
           fontSize: 15,
@@ -916,53 +916,69 @@ const resultAnalysis = (analysis: Spec[], keyName): Spec => {
   })
 }
 
-const importantInfo = (): Content => {
+const importantInfo = (params: RapidAntigenEmailResultDTO): Content => {
   const smallFontSize = 19
+  const data = []
+  if (params.result == ResultTypes.PresumptivePositive) {
+    console.log(params.result)
+    data.push({
+      //pressumptive possitive normal
+      text:
+        'The result of your test was PRESUMPTIVE POSITIVE for the presence of' +
+        '\nSARS-CoV-2, the virus that causes coronavirus disease (also called COVID-19)' +
+        ', a respiratory illness.\n A presumptive positive test indicates presence of the' +
+        'virus in the sample we collected.\n\n The result of this test, along with your name' +
+        'and contact information have been forwarded to\n a Public Health Lab, and will be' +
+        'shared with them for confirmatory testing, as required by law.\n\n' +
+        'While you wait for the results of the confirmatory testing, please follow the' +
+        'Public Health\n guidelines for "Have COVID-19", which can be found here:\n' +
+        'https://www.toronto.ca/home/covid-19/covid-19-what-you-should-do/covid-19-havesymptoms-or-been-exposed/ \n\n' +
+        'The probability of a false positive is low. However, due to the variability in testing platforms \n' +
+        'used both within and outside the public healthcare system, the ‘Presumptive Positive’ results \n' +
+        'you have received from FH Health may not (<5% chance) produce a positive result with the\n' +
+        'Public Health reference laboratory. In this case, Public Health will receive a "SARS-Cov-2 \n Not Detected"' +
+        'report from the reference laboratory, and we will similarly notify you of any\n such change in your status.\n\n' +
+        'In such a scenario, we would recommend and offer you complimentary follow-up repeat\n testing. If our Presumptive' +
+        'Positive is detecting early disease, then the re-collected sample\n will have further increased in viral load, allowing' +
+        'for broader detection that should be\n confirmed by the reference laboratory.\n\n' +
+        'If you did not provide us with your OHIP information please consider this as a final positive\n' +
+        'result. Your confirmatory result, whether negative or positive, will also be posted on the\n OLIS website. You must use your OHIP number to access the results:\n' +
+        'https://covid19results.ehealthontario.ca:4443/agree\n\n' +
+        'If you have further questions or concerns, you can contact FH Health at info@fhhealth.com or (416) 484-0042.',
+      font: 'SFPro',
+      lineHeight: 1.1,
+      bold: false,
+      fontSize: smallFontSize - 7,
+      style: ['black'],
+    })
+  } else if (params.result == ResultTypes.Negative) {
+    data.push({
+      text:
+        'The result of your test was NEGATIVE. Your results do not detect SARS-CoV-2, the virus' +
+        'that causes coronavirus disease (also called COVID-19), a respiratory illness.\n A negative' +
+        'test means that the virus was not present in the sample we collected.\n Your results suggest ' +
+        'you were negative at the time of testing.\n\n' +
+        'Although the possibility is low, a false negative result should be considered if\n you have had ' +
+        'recent exposure to the virus along with symptoms consistent \nwith COVID-19.\n\n' +
+        'If you are the patron receiving the test and require further information, please \nvisit the City of' +
+        'Toronto Public Health: https://www.toronto.ca/home/covid-19\n\n' +
+        'If you have further questions or concerns, you can contact FH Health at info@fhhealth.com or (416) 484-0042.',
+      font: 'SFPro',
+      lineHeight: 1.1,
+      bold: false,
+      fontSize: smallFontSize - 1,
+      style: ['black'],
+    })
+  }
   const textInfo: Content = [
     {
-      text: 'Important Information',
+      text: 'Important Information\n',
       font: 'SFPro',
       bold: true,
       fontSize: 30,
       style: ['black'],
     },
-    {
-      text: '\n The result of your test was ',
-      lineHeight: 1.1,
-      bold: false,
-      fontSize: smallFontSize + 5,
-      style: ['black'],
-      font: 'SFPro',
-    },
-    {
-      text: 'NEGATIVE ',
-      lineHeight: 1.1,
-      bold: true,
-      fontSize: smallFontSize + 5,
-      style: ['black'],
-      font: 'SFPro',
-    },
-    {
-      text:
-        'Your results do not detect SARS-CoV-2, the virus that causes coronavirus \n' +
-        'disease (also called COVID-19), a respiratory illness. A \n' +
-        'negative test means that the virus was not present in the\n' +
-        'sample we collected. Your results suggest you were \n' +
-        'negative at the time of testing.\n\n' +
-        'Although the possibility is low, a false negative result \n should be' +
-        'considered if you have had recent exposure to \n the virus along with' +
-        'symptoms consistent with COVID-19.\n\n' +
-        'If you are the patron receiving the test and require further\n' +
-        'information, please visit the City of Toronto Public Health:\n' +
-        'https://www.toronto.ca/home/covid-19\n\n' +
-        'If you have further questions or concerns, you can contact\n' +
-        'FH Health at info@fhhealth.ca or (416) 484-0042.',
-      font: 'SFPro',
-      lineHeight: 1.1,
-      bold: false,
-      fontSize: smallFontSize + 5,
-      style: ['black'],
-    },
+    ...data,
   ]
 
   return {

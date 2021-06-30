@@ -946,8 +946,8 @@ const companyInfoHeader = (params: RapidAntigenEmailResultDTO): Content => {
           text:
             '2637 Yonge Street\n' +
             'Toronto, ON \n\n' +
-            'info@fnhealth.com\n\n' +
-            'www.fnhealth.com',
+            'info@fhhealth.com\n\n' +
+            'www.fhhealth.com',
           font: 'SFPro',
           color: '#FFFFFF',
           fontSize: 15,
