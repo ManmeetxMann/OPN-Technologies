@@ -675,7 +675,7 @@ const legalNotice = (): Content => {
             bold: false,
             style: ['black'],
             font: 'SFPro',
-            fontSize: smallFontSize - 5,
+            fontSize: smallFontSize - 10,
             margin: [30, 0, 0, 10],
           },
         ],
@@ -688,53 +688,99 @@ const legalNotice = (): Content => {
   }
 }
 
-const importantInfo = (): Content => {
+const importantInfo = (params: RapidAntigenEmailResultDTO): Content => {
   const smallFontSize = 19
+  const data = []
+  if (params.result == ResultTypes.Positive) {
+    data.push(
+      {
+        text:
+          'The result of your test was POSITIVE for the direct and qualitative detection of SARS-CoV-2\n' +
+          'viral nucleoprotein antigens known to cause coronavirus disease (also called COVID-19), a \n' +
+          'respiratory illness. Antigen from nasal secretions of infected individuals is generally\n' +
+          'detectable within 6 days of symptom onset, during the acute phase of the infection. A \n' +
+          'positive result indicates the presence of viral antigens, but clinical correlation with your \n' +
+          'history and confirmatory diagnostic PCR testing is necessary to determine infection status.\n\n' +
+          'FAQ\n' +
+          'Q: Should I now undergo a confirmatory PCR test?\n' +
+          'A: Yes. It is currently the recommendation by Toronto Public Health officials that all point-of-care\n\n' +
+          '(POC) ‘rapid tests’ are considered as providing a ‘presumptive’ status. This type of test is \n' +
+          'considered a screening tool only, and not ‘confirmatory’, or diagnostic. As such all POC \n' +
+          'testing is subject to confirmatory molecular assay (PCR) testing\n\n' +
+          'If you wish to undergo confirmatory testing, FH Health uses only Health Canada approved\n' +
+          'RT-PRC testing. Our test is the gold standard RT-PCR test performed on the Allplex\n' +
+          'Seegene platform, considered one of the best in the industry, and the same platform used by\n ' +
+          'many Public Health labs.\n\n' +
+          'Meanwhile, even with the diagnosis as a ‘presumptive positive’ you should follow the Public\n' +
+          'Health guidelines for ‘Have COVID-19’, which can be found here:\n',
+        font: 'SFPro',
+        lineHeight: 1.1,
+        bold: false,
+        fontSize: smallFontSize - 4,
+        style: ['black'],
+      },
+      {
+        text: 'https://www.toronto.ca/home/covid-19/covid-19-what-\nyou-should-do/covid-19-havesymptoms-or-been-exposed/\n\n',
+        font: 'SFPro',
+        lineHeight: 1.1,
+        bold: false,
+        fontSize: smallFontSize - 4,
+        style: ['black'],
+      },
+      {
+        text: 'If you have further questions or concerns, you can contact FH Health at \ninfo@fhhealth.com or (416) 484-0042.\n',
+        font: 'SFPro',
+        lineHeight: 1.1,
+        bold: false,
+        fontSize: smallFontSize - 4,
+        style: ['black'],
+      },
+    )
+  } else if (params.result == ResultTypes.Negative) {
+    data.push({
+      text:
+        'The result of your test was NEGATIVE for the direct and qualitative detection of \n' +
+        'SARS-CoV-2 viral nucleoprotein antigens known to cause coronavirus disease (also called \n' +
+        'COVID-19), a respiratory illness. Antigen from nasal secretions of infected individuals is \n' +
+        'generally detectable within 6 days of symptom onset, during the acute phase of the infection. \n' +
+        'A negative result should be treated as presumptive, and does not rule out SARS-CoV-2 \n' +
+        'infection and should not be used as the sole basis for treatment of patient management \n\n' +
+        'decisions, including infection control decisions. Negative results should be considered in the \n' +
+        'context of a patient’s recent exposures, history, and the presence of clinical signs and \n' +
+        'symptoms consistent with COVID-19.\n\n' +
+        'FAQ\n' +
+        'Q: Should I now undergo a confirmatory PCR test?\n' +
+        'A: If you are feeling completely fine, exhibiting no symptoms, and have no identified risk \n' +
+        'exposure as per above, then you do not need to undergo confirmatory molecular assay \n' +
+        '(PCR) testing at this time. Be mindful that all point-of-care (POC) ‘rapid tests’ are considered \n' +
+        'as providing a ‘presumptive’ status.\n\n' +
+        'This type of test is considered a screening tool only, and not ‘confirmatory’, or diagnostic. If \n' +
+        'you wish to undergo confirmatory testing, FH Health uses only Health Canada approved RT\n' +
+        'PRC testing. Our test is the gold standard RT-PCR test performed on the Allplex Seegene\n' +
+        'platform, considered one of the best in the industry, and the same platform used by many \n' +
+        'Public Health labs.\n\n' +
+        'Meanwhile, even with the diagnosis as a ‘presumptive negative’ you should continue to\n' +
+        'follow the prevailing Public Health guidelines for COVID-19. \n' +
+        'If you require further information, please visit the City of Toronto Public Health: \n' +
+        'https://www.toronto.ca/home/covid-19\n' +
+        'If you have further questions or concerns, you can contact FH Health at info@fhhealth.com  \n' +
+        'or (416) 484-0042.\n\n',
+      font: 'SFPro',
+      lineHeight: 1.1,
+      bold: false,
+      fontSize: smallFontSize - 4,
+      style: ['black'],
+    })
+  }
   const textInfo: Content = [
     {
-      text: 'Important Information',
+      text: 'Important Information\n',
       font: 'SFPro',
       bold: true,
       fontSize: 30,
       style: ['black'],
     },
-    {
-      text: '\n The result of your test was ',
-      lineHeight: 1.1,
-      bold: false,
-      fontSize: smallFontSize + 5,
-      style: ['black'],
-      font: 'SFPro',
-    },
-    {
-      text: 'NEGATIVE ',
-      lineHeight: 1.1,
-      bold: true,
-      fontSize: smallFontSize + 5,
-      style: ['black'],
-      font: 'SFPro',
-    },
-    {
-      text:
-        'Your results do not detect \n' +
-        'SARS-CoV-2, the virus that causes coronavirus disease (also called \n' +
-        'COVID-19), a respiratory illness. A negative test means that the virus\n' +
-        'was not present in the sample we collected. Your results suggest you\n' +
-        'were negative at the time of testing.\n\n' +
-        'Although the possibility is low, a false negative result should be \n' +
-        'considered if you have had recent exposure to the virus along with\n' +
-        'symptoms consistent with COVID-19.\n\n' +
-        'If you are the patron receiving the test and require further\n' +
-        'information, please visit the City of Toronto Public Health:\n' +
-        'https://www.toronto.ca/home/covid-19\n\n' +
-        'If you have further questions or concerns, you can contact\n' +
-        'FH Health at info@fhhealth.ca or (416) 484-0042.',
-      font: 'SFPro',
-      lineHeight: 1.1,
-      bold: false,
-      fontSize: smallFontSize + 5,
-      style: ['black'],
-    },
+    ...data,
   ]
 
   return {
