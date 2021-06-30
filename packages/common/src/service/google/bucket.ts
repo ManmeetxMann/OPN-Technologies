@@ -2,7 +2,7 @@ import {Storage, Bucket} from '@google-cloud/storage'
 
 import {ResourceNotFoundException} from '../../exceptions/resource-not-found-exception'
 import {Stream} from 'stream'
-import {Actions, FiveDay, Versions} from '../../types/bucket'
+import {Actions, Versions} from '../../types/bucket'
 
 export default class {
   private client: Storage = new Storage()
@@ -14,11 +14,11 @@ export default class {
     this.initializeBucket()
   }
 
-  async generateV4ReadSignedUrl(fileName: string): Promise<string> {
+  async generateV4ReadSignedUrl(fileName: string, linkExpirationTime: number): Promise<string> {
     const options = {
       version: Versions.v4,
       action: Actions.read,
-      expires: FiveDay,
+      expires: Date.now() + linkExpirationTime,
     }
 
     // Get a v4 signed URL for reading the file

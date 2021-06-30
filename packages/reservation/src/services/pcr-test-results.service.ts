@@ -110,7 +110,7 @@ import {
 } from '../utils/push-notification.helper'
 import {OpnSources} from '../../../common/src/data/registration'
 import {PushMessages} from '../../../common/src/types/push-notification'
-import UploadService from '../../../enterprise/src/services/upload-service'
+import TestResultUploadService from '../../../enterprise/src/services/test-result-upload-service'
 import {QrService} from '../../../common/src/service/qr/qr-service'
 
 const POOL_BARCODE_FIRST_LETTER = 'P'
@@ -127,7 +127,7 @@ export class PCRTestResultsService {
   private couponService = new CouponService()
   private reservationPushService = new ReservationPushService()
   private emailService = new EmailService()
-  private uploadService = new UploadService()
+  private testResultUploadService = new TestResultUploadService()
   private userService = new UserService()
   private whiteListedResultsTypes = [
     ResultTypes.Negative,
@@ -1357,8 +1357,8 @@ export class PCRTestResultsService {
     resultData: PCRTestResultEmailDTO,
     pcrResultPDFType: PCRResultPDFType,
   ): Promise<void> {
-    const fileName = this.uploadService.generateFileName(resultData.id)
-    const v4ReadURL = await this.uploadService.getSignedInUrl(fileName)
+    const fileName = this.testResultUploadService.generateFileName(resultData.id)
+    const v4ReadURL = await this.testResultUploadService.getSignedInUrl(fileName)
     const qr = await QrService.generateQrCode(v4ReadURL)
 
     let pdfContent = ''
@@ -1376,7 +1376,7 @@ export class PCRTestResultsService {
 
     const pdfStream = Buffer.from(pdfContent, 'base64')
     const stream = Readable.from(pdfStream)
-    await this.uploadService.uploadPDFResult(stream, fileName)
+    await this.testResultUploadService.uploadPDFResult(stream, fileName)
 
     const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 

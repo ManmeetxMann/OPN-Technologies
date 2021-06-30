@@ -12,13 +12,13 @@ import {AntibodyAllPDFStream} from '../templates/antibody-all'
 import {LabService} from './lab.service'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {QrService} from '../../../common/src/service/qr/qr-service'
-import UploadService from '../../../enterprise/src/services/upload-service'
+import TestResultUploadService from '../../../enterprise/src/services/test-result-upload-service'
 
 export class TestResultsService {
   private pcrTestResultsService = new PCRTestResultsService()
   private rapidAntigenTestResultsService = new RapidAntigenTestResultsService()
   private labService = new LabService()
-  private uploadService = new UploadService()
+  private testResultUploadService = new TestResultUploadService()
   // async sendFax(testResults: TestResultsDTOForEmail, faxNumber: string): Promise<string> {
   //   const resultDateRaw = testResults.resultDate
   //   const date = new Date()
@@ -36,8 +36,8 @@ export class TestResultsService {
     appointment: AppointmentDBModel,
   ): Promise<Stream> {
     const lab = await this.labService.findOneById(testResult.labId)
-    const fileName = this.uploadService.generateFileName(testResult.id)
-    const v4ReadURL = await this.uploadService.getSignedInUrl(fileName)
+    const fileName = this.testResultUploadService.generateFileName(testResult.id)
+    const v4ReadURL = await this.testResultUploadService.getSignedInUrl(fileName)
     const qr = await QrService.generateQrCode(v4ReadURL)
 
     switch (testResult.testType) {

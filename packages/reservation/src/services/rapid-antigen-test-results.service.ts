@@ -24,7 +24,7 @@ import {
 import {RapidAntigenPDFContent} from '../templates/rapid-antigen'
 import {PcrResultTestActivityAction, PCRTestResultDBModel} from '../models/pcr-test-results'
 import {QrService} from '../../../common/src/service/qr/qr-service'
-import UploadService from '../../../enterprise/src/services/upload-service'
+import TestResultUploadService from '../../../enterprise/src/services/test-result-upload-service'
 
 export class RapidAntigenTestResultsService {
   private dataStore = new DataStore()
@@ -33,7 +33,7 @@ export class RapidAntigenTestResultsService {
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private emailService = new EmailService()
   private pubSub = new OPNPubSub('rapid-antigen-test-result-topic')
-  private uploadService = new UploadService()
+  private testResultUploadService = new TestResultUploadService()
 
   private getResultBasedOnAction = (action: RapidAntigenResultTypes) => {
     switch (action) {
@@ -226,8 +226,8 @@ export class RapidAntigenTestResultsService {
       return
     }
 
-    const fileName = this.uploadService.generateFileName(testResults.id)
-    const v4ReadURL = await this.uploadService.getSignedInUrl(fileName)
+    const fileName = this.testResultUploadService.generateFileName(testResults.id)
+    const v4ReadURL = await this.testResultUploadService.getSignedInUrl(fileName)
     const qr = await QrService.generateQrCode(v4ReadURL)
     const rapidAntigenAllowedResults = [
       ResultTypes.Negative,
