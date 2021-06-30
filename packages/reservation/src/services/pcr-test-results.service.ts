@@ -295,7 +295,7 @@ export class PCRTestResultsService {
     const lab = await this.labService.findOneById(labId)
 
     this.postPubSubForResultSend(
-      {...newPCRResult, ...appointment, labAssay: lab.assay},
+      {...newPCRResult, ...appointment, lab: lab},
       notificationType,
       newPCRResult.id,
     )
@@ -1055,9 +1055,9 @@ export class PCRTestResultsService {
       const pcrResultDataForEmail = {
         adminId,
         resultId: testResult.id,
-        labAssay: lab?.assay ?? null,
         ...appointment,
         ...pcrResultDataForDbUpdate,
+        lab,
       }
 
       LogInfo('handlePCRResultSaveAndSend', 'PostPubSubForResultSend', {
@@ -1194,7 +1194,7 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendEmailNotificationForResults(
+  public async sendEmailNotificationForResults(
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
     pcrId: string,
@@ -1265,7 +1265,7 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendPushNotification(result: PCRTestResultEmailDTO, userId: string): Promise<void> {
+  public async sendPushNotification(result: PCRTestResultEmailDTO, userId: string): Promise<void> {
     if (Config.get('TEST_RESULT_PUSH_NOTIFICATION') !== 'enabled') {
       LogInfo('PCRTestResultsService:sendPushNotification', 'PushNotificationDisabled', {})
       return
@@ -1311,8 +1311,8 @@ export class PCRTestResultsService {
 
     const resultData = {
       adminId: userId,
-      labAssay: lab.assay,
       ...appointment,
+      lab,
       appointmentId: pcrTestResult.appointmentId,
       confirmed: pcrTestResult.confirmed,
       dateTime: pcrTestResult.dateTime,
@@ -1349,7 +1349,7 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendTestResultsWithAttachment(
+  private async sendTestResultsWithAttachment(
     resultData: PCRTestResultEmailDTO,
     pcrResultPDFType: PCRResultPDFType,
   ): Promise<void> {
@@ -1397,7 +1397,7 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendEmailNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+  private async sendEmailNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
     const templateId =
       resultData.resultMetaData.action === PCRResultActions.SendPreliminaryPositive
         ? Config.getInt('TEST_RESULT_PRELIMNARY_RESULTS_TEMPLATE_ID')
@@ -1416,7 +1416,10 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendReCollectNotification(resultData: PCRTestResultEmailDTO, pcrId: string): Promise<void> {
+  private async sendReCollectNotification(
+    resultData: PCRTestResultEmailDTO,
+    pcrId: string,
+  ): Promise<void> {
     const getTemplateId = (): number => {
       if (
         !!resultData.organizationId &&

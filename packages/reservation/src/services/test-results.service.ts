@@ -37,7 +37,7 @@ export class TestResultsService {
     switch (testResult.testType) {
       case TestTypes.PCR:
         return PCRResultPDFStream(
-          {...testResult, ...appointment, labAssay: lab.assay},
+          {...testResult, ...appointment, lab},
           this.pcrTestResultsService.getPDFType(appointment.id, testResult.result),
         )
 
@@ -52,7 +52,7 @@ export class TestResultsService {
           {
             ...testResult,
             ...appointment,
-            labAssay: lab.assay,
+            lab,
             resultAnalysis: Object.values(testResult.resultAnalysis),
           },
           this.pcrTestResultsService.getAntibodyPDFType(appointment.id, testResult.result),
@@ -63,7 +63,7 @@ export class TestResultsService {
           {
             ...testResult,
             ...appointment,
-            labAssay: lab.assay,
+            lab,
             resultAnalysis: Object.values(testResult.resultAnalysis),
           },
           this.pcrTestResultsService.getAntibodyPDFType(appointment.id, testResult.result),
@@ -71,7 +71,7 @@ export class TestResultsService {
 
       case TestTypes.ExpressPCR:
         return PCRResultPDFStream(
-          {...testResult, ...appointment, labAssay: lab.assay},
+          {...testResult, ...appointment, lab},
           this.pcrTestResultsService.getPDFType(appointment.id, testResult.result),
         )
 
