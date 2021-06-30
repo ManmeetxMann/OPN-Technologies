@@ -23,6 +23,7 @@ const pdfContent = (
       commonPDFContent.testAnalysisTable(params),
       commonPDFContent.importantInfo(params),
       commonPDFContent.legalNotice(),
+      commonPDFContent.placeQRCode(QrService.getQrDataForPDFReport(qr, 200, 200)),
     ],
   }
 }

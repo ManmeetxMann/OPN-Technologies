@@ -824,91 +824,94 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
   ]
 }
 
-// const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
-//   if (params.testType === TestTypes.ExpressPCR) {
-//     return []
-//   }
+const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
+  if (params.testType === TestTypes.ExpressPCR) {
+    return []
+  }
 
-//   const groupedAnalysis = groupByChannel(params.resultAnalysis)
+  const groupedAnalysis = groupByChannel(params.resultAnalysis)
 
-//   return [
-//     {
-//       text: 'Detailed Test Analysis Data:',
-//       margin: [0, 15, 0, 0],
-//       lineHeight: 1.2,
-//     },
-//     {
-//       columns: [
-//         {
-//           layout: 'resultTable',
-//           width: 58,
-//           table: {
-//             widths: [52],
-//             heights: [46],
-//             body: [['Result']],
-//           },
-//         },
-//         {
-//           stack: [
-//             {
-//               layout: 'resultTable',
-//               width: 350,
-//               table: {
-//                 widths: [...groupedAnalysis.map((channel) => channel.groups.length * 44)],
-//                 body: [[...groupedAnalysis.map((channel) => channel.channelName)]],
-//               },
-//               margin: [3, 0, 0, 0],
-//               alignment: 'center',
-//             },
-//             {
-//               layout: 'resultTable',
-//               width: 350,
-//               table: {
-//                 widths: [40, 39, 40, 39, 40, 39, 40, 39],
-//                 body: [
-//                   [
-//                     ...groupedAnalysis
-//                       .map((channel) => channel.groups.map((group) => group.label))
-//                       .flat(),
-//                   ],
-//                 ],
-//               },
-//               margin: [3, -1, 0, 0],
-//               alignment: 'center',
-//             },
-//           ],
-//         },
-//       ],
-//       margin: [0, 15, 0, 0],
-//       fontSize: 10,
-//     },
-//     {
-//       layout: 'resultTable',
-//       table: {
-//         widths: [52, 40, 39, 40, 39, 40, 39, 40, 39],
-//         body: [
-//           [
-//             {
-//               text: resultText(params.result),
-//               fillColor: getFillColorForResultsCell(params.result),
-//               color: '#FFFFFF',
-//             },
-//             ...groupedAnalysis
-//               .map((channel) =>
-//                 channel.groups.map((group) => ({
-//                   text: group.value,
-//                   alignment: 'center',
-//                 })),
-//               )
-//               .flat(),
-//           ],
-//         ],
-//       },
-//       margin: [0, -1, 0, 0],
-//       fontSize: 10,
-//     },
-//   ]
-// }
+  return [
+    {
+      text: 'Detailed Test Analysis Data:',
+      margin: [0, 15, 0, 0],
+      lineHeight: 1.2,
+      absolutePosition: {x: 400, y: 400},
+    },
+    {
+      columns: [
+        {
+          layout: 'resultTable',
+          width: 58,
+          table: {
+            widths: [52],
+            heights: [46],
+            body: [['Result']],
+          },
+        },
+        {
+          stack: [
+            {
+              layout: 'resultTable',
+              width: 350,
+              table: {
+                widths: [...groupedAnalysis.map((channel) => channel.groups.length * 44)],
+                body: [[...groupedAnalysis.map((channel) => channel.channelName)]],
+              },
+              margin: [3, 0, 0, 0],
+              alignment: 'center',
+            },
+            {
+              layout: 'resultTable',
+              width: 350,
+              table: {
+                widths: [40, 39, 40, 39, 40, 39, 40, 39],
+                body: [
+                  [
+                    ...groupedAnalysis
+                      .map((channel) => channel.groups.map((group) => group.label))
+                      .flat(),
+                  ],
+                ],
+              },
+              margin: [3, -1, 0, 0],
+              alignment: 'center',
+            },
+          ],
+        },
+      ],
+      absolutePosition: {x: 400, y: 400},
+      margin: [0, 15, 0, 0],
+      fontSize: 10,
+    },
+    {
+      layout: 'resultTable',
+      table: {
+        widths: [52, 40, 39, 40, 39, 40, 39, 40, 39],
+        body: [
+          [
+            {
+              text: resultText(params.result),
+              fillColor: '#ff0000',
+              color: '#FFFFFF',
+            },
+            ...groupedAnalysis
+              .map((channel) =>
+                channel.groups.map((group) => ({
+                  text: group.value,
+                  alignment: 'center',
+                })),
+              )
+              .flat(),
+          ],
+        ],
+      },
+      margin: [0, -1, 0, 0],
+      absolutePosition: {x: pdfWidth + 200, y: 1224 / 2 + 250},
+      fontSize: 10,
+    },
+  ]
+}
 
 const resultAnalysis = (analysis: Spec[], keyName): Spec => {
   return analysis.find((analys) => {
@@ -919,7 +922,7 @@ const resultAnalysis = (analysis: Spec[], keyName): Spec => {
 const importantInfo = (params: RapidAntigenEmailResultDTO): Content => {
   const smallFontSize = 19
   const data = []
-  if (params.result == ResultTypes.PresumptivePositive) {
+  if (params.result == ResultTypes.PresumptivePositive || params.result == ResultTypes.Positive) {
     console.log(params.result)
     data.push({
       //pressumptive possitive normal
@@ -1000,168 +1003,168 @@ const importantInfo = (params: RapidAntigenEmailResultDTO): Content => {
   }
 }
 
-const testAnalysisTable = (params: RapidAntigenEmailResultDTO): Content => {
-  let data = []
-  if (params.testType != TestTypes.PCR) {
-    return
-  }
-  if (params.result == ResultTypes.Positive) {
-    data.push(
-      {
-        layout: 'infoTable',
-        table: {
-          widths: [70, 400],
-          headerRows: 0,
-          body: [
-            [
-              {
-                text: 'FAM',
-                bold: false,
-                style: ['black'],
-                fontSize: 30,
-                border: [true, true, true, true],
-                margin: [0, 10, 0, 10],
-                alignment: 'center',
-              },
-              {
-                text: 'Positive',
-                bold: false,
-                fontSize: 30,
-                border: [true, true, true, true],
-                margin: [0, 10, 0, 10],
-                alignment: 'center',
-                fillColor: '#FF0000',
-                color: '#FFFFFF',
-              },
-            ],
-          ],
-        },
-        absolutePosition: {x: 1224 / 2 + 40, y: 1224 / 2 + 400},
-        margin: [20, 50, 0, 200],
-      },
-      {
-        layout: 'infoTable',
-        table: {
-          widths: [70, 400],
-          headerRows: 0,
-          body: [
-            [
-              {
-                text: 'CAL RED 61',
-                bold: false,
-                style: ['black'],
-                fontSize: 30,
-                border: [true, true, true, true],
-                margin: [0, 10, 0, 10],
-                alignment: 'center',
-              },
-              {
-                text: 'Positive',
-                bold: false,
-                fontSize: 30,
-                border: [true, true, true, true],
-                margin: [0, 10, 0, 10],
-                alignment: 'center',
-                fillColor: '#FF0000',
-                color: '#FFFFFF',
-              },
-            ],
-          ],
-        },
-        absolutePosition: {x: 1224 / 2 + 40, y: 1224 / 2 + 500},
-        margin: [20, 50, 0, 200],
-      },
-    )
-  } else if (params.result == ResultTypes.Negative) {
-    data.push(
-      {
-        layout: 'infoTable',
-        table: {
-          widths: [70, 70, 330],
-          headerRows: 0,
-          body: [
-            [
-              {
-                text: 'IgG',
-                bold: false,
-                style: ['black'],
-                fontSize: 30,
-                border: [true, true, true, true],
-                margin: [0, 10, 0, 10],
-                alignment: 'center',
-              },
-              {
-                text: resultAnalysis(params.resultAnalysis, 'IgG')?.value || 'N/A',
-                bold: false,
-                style: ['black'],
-                fontSize: 30,
-                border: [true, true, true, true],
-                margin: [0, 10, 0, 10],
-                alignment: 'center',
-              },
-              {
-                text: 'Negative',
-                bold: false,
-                fontSize: 30,
-                border: [true, true, true, true],
-                margin: [0, 10, 0, 10],
-                alignment: 'center',
-                fillColor: '#008000',
-                color: '#FFFFFF',
-              },
-            ],
-          ],
-        },
-        absolutePosition: {x: 1224 / 2 + 40, y: 1224 / 2 + 400},
-        margin: [20, 50, 0, 200],
-      },
-      {
-        layout: 'infoTable',
-        table: {
-          widths: [70, 70, 330],
-          headerRows: 0,
-          body: [
-            [
-              {
-                text: 'IgM',
-                bold: false,
-                style: ['black'],
-                fontSize: 30,
-                border: [true, true, true, true],
-                margin: [0, 10, 0, 10],
-                alignment: 'center',
-              },
-              {
-                text: resultAnalysis(params.resultAnalysis, 'IgM')?.value || 'N/A',
-                bold: false,
-                style: ['black'],
-                fontSize: 30,
-                border: [true, true, true, true],
-                margin: [0, 10, 0, 10],
-                alignment: 'center',
-              },
-              {
-                text: 'Negative',
-                bold: false,
-                fontSize: 30,
-                border: [true, true, true, true],
-                margin: [0, 10, 0, 10],
-                alignment: 'center',
-                fillColor: '#008000',
-                color: '#FFFFFF',
-              },
-            ],
-          ],
-        },
-        absolutePosition: {x: 1224 / 2 + 40, y: 1224 / 2 + 500},
-        margin: [20, 50, 0, 200],
-      },
-    )
-  } else {
-    return
-  }
-  return data
-}
+// const testAnalysisTable = (params: RapidAntigenEmailResultDTO): Content => {
+//   const data = []
+//   if (params.testType != TestTypes.PCR) {
+//     return
+//   }
+//   if (params.result == ResultTypes.Positive) {
+//     data.push(
+//       {
+//         layout: 'infoTable',
+//         table: {
+//           widths: [70, 400],
+//           headerRows: 0,
+//           body: [
+//             [
+//               {
+//                 text: 'FAM',
+//                 bold: false,
+//                 style: ['black'],
+//                 fontSize: 30,
+//                 border: [true, true, true, true],
+//                 margin: [0, 10, 0, 10],
+//                 alignment: 'center',
+//               },
+//               {
+//                 text: 'Positive',
+//                 bold: false,
+//                 fontSize: 30,
+//                 border: [true, true, true, true],
+//                 margin: [0, 10, 0, 10],
+//                 alignment: 'center',
+//                 fillColor: '#FF0000',
+//                 color: '#FFFFFF',
+//               },
+//             ],
+//           ],
+//         },
+//         absolutePosition: {x: 1224 / 2 + 40, y: 1224 / 2 + 400},
+//         margin: [20, 50, 0, 200],
+//       },
+//       {
+//         layout: 'infoTable',
+//         table: {
+//           widths: [70, 400],
+//           headerRows: 0,
+//           body: [
+//             [
+//               {
+//                 text: 'CAL RED 61',
+//                 bold: false,
+//                 style: ['black'],
+//                 fontSize: 30,
+//                 border: [true, true, true, true],
+//                 margin: [0, 10, 0, 10],
+//                 alignment: 'center',
+//               },
+//               {
+//                 text: 'Positive',
+//                 bold: false,
+//                 fontSize: 30,
+//                 border: [true, true, true, true],
+//                 margin: [0, 10, 0, 10],
+//                 alignment: 'center',
+//                 fillColor: '#FF0000',
+//                 color: '#FFFFFF',
+//               },
+//             ],
+//           ],
+//         },
+//         absolutePosition: {x: 1224 / 2 + 40, y: 1224 / 2 + 500},
+//         margin: [20, 50, 0, 200],
+//       },
+//     )
+//   } else if (params.result == ResultTypes.Negative) {
+//     data.push(
+//       {
+//         layout: 'infoTable',
+//         table: {
+//           widths: [70, 70, 330],
+//           headerRows: 0,
+//           body: [
+//             [
+//               {
+//                 text: 'IgG',
+//                 bold: false,
+//                 style: ['black'],
+//                 fontSize: 30,
+//                 border: [true, true, true, true],
+//                 margin: [0, 10, 0, 10],
+//                 alignment: 'center',
+//               },
+//               {
+//                 text: resultAnalysis(params.resultAnalysis, 'IgG')?.value || 'N/A',
+//                 bold: false,
+//                 style: ['black'],
+//                 fontSize: 30,
+//                 border: [true, true, true, true],
+//                 margin: [0, 10, 0, 10],
+//                 alignment: 'center',
+//               },
+//               {
+//                 text: 'Negative',
+//                 bold: false,
+//                 fontSize: 30,
+//                 border: [true, true, true, true],
+//                 margin: [0, 10, 0, 10],
+//                 alignment: 'center',
+//                 fillColor: '#008000',
+//                 color: '#FFFFFF',
+//               },
+//             ],
+//           ],
+//         },
+//         absolutePosition: {x: 1224 / 2 + 40, y: 1224 / 2 + 400},
+//         margin: [20, 50, 0, 200],
+//       },
+//       {
+//         layout: 'infoTable',
+//         table: {
+//           widths: [70, 70, 330],
+//           headerRows: 0,
+//           body: [
+//             [
+//               {
+//                 text: 'IgM',
+//                 bold: false,
+//                 style: ['black'],
+//                 fontSize: 30,
+//                 border: [true, true, true, true],
+//                 margin: [0, 10, 0, 10],
+//                 alignment: 'center',
+//               },
+//               {
+//                 text: resultAnalysis(params.resultAnalysis, 'IgM')?.value || 'N/A',
+//                 bold: false,
+//                 style: ['black'],
+//                 fontSize: 30,
+//                 border: [true, true, true, true],
+//                 margin: [0, 10, 0, 10],
+//                 alignment: 'center',
+//               },
+//               {
+//                 text: 'Negative',
+//                 bold: false,
+//                 fontSize: 30,
+//                 border: [true, true, true, true],
+//                 margin: [0, 10, 0, 10],
+//                 alignment: 'center',
+//                 fillColor: '#008000',
+//                 color: '#FFFFFF',
+//               },
+//             ],
+//           ],
+//         },
+//         absolutePosition: {x: 1224 / 2 + 40, y: 1224 / 2 + 500},
+//         margin: [20, 50, 0, 200],
+//       },
+//     )
+//   } else {
+//     return
+//   }
+//   return data
+// }
 
 const legalNotice = (): Content => {
   return {
@@ -1226,6 +1229,57 @@ const doctorSignature = (): Content => {
   }
 }
 
+const placeQRCode = (qrCode: Content): Content => {
+  return {
+    columns: [
+      {
+        stack: [qrCode],
+        alignment: 'left',
+        width: '100%',
+        absolutePosition: {x: pdfWidth - 230, y: 1224 / 2 + 1000},
+      },
+      {
+        text: 'Access Code',
+        absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 1000},
+        bold: true,
+        color: '#000000',
+        fontSize: 30,
+        font: 'SFPro',
+
+        margin: [30, 0, 0, 10],
+      },
+      {
+        text: 'Tap on QR code to scan to verify \n authenticy of pass\n\n',
+        absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 1040},
+        bold: false,
+        color: '#a1a1a1',
+        font: 'SFPro',
+        fontSize: 18,
+        margin: [30, 0, 0, 10],
+      },
+      {
+        text: 'Powered by',
+        absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 1120},
+        bold: false,
+        color: '#a1a1a1',
+        fontSize: 18,
+        font: 'SFPro',
+        margin: [30, 0, 0, 10],
+      },
+      {
+        text: 'FN HEALTHPASS',
+        absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 1150},
+        bold: true,
+        color: '#000000',
+        fontSize: 35,
+        font: 'SFPro',
+        margin: [30, 0, 0, 10],
+      },
+    ],
+    margin: [30, 0, 0, topMargin],
+  }
+}
+
 export default {
   doctorSignature,
   clientInformation,
@@ -1233,5 +1287,6 @@ export default {
   legalNotice,
   companyInfoHeader,
   testAnalysisTable,
+  placeQRCode,
   tableLayouts,
 }

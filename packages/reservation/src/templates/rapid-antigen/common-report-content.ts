@@ -1059,6 +1059,57 @@ const testAnalysisTable = (params: RapidAntigenEmailResultDTO): Content => {
   return data
 }
 
+const placeQRCode = (qrCode: Content): Content => {
+  return {
+    columns: [
+      {
+        stack: [qrCode],
+        alignment: 'left',
+        width: '100%',
+        absolutePosition: {x: pdfWidth - 230, y: 1224 / 2 + 1000},
+      },
+      {
+        text: 'Access Code',
+        absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 1000},
+        bold: true,
+        color: '#000000',
+        fontSize: 30,
+        font: 'SFPro',
+
+        margin: [30, 0, 0, 10],
+      },
+      {
+        text: 'Tap on QR code to scan to verify \n authenticy of pass\n\n',
+        absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 1040},
+        bold: false,
+        color: '#a1a1a1',
+        font: 'SFPro',
+        fontSize: 18,
+        margin: [30, 0, 0, 10],
+      },
+      {
+        text: 'Powered by',
+        absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 1120},
+        bold: false,
+        color: '#a1a1a1',
+        fontSize: 18,
+        font: 'SFPro',
+        margin: [30, 0, 0, 10],
+      },
+      {
+        text: 'FN HEALTHPASS',
+        absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 1150},
+        bold: true,
+        color: '#000000',
+        fontSize: 35,
+        font: 'SFPro',
+        margin: [30, 0, 0, 10],
+      },
+    ],
+    margin: [30, 0, 0, topMargin],
+  }
+}
+
 export default {
   doctorSignature,
   clientInformation,
@@ -1066,5 +1117,6 @@ export default {
   legalNotice,
   companyInfoHeader,
   testAnalysisTable,
+  placeQRCode,
   tableLayouts,
 }

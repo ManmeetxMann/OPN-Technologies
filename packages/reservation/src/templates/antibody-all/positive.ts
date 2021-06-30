@@ -26,7 +26,7 @@ const pdfContent = (
       commonPDFContent.importantInfo(),
       commonPDFContent.legalNotice(),
       commonPDFContent.doctorSignature(),
-      // QrService.getQrDataForPDFReport(qr, 200, 200),
+      commonPDFContent.placeQRCode(QrService.getQrDataForPDFReport(qr, 200, 200)),
     ],
   }
 }

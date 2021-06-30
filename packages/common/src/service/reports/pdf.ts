@@ -64,7 +64,6 @@ export class PdfService {
     pageMargin?: number,
     background?: Content,
   ): Stream {
-    // console.log(pageSize.width + ' ' + pageSize.height)
     const generatedParams = this.getPDF(params, password, pageSize, pageMargin, background)
     const stream = new Stream.PassThrough()
     const pdfDoc = this.printer.createPdfKitDocument(generatedParams, {tableLayouts})
