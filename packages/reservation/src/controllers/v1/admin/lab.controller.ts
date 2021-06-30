@@ -3,9 +3,11 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
-import {LabService} from '../../../services/lab.service'
 import {getUserId} from '../../../../../common/src/utils/auth'
-import {Lab} from 'packages/reservation/src/models/lab'
+
+import {LabService} from '../../../services/lab.service'
+
+import {Lab} from '../../../models/lab'
 
 class AdminLabController implements IControllerBase {
   public path = '/reservation/admin'
