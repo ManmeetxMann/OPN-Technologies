@@ -19,6 +19,7 @@ const pdfContent = (
       },
     ],
     content: [
+      commonPDFContent.doctorSignature(),
       commonPDFContent.companyInfoHeader(params),
       commonPDFContent.clientInformation(params, resultDate),
       commonPDFContent.testAnalysisTable(params),

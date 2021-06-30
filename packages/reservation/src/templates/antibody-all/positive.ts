@@ -19,12 +19,14 @@ const pdfContent = (
       },
     ],
     content: [
+      commonPDFContent.doctorSignature(),
       commonPDFContent.companyInfoHeader(params),
       commonPDFContent.clientInformation(params, resultDate),
       commonPDFContent.testAnalysisTable(params),
       commonPDFContent.importantInfo(),
       commonPDFContent.legalNotice(),
-      QrService.getQrDataForPDFReport(qr, 200, 200),
+      commonPDFContent.doctorSignature(),
+      // QrService.getQrDataForPDFReport(qr, 200, 200),
     ],
   }
 }

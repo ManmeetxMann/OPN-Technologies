@@ -47,81 +47,8 @@ const bigFontSize = 55
 
 const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: string): Content => {
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
-  const dataPersonal = [
-    [
-      {text: 'Client Name ', bold: true},
-      {
-        text: `${params.firstName} ${params.lastName}`,
-        bold: true,
-      },
-    ],
-    [{text: 'Date of Birth', bold: true}, params.dateOfBirth],
-    [{text: 'Mobile Number', bold: true}, params.phone],
-  ]
-
-  if (params.gender) {
-    // if gender exists add as second field
-    dataPersonal.splice(1, 0, [{text: 'Gender', bold: true}, params.gender])
-  }
-
-  if (params.address) {
-    let address = params.address
-    if (params.city) {
-      address += ` ${params.city} ${params.province} ${params.country}`
-    }
-    dataPersonal.push([{text: 'Home Address', bold: true}, address])
-  }
-
-  if (params.addressUnit) {
-    dataPersonal.push([{text: 'Home Address (unit number, etc)', bold: true}, params.addressUnit])
-  }
-
-  if (params.postalCode) {
-    dataPersonal.push([{text: 'Postal Code', bold: true}, params.postalCode])
-  }
-
-  if (params.travelID) {
-    dataPersonal.push([{text: 'Travel ID', bold: true}, params.travelID])
-  }
-
-  if (params.travelIDIssuingCountry) {
-    dataPersonal.push([{text: 'Travel Country', bold: true}, params.travelIDIssuingCountry])
-  }
-
-  const dataAppointment = [
-    [
-      {text: 'Date of Test (Sample Collection)', bold: true},
-      `${params.dateOfAppointment} at ${params.timeOfAppointment}`,
-    ],
-    [{text: 'Date of Result', bold: true}, resultDate],
-    [{text: 'Registered Practical Nurse', bold: true}, params.registeredNursePractitioner],
-    [{text: 'Ordering Physician', bold: true}, requisitionDoctor],
-  ]
-
-  const data = [...dataPersonal, ...dataAppointment]
-
-  const resultAnalysis = (analysis: Spec[], keyName): Spec => {
-    return analysis.find((analys) => {
-      analys.label === keyName
-    })
-  }
 
   return [
-    // {
-    //   text: 'The following client completed a SARS-CoV-2 Antibody screening test:',
-    //   margin: [0, 20, 0, 0],
-    //   style: ['gray-text'],
-    //   lineHeight: 1.2,
-    // },
-    // {
-    //   layout: 'mainTable',
-    //   table: {
-    //     headerRows: 1,
-    //     widths: [183, 240],
-    //     body: data,
-    //   },
-    //   margin: [0, 10, 0, 10],
-    // },
     {
       columns: [
         {
@@ -698,6 +625,30 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
   ]
 }
 
+const doctorSignature = (): Content => {
+  return {
+    columns: [
+      {
+        image: path.join(__dirname, '../../static/images/Peter-Blecher_Signature.png'),
+        absolutePosition: {x: 50, y: (pdfHeight * 3) / 4 + 140},
+        opacity: 0.9,
+        margin: [0, 0, 0, 20],
+        width: 200,
+        height: 200 / 3,
+      },
+      {
+        text: 'Dr. Peter Blecher \n FH Health Physician',
+        absolutePosition: {x: 325, y: (pdfHeight * 3) / 4 + 140},
+        bold: true,
+        color: '#000000',
+        font: 'PTSerif',
+        fontSize: 20,
+        margin: [30, 0, 0, 10],
+      },
+    ],
+  }
+}
+
 const legalNotice = (): Content => {
   return {
     columns: [
@@ -903,7 +854,7 @@ const resultAnalysis = (analysis: Spec[], keyName): Spec => {
 }
 
 const testAnalysisTable = (params: RapidAntigenEmailResultDTO): Content => {
-  let data = []
+  const data = []
   if (params.result == ResultTypes.Positive) {
     data.push(
       {
@@ -1063,6 +1014,7 @@ const testAnalysisTable = (params: RapidAntigenEmailResultDTO): Content => {
 }
 
 export default {
+  doctorSignature,
   clientInformation,
   importantInfo,
   legalNotice,

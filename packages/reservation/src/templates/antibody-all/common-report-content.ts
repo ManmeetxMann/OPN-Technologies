@@ -40,7 +40,6 @@ const leftMarginX = 30
 const topMargin = 100
 // const smallx2FontSize = 8
 const smallFontSize = 23 - 5
-const legalNoticeFontSize = smallFontSize + 5
 const smallFontSizeHeader = smallFontSize - 5
 const pdfWidth = 1224
 const pdfHeight = 1816
@@ -729,6 +728,30 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
   ]
 }
 
+const doctorSignature = (): Content => {
+  return {
+    columns: [
+      {
+        image: path.join(__dirname, '../../static/images/Peter-Blecher_Signature.png'),
+        absolutePosition: {x: 50, y: (pdfHeight * 3) / 4 + 140},
+        opacity: 0.9,
+        margin: [0, 0, 0, 20],
+        width: 200,
+        height: 200 / 3,
+      },
+      {
+        text: 'Dr. Peter Blecher \n FH Health Physician',
+        absolutePosition: {x: 325, y: (pdfHeight * 3) / 4 + 140},
+        bold: true,
+        color: '#000000',
+        font: 'PTSerif',
+        fontSize: 20,
+        margin: [30, 0, 0, 10],
+      },
+    ],
+  }
+}
+
 const legalNotice = (): Content => {
   return {
     columns: [
@@ -1110,4 +1133,5 @@ export default {
   companyInfoHeader,
   testAnalysisTable,
   tableLayouts,
+  doctorSignature,
 }
