@@ -838,12 +838,15 @@ components:
           type: boolean
         sendORMRequest:
           type: boolean
+        displayNameOnReport:
+          type: boolean
       required:
         - name
         - templateId
         - assay
         - poolingEnabled
         - sendORMRequest
+        - displayNameOnReport
     LabResponse:
       type: object
       additionalProperties: false
@@ -4593,7 +4596,7 @@ paths:
                         nullable: true
                         type: string
 
-  /reservation/api/v1/pubsub/test-result:
+  /reservation/internal/api/v1/test-result/notify-by-email:
     post:
       description: Pubsub result-result
       tags:
@@ -4607,7 +4610,21 @@ paths:
         '200':
           description: Success
 
-  /reservation/api/v1/pubsub/test-result/test:
+  /reservation/internal/api/v1/test-result/notify-by-push-notification:
+    post:
+      description: Pubsub result-result
+      tags:
+        - Pubsub
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Success
+
+  /reservation/internal/api/v1/test-result/test-push-notification:
     post:
       description: Test push notification
       tags:

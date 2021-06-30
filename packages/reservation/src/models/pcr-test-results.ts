@@ -225,7 +225,7 @@ export type PCRTestResultEmailDTO = Omit<
   | 'userId'
   | 'sortOrder'
 > &
-  AppointmentDBModel & {labAssay: string}
+  AppointmentDBModel & {lab: Lab}
 
 export type ProcessPCRResultRequest = {
   reportTrackerId: string

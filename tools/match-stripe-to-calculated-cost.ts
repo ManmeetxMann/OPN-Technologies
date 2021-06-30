@@ -19,7 +19,7 @@ export enum PriceUpdateSource {
 
 async function updateSourceForOneTimeUsedCoupons() {
   let count = 0
-  const sql = `SELECT * FROM appointments WHERE datetimeCreated >= DATE('2020-11-01') AND datetimeCreated <= DATE('2020-11-30') AND amountPaid>0`
+  const sql = `SELECT * FROM appointments WHERE datetimeCreated >= DATE('2021-05-01') AND datetimeCreated <= DATE('2021-05-31') AND amountPaid>0`
   conn
     .query(sql, [])
     .on('error', (err) => {
@@ -28,7 +28,7 @@ async function updateSourceForOneTimeUsedCoupons() {
     })
     .on('result', (record) => {
       const acuityId = record.acuityId
-      const sql2 = `SELECT * FROM stripe_charges_nov WHERE description LIKE '%${acuityId}%'`
+      const sql2 = `SELECT * FROM stripe_charges_may WHERE description LIKE '%${acuityId}%'`
       console.log(sql2)
       conn
         .query(sql2, [])
@@ -55,7 +55,7 @@ async function updateSourceForOneTimeUsedCoupons() {
               console.log(`stripeMatchFound: ${acuityId}`)
             })
 
-          const sql4 = `UPDATE stripe_charges_nov SET matchFound=1 WHERE balance_transaction_id = '${record2.balance_transaction_id}'`
+          const sql4 = `UPDATE stripe_charges_may SET matchFound=1 WHERE balance_transaction_id = '${record2.balance_transaction_id}'`
           conn
             .query(sql4, [])
             .on('error', (err) => {

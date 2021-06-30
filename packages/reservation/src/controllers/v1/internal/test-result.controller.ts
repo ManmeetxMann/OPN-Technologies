@@ -1,14 +1,14 @@
 import * as express from 'express'
 import {Handler, Router} from 'express'
 
-import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {OPNPubSub} from '../../../../common/src/service/google/pub_sub'
-import {LogError} from '../../../../common/src/utils/logging-setup'
-import {PCRTestResultsService} from '../../services/pcr-test-results.service'
-import {PCRTestResultSubmitted} from '../../models/pcr-test-results'
-import {AppoinmentService} from '../../services/appoinment.service'
-import {LabService} from '../../services/lab.service'
-import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
+import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
+import {OPNPubSub} from '../../../../../common/src/service/google/pub_sub'
+import {LogError} from '../../../../../common/src/utils/logging-setup'
+import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
+import {PCRTestResultSubmitted} from '../../../models/pcr-test-results'
+import {AppoinmentService} from '../../../services/appoinment.service'
+import {LabService} from '../../../services/lab.service'
+import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 
 class PubsubController implements IControllerBase {
   public router = express.Router()
@@ -22,15 +22,18 @@ class PubsubController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = () => Router({mergeParams: true})
-    const root = '/reservation/api/v1/pubsub'
+    const root = '/reservation/internal/api/v1/test-result'
     const route = innerRouter().use(
       '/',
-      innerRouter().post('/test-result', this.pcrTestResult).post('/test-result/test', this.test),
+      innerRouter()
+        .post('/notify-by-email', this.notifyByEmail)
+        .post('/notify-by-push-notification', this.notifyByPushNotification)
+        .post('/test-push-notification', this.test),
     )
     this.router.use(root, route)
   }
 
-  pcrTestResult: Handler = async (req, res, next): Promise<void> => {
+  notifyByEmail: Handler = async (req, res, next): Promise<void> => {
     try {
       const data = (await OPNPubSub.getPublishedData(
         req.body.message.data,
@@ -45,7 +48,7 @@ class PubsubController implements IControllerBase {
 
       try {
         await this.pcrTestResultsService.sendEmailNotificationForResults(
-          {...testResult, ...appointment, id: testResult.id, labAssay: lab?.assay ?? null},
+          {...testResult, ...appointment, id: testResult.id, lab},
           data.actionType,
           testResult.id,
         )
@@ -55,9 +58,28 @@ class PubsubController implements IControllerBase {
         })
       }
 
+      res.sendStatus(200)
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  notifyByPushNotification: Handler = async (req, res, next): Promise<void> => {
+    try {
+      const data = (await OPNPubSub.getPublishedData(
+        req.body.message.data,
+      )) as PCRTestResultSubmitted
+
+      const testResult = await this.pcrTestResultsService.getPCRResultsById(data.id as string)
+
+      const [appointment, lab] = await Promise.all([
+        this.appoinmentService.getAppointmentDBById(testResult.appointmentId),
+        this.labService.findOneById(testResult.labId),
+      ])
+
       try {
         await this.pcrTestResultsService.sendPushNotification(
-          {...testResult, ...appointment, id: testResult.id, labAssay: lab?.assay},
+          {...testResult, ...appointment, id: testResult.id, lab},
           testResult.userId,
         )
       } catch (error) {
@@ -90,7 +112,7 @@ class PubsubController implements IControllerBase {
       }
 
       await this.pcrTestResultsService.sendPushNotification(
-        {...testResult, ...appointment, id: testResult.id, labAssay: lab?.assay},
+        {...testResult, ...appointment, id: testResult.id, lab},
         userId,
       )
 

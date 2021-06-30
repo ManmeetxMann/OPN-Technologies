@@ -134,7 +134,6 @@ OR a specific project
 lerna run --scope @opn/registry build --stream
 ```
 
-
 #### Run Distro
 ```
 cd packages/registry/dist
