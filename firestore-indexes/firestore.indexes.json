@@ -1063,6 +1063,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "testRunId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "poolBarcodeId",
+          "order": "ASCENDING"
+        },
+      ]
     }
   ],
   "fieldOverrides": [
