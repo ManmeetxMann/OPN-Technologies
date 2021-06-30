@@ -504,7 +504,6 @@ export class AccessService {
       .where(`createdAt`, '>=', after)
       .where(`createdAt`, '<=', before)
       .orderBy('createdAt', 'desc')
-      .limit(1)
     const allAccesses = await query.fetch()
     return this.getFirstOrNull(this.accessWithCheckInOrOut(allAccesses))
   }
@@ -516,7 +515,6 @@ export class AccessService {
       .where(`createdAt`, '>=', after)
       .where(`createdAt`, '<=', before)
       .orderBy('createdAt', 'desc')
-      .limit(1)
     const allAccesses = await query.fetch()
     return this.getFirstOrNull(this.accessWithCheckInOrOut(allAccesses))
   }
