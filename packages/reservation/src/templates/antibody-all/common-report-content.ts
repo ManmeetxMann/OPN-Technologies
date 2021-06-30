@@ -4,6 +4,7 @@ import {RapidAntigenEmailResultDTO} from '../../models/rapid-antigen-test-result
 import {ResultTypes} from '../../models/appointment'
 import path from 'path'
 import {Spec} from '../../models/pcr-test-results'
+import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
 
 const tableLayouts: TableLayouts = {
   mainTable: {
@@ -45,8 +46,10 @@ const pdfWidth = 1224
 const pdfHeight = 1816
 const bigFontSize = 55
 
-const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: string): Content => {
+const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): Content => {
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
+
+  const lab = params.lab.displayNameOnReport ? params.lab.name : 'N/A'
 
   return [
     {
@@ -656,7 +659,7 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
           ],
           [
             {
-              text: 'FH Buffalo',
+              text: lab,
               alignment: 'left',
               bold: true,
               style: ['black'],
@@ -896,7 +899,7 @@ const resultText = (result: ResultTypes): string => {
   return 'Indeterminate'
 }
 
-const companyInfoHeader = (params: RapidAntigenEmailResultDTO): Content => {
+const companyInfoHeader = (params: PCRTestResultEmailDTO): Content => {
   return [
     {
       image: path.join(
@@ -966,7 +969,7 @@ const resultAnalysis = (analysis: Spec[], keyName): Spec => {
   })
 }
 
-const testAnalysisTable = (params: RapidAntigenEmailResultDTO): Content => {
+const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
   let data = []
   if (params.result == ResultTypes.Positive) {
     data.push(

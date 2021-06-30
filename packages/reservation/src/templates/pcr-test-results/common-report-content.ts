@@ -2,10 +2,10 @@ import path from 'path'
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
 import {Config} from '../../../../common/src/utils/config'
 import {ResultTypes, TestTypes} from '../../models/appointment'
-import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
 import {groupByChannel} from '../../utils/analysis.helper'
 import {Spec} from '../../models/pcr-test-results'
 import {RapidAntigenEmailResultDTO} from '../../models/rapid-antigen-test-results'
+import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
 
 const tableLayouts: TableLayouts = {
   mainTable: {
@@ -65,7 +65,9 @@ const testType = (result: TestTypes): string => {
   else if (result === TestTypes.PCR) return 'RT-PCR'
 }
 
-const companyInfoHeader = (params: RapidAntigenEmailResultDTO): Content => {
+const companyInfoHeader = (params: PCRTestResultEmailDTO): Content => {
+  const lab = params.lab.displayNameOnReport ? params.lab.name : 'N/A'
+
   return [
     {
       image: path.join(
@@ -141,8 +143,9 @@ const pdfWidth = 1224
 const pdfHeight = 1816
 const bigFontSize = 55
 
-const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: string): Content => {
+const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): Content => {
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
+  const lab = params.lab.displayNameOnReport ? params.lab.name : 'N/A'
 
   return [
     {
@@ -752,7 +755,7 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
           ],
           [
             {
-              text: 'FH Buffalo',
+              text: lab,
               alignment: 'left',
               bold: true,
               style: ['black'],
@@ -880,7 +883,7 @@ const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
           ],
         },
       ],
-      absolutePosition: {x: 400, y: 400},
+      absolutePosition: {x: pdfWidth / 2 + 10, y: 1224 / 2 + 500},
       margin: [0, 15, 0, 0],
       fontSize: 10,
     },
@@ -919,11 +922,10 @@ const resultAnalysis = (analysis: Spec[], keyName): Spec => {
   })
 }
 
-const importantInfo = (params: RapidAntigenEmailResultDTO): Content => {
+const importantInfo = (params: PCRTestResultEmailDTO): Content => {
   const smallFontSize = 19
   const data = []
   if (params.result == ResultTypes.PresumptivePositive || params.result == ResultTypes.Positive) {
-    console.log(params.result)
     data.push({
       //pressumptive possitive normal
       text:
