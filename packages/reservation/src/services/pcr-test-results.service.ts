@@ -1837,7 +1837,10 @@ export class PCRTestResultsService {
       pcrTestResultsQuery.push(equals('testType', testType))
     }
 
-    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery, {
+      key: 'poolBarcodeId',
+      direction: 'asc',
+    })
   }
 
   async getDueDeadlineStats(
