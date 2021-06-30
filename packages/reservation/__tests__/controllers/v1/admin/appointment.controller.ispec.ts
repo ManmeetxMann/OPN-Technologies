@@ -196,7 +196,7 @@ describe('AdminAppointmentController', () => {
       const url = `/reservation/admin/api/v1/appointments?organizationId=null&dateOfAppointment=${dateForAppointments}`
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
-      expect(result.body.data.length).toBeGreaterThan(3)
+      expect(result.body.data.length).toBeGreaterThanOrEqual(3)
     })
     test('get appointments by organizationId should fail for missing dateOfAppointment', async () => {
       const url = `/reservation/admin/api/v1/appointments?organizationId=${organizationId}`
