@@ -9,6 +9,7 @@ export const create = async (
     userID: string
     sendORMRequest?: boolean
     poolingEnabled?: boolean
+    displayNameOnReport?: boolean
   },
   testDataCreator: string,
 ): Promise<void> => {
@@ -21,6 +22,7 @@ export const create = async (
     testDataCreator,
     sendORMRequest: dataOverwrite.sendORMRequest ?? false,
     poolingEnabled: dataOverwrite.poolingEnabled ?? false,
+    displayNameOnReport: dataOverwrite.displayNameOnReport ?? false,
   }
 
   await database.collection(collectionName).doc(dataOverwrite.id).set(data)

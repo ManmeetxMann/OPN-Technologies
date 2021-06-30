@@ -838,12 +838,15 @@ components:
           type: boolean
         sendORMRequest:
           type: boolean
+        displayNameOnReport:
+          type: boolean
       required:
         - name
         - templateId
         - assay
         - poolingEnabled
         - sendORMRequest
+        - displayNameOnReport
     LabResponse:
       type: object
       additionalProperties: false
