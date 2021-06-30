@@ -49,6 +49,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
   const lab = params.lab.displayNameOnReport ? params.lab.name : 'N/A'
+  const testingLabString = 'TESTING LAB ' ? params.lab.name : ''
 
   return [
     {
@@ -63,7 +64,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
               fontSize: smallFontSizeHeader,
             },
             {
-              text: params.firstName,
+              text: params.firstName || 'N/A',
               bold: true,
               style: ['black'],
               fontSize: bigFontSize,
@@ -78,7 +79,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
               fontSize: smallFontSizeHeader,
             },
             {
-              text: params.lastName,
+              text: params.lastName || 'N/A',
               bold: true,
               style: ['black'],
               font: 'PTSerif',
@@ -166,7 +167,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
           ],
           [
             {
-              text: params.country,
+              text: params.country || 'N/A',
               bold: true,
               style: ['black'],
               fontSize: smallFontSize,
@@ -176,7 +177,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
               margin: [10, 5, 0, 0],
             },
             {
-              text: params.phone,
+              text: params.phone || 'N/A',
               bold: true,
               style: ['black'],
               fontSize: smallFontSize,
@@ -265,8 +266,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
           ],
           [
             {
-              // Add passport
-              text: params.travelID,
+              text: params.travelID || 'N/A',
               bold: true,
               style: ['black'],
               font: 'PTSerif',
@@ -570,7 +570,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
           ],
           [
             {
-              text: params.registeredNursePractitioner,
+              text: params.registeredNursePractitioner || 'N/A',
               alignment: 'left',
               bold: true,
               style: ['black'],
@@ -614,7 +614,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
           ],
           [
             {
-              text: params.locationName,
+              text: params.locationName || 'N/A',
               alignment: 'left',
               bold: true,
               style: ['black'],
@@ -624,7 +624,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
               margin: [10, 5, 0, 0],
             },
             {
-              text: params.locationAddress,
+              text: params.locationAddress || 'N/A',
               alignment: 'left',
               bold: true,
               style: ['black'],
@@ -636,7 +636,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
           ],
           [
             {
-              text: 'TESTING LAB',
+              text: testingLabString,
               bold: true,
               style: ['gray'],
               font: 'DMSans',
@@ -1135,6 +1135,32 @@ const placeQRCode = (qrCode: Content): Content => {
   }
 }
 
+const ReferenceIndexingInfo = (): Content => {
+  return {
+    columns: [
+      {
+        text: 'Reference Cut-off Index',
+        absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 880},
+        bold: false,
+        color: '#000000',
+        font: 'SFPro',
+        fontSize: 18,
+        margin: [30, 0, 0, 10],
+      },
+      {
+        text: '0.8 - < 1.0 = Indeterminate\n >= 1.0 = positive \n < 0.8 = Negative',
+        absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 905},
+        bold: false,
+        color: '#a1a1a1',
+        font: 'SFPro',
+        fontSize: 18,
+        margin: [30, 0, 0, 10],
+      },
+    ],
+    margin: [30, 0, 0, topMargin],
+  }
+}
+
 export default {
   clientInformation,
   importantInfo,
@@ -1144,4 +1170,5 @@ export default {
   tableLayouts,
   doctorSignature,
   placeQRCode,
+  ReferenceIndexingInfo,
 }

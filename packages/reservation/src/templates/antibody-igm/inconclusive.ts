@@ -26,6 +26,7 @@ const pdfContent = (
       commonPDFContent.importantInfo(),
       commonPDFContent.legalNotice(),
       commonPDFContent.placeQRCode(QrService.getQrDataForPDFReport(qr, 200, 200)),
+      commonPDFContent.ReferenceIndexingInfo(),
     ],
   }
 }

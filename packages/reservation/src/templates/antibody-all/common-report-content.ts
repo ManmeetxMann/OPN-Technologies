@@ -50,6 +50,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
   const lab = params.lab.displayNameOnReport ? params.lab.name : 'N/A'
+  const testingLabString = 'TESTING LAB ' ? params.lab.name : ''
 
   return [
     {
@@ -637,7 +638,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
           ],
           [
             {
-              text: 'TESTING LAB',
+              text: testingLabString,
               bold: true,
               style: ['gray'],
               font: 'DMSans',
