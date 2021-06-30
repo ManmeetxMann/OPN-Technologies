@@ -1130,7 +1130,7 @@ export class AppoinmentService {
           agreeToConductFHHealthAssessment: appointment.agreeToConductFHHealthAssessment,
           receiveResultsViaEmail: appointment.receiveResultsViaEmail,
           receiveNotificationsFromGov: appointment.receiveNotificationsFromGov,
-          agreeCancellationRefund: appointment?.agreeCancellationRefund ?? true,
+          agreeCancellationRefund: appointment?.agreeCancellationRefund ?? false,
           barCodeNumber,
         },
       })
