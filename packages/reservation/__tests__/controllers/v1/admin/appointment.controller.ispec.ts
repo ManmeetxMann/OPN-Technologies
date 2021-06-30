@@ -12,6 +12,7 @@ jest.spyOn(global.console, 'error').mockImplementation()
 jest.spyOn(global.console, 'info').mockImplementation()
 jest.mock('../../../../../common/src/middlewares/authorization')
 jest.mock('../../../../../common/src/utils/logging-setup')
+jest.mock('../../../../../reservation/src/respository/acuity.repository')
 
 const testDataCreator = __filename.split('/packages/')[1]
 const oneDay = 86400000
@@ -22,10 +23,14 @@ const organizationId = 'TEST1'
 const laboratoryId = 'Lab1'
 const barCode = 'BAR1'
 const barCode2 = 'BAR2'
+const barCode3 = 'BAR3'
+const barCode4 = 'BAR4'
 
 const vialLocation = 'TestLocation'
 
 const transportRunId = 'APPOINTMENT_TRANSPORT_RUN'
+
+jest.setTimeout(15000)
 
 describe('AdminAppointmentController', () => {
   beforeAll(async () => {
@@ -114,6 +119,26 @@ describe('AdminAppointmentController', () => {
         },
         testDataCreator,
       ),
+      createAppointment(
+        {
+          id: 'APT10',
+          dateTime: `2020-02-01T08:30:00`,
+          dateOfAppointment: 'February 01, 2020',
+          appointmentStatus: 'Pending',
+          barCode: barCode3,
+        },
+        testDataCreator,
+      ),
+      createAppointment(
+        {
+          id: 'APT11',
+          dateTime: `2020-02-02T08:30:00`,
+          dateOfAppointment: 'February 02, 2020',
+          appointmentStatus: 'Pending',
+          barCode: barCode4,
+        },
+        testDataCreator,
+      ),
       await createTransportRun(
         {
           id: transportRunId,
@@ -171,7 +196,7 @@ describe('AdminAppointmentController', () => {
       const url = `/reservation/admin/api/v1/appointments?organizationId=null&dateOfAppointment=${dateForAppointments}`
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
-      expect(result.body.data.length).toBe(3)
+      expect(result.body.data.length).toBeGreaterThan(3)
     })
     test('get appointments by organizationId should fail for missing dateOfAppointment', async () => {
       const url = `/reservation/admin/api/v1/appointments?organizationId=${organizationId}`
@@ -235,24 +260,6 @@ describe('AdminAppointmentController', () => {
     })
   })
 
-  describe('Appointment vial location', () => {
-    test('add vialLocation to appointment', async () => {
-      const url = `/reservation/admin/api/v1/appointments/receive`
-      const result = await request(server.app)
-        .put(url)
-        .set('Content-Type', 'application/json')
-        .set('authorization', 'Bearer LabUser')
-        .send({
-          appointmentIds: ['APT9'],
-          vialLocation,
-        })
-
-      expect(result.status).toBe(200)
-      expect(result.body.data.length).toBeGreaterThanOrEqual(1)
-      expect(result.body.data[0].updatedData.vialLocation).toBe(vialLocation)
-    })
-  })
-
   describe('Appointment add label', () => {
     test('add label to appointment', async () => {
       const url = `/reservation/admin/api/v2/appointments/add-labels`
@@ -277,8 +284,51 @@ describe('AdminAppointmentController', () => {
       expect(result.body.data.length).toBeGreaterThanOrEqual(1)
       expect(
         new Date(resultAfter.body.data[0].updatedData.deadline).getTime() -
-          new Date(result.body.data[0].updatedData.deadline).getTime(),
+        new Date(result.body.data[0].updatedData.deadline).getTime(),
       ).toBe(oneDay)
+      expect(result.status).toBe(200)
+    })
+  })
+
+  describe('Appointment vial location', () => {
+    test('add vialLocation to appointment', async () => {
+      const url = `/reservation/admin/api/v1/appointments/receive`
+      const result = await request(server.app)
+        .put(url)
+        .set('Content-Type', 'application/json')
+        .set('authorization', 'Bearer LabUser')
+        .send({
+          appointmentIds: ['APT9'],
+          vialLocation,
+        })
+
+      expect(result.status).toBe(200)
+      expect(result.body.data.length).toBeGreaterThanOrEqual(1)
+      expect(result.body.data[0].updatedData.vialLocation).toBe(vialLocation)
+    })
+  })
+
+  describe('Appointment check-in', () => {
+    test('check-in appointment', async () => {
+      const url = `/reservation/admin/api/v1/appointments/${'APT10'}/check-in`
+      const result = await request(server.app)
+        .put(url)
+        .set('Content-Type', 'application/json')
+        .set('authorization', 'Bearer LabUser')
+
+      expect(result.status).toBe(200)
+      expect(result.body.data.status).toBe('CheckedIn')
+    })
+  })
+
+  describe('Appointment cancel', () => {
+    test('cancel appointment', async () => {
+      const url = `/reservation/admin/api/v1/appointments/${'APT11'}/cancel`
+      const result = await request(server.app)
+        .put(url)
+        .set('Content-Type', 'application/json')
+        .set('authorization', 'Bearer LabUser')
+
       expect(result.status).toBe(200)
     })
   })
