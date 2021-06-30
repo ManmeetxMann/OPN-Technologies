@@ -54,6 +54,9 @@ export const preprodConfig: Record<string, string | string[] | number | boolean>
 
   AUTH_EMAIL_TEMPLATE_ID: 3,
 
+  TEST_RESULTS_BUCKET_NAME: 'opn-platform-preprod-test-results',
+  QR_LINK_EXPIRATION_TIME: 60 * 24 * 7 * 60 * 1000,
+
   APPOINTMENTS_PUSH_NOTIFY: 'enabled',
   APPOINTMENTS_PUB_SUB_NOTIFY: 'enabled',
   TEST_RESULT_PUB_SUB_NOTIFY: 'enabled',

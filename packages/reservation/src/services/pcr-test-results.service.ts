@@ -1,5 +1,6 @@
 import moment from 'moment'
 import {fromPairs, sortBy, union} from 'lodash'
+import {Readable} from 'stream'
 
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
@@ -109,6 +110,8 @@ import {
 } from '../utils/push-notification.helper'
 import {OpnSources} from '../../../common/src/data/registration'
 import {PushMessages} from '../../../common/src/types/push-notification'
+import TestResultUploadService from '../../../enterprise/src/services/test-result-upload-service'
+import {QrService} from '../../../common/src/service/qr/qr-service'
 
 const POOL_BARCODE_FIRST_LETTER = 'P'
 
@@ -124,6 +127,7 @@ export class PCRTestResultsService {
   private couponService = new CouponService()
   private reservationPushService = new ReservationPushService()
   private emailService = new EmailService()
+  private testResultUploadService = new TestResultUploadService()
   private userService = new UserService()
   private whiteListedResultsTypes = [
     ResultTypes.Negative,
@@ -1353,18 +1357,26 @@ export class PCRTestResultsService {
     resultData: PCRTestResultEmailDTO,
     pcrResultPDFType: PCRResultPDFType,
   ): Promise<void> {
+    const fileName = this.testResultUploadService.generateFileName(resultData.id)
+    const v4ReadURL = await this.testResultUploadService.getSignedInUrl(fileName)
+    const qr = await QrService.generateQrCode(v4ReadURL)
+
     let pdfContent = ''
     switch (resultData.testType) {
       case 'Antibody_All':
-        pdfContent = await AntibodyAllPDFContent(resultData, pcrResultPDFType)
+        pdfContent = await AntibodyAllPDFContent(resultData, pcrResultPDFType, qr)
         break
       case 'Antibody_IgM':
-        pdfContent = await AntibodyIgmPDFContent(resultData, pcrResultPDFType)
+        pdfContent = await AntibodyIgmPDFContent(resultData, pcrResultPDFType, qr)
         break
       default:
-        pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType)
+        pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType, qr)
         break
     }
+
+    const pdfStream = Buffer.from(pdfContent, 'base64')
+    const stream = Readable.from(pdfStream)
+    await this.testResultUploadService.uploadPDFResult(stream, fileName)
 
     const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 
