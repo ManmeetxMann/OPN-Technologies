@@ -35,6 +35,7 @@ class PubsubController implements IControllerBase {
       const data = (await OPNPubSub.getPublishedData(
         req.body.message.data,
       )) as PCRTestResultSubmitted
+
       const testResult = await this.pcrTestResultsService.getPCRResultsById(data.id as string)
 
       const [appointment, lab] = await Promise.all([
