@@ -1,3 +1,4 @@
+import {GroupedSpecs} from './../../models/pcr-test-results'
 import path from 'path'
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
 import {Config} from '../../../../common/src/utils/config'
@@ -66,8 +67,6 @@ const testType = (result: TestTypes): string => {
 }
 
 const companyInfoHeader = (params: PCRTestResultEmailDTO): Content => {
-  const lab = params.lab.displayNameOnReport ? params.lab.name : 'N/A'
-
   return [
     {
       image: path.join(
@@ -827,6 +826,15 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
   ]
 }
 
+const getFillColorForResultsCell = (result: ResultTypes): string => {
+  if (result === ResultTypes.PresumptivePositive) {
+    return '#FF0000'
+  } else if (result === ResultTypes.Positive) {
+    return '#FF0000'
+  }
+  return '#6AA84F'
+}
+
 const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
   if (params.testType === TestTypes.ExpressPCR) {
     return []
@@ -836,19 +844,13 @@ const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
 
   return [
     {
-      text: 'Detailed Test Analysis Data:',
-      margin: [0, 15, 0, 0],
-      lineHeight: 1.2,
-      absolutePosition: {x: 400, y: 400},
-    },
-    {
       columns: [
         {
           layout: 'resultTable',
           width: 58,
           table: {
-            widths: [52],
-            heights: [46],
+            widths: [90],
+            heights: [40],
             body: [['Result']],
           },
         },
@@ -858,7 +860,8 @@ const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
               layout: 'resultTable',
               width: 350,
               table: {
-                widths: [...groupedAnalysis.map((channel) => channel.groups.length * 44)],
+                widths: [...groupedAnalysis.map((channel) => channel.groups.length * 90)],
+                heights: [...groupedAnalysis.map((channel) => channel.groups.length * 40)],
                 body: [[...groupedAnalysis.map((channel) => channel.channelName)]],
               },
               margin: [3, 0, 0, 0],
@@ -868,7 +871,8 @@ const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
               layout: 'resultTable',
               width: 350,
               table: {
-                widths: [40, 39, 40, 39, 40, 39, 40, 39],
+                widths: [90, 90, 90, 90, 90, 90, 90, 90, 90],
+                heights: [40],
                 body: [
                   [
                     ...groupedAnalysis
@@ -883,19 +887,20 @@ const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
           ],
         },
       ],
-      absolutePosition: {x: pdfWidth / 2 + 10, y: 1224 / 2 + 500},
       margin: [0, 15, 0, 0],
-      fontSize: 10,
+      absolutePosition: {x: 700, y: 1200},
+      fontSize: smallFontSize,
     },
     {
       layout: 'resultTable',
       table: {
-        widths: [52, 40, 39, 40, 39, 40, 39, 40, 39],
+        widths: [90, 90, 90, 90, 90, 90, 90, 90, 90],
+        heights: [40],
         body: [
           [
             {
               text: resultText(params.result),
-              fillColor: '#ff0000',
+              fillColor: getFillColorForResultsCell(params.result),
               color: '#FFFFFF',
             },
             ...groupedAnalysis
@@ -909,9 +914,9 @@ const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
           ],
         ],
       },
+      absolutePosition: {x: 700, y: 1300},
       margin: [0, -1, 0, 0],
-      absolutePosition: {x: pdfWidth + 200, y: 1224 / 2 + 250},
-      fontSize: 10,
+      fontSize: smallFontSize,
     },
   ]
 }
