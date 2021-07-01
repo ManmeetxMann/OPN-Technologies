@@ -29,6 +29,28 @@ const getFontSettings = () => ({
   BrutalTypeLight: {
     normal: path.join(__dirname, '../../static/fonts/BrutalType-Light.otf'),
   },
+  DMSans: {
+    normal: path.join(__dirname, '../../static/fonts/DMSans-Regular.ttf'),
+    bold: path.join(__dirname, '../../static/fonts/DMSans-Bold.ttf'),
+  },
+  DMSansItalic: {
+    normal: path.join(__dirname, '../../static/fonts/DMSans-Italic.ttf'),
+    bold: path.join(__dirname, '../../static/fonts/DMSans-BoldItalic.ttf'),
+  },
+  DMSansMedium: {
+    normal: path.join(__dirname, '../../static/fonts/DMSans-Medium.ttf'),
+    bold: path.join(__dirname, '../../static/fonts/DMSans-MediumItalic.ttf'),
+  },
+  PTSerif: {
+    normal: path.join(__dirname, '../../static/fonts/PTSerif-Regular.ttf'),
+    bold: path.join(__dirname, '../../static/fonts/PTSerif-Bold.ttf'),
+    italics: path.join(__dirname, '../../static/fonts/PTSerif-Italic.ttf'),
+    bolditalics: path.join(__dirname, '../../static/fonts/PTSerif-BoldItalic.ttf'),
+  },
+  SFPro: {
+    normal: path.join(__dirname, '../../static/fonts/SFPro.ttf'),
+    bold: path.join(__dirname, '../../static/fonts/SFPro-Bold.ttf'),
+  },
 })
 
 export class PdfService {
@@ -40,8 +62,9 @@ export class PdfService {
     password?: string,
     pageSize?: {height: number; width: number},
     pageMargin?: number,
+    background?: Content,
   ): Stream {
-    const generatedParams = this.getPDF(params, password, pageSize, pageMargin)
+    const generatedParams = this.getPDF(params, password, pageSize, pageMargin, background)
     const stream = new Stream.PassThrough()
     const pdfDoc = this.printer.createPdfKitDocument(generatedParams, {tableLayouts})
     pdfDoc.on('data', (chunk) => stream.push(chunk))
@@ -75,6 +98,7 @@ export class PdfService {
     password?: string,
     PageSize?: {height: number; width: number},
     pageMargin?: number,
+    background?: Content,
   ): TDocumentDefinitions {
     const docDefinition: TDocumentDefinitions = {
       pageSize: PageSize || 'A4',
@@ -102,6 +126,7 @@ export class PdfService {
         font: 'Cambria',
         fontSize: 11,
       },
+      background,
       content,
     }
 
