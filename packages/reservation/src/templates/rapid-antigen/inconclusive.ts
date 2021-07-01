@@ -7,6 +7,7 @@ import {QrService} from '../../../../common/src/service/qr/qr-service'
 const pdfContent = (
   params: PCRTestResultEmailDTO,
   resultDate: string,
+  qr: string,
 ): {content: Content[]; background: Content; tableLayouts: TableLayouts} => {
   return {
     tableLayouts: commonPDFContent.tableLayouts,
