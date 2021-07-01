@@ -1811,6 +1811,7 @@ export class PCRTestResultsService {
   ): Promise<PCRTestResultDBModel[]> {
     const pcrTestResultsQuery = []
     const {labId, deadline, barCode, testRunId, organizationId, testType} = queryParams
+    let order
 
     const equals = (key: string, value) => ({
       map: '/',
@@ -1840,6 +1841,10 @@ export class PCRTestResultsService {
 
     if (testRunId) {
       pcrTestResultsQuery.push(equals('testRunId', testRunId))
+      order = {
+        key: 'poolBarcodeId',
+        direction: 'asc',
+      }
     }
 
     if (organizationId) {
@@ -1852,10 +1857,7 @@ export class PCRTestResultsService {
       pcrTestResultsQuery.push(equals('testType', testType))
     }
 
-    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery, {
-      key: 'poolBarcodeId',
-      direction: 'asc',
-    })
+    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery, order)
   }
 
   async getDueDeadlineStats(
