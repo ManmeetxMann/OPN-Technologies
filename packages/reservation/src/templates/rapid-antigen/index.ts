@@ -6,10 +6,7 @@ import {LogInfo} from '../../../../common/src/utils/logging-setup'
 import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
 
 //Models
-import {
-  RapidAntigenResultPDFType,
-  RapidAntigenEmailResultDTO,
-} from '../../models/rapid-antigen-test-results'
+import {RapidAntigenResultPDFType} from '../../models/rapid-antigen-test-results'
 
 import positivePCRResultTemplate from './positive'
 import negativePCRResultTemplate from './negative'
