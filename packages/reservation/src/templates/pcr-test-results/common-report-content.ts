@@ -144,6 +144,68 @@ const bigFontSize = 55
 
 const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): Content => {
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
+  const dataPersonal = [
+    [
+      'Patient Name ',
+      {
+        text: `${params.firstName} ${params.lastName}`,
+        bold: true,
+      },
+    ],
+    ['Date of Birth', params.dateOfBirth],
+    ['Mobile Number', params.phone],
+  ]
+
+  if (params.gender) {
+    // if gender exists add as second field
+    dataPersonal.splice(1, 0, [{text: 'Gender', bold: true}, params.gender])
+  }
+
+  if (params.address) {
+    let address = params.address
+    if (params.city) {
+      address += ` ${params.city} ${params.province} ${params.country}`
+    }
+    dataPersonal.push(['Home Address', address])
+  }
+
+  if (params.addressUnit) {
+    dataPersonal.push(['Home Address (unit number, etc)', params.addressUnit])
+  }
+
+  if (params.postalCode) {
+    dataPersonal.push([{text: 'Postal Code', bold: true}, params.postalCode])
+  }
+
+  if (
+    params.ohipCard &&
+    (params.result === ResultTypes.Positive || params.result === ResultTypes.PresumptivePositive)
+  ) {
+    dataPersonal.push(['Health / OHIP Card', params.ohipCard])
+  }
+
+  if (params.travelID) {
+    dataPersonal.push(['Passport / Travel ID', params.travelID])
+  }
+
+  if (params.travelIDIssuingCountry) {
+    dataPersonal.push(['Passport Travel ID Issuing Country', params.travelIDIssuingCountry])
+  }
+
+  const dataAppointment = [
+    [
+      'Date of Test (Sample Collection)',
+      `${params.dateOfAppointment} at ${params.timeOfAppointment}`,
+    ],
+    ['Date of Result', resultDate],
+    ['Ordering Physician', requisitionDoctor],
+    ['Nurse', params.registeredNursePractitioner],
+  ]
+
+  if (params.swabMethod) {
+    dataAppointment.push(['Swab Method', params.swabMethod])
+  }
+
   const lab = params.lab.displayNameOnReport ? params.lab.name : 'N/A'
   const testingLabString = 'TESTING LAB ' ? params.lab.name : ''
   const TestAnalysisText = params.testType == TestTypes.ExpressPCR ? '' : 'Test Analysis'
