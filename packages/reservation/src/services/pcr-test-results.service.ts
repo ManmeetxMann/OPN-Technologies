@@ -12,7 +12,7 @@ import {ReservationPushTypes} from '../types/appointment-push'
 import {toDateFormat} from '../../../common/src/utils/times'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
-import {makeSpaceOnTitleCase} from '../../../common/src/utils/utils'
+import {makeSpaceOnTitleCase, sortingAlgorithm} from '../../../common/src/utils/utils'
 import {
   dateToDateTime,
   formatDateRFC822Local,
@@ -1811,6 +1811,7 @@ export class PCRTestResultsService {
   ): Promise<PCRTestResultDBModel[]> {
     const pcrTestResultsQuery = []
     const {labId, deadline, barCode, testRunId, organizationId, testType} = queryParams
+    let order
 
     const equals = (key: string, value) => ({
       map: '/',
@@ -1840,6 +1841,7 @@ export class PCRTestResultsService {
 
     if (testRunId) {
       pcrTestResultsQuery.push(equals('testRunId', testRunId))
+      order = 'poolBarcodeId'
     }
 
     if (organizationId) {
@@ -1852,7 +1854,13 @@ export class PCRTestResultsService {
       pcrTestResultsQuery.push(equals('testType', testType))
     }
 
-    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+    let pcrTests = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+
+    if (order) {
+      pcrTests = pcrTests.sort(sortingAlgorithm(order))
+    }
+
+    return pcrTests
   }
 
   async getDueDeadlineStats(
