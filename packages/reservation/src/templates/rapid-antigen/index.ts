@@ -3,10 +3,13 @@ import {Stream} from 'stream'
 import {Content, TableLayouts} from '../../../../common/src/service/reports/pdf-types'
 import {PdfService} from '../../../../common/src/service/reports/pdf'
 import {LogInfo} from '../../../../common/src/utils/logging-setup'
-import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
 
 //Models
-import {RapidAntigenResultPDFType} from '../../models/rapid-antigen-test-results'
+import {
+  RapidAntigenResultPDFType,
+  RapidAntigenEmailResultDTO,
+  PCRTestResultEmailDTO,
+} from '../../models/rapid-antigen-test-results'
 
 import positivePCRResultTemplate from './positive'
 import negativePCRResultTemplate from './negative'
@@ -44,7 +47,7 @@ const getRapidAntigenTemplate = (
 }
 
 export const RapidAntigenPDFContent = async (
-  resultData: PCRTestResultEmailDTO,
+  resultData: RapidAntigenEmailResultDTO,
   pdfType: RapidAntigenResultPDFType,
   qr: string,
 ): Promise<string> => {
@@ -60,7 +63,7 @@ export const RapidAntigenPDFContent = async (
 }
 
 export const RapidAntigenPDFStream = (
-  resultData: PCRTestResultEmailDTO,
+  resultData: RapidAntigenEmailResultDTO,
   pdfType: RapidAntigenResultPDFType,
   qr: string,
 ): Stream => {

@@ -212,12 +212,12 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
               fontSize: smallFontSize,
               font: 'PTSerif',
               border: [true, false, false, false],
-              margin: [10, 5, 0, 10],
+              margin: [10, 5, 0, 67],
             },
             {
               text: '',
               border: [false, false, true, false],
-              margin: [10, 5, 0, 10],
+              margin: [10, 5, 0, 67],
             },
           ],
         ],
@@ -1045,7 +1045,7 @@ const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
         body: [
           [
             {
-              text: 'IgM',
+              text: 'Ratio',
               bold: false,
               style: ['black'],
               fontSize: 30,
