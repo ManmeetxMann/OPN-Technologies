@@ -830,7 +830,7 @@ const companyInfoHeader = (params: RapidAntigenEmailResultDTO): Content => {
     {
       image: path.join(
         __dirname,
-        '../../static/Banner/' + resultText(params.result) + '_Banner@3x.png',
+        '../../static/images/Banner/' + resultText(params.result) + '_Banner@3x.png',
       ),
       absolutePosition: {x: 0, y: 0},
       width: 1224,
@@ -866,7 +866,10 @@ const companyInfoHeader = (params: RapidAntigenEmailResultDTO): Content => {
         {
           stack: [
             {
-              image: path.join(__dirname, '../../static/FH_Logo/FH_Health_Logos_Hor_White.png'),
+              image: path.join(
+                __dirname,
+                '../../static/images/FH_Logo/FH_Health_Logos_Hor_White.png',
+              ),
               width: 275,
               height: 275 / 3.6,
               absolutePosition: {x: (1224 * 3) / 4 - 180, y: 50},
