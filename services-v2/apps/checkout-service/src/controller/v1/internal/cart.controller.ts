@@ -5,7 +5,7 @@ import {AuthTypes, InternalAuthTypes} from '@opn-services/common/types/authoriza
 import {UserCardService} from '@opn-services/checkout/service'
 import {InternalGuard} from '@opn-services/common/guard/internal.guard'
 import {ApiCommonHeaders, InternalType, ApiAuthType} from '@opn-services/common/decorator'
-import {BadRequestException} from '@opn-common-v1/exceptions/bad-request-exception'
+import {BadRequestException} from '@opn-services/common/exception'
 import {AppointmentConfirmedDto} from '@opn-services/checkout/dto'
 
 @ApiTags('Cart Internal')
@@ -45,7 +45,6 @@ export class CartInternalController {
   async sendConfirmedEmail(
     @Body() {message}: AppointmentConfirmedDto,
   ): Promise<ResponseWrapper<void>> {
-    await this.userCardService.cleanupUserCart()
     if (!message || !message.data) {
       throw new BadRequestException(`data is missing from pub sub post`)
     }
