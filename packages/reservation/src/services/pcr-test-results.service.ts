@@ -196,7 +196,7 @@ export class PCRTestResultsService {
   private async pcrTestResultsWithAdditionalInfo(
     pcrResults,
     queryParams,
-     order = null,
+    order = null,
   ): Promise<PCRTestResultByDeadlineListDTO[]> {
     const appointmentIds = []
     const testRunIds = []
