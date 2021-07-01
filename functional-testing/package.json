@@ -17,7 +17,8 @@
     "test_public_call_group": "USER_ROLE=reguser jest '--group=public-call'",
     "test_reguser": "USER_ROLE=reguser jest",
     "test_admin": "USER_ROLE=admin jest",
-    "test_lab": "USER_ROLE=lab jest"
+    "test_lab": "USER_ROLE=lab jest",
+    "test_data_generator": "ts-node test-data-generator/main.ts"
   },
   "devDependencies": {
     "@types/faker": "^5.5.5",
@@ -31,6 +32,7 @@
     "jest": "^27.0.1",
     "jest-runner-groups": "^2.1.0",
     "moment": "2.29.1",
-    "moment-timezone": "0.5.32"
+    "moment-timezone": "0.5.32",
+    "ts-node": "^10.0.0"
   }
 }

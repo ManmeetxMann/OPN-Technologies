@@ -587,7 +587,30 @@ export class ReportService {
           return null
         }
 
+        const childAccess = () => {
+          if (isLive) {
+            return locationId
+              ? this.accessService.findLatestAtLocationForDependant(id, locationId, user?.delegates)
+              : this.accessService.findLatestAnywhereForDependant(id, user?.delegates)
+          } else {
+            return locationId
+              ? this.accessService.findAtLocationOnDayForDependant(
+                  id,
+                  locationId,
+                  after,
+                  before,
+                  user?.delegates,
+                )
+              : this.accessService.findAnywhereOnDayForDependant(id, after, before, user?.delegates)
+          }
+        }
+
         const getAccess = () => {
+          // if we got a child return child related access
+          if (user?.delegates?.length) {
+            return childAccess()
+          }
+
           if (isLive) {
             return locationId
               ? this.accessService.findLatestAtLocation(id, locationId)

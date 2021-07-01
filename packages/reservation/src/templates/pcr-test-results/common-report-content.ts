@@ -147,6 +147,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
   const lab = params.lab.displayNameOnReport ? params.lab.name : 'N/A'
   const testingLabString = 'TESTING LAB ' ? params.lab.name : ''
 
+
   return [
     {
       columns: [
