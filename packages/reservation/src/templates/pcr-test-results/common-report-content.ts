@@ -55,7 +55,7 @@ const resultText = (result: ResultTypes): string => {
   } else if (result === ResultTypes.Inconclusive) {
     return 'Inconclusive'
   }
-  return 'Indeterminate'
+  return 'Inconclusive'
 }
 
 const testType = (result: TestTypes): string => {
@@ -68,7 +68,7 @@ const companyInfoHeader = (params: PCRTestResultEmailDTO): Content => {
     {
       image: path.join(
         __dirname,
-        '../Assets/Banner/' + resultText(params.result) + '_Banner@3x.png',
+        '../../static/images/Banner/' + resultText(params.result) + '_Banner@3x.png',
       ),
       absolutePosition: {x: 0, y: 0},
       width: 1224,
@@ -103,7 +103,10 @@ const companyInfoHeader = (params: PCRTestResultEmailDTO): Content => {
         {
           stack: [
             {
-              image: path.join(__dirname, '../Assets/FH_Logo/FH_Health_Logos_Hor_White.png'),
+              image: path.join(
+                __dirname,
+                '../../static/images/FH_Logo/FH_Health_Logos_Hor_White.png',
+              ),
               width: 275,
               height: 275 / 3.6,
               absolutePosition: {x: (1224 * 3) / 4 - 180, y: 50},
@@ -143,6 +146,9 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
   const lab = params.lab.displayNameOnReport ? params.lab.name : 'N/A'
   const testingLabString = 'TESTING LAB ' ? params.lab.name : ''
+  const TestAnalysisText = params.testType == TestTypes.ExpressPCR ? '' : 'Test Analysis'
+  const CutOffText = params.testType == TestTypes.ExpressPCR ? '' : 'ANTIBODY CUT-OFF INDEX VALUES'
+  const displayTestAnalysisLine = params.testType != TestTypes.ExpressPCR
 
   return [
     {
@@ -783,14 +789,14 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
         {
           stack: [
             {
-              text: 'Test Analysis',
+              text: TestAnalysisText,
               bold: true,
               fontSize: 30,
               style: ['black'],
               margin: [30, 0, 0, 10],
             },
             {
-              text: 'ANTIBODY CUT-OFF INDEX VALUES',
+              text: CutOffText,
               bold: true,
               color: '#FFA500',
               fontSize: 20,
@@ -815,7 +821,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
           [
             {
               text: '',
-              border: [false, false, true, false],
+              border: [false, false, displayTestAnalysisLine, false],
             },
           ],
         ],

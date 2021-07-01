@@ -84,8 +84,18 @@ export class PdfService {
     params: Content,
     tableLayouts: TableLayouts,
     password?: string,
+    pageSize?: {height: number; width: number},
+    pageMargin?: number,
+    background?: Content,
   ): Promise<string> {
-    const stream = this.generatePDFStream(params, tableLayouts, password)
+    const stream = this.generatePDFStream(
+      params,
+      tableLayouts,
+      password,
+      pageSize,
+      pageMargin,
+      background,
+    )
     const chunks = []
     stream.on('data', (d) => chunks.push(d))
     return new Promise((resolve) => {
