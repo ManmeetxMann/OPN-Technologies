@@ -13,7 +13,7 @@ const pdfContent = (
     tableLayouts: commonPDFContent.tableLayouts,
     background: [
       {
-        image: path.join(__dirname, '../Assets/Overlay/FH_Forge_Overlay@3x.png'),
+        image: path.join(__dirname, '../../static/Overlay/FH_Forge_Overlay@3x.png'),
         width: 1224,
         height: 1816,
       },

@@ -719,8 +719,7 @@ const importantInfo = (params: RapidAntigenEmailResultDTO): Content => {
         style: ['black'],
       },
       {
-        text:
-          'https://www.toronto.ca/home/covid-19/covid-19-what-\nyou-should-do/covid-19-havesymptoms-or-been-exposed/\n\n',
+        text: 'https://www.toronto.ca/home/covid-19/covid-19-what-\nyou-should-do/covid-19-havesymptoms-or-been-exposed/\n\n',
         font: 'SFPro',
         lineHeight: 1.1,
         bold: false,
@@ -728,8 +727,7 @@ const importantInfo = (params: RapidAntigenEmailResultDTO): Content => {
         style: ['black'],
       },
       {
-        text:
-          'If you have further questions or concerns, you can contact FH Health at \ninfo@fhhealth.com or (416) 484-0042.\n',
+        text: 'If you have further questions or concerns, you can contact FH Health at \ninfo@fhhealth.com or (416) 484-0042.\n',
         font: 'SFPro',
         lineHeight: 1.1,
         bold: false,
@@ -813,7 +811,7 @@ const resultText = (result: ResultTypes): string => {
   } else if (result === ResultTypes.Inconclusive) {
     return 'Inconclusive'
   }
-  return 'Indeterminate'
+  return 'Inconclusive'
 }
 
 const testType = (result: TestTypes): string => {
@@ -824,7 +822,7 @@ const testType = (result: TestTypes): string => {
     result === TestTypes.EmergencyRapidAntigen
   )
     return 'Rapid Antigen'
-  return 'Indeterminate'
+  return 'Inconclusive'
 }
 
 const companyInfoHeader = (params: RapidAntigenEmailResultDTO): Content => {
@@ -832,7 +830,7 @@ const companyInfoHeader = (params: RapidAntigenEmailResultDTO): Content => {
     {
       image: path.join(
         __dirname,
-        '../Assets/Banner/' + resultText(params.result) + '_Banner@3x.png',
+        '../../static/Banner/' + resultText(params.result) + '_Banner@3x.png',
       ),
       absolutePosition: {x: 0, y: 0},
       width: 1224,
@@ -868,7 +866,7 @@ const companyInfoHeader = (params: RapidAntigenEmailResultDTO): Content => {
         {
           stack: [
             {
-              image: path.join(__dirname, '../Assets/FH_Logo/FH_Health_Logos_Hor_White.png'),
+              image: path.join(__dirname, '../../static/FH_Logo/FH_Health_Logos_Hor_White.png'),
               width: 275,
               height: 275 / 3.6,
               absolutePosition: {x: (1224 * 3) / 4 - 180, y: 50},
@@ -915,8 +913,7 @@ const placeQRCode = (qrCode: Content): Content => {
         margin: [30, 0, 0, 10],
       },
       {
-        text:
-          'Scan the QR Code to verify authenticity of the pass\n QR Code will expire 7 days after sample was taken\n\n',
+        text: 'Scan the QR Code to verify authenticity of the pass\n QR Code will expire 7 days after sample was taken\n\n',
         absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 1040},
         bold: false,
         color: '#a1a1a1',

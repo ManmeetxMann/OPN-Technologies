@@ -518,8 +518,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
           ],
           [
             {
-              text:
-                'Suspected Exposure to \n COVID-19. Patron specified \nthat they are vaccinated.',
+              text: 'Suspected Exposure to \n COVID-19. Patron specified \nthat they are vaccinated.',
               bold: true,
               style: ['black'],
               font: 'PTSerif',
@@ -875,7 +874,7 @@ const resultText = (result: ResultTypes): string => {
   } else if (result === ResultTypes.Inconclusive) {
     return 'Inconclusive'
   }
-  return 'Indeterminate'
+  return 'Inconclusive'
 }
 
 const companyInfoHeader = (params: PCRTestResultEmailDTO): Content => {
@@ -883,7 +882,7 @@ const companyInfoHeader = (params: PCRTestResultEmailDTO): Content => {
     {
       image: path.join(
         __dirname,
-        '../Assets/Banner/' + resultText(params.result) + '_Banner@3x.png',
+        '../../static/images/Banner/' + resultText(params.result) + '_Banner@3x.png',
       ),
       absolutePosition: {x: 0, y: 0},
       width: 1224,
@@ -917,7 +916,10 @@ const companyInfoHeader = (params: PCRTestResultEmailDTO): Content => {
         {
           stack: [
             {
-              image: path.join(__dirname, '../Assets/FH_Logo/FH_Health_Logos_Hor_White.png'),
+              image: path.join(
+                __dirname,
+                '../../static/images/FH_Logo/FH_Health_Logos_Hor_White.png',
+              ),
               width: 275,
               height: 275 / 3.6,
               absolutePosition: {x: (1224 * 3) / 4 - 180, y: 50},
@@ -1105,8 +1107,7 @@ const placeQRCode = (qrCode: Content): Content => {
         margin: [30, 0, 0, 10],
       },
       {
-        text:
-          'Scan the QR Code to verify authenticity of the pass\n QR Code will expire 7 days after sample was taken\n\n',
+        text: 'Scan the QR Code to verify authenticity of the pass\n QR Code will expire 7 days after sample was taken\n\n',
         absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 1040},
         bold: false,
         color: '#a1a1a1',
