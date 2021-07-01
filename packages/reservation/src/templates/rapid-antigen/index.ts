@@ -4,6 +4,8 @@ import {Content, TableLayouts} from '../../../../common/src/service/reports/pdf-
 import {PdfService} from '../../../../common/src/service/reports/pdf'
 import {LogInfo} from '../../../../common/src/utils/logging-setup'
 
+import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
+
 //Models
 import {
   RapidAntigenResultPDFType,
@@ -13,13 +15,18 @@ import {
 import positivePCRResultTemplate from './positive'
 import negativePCRResultTemplate from './negative'
 
-import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
+const pageSize = {
+  height: 1816,
+  width: 1224,
+}
+
+const pageMargin = 0
 
 const getRapidAntigenTemplate = (
   resultData: RapidAntigenEmailResultDTO,
   pdfType: RapidAntigenResultPDFType,
   qr: string,
-): {content: Content; tableLayouts: TableLayouts} => {
+): {content: Content; background: Content; tableLayouts: TableLayouts} => {
   const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 
   switch (pdfType) {
@@ -51,7 +58,14 @@ export const RapidAntigenPDFContent = async (
     return
   }
 
-  return await pdfService.generatePDFBase64(data.content, data.tableLayouts)
+  return await pdfService.generatePDFBase64(
+    data.content,
+    data.tableLayouts,
+    undefined,
+    pageSize,
+    pageMargin,
+    data.background,
+  )
 }
 
 export const RapidAntigenPDFStream = (
@@ -66,5 +80,12 @@ export const RapidAntigenPDFStream = (
     throw new BadRequestException(`Not supported result ${pdfType}`)
   }
 
-  return pdfService.generatePDFStream(data.content, data.tableLayouts)
+  return pdfService.generatePDFStream(
+    data.content,
+    data.tableLayouts,
+    undefined,
+    pageSize,
+    pageMargin,
+    data.background,
+  )
 }

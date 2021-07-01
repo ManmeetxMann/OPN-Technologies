@@ -9,6 +9,13 @@ import {PCRResultPDFType, PCRTestResultEmailDTO} from '../../models/pcr-test-res
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {Stream} from 'stream'
 
+const pageSize = {
+  height: 1816,
+  width: 1224,
+}
+
+const pageMargin = 0
+
 export const AntibodyAllPDFContent = async (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
@@ -21,7 +28,14 @@ export const AntibodyAllPDFContent = async (
     return
   }
 
-  return await pdfService.generatePDFBase64(data.content, data.tableLayouts)
+  return await pdfService.generatePDFBase64(
+    data.content,
+    data.tableLayouts,
+    undefined,
+    pageSize,
+    pageMargin,
+    data.background,
+  )
 }
 
 export const AntibodyAllPDFStream = (
@@ -35,15 +49,21 @@ export const AntibodyAllPDFStream = (
   if (!data) {
     throw new BadRequestException(`Not supported result ${pdfType}`)
   }
-
-  return pdfService.generatePDFStream(data.content, data.tableLayouts)
+  return pdfService.generatePDFStream(
+    data.content,
+    data.tableLayouts,
+    undefined,
+    pageSize,
+    pageMargin,
+    data.background,
+  )
 }
 
 const getAntibodyAllTemplate = (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
   qr: string,
-): {content: Content; tableLayouts: TableLayouts} => {
+): {content: Content; background: Content; tableLayouts: TableLayouts} => {
   const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 
   switch (pdfType) {
