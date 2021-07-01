@@ -240,17 +240,21 @@ class AdminAppointmentController implements IControllerBase {
 
       const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
 
-      const {appointmentStatusArray, orgIdArray, appointmentStatsByLabIdArr, total} =
-        await this.appointmentService.getAppointmentsStats({
-          appointmentStatus,
-          barCode,
-          organizationId,
-          dateOfAppointment,
-          searchQuery,
-          transportRunId,
-          labId,
-          testType,
-        })
+      const {
+        appointmentStatusArray,
+        orgIdArray,
+        appointmentStatsByLabIdArr,
+        total,
+      } = await this.appointmentService.getAppointmentsStats({
+        appointmentStatus,
+        barCode,
+        organizationId,
+        dateOfAppointment,
+        searchQuery,
+        transportRunId,
+        labId,
+        testType,
+      })
 
       const filterGroup = [
         {
@@ -336,8 +340,10 @@ class AdminAppointmentController implements IControllerBase {
         transportRunId: string
       }
 
-      const {failed, filtredAppointmentIds} =
-        await this.appointmentService.checkDuplicatedAndMissedAppointments(appointmentIds)
+      const {
+        failed,
+        filtredAppointmentIds,
+      } = await this.appointmentService.checkDuplicatedAndMissedAppointments(appointmentIds)
 
       const transportRuns = await this.transportRunsService.getByTransportRunId(transportRunId)
       if (transportRuns.length > 1) {
@@ -429,8 +435,10 @@ class AdminAppointmentController implements IControllerBase {
         throw new BadRequestException('Allowed maximum 50 appointments in array')
       }
 
-      const {failed, filtredAppointmentIds} =
-        await this.appointmentService.checkDuplicatedAndMissedAppointments(appointmentIds)
+      const {
+        failed,
+        filtredAppointmentIds,
+      } = await this.appointmentService.checkDuplicatedAndMissedAppointments(appointmentIds)
 
       const appointmentsState: BulkOperationResponse[] = await Promise.all(
         filtredAppointmentIds.map(async (appointmentId) => {

@@ -118,23 +118,25 @@ export class PackageService {
       })
     }
 
-    return packagesAcuity.map((packageCode): PackageListItem => {
-      const organization = packagesOrganization.get(packageCode.certificate)
-      const remainingCountValues = Object.values(packageCode.remainingCounts || {})
-      let remainingCounts
+    return packagesAcuity.map(
+      (packageCode): PackageListItem => {
+        const organization = packagesOrganization.get(packageCode.certificate)
+        const remainingCountValues = Object.values(packageCode.remainingCounts || {})
+        let remainingCounts
 
-      if (remainingCountValues.length) {
-        remainingCounts = remainingCountValues.reduce(
-          (accumulator, current) => accumulator + current,
-        )
-      }
+        if (remainingCountValues.length) {
+          remainingCounts = remainingCountValues.reduce(
+            (accumulator, current) => accumulator + current,
+          )
+        }
 
-      return {
-        packageCode: packageCode.certificate,
-        name: packageCode.name,
-        remainingCounts: remainingCounts || 0,
-        organization: organization?.organizationName || '',
-      }
-    })
+        return {
+          packageCode: packageCode.certificate,
+          name: packageCode.name,
+          remainingCounts: remainingCounts || 0,
+          organization: organization?.organizationName || '',
+        }
+      },
+    )
   }
 }

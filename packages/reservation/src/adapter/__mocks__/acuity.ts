@@ -197,19 +197,22 @@ const dataSuccess = {
           id: 1630276655,
           fieldID: 9082891,
           value: 'yes',
-          name: 'I accept to receive my results at the email specified above (only way possible right now)',
+          name:
+            'I accept to receive my results at the email specified above (only way possible right now)',
         },
         {
           id: 1630276656,
           fieldID: 9082892,
           value: 'yes',
-          name: 'I agree to conduct the FH Health self-assessment screening questionnaire the day of and prior to my appointment.  Questionnaire: https://www.fhhealth.ca/selfassessment-screening',
+          name:
+            'I agree to conduct the FH Health self-assessment screening questionnaire the day of and prior to my appointment.  Questionnaire: https://www.fhhealth.ca/selfassessment-screening',
         },
         {
           id: 1630276657,
           fieldID: 9082893,
           value: 'yes',
-          name: 'I  agree to receiving communication from FH Health regarding government updates, new requirements and advancements in COVID-19 screening tests',
+          name:
+            'I  agree to receiving communication from FH Health regarding government updates, new requirements and advancements in COVID-19 screening tests',
         },
       ],
     },
@@ -221,7 +224,8 @@ const dataSuccess = {
           id: 1630276658,
           fieldID: 9112802,
           value: 'yes',
-          name: 'I agree and permit FH Health to provide the results of my SARS-Cov-2 screening test with my employer (including HR personnel and/or Covid coordinator)  via email for the sole purpose of ensuring employee safety within the workplace',
+          name:
+            'I agree and permit FH Health to provide the results of my SARS-Cov-2 screening test with my employer (including HR personnel and/or Covid coordinator)  via email for the sole purpose of ensuring employee safety within the workplace',
         },
       ],
     },

@@ -271,8 +271,12 @@ export class PCRTestResultsService {
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
-    const {finalResult, notificationType, recollected, action} =
-      this.getConfirmationResultForAction(data.action)
+    const {
+      finalResult,
+      notificationType,
+      recollected,
+      action,
+    } = this.getConfirmationResultForAction(data.action)
     const newPCRResult = await this.pcrTestResultsRepository.createNewTestResults({
       appointment,
       adminId: data.adminId,
@@ -348,8 +352,10 @@ export class PCRTestResultsService {
   }
 
   async processPCRTestResult(reportTrackerId: string, resultId: string): Promise<void> {
-    const testResultsReportingTrackerPCRResult =
-      new TestResultsReportingTrackerPCRResultsRepository(this.datastore, reportTrackerId)
+    const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
+      this.datastore,
+      reportTrackerId,
+    )
 
     const pcrResults = await testResultsReportingTrackerPCRResult.get(resultId)
     if (!pcrResults) {
@@ -469,8 +475,10 @@ export class PCRTestResultsService {
   async listPCRTestResultReportStatus(
     reportTrackerId: string,
   ): Promise<{inProgress: boolean; pcrTestResults: pcrTestResultsDTO[]}> {
-    const testResultsReportingTrackerPCRResult =
-      new TestResultsReportingTrackerPCRResultsRepository(this.datastore, reportTrackerId)
+    const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
+      this.datastore,
+      reportTrackerId,
+    )
 
     let inProgress = false
     const testResultsReporting = await testResultsReportingTrackerPCRResult.fetchAll()
@@ -849,8 +857,10 @@ export class PCRTestResultsService {
       }
     }
 
-    const testResultsReportingTrackerPCRResult =
-      new TestResultsReportingTrackerPCRResultsRepository(this.datastore, reportTrackerId)
+    const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
+      this.datastore,
+      reportTrackerId,
+    )
     const resultDate = testResultData.resultDate
     const templateId = testResultData.templateId
     const labId = testResultData.labId
@@ -1848,7 +1858,9 @@ export class PCRTestResultsService {
     })
   }
 
-  async getDueDeadlineStats(queryParams: PcrTestResultsListByDeadlineRequest): Promise<{
+  async getDueDeadlineStats(
+    queryParams: PcrTestResultsListByDeadlineRequest,
+  ): Promise<{
     pcrResultStatsByResultArr: Filter[]
     pcrResultStatsByOrgIdArr: Filter[]
     total: number
