@@ -161,7 +161,10 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
 
   const dataTestDetails = [
     ['Test', 'NAAT, RT-PCR (Reverse Transcription Polymerase Chain Reaction)'],
-    ['Equipment approved by \n Health Canada', (params.lab && params.lab.assay)?params.lab.assay:""],
+    [
+      'Equipment approved by \n Health Canada',
+      params.lab && params.lab.assay ? params.lab.assay : '',
+    ],
   ]
 
   const data = dataPersonal.concat(dataAppointment, dataTestDetails)

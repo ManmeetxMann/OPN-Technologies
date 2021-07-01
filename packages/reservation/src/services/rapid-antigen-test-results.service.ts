@@ -265,7 +265,7 @@ export class RapidAntigenTestResultsService {
     appointment: AppointmentDBModel,
     result: ResultTypes,
     qr: string,
-    fileName: string
+    fileName: string,
   ): Promise<EmailMessage> {
     const resultDate = moment(appointment.dateTime.toDate()).format('LL')
     const templateId =
@@ -299,7 +299,7 @@ export class RapidAntigenTestResultsService {
           name: `FHHealth.ca Result - ${appointment.barCode}.pdf`,
         },
       ]
-      
+
       const pdfStream = Buffer.from(pdfContent, 'base64')
       const stream = Readable.from(pdfStream)
       await this.testResultUploadService.uploadPDFResult(stream, fileName)
