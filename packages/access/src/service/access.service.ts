@@ -491,6 +491,19 @@ export class AccessService {
     return this.getFirstOrNull(this.accessWithCheckInOrOut(allAccesses))
   }
 
+  async findLatestAnywhereForDependant(
+    userId: string,
+    delegateIds: string[] = [],
+  ): Promise<AccessModel> {
+    const query = this.accessRepository
+      .collection()
+      .where(`userId`, 'in', delegateIds)
+      .orderBy('createdAt', 'desc')
+    const allAccesses = await query.fetch()
+    const filtered = allAccesses.filter((access) => Object.keys(access.dependants).includes(userId))
+    return this.getFirstOrNull(this.accessWithCheckInOrOut(filtered))
+  }
+
   async findAtLocationOnDay(
     userId: string,
     locationId: string,
@@ -508,6 +521,25 @@ export class AccessService {
     return this.getFirstOrNull(this.accessWithCheckInOrOut(allAccesses))
   }
 
+  async findAtLocationOnDayForDependant(
+    userId: string,
+    locationId: string,
+    after: Date,
+    before: Date,
+    delegateIds: string[],
+  ): Promise<AccessModel> {
+    const query = this.accessRepository
+      .collection()
+      .where(`userId`, 'in', delegateIds)
+      .where(`locationId`, '==', locationId)
+      .where(`createdAt`, '>=', after)
+      .where(`createdAt`, '<=', before)
+      .orderBy('createdAt', 'desc')
+    const allAccesses = await query.fetch()
+    const filtered = allAccesses.filter((access) => Object.keys(access.dependants).includes(userId))
+    return this.getFirstOrNull(this.accessWithCheckInOrOut(filtered))
+  }
+
   async findAnywhereOnDay(userId: string, after: Date, before: Date): Promise<AccessModel> {
     const query = this.accessRepository
       .collection()
@@ -519,6 +551,23 @@ export class AccessService {
     return this.getFirstOrNull(this.accessWithCheckInOrOut(allAccesses))
   }
 
+  async findAnywhereOnDayForDependant(
+    userId: string,
+    after: Date,
+    before: Date,
+    delegateIds: string[] = [],
+  ): Promise<AccessModel> {
+    const query = this.accessRepository
+      .collection()
+      .where(`userId`, 'in', delegateIds)
+      .where(`createdAt`, '>=', after)
+      .where(`createdAt`, '<=', before)
+      .orderBy('createdAt', 'desc')
+    const allAccesses = await query.fetch()
+    const filtered = allAccesses.filter((access) => Object.keys(access.dependants).includes(userId))
+    return this.getFirstOrNull(this.accessWithCheckInOrOut(filtered))
+  }
+
   async findLatestAtLocation(userId: string, locationId: string): Promise<AccessModel> {
     const query = this.accessRepository
       .collection()
@@ -527,6 +576,21 @@ export class AccessService {
       .orderBy('createdAt', 'desc')
     const allAccesses = await query.fetch()
     return this.getFirstOrNull(this.accessWithCheckInOrOut(allAccesses))
+  }
+
+  async findLatestAtLocationForDependant(
+    userId: string,
+    locationId: string,
+    delegateIds: string[] = [],
+  ): Promise<AccessModel> {
+    const query = this.accessRepository
+      .collection()
+      .where(`userId`, 'in', delegateIds)
+      .where(`locationId`, '==', locationId)
+      .orderBy('createdAt', 'desc')
+    const allAccesses = await query.fetch()
+    const filtered = allAccesses.filter((access) => Object.keys(access.dependants).includes(userId))
+    return this.getFirstOrNull(this.accessWithCheckInOrOut(filtered))
   }
 
   async getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {

@@ -16,11 +16,7 @@ export const getNotificationBody = (testResult: PCRTestResultEmailDTO): string =
       return `Your result are in-progress for the specimens collected for ${testResult.firstName} ${testResult.lastName} on ${testResult.dateOfAppointment} at ${testResult.timeOfAppointment}. As soon as results are available you will receive notification in real time.`
 
     case AppointmentStatus.Reported:
-      return `A result for ${testResult.firstName} ${
-        testResult.lastName
-      } has come back ${testResult.result.toLocaleUpperCase()}. The speciment had been collected on ${
-        testResult.dateOfAppointment
-      } at ${testResult.timeOfAppointment}. Tap for more details.`
+      return `Your Covid-19 test result is ready. Tap here to view.`
 
     case AppointmentStatus.ReRunRequired:
       return `The speciment that had been collected on ${testResult.dateOfAppointment} at ${testResult.timeOfAppointment} needs to be re-run as part of our quality control measures, and as such your results will be delayed. Tap here for more details.`

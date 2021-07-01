@@ -15,7 +15,6 @@ export const devConfig: Record<string, string | string[] | number | boolean> = {
   DOMAIN_USER: 'https://user-service-dot-opn-platform-dev.nn.r.appspot.com/user/',
 
   TEST_RESULTS_BUCKET_NAME: 'opn-platform-dev-test-results',
-  QR_LINK_EXPIRATION_TIME: 60 * 24 * 7 * 60 * 1000,
 
   AUTH_EMAIL_TEMPLATE_ID: 3,
 
