@@ -23,7 +23,7 @@ const headers = {
 const userId = 'USER1'
 const aptID1 = 'APT10'
 const aptID2 = 'APT2'
-const dateForAppointments = '2020-01-05'
+const dateForAppointments = '2020-02-05'
 const dateTimeForAppointment7AM = `${dateForAppointments}T07:00:00`
 const deadlineSameDay = `${dateForAppointments}T23:59:00`
 
