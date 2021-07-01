@@ -37,6 +37,3 @@ export const cleanUndefinedKeys = (obj: unknown): unknown => {
   Object.keys(obj).forEach((key) => obj[key] === undefined && delete obj[key])
   return clone
 }
-
-export const sortingAlgorithm = (fieldName: string) => (a: unknown, b: unknown) =>
-  a[fieldName] > b[fieldName] ? 1 : b[fieldName] > a[fieldName] ? -1 : 0

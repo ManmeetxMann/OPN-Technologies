@@ -12,7 +12,7 @@ import {ReservationPushTypes} from '../types/appointment-push'
 import {toDateFormat} from '../../../common/src/utils/times'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
-import {makeSpaceOnTitleCase, sortingAlgorithm} from '../../../common/src/utils/utils'
+import {makeSpaceOnTitleCase} from '../../../common/src/utils/utils'
 import {
   dateToDateTime,
   formatDateRFC822Local,
@@ -196,6 +196,7 @@ export class PCRTestResultsService {
   private async pcrTestResultsWithAdditionalInfo(
     pcrResults,
     queryParams,
+     order = null,
   ): Promise<PCRTestResultByDeadlineListDTO[]> {
     const appointmentIds = []
     const testRunIds = []
@@ -252,7 +253,7 @@ export class PCRTestResultsService {
       }
     })
 
-    return sortBy(pcrFiltered, ['status'])
+    return order ? sortBy(pcrFiltered, [order]) : sortBy(pcrFiltered, ['status'])
   }
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest): Promise<string> {
@@ -1808,7 +1809,7 @@ export class PCRTestResultsService {
 
   async getPCRResultsFromDB(
     queryParams: PcrTestResultsListByDeadlineRequest,
-  ): Promise<PCRTestResultDBModel[]> {
+  ): Promise<[PCRTestResultDBModel[], string]> {
     const pcrTestResultsQuery = []
     const {labId, deadline, barCode, testRunId, organizationId, testType} = queryParams
     let order
@@ -1854,13 +1855,9 @@ export class PCRTestResultsService {
       pcrTestResultsQuery.push(equals('testType', testType))
     }
 
-    let pcrTests = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+    const pcrTests = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
 
-    if (order) {
-      pcrTests = pcrTests.sort(sortingAlgorithm(order))
-    }
-
-    return pcrTests
+    return [pcrTests, order]
   }
 
   async getDueDeadlineStats(
@@ -1870,7 +1867,7 @@ export class PCRTestResultsService {
     pcrResultStatsByOrgIdArr: Filter[]
     total: number
   }> {
-    const pcrResults = await this.getPCRResultsFromDB(queryParams)
+    const [pcrResults] = await this.getPCRResultsFromDB(queryParams)
     const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
     const appointments = await this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds)
 
@@ -1932,9 +1929,9 @@ export class PCRTestResultsService {
   async getDueDeadline(
     queryParams: PcrTestResultsListByDeadlineRequest,
   ): Promise<PCRTestResultByDeadlineListDTO[]> {
-    const pcrResults = await this.getPCRResultsFromDB(queryParams)
+    const [pcrResults, order] = await this.getPCRResultsFromDB(queryParams)
 
-    return this.pcrTestResultsWithAdditionalInfo(pcrResults, queryParams)
+    return this.pcrTestResultsWithAdditionalInfo(pcrResults, queryParams, order)
   }
 
   async getReportStatus(action: PCRResultActions, result: ResultTypes): Promise<string> {
