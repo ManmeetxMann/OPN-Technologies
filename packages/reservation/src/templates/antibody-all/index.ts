@@ -28,7 +28,14 @@ export const AntibodyAllPDFContent = async (
     return
   }
 
-  return await pdfService.generatePDFBase64(data.content, data.tableLayouts)
+  return await pdfService.generatePDFBase64(
+    data.content,
+    data.tableLayouts,
+    undefined,
+    pageSize,
+    pageMargin,
+    data.background,
+  )
 }
 
 export const AntibodyAllPDFStream = (

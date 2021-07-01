@@ -12,11 +12,18 @@ import {Stream} from 'stream'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {LogInfo} from '../../../../common/src/utils/logging-setup'
 
+const pageSize = {
+  height: 1816,
+  width: 1224,
+}
+
+const pageMargin = 0
+
 const getPCRTemplate = (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
   qr: string,
-): {content: Content; tableLayouts: TableLayouts} => {
+): {content: Content; background: Content; tableLayouts: TableLayouts} => {
   const resultDateRaw =
     resultData.resultMetaData && resultData.resultMetaData.resultDate
       ? resultData.resultMetaData.resultDate
@@ -61,7 +68,14 @@ export const PCRResultPDFContent = async (
     return
   }
 
-  return await pdfService.generatePDFBase64(data.content, data.tableLayouts)
+  return await pdfService.generatePDFBase64(
+    data.content,
+    data.tableLayouts,
+    undefined,
+    pageSize,
+    pageMargin,
+    data.background,
+  )
 }
 
 export const PCRResultPDFStream = (
@@ -76,5 +90,12 @@ export const PCRResultPDFStream = (
     throw new BadRequestException(`Not supported result ${pdfType}`)
   }
 
-  return pdfService.generatePDFStream(data.content, data.tableLayouts)
+  return pdfService.generatePDFStream(
+    data.content,
+    data.tableLayouts,
+    undefined,
+    pageSize,
+    pageMargin,
+    data.background,
+  )
 }

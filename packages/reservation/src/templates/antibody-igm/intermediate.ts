@@ -1,15 +1,23 @@
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
 import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
 import commonPDFContent from './common-report-content'
+import path from 'path'
 import {QrService} from '../../../../common/src/service/qr/qr-service'
 
 const pdfContent = (
   params: PCRTestResultEmailDTO,
   resultDate: string,
   qr: string,
-): {content: Content[]; tableLayouts: TableLayouts} => {
+): {content: Content[]; background: Content; tableLayouts: TableLayouts} => {
   return {
     tableLayouts: commonPDFContent.tableLayouts,
+    background: [
+      {
+        image: path.join(__dirname, '../../static/images/Overlay/FH_Forge_Overlay@3x.png'),
+        width: 1224,
+        height: 1816,
+      },
+    ],
     content: [
       commonPDFContent.doctorSignature(),
       commonPDFContent.companyInfoHeader(params),
@@ -22,4 +30,5 @@ const pdfContent = (
     ],
   }
 }
+
 export default pdfContent
