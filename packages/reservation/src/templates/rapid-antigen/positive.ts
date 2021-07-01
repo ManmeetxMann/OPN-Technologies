@@ -1,11 +1,11 @@
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
-import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
 import commonPDFContent from './common-report-content'
 import path from 'path'
 import {QrService} from '../../../../common/src/service/qr/qr-service'
+import {RapidAntigenEmailResultDTO} from '../../models/rapid-antigen-test-results'
 
 const pdfContent = (
-  params: PCRTestResultEmailDTO,
+  params: RapidAntigenEmailResultDTO,
   resultDate: string,
   qr: string,
 ): {content: Content[]; background: Content; tableLayouts: TableLayouts} => {

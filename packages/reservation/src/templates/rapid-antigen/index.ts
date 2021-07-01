@@ -4,17 +4,16 @@ import {Content, TableLayouts} from '../../../../common/src/service/reports/pdf-
 import {PdfService} from '../../../../common/src/service/reports/pdf'
 import {LogInfo} from '../../../../common/src/utils/logging-setup'
 
+import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
+
 //Models
 import {
   RapidAntigenResultPDFType,
   RapidAntigenEmailResultDTO,
-  PCRTestResultEmailDTO,
 } from '../../models/rapid-antigen-test-results'
 
 import positivePCRResultTemplate from './positive'
 import negativePCRResultTemplate from './negative'
-
-import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 
 const pageSize = {
   height: 1816,
@@ -24,7 +23,7 @@ const pageSize = {
 const pageMargin = 0
 
 const getRapidAntigenTemplate = (
-  resultData: PCRTestResultEmailDTO,
+  resultData: RapidAntigenEmailResultDTO,
   pdfType: RapidAntigenResultPDFType,
   qr: string,
 ): {content: Content; background: Content; tableLayouts: TableLayouts} => {
