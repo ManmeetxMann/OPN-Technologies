@@ -45,6 +45,7 @@ export type AcuityDBModel = {
 
 export enum CouponErrorsEnum {
   exceed_count = 'The coupon count exceed',
+  invalid_coupon_code = 'Invalid coupon code',
 }
 
 export {CardItemDBModel}

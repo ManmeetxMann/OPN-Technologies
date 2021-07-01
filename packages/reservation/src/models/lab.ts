@@ -6,4 +6,5 @@ export type Lab = {
   assay: string
   createdBy: string
   poolingEnabled: boolean
+  displayNameOnReport: boolean
 }

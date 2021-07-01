@@ -9,6 +9,7 @@ import {
   CartAddRequestDto,
   CartResponseDto,
   CheckoutResponseDto,
+  PaymentSheet,
   PaymentAuthorizationRequestDto,
   PaymentAuthorizationResponseDto,
   CartUpdateRequestDto,
@@ -197,6 +198,40 @@ export class CartController {
     const ephemeralKeys = await this.stripeService.customerEphemeralKeys(stripeCustomerId)
 
     return ephemeralKeys
+  }
+
+  @Post('/payment-sheet')
+  @ApiResponse({type: PaymentSheet})
+  @ApiOperation({
+    summary: `Returns a payment intent setup, ephemeral key and stripe customer id`,
+  })
+  @Roles([RequiredUserPermission.RegUser])
+  async paymentSheet(@AuthUserDecorator() authUser: AuthUser): Promise<PaymentSheet> {
+    let stripeCustomerId = authUser.stripeCustomerId
+
+    // Create stripe customer and safe in user document
+    if (!stripeCustomerId) {
+      stripeCustomerId = (await this.stripeService.createUser()).id
+
+      const authUserId = authUser.id
+      LogInfo(CartFunctions.paymentSheet, CartEvent.stripeCreateCustomer, {
+        authUserId,
+        stripeCustomerId,
+      })
+      await this.userCardService.updateUserStripeCustomerId(authUserId, stripeCustomerId)
+    }
+
+    // Create wallet ephemeral keys and setup intent
+    const [ephemeralKeys, setupIntent] = await Promise.all([
+      this.stripeService.customerEphemeralKeys(stripeCustomerId),
+      this.stripeService.setupIntent(stripeCustomerId),
+    ])
+
+    return {
+      setupPaymentIntent: setupIntent.client_secret,
+      ephemeralKey: ephemeralKeys.secret,
+      customer: stripeCustomerId,
+    }
   }
 
   @Post('/checkout-payment')

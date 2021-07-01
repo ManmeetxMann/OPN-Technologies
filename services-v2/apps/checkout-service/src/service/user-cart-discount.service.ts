@@ -1,4 +1,6 @@
 import {forwardRef, Inject, Injectable} from '@nestjs/common'
+import {LogWarning} from '@opn-services/common/utils/logging'
+import {CartEvent, CartFunctions} from '@opn-services/common/types/activity-logs'
 import {CartResponseDto} from '@opn-services/checkout/dto'
 import {UserCardService} from '@opn-services/checkout/service'
 import {CardItemDBModel} from '@opn-reservation-v1/models/cart'
@@ -75,11 +77,16 @@ export class UserCardDiscountService {
         cartItem.appointment.appointmentTypeId,
       )
     } catch (e) {
-      for (const acuityErrorsKey in AcuityErrorValues) {
-        if (e.message === AcuityErrorValues[acuityErrorsKey]) {
-          error = e.message
-        }
-      }
+      const [acuityError] = Object.values(AcuityErrorValues).filter(
+        acuityError => acuityError === e.message,
+      )
+
+      LogWarning(CartFunctions.discountSingleItem, CartEvent.checkCoupon, {
+        error: acuityError,
+        rawError: e,
+      })
+
+      error = CouponErrorsEnum.invalid_coupon_code
     }
     if (discount?.discountAmount <= 0) {
       error = CouponErrorsEnum.exceed_count

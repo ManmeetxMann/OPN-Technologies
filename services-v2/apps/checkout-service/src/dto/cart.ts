@@ -157,6 +157,22 @@ export class PaymentAuthorizationPaymentDto {
   client_secret: string
 }
 
+export class PaymentSheet {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  setupPaymentIntent: string
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  ephemeralKey: string
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  customer: string
+}
 export class PaymentAuthorizationResponseDto {
   @ApiProperty()
   @IsObject()

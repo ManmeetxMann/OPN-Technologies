@@ -37,6 +37,23 @@ export class StripeService {
     return ephemeralKeys
   }
 
+  async setupIntent(customer: string): Promise<Stripe.SetupIntent> {
+    let setupIntents = null
+    try {
+      setupIntents = this.stripe.setupIntents.create(
+        {
+          payment_method_types: ['card'],
+          customer,
+        },
+        this.commonOptions,
+      )
+    } catch (err) {
+      LogError(StripeFunctions.setupIntent, StripeEvent.setupIntentError, {...err})
+    }
+
+    return setupIntents
+  }
+
   /**
    * https://stripe.com/docs/payments/save-during-payment?platform=ios#ios-create-payment-intent-off-session
    */

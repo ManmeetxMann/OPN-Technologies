@@ -11,7 +11,9 @@ let profiles = {
         "groupName":"TEST1_GRP1",
         "userId":"iVK1tRyuU5znFGptWP6s",
         "locationTitle":"TEST1_LOC1",
-        "locationId":"TEST_LOC1"
+        "locationId":"TEST_LOC1",
+        "appointmentId":"FT_APT_1",
+        "resultId":"FT_TEST_RESULT_1"
     },
     "harpreet_preprod_lab":{
         "email":"harpreet+kitchener@stayopn.com",
@@ -22,7 +24,9 @@ let profiles = {
         "groupName":"TEST1_GRP1",
         "userId":"iVK1tRyuU5znFGptWP6s",
         "locationTitle":"TEST1_LOC1",
-        "locationId":"TEST_LOC1"
+        "locationId":"TEST_LOC1",
+        "appointmentId":"FT_APT_1",
+        "resultId":"FT_TEST_RESULT_1"
     },
     "harpreet_preprod_clinic":{
         "email":"harpreet+test1@stayopn.com",
@@ -44,7 +48,9 @@ let profiles = {
         "groupName":"TEST1_GRP1",
         "userId":"iVK1tRyuU5znFGptWP6s",
         "locationTitle":"TEST1_LOC1",
-        "locationId":"TEST_LOC1"
+        "locationId":"TEST_LOC1",
+        "appointmentId":"FT_APT_1",
+        "resultId":"FT_TEST_RESULT_1"
     },
     "harpreet_preprod2_admin":{
         "email":"harpreet+preprod1@stayopn.com",
@@ -55,10 +61,12 @@ let profiles = {
         "groupName":"TEST1_GRP1",
         "userId":"iVK1tRyuU5znFGptWP6s",
         "locationTitle":"TEST1_LOC1",
-        "locationId":"TEST_LOC1"
+        "locationId":"TEST_LOC1",
+        "appointmentId":"FT_APT_1",
+        "resultId":"FT_TEST_RESULT_1"
     },
     "harpreet_dev_lab":{
-        "email":"harpreet+6@stayopn.com",
+        "email":"developers+kitchener@stayopn.com",
         "organizationId":"TEST1",
         "firstName":"Harpreet 6",
         "lastName":"Gill 6",
@@ -66,7 +74,9 @@ let profiles = {
         "groupName":"TEST1_GRP1",
         "userId":"iVK1tRyuU5znFGptWP6s",
         "locationTitle":"TEST1_LOC1",
-        "locationId":"TEST_LOC1"
+        "locationId":"TEST_LOC1",
+        "appointmentId":"FT_APT_1",
+        "resultId":"FT_TEST_RESULT_1"
     },
     "harpreet_dev_reguser":{
         "email":"harpreet+test1@stayopn.com",
@@ -77,7 +87,9 @@ let profiles = {
         "groupName":"TEST1_GRP1",
         "userId":"Nxo998QT9rT4l5uoq0r6",
         "locationTitle":"TEST1_LOC1",
-        "locationId":"sWH9zD3430XuaHd9DebY"
+        "locationId":"sWH9zD3430XuaHd9DebY",
+        "appointmentId":"FT_APT_1",
+        "resultId":"FT_TEST_RESULT_1"
     },
     "harpreet_dev_admin":{
         "email":"harpreet+6@stayopn.com",
@@ -88,7 +100,9 @@ let profiles = {
         "groupName":"TEST1_GRP1",
         "userId":"iVK1tRyuU5znFGptWP6s",
         "locationTitle":"TEST1_LOC1",
-        "locationId":"TEST_LOC1"
+        "locationId":"TEST_LOC1",
+        "appointmentId":"FT_APT_1",
+        "resultId":"FT_TEST_RESULT_1"
     },
     "mary_prod_admin":{
         "email":"mary+march41@stayopn.com",
@@ -99,7 +113,9 @@ let profiles = {
         "groupName":"TEST1_GRP1",
         "userId":"iVK1tRyuU5znFGptWP6s",
         "locationTitle":"TEST1_LOC1",
-        "locationId":"TEST_LOC1"
+        "locationId":"TEST_LOC1",
+        "appointmentId":"FT_APT_1",
+        "resultId":"FT_TEST_RESULT_1"
     },
 }
 

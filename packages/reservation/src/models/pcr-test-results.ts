@@ -194,6 +194,7 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   sortOrder: number
   appointmentStatus: AppointmentStatus
   couponCode?: string
+  poolBarcodeId?: string
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -224,7 +225,7 @@ export type PCRTestResultEmailDTO = Omit<
   | 'userId'
   | 'sortOrder'
 > &
-  AppointmentDBModel & {labAssay: string}
+  AppointmentDBModel & {lab: Lab}
 
 export type ProcessPCRResultRequest = {
   reportTrackerId: string
@@ -351,6 +352,7 @@ export type PCRTestResultListDTO = {
 export type PCRTestResultByDeadlineListDTO = {
   id: string
   barCode: string
+  poolBarcodeId?: string
   vialLocation: string
   status: AppointmentStatus
   deadline: string

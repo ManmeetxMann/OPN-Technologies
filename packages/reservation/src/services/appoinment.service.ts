@@ -587,7 +587,7 @@ export class AppoinmentService {
     } = additionalData
 
     const currentUserId =
-      userId || appointmentDb?.userId || (await this.checkWithPhone(acuityAppointment))
+      userId || appointmentDb?.userId || (await this.getCreateUser(acuityAppointment))
 
     return {
       acuityAppointmentId: Number(acuityAppointment.id),
@@ -850,7 +850,7 @@ export class AppoinmentService {
         testResult.id,
         ThirdPartySyncSource.TransportRun,
       )
-      await this.makeInProgress(appointmentId,null,data.userId)
+      await this.makeInProgress(appointmentId, null, data.userId)
     }
 
     await this.appointmentsRepository.addStatusHistoryById(
@@ -1118,13 +1118,19 @@ export class AppoinmentService {
         calendarID: appointment.calendarID,
         fields: {
           dateOfBirth: appointment.dateOfBirth,
+          gender: appointment?.gender ?? Gender.PreferNotToSay,
           address: appointment.address,
           addressUnit: appointment.addressUnit,
+          city: appointment?.city ?? 'N/A',
+          province: appointment?.province ?? 'N/A',
+          country: appointment?.country ?? 'N/A',
+          postalCode: appointment?.postalCode ?? 'N/A',
           shareTestResultWithEmployer: appointment.shareTestResultWithEmployer,
           readTermsAndConditions: appointment.readTermsAndConditions,
           agreeToConductFHHealthAssessment: appointment.agreeToConductFHHealthAssessment,
           receiveResultsViaEmail: appointment.receiveResultsViaEmail,
           receiveNotificationsFromGov: appointment.receiveNotificationsFromGov,
+          agreeCancellationRefund: appointment?.agreeCancellationRefund ?? false,
           barCodeNumber,
         },
       })
@@ -1838,7 +1844,14 @@ export class AppoinmentService {
     }
     return linkedBarcodes
   }
+
   private async createUser(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
+    const featureCreateUser = Config.get('FEATURE_CREATE_USER_ON_ENTERPRISE')
+    if (featureCreateUser !== 'enabled') {
+      LogInfo('AppoinmentService:createUser', 'UserCreationSkipped', null)
+      return null
+    }
+
     const publicOrgId = Config.get('PUBLIC_ORG_ID')
     const publicGroupId = Config.get('PUBLIC_GROUP_ID')
     const user = await this.userService.create({
@@ -1864,7 +1877,7 @@ export class AppoinmentService {
     return user.id
   }
 
-  private async checkWithEmail(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
+  private async getCreateByEmail(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
     const user = await this.userService.findOneByEmail(acuityAppointment.email)
     if (
       user &&
@@ -1877,10 +1890,10 @@ export class AppoinmentService {
     }
   }
 
-  private async checkWithPhone(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
+  private async getCreateUser(acuityAppointment: AppointmentAcuityResponse): Promise<string> {
     const user = await this.userService.findOneByPhone(acuityAppointment.phone)
     if (!user) {
-      return await this.checkWithEmail(acuityAppointment)
+      return await this.getCreateByEmail(acuityAppointment)
     } else {
       if (
         user.firstName === acuityAppointment.firstName &&
@@ -1888,7 +1901,7 @@ export class AppoinmentService {
       ) {
         return user.id
       } else {
-        return await this.checkWithEmail(acuityAppointment)
+        return await this.getCreateByEmail(acuityAppointment)
       }
     }
   }

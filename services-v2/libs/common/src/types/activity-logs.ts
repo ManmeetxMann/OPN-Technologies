@@ -12,11 +12,13 @@ export enum UserEvent {
 export enum CartFunctions {
   addCartItem = 'addCartItem',
   creteEphemeralKeys = 'creteEphemeralKeys',
+  paymentSheet = 'paymentSheet',
   paymentAuthorization = 'paymentAuthorization',
   checkout = 'checkout',
   cancelBulkAppointment = 'cancelBulkAppointment',
   addItems = 'addItems',
   createBulkAppointment = 'createBulkAppointment',
+  discountSingleItem = 'discountSingleItem',
 }
 
 export enum CartEvent {
@@ -27,6 +29,7 @@ export enum CartEvent {
   appointmentsBookingError = 'appointmentsBookingError',
   appointmentTypeNotFound = 'appointmentTypeNotFound',
   errorBookingAppointment = 'errorBookingAppointment',
+  checkCoupon = 'checkCoupon',
 }
 
 export enum CaptchaFunctions {
@@ -40,6 +43,7 @@ export enum CaptchaEvents {
 export enum StripeFunctions {
   createUser = 'createUser',
   customerEphemeralKeys = 'customerEphemeralKeys',
+  setupIntent = 'setupIntent',
   createPaymentIntent = 'createPaymentIntent',
   cancelPaymentIntent = 'cancelPaymentIntent',
   capturePaymentIntent = 'capturePaymentIntent',
@@ -47,6 +51,7 @@ export enum StripeFunctions {
 
 export enum StripeEvent {
   ephemeralKeysError = 'ephemeralKeysError',
+  setupIntentError = 'setupIntentError',
   paymentIntentsError = 'paymentIntentsError',
 }
 

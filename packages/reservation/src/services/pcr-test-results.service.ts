@@ -1,5 +1,6 @@
 import moment from 'moment'
 import {fromPairs, sortBy, union} from 'lodash'
+import {Readable} from 'stream'
 
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
@@ -102,13 +103,15 @@ import {normalizeAnalysis} from '../utils/analysis.helper'
 import {CouponEnum} from '../models/coupons'
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
 import {FirebaseMessagingService} from '../../../common/src/service/messaging/firebase-messaging-service'
-import {FHPushNotificationMessage} from '../types/push-notification.type'
 import {
   getNotificationBody,
   getNotificationTitle,
   getPushNotificationType,
 } from '../utils/push-notification.helper'
 import {OpnSources} from '../../../common/src/data/registration'
+import {PushMessages} from '../../../common/src/types/push-notification'
+import TestResultUploadService from '../../../enterprise/src/services/test-result-upload-service'
+import {QrService} from '../../../common/src/service/qr/qr-service'
 
 const POOL_BARCODE_FIRST_LETTER = 'P'
 
@@ -124,6 +127,7 @@ export class PCRTestResultsService {
   private couponService = new CouponService()
   private reservationPushService = new ReservationPushService()
   private emailService = new EmailService()
+  private testResultUploadService = new TestResultUploadService()
   private userService = new UserService()
   private whiteListedResultsTypes = [
     ResultTypes.Negative,
@@ -189,6 +193,68 @@ export class PCRTestResultsService {
     return resultId[0] === POOL_BARCODE_FIRST_LETTER
   }
 
+  private async pcrTestResultsWithAdditionalInfo(
+    pcrResults,
+    queryParams,
+  ): Promise<PCRTestResultByDeadlineListDTO[]> {
+    const appointmentIds = []
+    const testRunIds = []
+    const organizationIds = []
+    const pcrFiltered = []
+
+    pcrResults.forEach(({appointmentId, testRunId, organizationId}) => {
+      appointmentIds.push(appointmentId)
+      if (testRunId) testRunIds.push(testRunId)
+      if (organizationId) organizationIds.push(organizationId)
+    })
+
+    const [appointments, testRuns, organizations] = await Promise.all([
+      this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds),
+      this.testRunsService.getTestRunByTestRunIds(union(testRunIds)),
+      this.organizationService.getAllByIds(union(organizationIds)),
+    ])
+
+    const finalOrganization = fromPairs(
+      organizations.map((organization) => [organization.id, organization.name]),
+    )
+
+    pcrResults.map((pcr) => {
+      const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
+      const allowedAppointmentStatus = [
+        AppointmentStatus.InProgress,
+        AppointmentStatus.ReRunRequired,
+        AppointmentStatus.Received,
+      ]
+
+      const {appointmentStatus, testRunId} = queryParams
+      if (
+        appointment &&
+        ((!appointmentStatus && allowedAppointmentStatus.includes(appointment.appointmentStatus)) ||
+          appointmentStatus === appointment.appointmentStatus ||
+          testRunId)
+      ) {
+        const testRun = testRuns?.find(({testRunId}) => pcr.testRunId === testRunId)
+
+        pcrFiltered.push({
+          id: pcr.id,
+          barCode: pcr.barCode,
+          poolBarcodeId: pcr.poolBarcodeId ?? null,
+          deadline: formatDateRFC822Local(pcr.deadline),
+          status: appointment?.appointmentStatus,
+          testRunId: pcr.testRunId,
+          vialLocation: appointment?.vialLocation,
+          runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
+          reCollectNumber: pcr.reCollectNumber ? `S${pcr.reCollectNumber}` : null,
+          dateTime: formatDateRFC822Local(appointment.dateTime),
+          testRunLabel: testRun?.name,
+          organizationName: pcr.organizationId ? finalOrganization[pcr.organizationId] : 'None',
+        })
+      }
+    })
+
+    return sortBy(pcrFiltered, ['status'])
+  }
+
   async confirmPCRResults(data: PCRTestResultConfirmRequest): Promise<string> {
     //Validate Result Exists for barCode and throws exception
     const pcrResultHistory = await this.getPCRResultsByBarCode(data.barCode)
@@ -205,7 +271,12 @@ export class PCRTestResultsService {
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
-    const {finalResult, notificationType, recollected, action} = this.getConfirmationResultForAction(data.action)
+    const {
+      finalResult,
+      notificationType,
+      recollected,
+      action,
+    } = this.getConfirmationResultForAction(data.action)
     const newPCRResult = await this.pcrTestResultsRepository.createNewTestResults({
       appointment,
       adminId: data.adminId,
@@ -228,7 +299,7 @@ export class PCRTestResultsService {
     const lab = await this.labService.findOneById(labId)
 
     this.postPubSubForResultSend(
-      {...newPCRResult, ...appointment, labAssay: lab.assay},
+      {...newPCRResult, ...appointment, lab: lab},
       notificationType,
       newPCRResult.id,
     )
@@ -334,6 +405,25 @@ export class PCRTestResultsService {
         labId: pcrResults.data.labId,
       }
 
+      // specific metadata for pooling results
+      const getMetaData = (pcrResult: PCRTestResultDBModel, sendMetaData: TestResultsMetaData) => {
+        if (pcrResult.result == ResultTypes.Negative) {
+          return {
+            resultDate: sendMetaData.resultDate,
+            notify: true,
+            action: PCRResultActions.SendThisResult,
+            autoResult: ResultTypes.Negative,
+          }
+        } else {
+          return {
+            resultDate: sendMetaData.resultDate,
+            notify: false,
+            action: PCRResultActions.ReRunToday,
+            autoResult: sendMetaData.autoResult,
+          }
+        }
+      }
+
       /**
        * If got pooled results
        * - query pool by `poolBarcode` & fetch pooled tests results
@@ -342,10 +432,11 @@ export class PCRTestResultsService {
       const handleSaveAndSend = async () => {
         if (isPooledResults) {
           const pool = await this.testRunsPoolRepository.getByBarcode(pcrResults.data.barCode)
-          const poolTestResults = await this.getTestResultsByIds(pool.testResultIds)
+          const poolTestResults = await this.getDBTestResultsByIds(pool.testResultIds)
           const poolSaveAndSend = poolTestResults.map((result) =>
             this.handlePCRResultSaveAndSend({
               ...saveAndSendPayload,
+              metaData: getMetaData(result, metaData),
               barCode: result.barCode,
             }),
           )
@@ -968,9 +1059,9 @@ export class PCRTestResultsService {
       const pcrResultDataForEmail = {
         adminId,
         resultId: testResult.id,
-        labAssay: lab?.assay ?? null,
         ...appointment,
         ...pcrResultDataForDbUpdate,
+        lab,
       }
 
       LogInfo('handlePCRResultSaveAndSend', 'PostPubSubForResultSend', {
@@ -1107,7 +1198,7 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendEmailNotificationForResults(
+  public async sendEmailNotificationForResults(
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
     pcrId: string,
@@ -1178,7 +1269,7 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendPushNotification(result: PCRTestResultEmailDTO, userId: string): Promise<void> {
+  public async sendPushNotification(result: PCRTestResultEmailDTO, userId: string): Promise<void> {
     if (Config.get('TEST_RESULT_PUSH_NOTIFICATION') !== 'enabled') {
       LogInfo('PCRTestResultsService:sendPushNotification', 'PushNotificationDisabled', {})
       return
@@ -1195,9 +1286,11 @@ export class PCRTestResultsService {
 
     await this.firebaseMessagingService.validatePushToken(registration.pushToken)
 
-    const message: FHPushNotificationMessage = {
+    const message: PushMessages = {
       data: {
         notificationType: null,
+        title: getNotificationTitle(result),
+        body: getNotificationBody(result),
       },
       notification: {
         title: getNotificationTitle(result),
@@ -1222,8 +1315,8 @@ export class PCRTestResultsService {
 
     const resultData = {
       adminId: userId,
-      labAssay: lab.assay,
       ...appointment,
+      lab,
       appointmentId: pcrTestResult.appointmentId,
       confirmed: pcrTestResult.confirmed,
       dateTime: pcrTestResult.dateTime,
@@ -1260,22 +1353,30 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendTestResultsWithAttachment(
+  private async sendTestResultsWithAttachment(
     resultData: PCRTestResultEmailDTO,
     pcrResultPDFType: PCRResultPDFType,
   ): Promise<void> {
+    const fileName = this.testResultUploadService.generateFileName(resultData.id)
+    const v4ReadURL = await this.testResultUploadService.getSignedInUrl(fileName)
+    const qr = await QrService.generateQrCode(v4ReadURL)
+
     let pdfContent = ''
     switch (resultData.testType) {
       case 'Antibody_All':
-        pdfContent = await AntibodyAllPDFContent(resultData, pcrResultPDFType)
+        pdfContent = await AntibodyAllPDFContent(resultData, pcrResultPDFType, qr)
         break
       case 'Antibody_IgM':
-        pdfContent = await AntibodyIgmPDFContent(resultData, pcrResultPDFType)
+        pdfContent = await AntibodyIgmPDFContent(resultData, pcrResultPDFType, qr)
         break
       default:
-        pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType)
+        pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType, qr)
         break
     }
+
+    const pdfStream = Buffer.from(pdfContent, 'base64')
+    const stream = Readable.from(pdfStream)
+    await this.testResultUploadService.uploadPDFResult(stream, fileName)
 
     const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 
@@ -1308,7 +1409,7 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendEmailNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+  private async sendEmailNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
     const templateId =
       resultData.resultMetaData.action === PCRResultActions.SendPreliminaryPositive
         ? Config.getInt('TEST_RESULT_PRELIMNARY_RESULTS_TEMPLATE_ID')
@@ -1327,7 +1428,10 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendReCollectNotification(resultData: PCRTestResultEmailDTO, pcrId: string): Promise<void> {
+  private async sendReCollectNotification(
+    resultData: PCRTestResultEmailDTO,
+    pcrId: string,
+  ): Promise<void> {
     const getTemplateId = (): number => {
       if (
         !!resultData.organizationId &&
@@ -1821,61 +1925,8 @@ export class PCRTestResultsService {
     queryParams: PcrTestResultsListByDeadlineRequest,
   ): Promise<PCRTestResultByDeadlineListDTO[]> {
     const pcrResults = await this.getPCRResultsFromDB(queryParams)
-    const appointmentIds = []
-    const testRunIds = []
-    const pcrFiltred = []
-    const organizationIds = []
 
-    pcrResults.forEach(({appointmentId, testRunId, organizationId}) => {
-      appointmentIds.push(appointmentId)
-      if (testRunId) testRunIds.push(testRunId)
-      if (organizationId) organizationIds.push(organizationId)
-    })
-
-    const [appointments, testRuns, organizations] = await Promise.all([
-      this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds),
-      this.testRunsService.getTestRunByTestRunIds(union(testRunIds)),
-      this.organizationService.getAllByIds(union(organizationIds)),
-    ])
-
-    const finalOrganization = fromPairs(
-      organizations.map((organization) => [organization.id, organization.name]),
-    )
-
-    pcrResults.map((pcr) => {
-      const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
-      const allowedAppointmentStatus = [
-        AppointmentStatus.InProgress,
-        AppointmentStatus.ReRunRequired,
-        AppointmentStatus.Received,
-      ]
-
-      const {appointmentStatus, testRunId} = queryParams
-      if (
-        appointment &&
-        ((!appointmentStatus && allowedAppointmentStatus.includes(appointment.appointmentStatus)) ||
-          appointmentStatus === appointment.appointmentStatus ||
-          testRunId)
-      ) {
-        const testRun = testRuns?.find(({testRunId}) => pcr.testRunId === testRunId)
-
-        pcrFiltred.push({
-          id: pcr.id,
-          barCode: pcr.barCode,
-          deadline: formatDateRFC822Local(pcr.deadline),
-          status: appointment?.appointmentStatus,
-          testRunId: pcr.testRunId,
-          vialLocation: appointment?.vialLocation,
-          runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
-          reCollectNumber: pcr.reCollectNumber ? `S${pcr.reCollectNumber}` : null,
-          dateTime: formatDateRFC822Local(appointment.dateTime),
-          testRunLabel: testRun?.name,
-          organizationName: pcr.organizationId ? finalOrganization[pcr.organizationId] : 'None',
-        })
-      }
-    })
-
-    return sortBy(pcrFiltred, ['status'])
+    return this.pcrTestResultsWithAdditionalInfo(pcrResults, queryParams)
   }
 
   async getReportStatus(action: PCRResultActions, result: ResultTypes): Promise<string> {
@@ -2250,7 +2301,31 @@ export class PCRTestResultsService {
     )
   }
 
-  getTestResultsByIds(ids: string[]): Promise<PCRTestResultDBModel[]> {
+  getDBTestResultsByIds(ids: string[]): Promise<PCRTestResultDBModel[]> {
     return this.pcrTestResultsRepository.findWhereIdIn(ids)
+  }
+
+  async getTestResultsByIds(
+    ids: string[],
+    testRunId: string,
+  ): Promise<PCRTestResultByDeadlineListDTO[]> {
+    const pcrResults = await this.pcrTestResultsRepository.findWhereIdIn(ids)
+    return this.pcrTestResultsWithAdditionalInfo(pcrResults, {testRunId})
+  }
+
+  async updatePoolBarcodeId(id: string, barcodeId: string | null): Promise<PCRTestResultDBModel> {
+    return this.pcrTestResultsRepository.updateProperty(id, 'poolBarcodeId', barcodeId)
+  }
+
+  async removePoolIdFromResults(ids: string[]): Promise<PCRTestResultDBModel[]> {
+    const results = await this.getDBTestResultsByIds(ids)
+
+    const updatedData = await Promise.all(
+      results.map((result) => {
+        return this.updatePoolBarcodeId(result.id, null)
+      }),
+    )
+
+    return updatedData
   }
 }

@@ -39,6 +39,7 @@ import {
   UnconfirmedPatient,
   AttachOrganization,
   PatientOrganizationsDto,
+  AttachOrganizationResponse,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
@@ -193,7 +194,7 @@ export class PatientController {
     @Body() authenticateDto: AuthenticateDto,
     @OpnHeaders() opnHeaders: OpnCommonHeaders,
   ): Promise<ResponseWrapper> {
-    const {patientId, organizationId, code} = authenticateDto
+    const {organizationId, code} = authenticateDto
     const patientExists = await this.patientService.getAuthByAuthUserId(authUser.authUserId)
     if (!patientExists) {
       throw new NotFoundException('User with given id not found')
@@ -201,9 +202,9 @@ export class PatientController {
 
     const shortCode = await this.patientService.findShortCodeByPatientEmail(patientExists.email)
     await this.patientService.verifyCodeOrThrowError(shortCode.shortCode, code)
-    await this.patientService.connectOrganization(Number(patientId), organizationId)
+    await this.patientService.connectOrganization(Number(patientExists.patientId), organizationId)
     await this.patientService.updateProfile(
-      Number(patientId),
+      Number(patientExists.patientId),
       {isEmailVerified: true},
       opnHeaders.opnSourceHeader,
     )
@@ -347,12 +348,13 @@ export class PatientController {
   @Put('/patient/organization')
   @UseGuards(AuthGuard)
   @Roles([RequiredUserPermission.RegUser])
+  @ApiResponse({type: AttachOrganizationResponse, status: 200})
   async attachOrganization(
     @AuthUserDecorator() authUser: AuthUser,
     @Body() {organizationCode}: AttachOrganization,
-  ): Promise<ResponseWrapper<void>> {
-    await this.patientService.attachOrganization(organizationCode, authUser.id)
+  ): Promise<ResponseWrapper<AttachOrganizationResponse>> {
+    const name = await this.patientService.attachOrganization(organizationCode, authUser.id)
 
-    return ResponseWrapper.actionSucceed()
+    return ResponseWrapper.actionSucceed({name})
   }
 }

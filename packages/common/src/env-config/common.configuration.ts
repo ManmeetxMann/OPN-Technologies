@@ -105,4 +105,5 @@ export const commonConfig: Record<string, string | string[] | number | boolean> 
 
   RAPID_ANTIGEN_KIT_USE_COUNT: 5,
   TEST_RESULT_CONFIRMED_TEMPLATE_ID: 12,
+  QR_LINK_EXPIRATION_TIME: (60 * 24 * 7 - 1) * 60 * 1000, //7 Days minus 1 minute
 }
