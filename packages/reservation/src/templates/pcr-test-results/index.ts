@@ -12,13 +12,6 @@ import {Stream} from 'stream'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {LogInfo} from '../../../../common/src/utils/logging-setup'
 
-const pageSize = {
-  height: 1816,
-  width: 1224,
-}
-
-const pageMargin = 0
-
 const getPCRTemplate = (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,

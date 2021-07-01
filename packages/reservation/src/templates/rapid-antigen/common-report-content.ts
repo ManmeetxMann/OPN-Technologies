@@ -719,7 +719,8 @@ const importantInfo = (params: RapidAntigenEmailResultDTO): Content => {
         style: ['black'],
       },
       {
-        text: 'https://www.toronto.ca/home/covid-19/covid-19-what-\nyou-should-do/covid-19-havesymptoms-or-been-exposed/\n\n',
+        text:
+          'https://www.toronto.ca/home/covid-19/covid-19-what-\nyou-should-do/covid-19-havesymptoms-or-been-exposed/\n\n',
         font: 'SFPro',
         lineHeight: 1.1,
         bold: false,
@@ -727,7 +728,8 @@ const importantInfo = (params: RapidAntigenEmailResultDTO): Content => {
         style: ['black'],
       },
       {
-        text: 'If you have further questions or concerns, you can contact FH Health at \ninfo@fhhealth.com or (416) 484-0042.\n',
+        text:
+          'If you have further questions or concerns, you can contact FH Health at \ninfo@fhhealth.com or (416) 484-0042.\n',
         font: 'SFPro',
         lineHeight: 1.1,
         bold: false,
@@ -916,7 +918,8 @@ const placeQRCode = (qrCode: Content): Content => {
         margin: [30, 0, 0, 10],
       },
       {
-        text: 'Scan the QR Code to verify authenticity of the pass\n QR Code will expire 7 days after sample was taken\n\n',
+        text:
+          'Scan the QR Code to verify authenticity of the pass\n QR Code will expire 7 days after sample was taken\n\n',
         absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 1040},
         bold: false,
         color: '#a1a1a1',

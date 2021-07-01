@@ -518,7 +518,8 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
           ],
           [
             {
-              text: 'Suspected Exposure to \n COVID-19. Patron specified \nthat they are vaccinated.',
+              text:
+                'Suspected Exposure to \n COVID-19. Patron specified \nthat they are vaccinated.',
               bold: true,
               style: ['black'],
               font: 'PTSerif',
@@ -1107,7 +1108,8 @@ const placeQRCode = (qrCode: Content): Content => {
         margin: [30, 0, 0, 10],
       },
       {
-        text: 'Scan the QR Code to verify authenticity of the pass\n QR Code will expire 7 days after sample was taken\n\n',
+        text:
+          'Scan the QR Code to verify authenticity of the pass\n QR Code will expire 7 days after sample was taken\n\n',
         absolutePosition: {x: pdfWidth / 2 + 30, y: 1224 / 2 + 1040},
         bold: false,
         color: '#a1a1a1',
