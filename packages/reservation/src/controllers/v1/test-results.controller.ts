@@ -66,10 +66,8 @@ class TestResultsController implements IControllerBase {
       const {id} = req.params as SingleTestResultsRequest
       const userId = getUserId(res.locals.authenticatedUser)
 
-      const {
-        appointment,
-        pcrTestResult,
-      } = await this.pcrTestResultsService.getTestResultAndAppointment(id, userId)
+      const {appointment, pcrTestResult} =
+        await this.pcrTestResultsService.getTestResultAndAppointment(id, userId)
 
       const lab = await this.labService.findOneById(pcrTestResult.labId)
 
@@ -88,10 +86,8 @@ class TestResultsController implements IControllerBase {
     try {
       const {id} = req.params as SingleTestResultsRequest
       const userId = getUserId(res.locals.authenticatedUser)
-      const {
-        appointment,
-        pcrTestResult,
-      } = await this.pcrTestResultsService.getTestResultAndAppointment(id, userId)
+      const {appointment, pcrTestResult} =
+        await this.pcrTestResultsService.getTestResultAndAppointment(id, userId)
 
       if (!this.pcrTestResultsService.isDownloadable(pcrTestResult)) {
         throw new BadRequestException(

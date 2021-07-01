@@ -48,13 +48,8 @@ class AdminTemperatureController implements IControllerBase {
 
   saveTemperature = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {
-        organizationId,
-        temperature,
-        pulse,
-        oxygen,
-        userId,
-      } = req.body as TemperatureSaveRequest
+      const {organizationId, temperature, pulse, oxygen, userId} =
+        req.body as TemperatureSaveRequest
       const createdBy = getUserId(res.locals.authenticatedUser)
 
       if (!temperatureThreshold) {

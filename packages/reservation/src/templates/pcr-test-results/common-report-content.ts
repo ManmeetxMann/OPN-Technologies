@@ -1,11 +1,8 @@
-import {GroupedSpecs} from './../../models/pcr-test-results'
 import path from 'path'
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
 import {Config} from '../../../../common/src/utils/config'
 import {ResultTypes, TestTypes} from '../../models/appointment'
 import {groupByChannel} from '../../utils/analysis.helper'
-import {Spec} from '../../models/pcr-test-results'
-import {RapidAntigenEmailResultDTO} from '../../models/rapid-antigen-test-results'
 import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
 
 const tableLayouts: TableLayouts = {
@@ -920,12 +917,6 @@ const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
       fontSize: smallFontSize,
     },
   ]
-}
-
-const resultAnalysis = (analysis: Spec[], keyName): Spec => {
-  return analysis.find((analys) => {
-    analys.label === keyName
-  })
 }
 
 const importantInfo = (params: PCRTestResultEmailDTO): Content => {

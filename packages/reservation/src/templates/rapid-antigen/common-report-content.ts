@@ -3,7 +3,6 @@ import {Config} from '../../../../common/src/utils/config'
 import {RapidAntigenEmailResultDTO} from '../../models/rapid-antigen-test-results'
 import {ResultTypes, TestTypes} from '../../models/appointment'
 import path from 'path'
-import {Spec} from '../../models/pcr-test-results'
 
 const tableLayouts: TableLayouts = {
   mainTable: {
@@ -892,12 +891,6 @@ const companyInfoHeader = (params: RapidAntigenEmailResultDTO): Content => {
       margin: [0, 0, 0, 50],
     },
   ]
-}
-
-const resultAnalysis = (analysis: Spec[], keyName): Spec => {
-  return analysis.find((analys) => {
-    analys.label === keyName
-  })
 }
 
 const placeQRCode = (qrCode: Content): Content => {

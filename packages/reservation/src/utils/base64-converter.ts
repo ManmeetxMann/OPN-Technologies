@@ -13,13 +13,8 @@ export const decodeBookingLocationId = (id: string): BookingLocationIdParams => 
     throw new BadRequestException('Invalid Id')
   }
 
-  const {
-    calendarTimezone,
-    appointmentTypeId,
-    calendarId,
-    organizationId,
-    packageCode,
-  } = serializedId
+  const {calendarTimezone, appointmentTypeId, calendarId, organizationId, packageCode} =
+    serializedId
 
   if (
     !calendarTimezone ||
@@ -46,15 +41,8 @@ export const decodeAvailableTimeId = (id: string): AvailableTimeIdParams => {
     throw new BadRequestException('Invalid Id')
   }
 
-  const {
-    appointmentTypeId,
-    calendarTimezone,
-    calendarId,
-    date,
-    time,
-    organizationId,
-    packageCode,
-  } = serializedId
+  const {appointmentTypeId, calendarTimezone, calendarId, date, time, organizationId, packageCode} =
+    serializedId
 
   if (
     !date ||

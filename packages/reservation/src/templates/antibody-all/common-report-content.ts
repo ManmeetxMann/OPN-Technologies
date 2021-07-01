@@ -1,6 +1,5 @@
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
 import {Config} from '../../../../common/src/utils/config'
-import {RapidAntigenEmailResultDTO} from '../../models/rapid-antigen-test-results'
 import {ResultTypes} from '../../models/appointment'
 import path from 'path'
 import {Spec} from '../../models/pcr-test-results'

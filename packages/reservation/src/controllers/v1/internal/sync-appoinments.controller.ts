@@ -82,13 +82,8 @@ class InternalSyncAppointmentController implements IControllerBase {
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
-    const {
-      acuityID,
-      action,
-      calendarID,
-      appointmentTypeID,
-      returnData,
-    } = req.body as AppointmentSyncRequest
+    const {acuityID, action, calendarID, appointmentTypeID, returnData} =
+      req.body as AppointmentSyncRequest
     try {
       LogInfo('AppointmentWebhookController:syncAppointmentFromAcuityToDB', 'SyncRequested', {
         acuityID,

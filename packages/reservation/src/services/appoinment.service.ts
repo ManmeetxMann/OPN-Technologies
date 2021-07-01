@@ -715,9 +715,10 @@ export class AppoinmentService {
       //Update Appointment DB to be Canceled
       await this.makeCanceled(appointmentId, userId)
       try {
-        const pcrTestResult = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
-          appointmentFromDB.id,
-        )
+        const pcrTestResult =
+          await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
+            appointmentFromDB.id,
+          )
         if (pcrTestResult) {
           //Remove any Results
           //Only one Waiting Result is Expected
@@ -1216,13 +1217,8 @@ export class AppoinmentService {
     receiveNotificationsFromGov,
     userId,
   }: CreateAppointmentRequest & {email: string}): Promise<AppointmentDBModel> {
-    const {
-      time,
-      appointmentTypeId,
-      calendarId,
-      packageCode,
-      organizationId,
-    } = decodeAvailableTimeId(slotId)
+    const {time, appointmentTypeId, calendarId, packageCode, organizationId} =
+      decodeAvailableTimeId(slotId)
     const utcDateTime = moment(time).utc()
     const dateTime = utcDateTime.tz(timeZone).format()
     const barCodeNumber = await this.getNextBarCodeNumber()
@@ -1426,9 +1422,7 @@ export class AppoinmentService {
     )
   }
 
-  async checkDuplicatedAndMissedAppointments(
-    appointmentIds: string[],
-  ): Promise<{
+  async checkDuplicatedAndMissedAppointments(appointmentIds: string[]): Promise<{
     failed: BulkOperationResponse[]
     filtredAppointmentIds: string[]
   }> {
@@ -1548,9 +1542,7 @@ export class AppoinmentService {
     return updatedAppoinment
   }
 
-  async getAppointmentsStats(
-    queryParams: AppointmentByOrganizationRequest,
-  ): Promise<{
+  async getAppointmentsStats(queryParams: AppointmentByOrganizationRequest): Promise<{
     appointmentStatusArray: Filter[]
     orgIdArray: Filter[]
     appointmentStatsByLabIdArr: Filter[]
