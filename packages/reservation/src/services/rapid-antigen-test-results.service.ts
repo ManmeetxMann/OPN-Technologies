@@ -1,4 +1,5 @@
 import moment from 'moment'
+import {Readable} from 'stream'
 
 //Common
 import DataStore from '../../../common/src/data/datastore'
@@ -252,7 +253,7 @@ export class RapidAntigenTestResultsService {
     }
 
     const emailSendStatus = await this.emailService.send(
-      await this.getEmailData(appointment, testResults.result, qr),
+      await this.getEmailData(appointment, testResults.result, qr, fileName),
     )
 
     LogInfo('RapidAntigenTestResultsService: sendTestResultEmail', 'EmailSendSuccess', {
@@ -264,6 +265,7 @@ export class RapidAntigenTestResultsService {
     appointment: AppointmentDBModel,
     result: ResultTypes,
     qr: string,
+    fileName: string
   ): Promise<EmailMessage> {
     const resultDate = moment(appointment.dateTime.toDate()).format('LL')
     const templateId =
@@ -297,6 +299,11 @@ export class RapidAntigenTestResultsService {
           name: `FHHealth.ca Result - ${appointment.barCode}.pdf`,
         },
       ]
+      
+      const pdfStream = Buffer.from(pdfContent, 'base64')
+      const stream = Readable.from(pdfStream)
+      await this.testResultUploadService.uploadPDFResult(stream, fileName)
+
       return {...emailData, attachment}
     }
     return emailData
