@@ -92,6 +92,18 @@ export class CouponRequestDto {
   coupon!: string
 }
 
+class PubSubMessageDto {
+  @ApiProperty()
+  @IsBoolean()
+  data!: string
+}
+
+export class AppointmentConfirmedDto {
+  @ApiProperty()
+  @IsObject()
+  message!: PubSubMessageDto
+}
+
 export class PaymentAuthorizationRequestDto {
   @ApiProperty()
   @IsString()

@@ -27,6 +27,7 @@ import {AppoinmentService} from '@opn-reservation-v1/services/appoinment.service
 
 import {CartFunctions, CartEvent} from '@opn-services/common/types/activity-logs'
 import {LogInfo, LogWarning, LogError} from '@opn-services/common/utils/logging'
+import {toEmailFormattedDateTime} from '@opn-services/common/utils/times'
 
 @ApiTags('Cart')
 @ApiBearerAuth()
@@ -302,6 +303,11 @@ export class CartController {
       userId,
       userEmail,
     )
+    this.userCardService.pushAppointmentConfirmationEmail(
+      cart.cartDdItems,
+      appointmentCreateStatuses,
+      paymentIntent,
+    )
     result.cart.items = appointmentCreateStatuses
       .filter(status => status.isSuccess === false)
       .map(status => {
@@ -387,6 +393,11 @@ export class CartController {
       userId,
       userEmail,
     )
+    this.userCardService.pushAppointmentConfirmationEmail(
+      cart.cartDdItems,
+      appointmentCreateStatuses,
+      null,
+    )
     result.cart.items = appointmentCreateStatuses
       .filter(status => status.isSuccess === false)
       .map(status => {
@@ -426,6 +437,15 @@ export class CartController {
             cartItemId: cartDdItem.cartItemId,
             appointmentId: newAppointment.id,
             isSuccess: true,
+            mailData: {
+              name: cartDdItem.appointmentType.name,
+              location: newAppointment.locationName,
+              patname: `${newAppointment.firstName} ${newAppointment.lastName}`,
+              date: toEmailFormattedDateTime(newAppointment.dateTime.toDate()),
+              quantity: 1,
+              total: cartDdItem.appointmentType.price,
+            },
+            appointment: newAppointment,
           }
         } catch (e) {
           LogError(CartFunctions.cancelBulkAppointment, CartEvent.errorBookingAppointment, {

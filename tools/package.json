@@ -20,7 +20,8 @@
 				"tool:match-stripe-to-calculated-cost": "ts-node ./match-stripe-to-calculated-cost",
 				"tools:users-with-multi-orgs": "ts-node ./users-with-multi-orgs",
 				"tool:stripe_acuity_id_assoc": "ts-node ./stripe_acuity_id_assoc",
-				"tool:last_created_appointments": "ts-node ./last-created-appointments"
+				"tool:last_created_appointments": "ts-node ./last-created-appointments",
+				"tool:send_email": "ts-node ./send-email.ts"
 		},
 		"author": "",
 		"license": "Appropriate",
