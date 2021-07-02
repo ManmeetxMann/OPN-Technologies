@@ -14,6 +14,8 @@ export const devConfig: Record<string, string | string[] | number | boolean> = {
   DOMAIN_CHECKOUT: 'https://checkout-service-dot-opn-platform-dev.nn.r.appspot.com/checkout/',
   DOMAIN_USER: 'https://user-service-dot-opn-platform-dev.nn.r.appspot.com/user/',
 
+  TEST_RESULTS_BUCKET_NAME: 'opn-platform-dev-test-results',
+
   AUTH_EMAIL_TEMPLATE_ID: 3,
 
   APPOINTMENTS_PUSH_NOTIFY: 'enabled',

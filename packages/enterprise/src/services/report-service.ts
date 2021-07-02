@@ -20,7 +20,7 @@ import {Access} from '../../../access/src/models/access'
 
 import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 
-import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
+import {Passport, PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {attestationAnswersFromLegacyToV1} from '../../../passport/src/models/attestation'
 import {AttestationService} from '../../../passport/src/services/attestation-service'
 import {PassportService} from '../../../passport/src/services/passport-service'
@@ -39,6 +39,7 @@ type UserInfoBundle = {
   access: Access
   user: User
   status: PassportStatus
+  passport: Passport
 }
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
@@ -113,23 +114,45 @@ export class ReportService {
       return true
     })
     const nowMoment = moment(now())
-    const nullOrISOString = (status: PassportStatus, timestamp: string | null): string | null => {
+    const nullOrISOString = (
+      status: PassportStatus,
+      timestamp: string | null,
+      passport: Passport,
+    ): string | null => {
       if (status !== PassportStatuses.Proceed) return null
+
+      const accessNotAssociatedWithPassport = !moment(safeTimestamp(timestamp)).isBetween(
+        safeTimestamp(passport.validFrom),
+        safeTimestamp(passport.validUntil),
+      )
+
+      if (accessNotAssociatedWithPassport) {
+        return null
+      }
+
       return safeTimestamp(timestamp).toISOString()
     }
 
-    const exitAt = (status: PassportStatus, timestamp: string | null): string | null => {
+    const exitAt = (
+      status: PassportStatus,
+      timestamp: string | null,
+      passport: Passport,
+    ): string | null => {
       if (!timestamp) return null
       if (moment(safeTimestamp(nowMoment)).isSameOrBefore(safeTimestamp(timestamp))) return null
-      return nullOrISOString(status, timestamp)
+      return nullOrISOString(status, timestamp, passport)
     }
 
-    const enteredAt = (status: PassportStatus, timestamp: string | null): string | null => {
+    const enteredAt = (
+      status: PassportStatus,
+      timestamp: string | null,
+      passport,
+    ): string | null => {
       if (!timestamp) return null
-      return nullOrISOString(status, timestamp)
+      return nullOrISOString(status, timestamp, passport)
     }
 
-    const accesses = data.map(({user, status, access}) => ({
+    const accesses = data.map(({user, status, access, passport}) => ({
       token: access?.token,
       statusToken: access?.statusToken,
       createdAt: access?.createdAt,
@@ -137,8 +160,8 @@ export class ReportService {
       dependants: access?.dependants,
       userId: user.id,
       // remove not-yet-exited exitAt
-      exitAt: exitAt(status, access?.exitAt),
-      enteredAt: enteredAt(status, access?.enteredAt),
+      exitAt: exitAt(status, access?.exitAt, passport),
+      enteredAt: enteredAt(status, access?.enteredAt, passport),
       parentUserId: user.delegates?.length ? user.delegates[0] : null,
       status,
       user,
@@ -564,7 +587,30 @@ export class ReportService {
           return null
         }
 
+        const childAccess = () => {
+          if (isLive) {
+            return locationId
+              ? this.accessService.findLatestAtLocationForDependant(id, locationId, user?.delegates)
+              : this.accessService.findLatestAnywhereForDependant(id, user?.delegates)
+          } else {
+            return locationId
+              ? this.accessService.findAtLocationOnDayForDependant(
+                  id,
+                  locationId,
+                  after,
+                  before,
+                  user?.delegates,
+                )
+              : this.accessService.findAnywhereOnDayForDependant(id, after, before, user?.delegates)
+          }
+        }
+
         const getAccess = () => {
+          // if we got a child return child related access
+          if (user?.delegates?.length) {
+            return childAccess()
+          }
+
           if (isLive) {
             return locationId
               ? this.accessService.findLatestAtLocation(id, locationId)
@@ -589,7 +635,7 @@ export class ReportService {
           status = latestPassport.status
         }
 
-        return {access, status, user: usersById[id]}
+        return {access, status, user: usersById[id], passport: latestPassport}
       }),
     )
     return results.filter((notNull) => notNull)

@@ -12,10 +12,18 @@ import {Stream} from 'stream'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {LogInfo} from '../../../../common/src/utils/logging-setup'
 
+const pageSize = {
+  height: 1816,
+  width: 1224,
+}
+
+const pageMargin = 0
+
 const getPCRTemplate = (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
-): {content: Content; tableLayouts: TableLayouts} => {
+  qr: string,
+): {content: Content; background: Content; tableLayouts: TableLayouts} => {
   const resultDateRaw =
     resultData.resultMetaData && resultData.resultMetaData.resultDate
       ? resultData.resultMetaData.resultDate
@@ -25,19 +33,19 @@ const getPCRTemplate = (
 
   switch (pdfType) {
     case PCRResultPDFType.ConfirmedNegative: {
-      return confirmedNegativePCRResultsTemplate(resultData, resultDate)
+      return confirmedNegativePCRResultsTemplate(resultData, resultDate, qr)
     }
     case PCRResultPDFType.ConfirmedPositive: {
-      return confirmedPositivePCRResultsTemplate(resultData, resultDate)
+      return confirmedPositivePCRResultsTemplate(resultData, resultDate, qr)
     }
     case PCRResultPDFType.Positive: {
-      return positivePCRResultTemplate(resultData, resultDate)
+      return positivePCRResultTemplate(resultData, resultDate, qr)
     }
     case PCRResultPDFType.Negative: {
-      return negativePCRResultTemplate(resultData, resultDate)
+      return negativePCRResultTemplate(resultData, resultDate, qr)
     }
     case PCRResultPDFType.PresumptivePositive: {
-      return presumptivePositivePCRResultTemplate(resultData, resultDate)
+      return presumptivePositivePCRResultTemplate(resultData, resultDate, qr)
     }
     default: {
       LogInfo('getPCRTemplate', 'InavldiPCRResultPDFType', {
@@ -51,27 +59,43 @@ const getPCRTemplate = (
 export const PCRResultPDFContent = async (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
+  qr: string,
 ): Promise<string> => {
   const pdfService = new PdfService()
-  const data = getPCRTemplate(resultData, pdfType)
+  const data = getPCRTemplate(resultData, pdfType, qr)
 
   if (!data) {
     return
   }
 
-  return await pdfService.generatePDFBase64(data.content, data.tableLayouts)
+  return await pdfService.generatePDFBase64(
+    data.content,
+    data.tableLayouts,
+    undefined,
+    pageSize,
+    pageMargin,
+    data.background,
+  )
 }
 
 export const PCRResultPDFStream = (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
+  qr: string,
 ): Stream => {
   const pdfService = new PdfService()
-  const data = getPCRTemplate(resultData, pdfType)
+  const data = getPCRTemplate(resultData, pdfType, qr)
 
   if (!data) {
     throw new BadRequestException(`Not supported result ${pdfType}`)
   }
 
-  return pdfService.generatePDFStream(data.content, data.tableLayouts)
+  return pdfService.generatePDFStream(
+    data.content,
+    data.tableLayouts,
+    undefined,
+    pageSize,
+    pageMargin,
+    data.background,
+  )
 }

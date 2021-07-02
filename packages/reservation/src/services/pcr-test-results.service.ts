@@ -1,5 +1,6 @@
 import moment from 'moment'
 import {fromPairs, sortBy, union} from 'lodash'
+import {Readable} from 'stream'
 
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
@@ -109,6 +110,8 @@ import {
 } from '../utils/push-notification.helper'
 import {OpnSources} from '../../../common/src/data/registration'
 import {PushMessages} from '../../../common/src/types/push-notification'
+import TestResultUploadService from '../../../enterprise/src/services/test-result-upload-service'
+import {QrService} from '../../../common/src/service/qr/qr-service'
 
 const POOL_BARCODE_FIRST_LETTER = 'P'
 
@@ -124,6 +127,7 @@ export class PCRTestResultsService {
   private couponService = new CouponService()
   private reservationPushService = new ReservationPushService()
   private emailService = new EmailService()
+  private testResultUploadService = new TestResultUploadService()
   private userService = new UserService()
   private whiteListedResultsTypes = [
     ResultTypes.Negative,
@@ -192,6 +196,7 @@ export class PCRTestResultsService {
   private async pcrTestResultsWithAdditionalInfo(
     pcrResults,
     queryParams,
+    order = null,
   ): Promise<PCRTestResultByDeadlineListDTO[]> {
     const appointmentIds = []
     const testRunIds = []
@@ -248,7 +253,7 @@ export class PCRTestResultsService {
       }
     })
 
-    return sortBy(pcrFiltered, ['status'])
+    return order ? sortBy(pcrFiltered, [order]) : sortBy(pcrFiltered, ['status'])
   }
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest): Promise<string> {
@@ -295,7 +300,7 @@ export class PCRTestResultsService {
     const lab = await this.labService.findOneById(labId)
 
     this.postPubSubForResultSend(
-      {...newPCRResult, ...appointment, labAssay: lab.assay},
+      {...newPCRResult, ...appointment, lab: lab},
       notificationType,
       newPCRResult.id,
     )
@@ -401,25 +406,6 @@ export class PCRTestResultsService {
         labId: pcrResults.data.labId,
       }
 
-      // specific metadata for pooling results
-      const getMetaData = (pcrResult: PCRTestResultDBModel, sendMetaData: TestResultsMetaData) => {
-        if (pcrResult.result == ResultTypes.Negative) {
-          return {
-            resultDate: sendMetaData.resultDate,
-            notify: true,
-            action: PCRResultActions.SendThisResult,
-            autoResult: ResultTypes.Negative,
-          }
-        } else {
-          return {
-            resultDate: sendMetaData.resultDate,
-            notify: false,
-            action: PCRResultActions.ReRunToday,
-            autoResult: sendMetaData.autoResult,
-          }
-        }
-      }
-
       /**
        * If got pooled results
        * - query pool by `poolBarcode` & fetch pooled tests results
@@ -432,7 +418,6 @@ export class PCRTestResultsService {
           const poolSaveAndSend = poolTestResults.map((result) =>
             this.handlePCRResultSaveAndSend({
               ...saveAndSendPayload,
-              metaData: getMetaData(result, metaData),
               barCode: result.barCode,
             }),
           )
@@ -1055,9 +1040,9 @@ export class PCRTestResultsService {
       const pcrResultDataForEmail = {
         adminId,
         resultId: testResult.id,
-        labAssay: lab?.assay ?? null,
         ...appointment,
         ...pcrResultDataForDbUpdate,
+        lab,
       }
 
       LogInfo('handlePCRResultSaveAndSend', 'PostPubSubForResultSend', {
@@ -1194,7 +1179,7 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendEmailNotificationForResults(
+  public async sendEmailNotificationForResults(
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
     pcrId: string,
@@ -1265,7 +1250,7 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendPushNotification(result: PCRTestResultEmailDTO, userId: string): Promise<void> {
+  public async sendPushNotification(result: PCRTestResultEmailDTO, userId: string): Promise<void> {
     if (Config.get('TEST_RESULT_PUSH_NOTIFICATION') !== 'enabled') {
       LogInfo('PCRTestResultsService:sendPushNotification', 'PushNotificationDisabled', {})
       return
@@ -1311,8 +1296,8 @@ export class PCRTestResultsService {
 
     const resultData = {
       adminId: userId,
-      labAssay: lab.assay,
       ...appointment,
+      lab,
       appointmentId: pcrTestResult.appointmentId,
       confirmed: pcrTestResult.confirmed,
       dateTime: pcrTestResult.dateTime,
@@ -1349,22 +1334,30 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendTestResultsWithAttachment(
+  private async sendTestResultsWithAttachment(
     resultData: PCRTestResultEmailDTO,
     pcrResultPDFType: PCRResultPDFType,
   ): Promise<void> {
+    const fileName = this.testResultUploadService.generateFileName(resultData.id)
+    const v4ReadURL = await this.testResultUploadService.getSignedInUrl(fileName)
+    const qr = await QrService.generateQrCode(v4ReadURL)
+
     let pdfContent = ''
     switch (resultData.testType) {
       case 'Antibody_All':
-        pdfContent = await AntibodyAllPDFContent(resultData, pcrResultPDFType)
+        pdfContent = await AntibodyAllPDFContent(resultData, pcrResultPDFType, qr)
         break
       case 'Antibody_IgM':
-        pdfContent = await AntibodyIgmPDFContent(resultData, pcrResultPDFType)
+        pdfContent = await AntibodyIgmPDFContent(resultData, pcrResultPDFType, qr)
         break
       default:
-        pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType)
+        pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType, qr)
         break
     }
+
+    const pdfStream = Buffer.from(pdfContent, 'base64')
+    const stream = Readable.from(pdfStream)
+    await this.testResultUploadService.uploadPDFResult(stream, fileName)
 
     const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 
@@ -1397,7 +1390,7 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendEmailNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+  private async sendEmailNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
     const templateId =
       resultData.resultMetaData.action === PCRResultActions.SendPreliminaryPositive
         ? Config.getInt('TEST_RESULT_PRELIMNARY_RESULTS_TEMPLATE_ID')
@@ -1416,7 +1409,10 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendReCollectNotification(resultData: PCRTestResultEmailDTO, pcrId: string): Promise<void> {
+  private async sendReCollectNotification(
+    resultData: PCRTestResultEmailDTO,
+    pcrId: string,
+  ): Promise<void> {
     const getTemplateId = (): number => {
       if (
         !!resultData.organizationId &&
@@ -1793,9 +1789,10 @@ export class PCRTestResultsService {
 
   async getPCRResultsFromDB(
     queryParams: PcrTestResultsListByDeadlineRequest,
-  ): Promise<PCRTestResultDBModel[]> {
+  ): Promise<[PCRTestResultDBModel[], string]> {
     const pcrTestResultsQuery = []
     const {labId, deadline, barCode, testRunId, organizationId, testType} = queryParams
+    let order
 
     const equals = (key: string, value) => ({
       map: '/',
@@ -1825,6 +1822,7 @@ export class PCRTestResultsService {
 
     if (testRunId) {
       pcrTestResultsQuery.push(equals('testRunId', testRunId))
+      order = 'poolBarcodeId'
     }
 
     if (organizationId) {
@@ -1837,7 +1835,9 @@ export class PCRTestResultsService {
       pcrTestResultsQuery.push(equals('testType', testType))
     }
 
-    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+    const pcrTests = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+
+    return [pcrTests, order]
   }
 
   async getDueDeadlineStats(
@@ -1847,7 +1847,7 @@ export class PCRTestResultsService {
     pcrResultStatsByOrgIdArr: Filter[]
     total: number
   }> {
-    const pcrResults = await this.getPCRResultsFromDB(queryParams)
+    const [pcrResults] = await this.getPCRResultsFromDB(queryParams)
     const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
     const appointments = await this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds)
 
@@ -1909,9 +1909,9 @@ export class PCRTestResultsService {
   async getDueDeadline(
     queryParams: PcrTestResultsListByDeadlineRequest,
   ): Promise<PCRTestResultByDeadlineListDTO[]> {
-    const pcrResults = await this.getPCRResultsFromDB(queryParams)
+    const [pcrResults, order] = await this.getPCRResultsFromDB(queryParams)
 
-    return this.pcrTestResultsWithAdditionalInfo(pcrResults, queryParams)
+    return this.pcrTestResultsWithAdditionalInfo(pcrResults, queryParams, order)
   }
 
   async getReportStatus(action: PCRResultActions, result: ResultTypes): Promise<string> {

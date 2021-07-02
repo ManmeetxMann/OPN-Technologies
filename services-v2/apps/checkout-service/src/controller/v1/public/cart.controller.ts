@@ -9,6 +9,7 @@ import {
   CartAddRequestDto,
   CartResponseDto,
   CheckoutResponseDto,
+  PaymentSheet,
   PaymentAuthorizationRequestDto,
   PaymentAuthorizationResponseDto,
   CartUpdateRequestDto,
@@ -26,6 +27,7 @@ import {AppoinmentService} from '@opn-reservation-v1/services/appoinment.service
 
 import {CartFunctions, CartEvent} from '@opn-services/common/types/activity-logs'
 import {LogInfo, LogWarning, LogError} from '@opn-services/common/utils/logging'
+import {toEmailFormattedDateTime} from '@opn-services/common/utils/times'
 
 @ApiTags('Cart')
 @ApiBearerAuth()
@@ -198,6 +200,40 @@ export class CartController {
     return ephemeralKeys
   }
 
+  @Post('/payment-sheet')
+  @ApiResponse({type: PaymentSheet})
+  @ApiOperation({
+    summary: `Returns a payment intent setup, ephemeral key and stripe customer id`,
+  })
+  @Roles([RequiredUserPermission.RegUser])
+  async paymentSheet(@AuthUserDecorator() authUser: AuthUser): Promise<PaymentSheet> {
+    let stripeCustomerId = authUser.stripeCustomerId
+
+    // Create stripe customer and safe in user document
+    if (!stripeCustomerId) {
+      stripeCustomerId = (await this.stripeService.createUser()).id
+
+      const authUserId = authUser.id
+      LogInfo(CartFunctions.paymentSheet, CartEvent.stripeCreateCustomer, {
+        authUserId,
+        stripeCustomerId,
+      })
+      await this.userCardService.updateUserStripeCustomerId(authUserId, stripeCustomerId)
+    }
+
+    // Create wallet ephemeral keys and setup intent
+    const [ephemeralKeys, setupIntent] = await Promise.all([
+      this.stripeService.customerEphemeralKeys(stripeCustomerId),
+      this.stripeService.setupIntent(stripeCustomerId),
+    ])
+
+    return {
+      setupPaymentIntent: setupIntent.client_secret,
+      ephemeralKey: ephemeralKeys.secret,
+      customer: stripeCustomerId,
+    }
+  }
+
   @Post('/checkout-payment')
   @ApiResponse({type: PaymentAuthorizationResponseDto})
   @ApiOperation({
@@ -266,6 +302,11 @@ export class CartController {
       cart.cartDdItems,
       userId,
       userEmail,
+    )
+    this.userCardService.pushAppointmentConfirmationEmail(
+      cart.cartDdItems,
+      appointmentCreateStatuses,
+      paymentIntent,
     )
     result.cart.items = appointmentCreateStatuses
       .filter(status => status.isSuccess === false)
@@ -352,6 +393,11 @@ export class CartController {
       userId,
       userEmail,
     )
+    this.userCardService.pushAppointmentConfirmationEmail(
+      cart.cartDdItems,
+      appointmentCreateStatuses,
+      null,
+    )
     result.cart.items = appointmentCreateStatuses
       .filter(status => status.isSuccess === false)
       .map(status => {
@@ -391,6 +437,15 @@ export class CartController {
             cartItemId: cartDdItem.cartItemId,
             appointmentId: newAppointment.id,
             isSuccess: true,
+            mailData: {
+              name: cartDdItem.appointmentType.name,
+              location: newAppointment.locationName,
+              patname: `${newAppointment.firstName} ${newAppointment.lastName}`,
+              date: toEmailFormattedDateTime(newAppointment.dateTime.toDate()),
+              quantity: 1,
+              total: cartDdItem.appointmentType.price,
+            },
+            appointment: newAppointment,
           }
         } catch (e) {
           LogError(CartFunctions.cancelBulkAppointment, CartEvent.errorBookingAppointment, {

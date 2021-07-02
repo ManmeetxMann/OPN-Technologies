@@ -30,8 +30,8 @@ import AdminTestKitBatchController from './controllers/v1/admin/test-kit-batch.c
 import AppointmentToTestTypeAssociationController from './controllers/v1/admin/appointment-to-test-type-association.controller'
 import InternalSendAppointmentPushController from './controllers/v1/internal/send-appointment-push.controller'
 import InternalSyncAppointmentController from './controllers/v1/internal/sync-appoinments.controller'
+import PubsubController from './controllers/v1/internal/test-result.controller'
 import InternalMountSinaiResultReceivedController from './controllers/v1/internal/mount-sinai-results-received.controller'
-import PubsubController from './controllers/v1/pubsub.controller'
 
 const PORT = Number(process.env.PORT) || 5008
 

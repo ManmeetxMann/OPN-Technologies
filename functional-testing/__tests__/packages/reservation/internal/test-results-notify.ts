@@ -1,32 +1,49 @@
+/*
+ * Test Result Notification via Email
+ * PreRequiste: Appointment and Result Created Successfully
+ */
 import frisby from 'frisby'
 import helpersCommon from '../../../../helpers/helpers_common'
 import testProfile from '../../../../test_data/test_profile'
 
 // Do setup first
 frisby.globalSetup({
-	request: {
-		headers:  helpersCommon.headers()
-	}
+    request: {
+        headers: helpersCommon.headers()
+    }
 });
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL
+
+const resultId = testProfile.get().resultId;
+
 /**
  * @group reservation-service
- * @group /reservation/api/v1/pubsub/test-result
- * @group pubsub-test-result
+ * @group /reservation/internal/api/v1/test-result/notify-by-email
+ * @group test-result-notify-by-email
  */
 describe('test results notify-by-email', () => {
-  test('Succcessfully notify by email',  () => {
-      const url = `${reservationServiceUrl}/reservation/api/v1/pubsub/pubsub/test-result/notify-by-email`
-      return frisby
-              .post(
-                    url,
-                    {
-                        message:{
-                            data: "eyJpZCI6IjAxMFN3RU5Kek9BeGpmemt3UU93IiwicmVzdWx0IjoiTmVnYXRpdmUiLCJkYXRlIjoiMjAyMS0wNi0xMFQyMDo1NTowMC4wMDBaIiwidXNlcklkIjoiU3BhRHNOUXZUdElEM2xnYnVqYkYiLCJvcmdhbml6YXRpb25JZCI6IiIsImFjdGlvblR5cGUiOiJTZW5kVGhpc1Jlc3VsdCIsInBob25lIjoiMzMzMzMzMzMzMyIsImZpcnN0TmFtZSI6IkhTRyJ9",
-                        }
+    test('Succcessfully notify by email', async () => {
+        const url = `${reservationServiceUrl}/reservation/internal/api/v1/test-result/notify-by-email`
+        const data = {
+            id: resultId,
+            result: 'Positive',
+            date: '2021-07-11',
+            userId: 'string',
+            organizationId: 'string',
+            actionType: 'SendThisResult',
+            phone: 'string',
+            firstName: 'string',
+        }
+        const base64data = Buffer.from(JSON.stringify(data)).toString('base64')
+        const response = await frisby
+            .post(
+                url,
+                {
+                    message: {
+                        data: base64data,
                     }
-                )
-                .inspectBody()
-                .expect('status', 200)
-  })
+                }
+            )
+        expect(response.status).toEqual(200)
+    })
 })

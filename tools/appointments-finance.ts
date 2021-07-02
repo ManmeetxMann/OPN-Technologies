@@ -108,7 +108,7 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
   const userPassBase64 = userPassBuf.toString('base64')
   const apiUrl =
     APIURL +
-    '/api/v1/appointments?canceled=true&max=2500&' +
+    '/api/v1/appointments?max=2500&' +
     querystring.stringify(filters as ParsedUrlQueryInput)
 
   return fetch(apiUrl, {

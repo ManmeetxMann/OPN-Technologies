@@ -92,6 +92,18 @@ export class CouponRequestDto {
   coupon!: string
 }
 
+class PubSubMessageDto {
+  @ApiProperty()
+  @IsBoolean()
+  data!: string
+}
+
+export class AppointmentConfirmedDto {
+  @ApiProperty()
+  @IsObject()
+  message!: PubSubMessageDto
+}
+
 export class PaymentAuthorizationRequestDto {
   @ApiProperty()
   @IsString()
@@ -145,6 +157,22 @@ export class PaymentAuthorizationPaymentDto {
   client_secret: string
 }
 
+export class PaymentSheet {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  setupPaymentIntent: string
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  ephemeralKey: string
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  customer: string
+}
 export class PaymentAuthorizationResponseDto {
   @ApiProperty()
   @IsObject()

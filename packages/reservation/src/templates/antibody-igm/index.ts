@@ -9,49 +9,73 @@ import {PCRResultPDFType, PCRTestResultEmailDTO} from '../../models/pcr-test-res
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {Stream} from 'stream'
 
+const pageSize = {
+  height: 1816,
+  width: 1224,
+}
+
+const pageMargin = 0
+
 export const AntibodyIgmPDFContent = async (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
+  qr: string,
 ): Promise<string> => {
   const pdfService = new PdfService()
-  const data = getAntibodyIgmTemplate(resultData, pdfType)
+  const data = getAntibodyIgmTemplate(resultData, pdfType, qr)
 
   if (!data) {
     return
   }
 
-  return await pdfService.generatePDFBase64(data.content, data.tableLayouts)
+  return await pdfService.generatePDFBase64(
+    data.content,
+    data.tableLayouts,
+    undefined,
+    pageSize,
+    pageMargin,
+    data.background,
+  )
 }
 
 export const AntibodyIgmPDFStream = (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
+  qr: string,
 ): Stream => {
   const pdfService = new PdfService()
-  const data = getAntibodyIgmTemplate(resultData, pdfType)
+  const data = getAntibodyIgmTemplate(resultData, pdfType, qr)
 
   if (!data) {
     throw new BadRequestException(`Not supported result ${pdfType}`)
   }
 
-  return pdfService.generatePDFStream(data.content, data.tableLayouts)
+  return pdfService.generatePDFStream(
+    data.content,
+    data.tableLayouts,
+    undefined,
+    pageSize,
+    pageMargin,
+    data.background,
+  )
 }
 
 const getAntibodyIgmTemplate = (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
-): {content: Content; tableLayouts: TableLayouts} => {
+  qr: string,
+): {content: Content; background: Content; tableLayouts: TableLayouts} => {
   const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 
   switch (pdfType) {
     case PCRResultPDFType.Positive: {
-      return positiveTemplate(resultData, resultDate)
+      return positiveTemplate(resultData, resultDate, qr)
     }
     case PCRResultPDFType.Negative: {
-      return negativeTemplate(resultData, resultDate)
+      return negativeTemplate(resultData, resultDate, qr)
     }
     case PCRResultPDFType.Intermediate: {
-      return intermediateTemplate(resultData, resultDate)
+      return intermediateTemplate(resultData, resultDate, qr)
     }
     default: {
       LogInfo('getAntibodyIgmTemplate', 'InavalidAntibodyIgmResultPDFType', {

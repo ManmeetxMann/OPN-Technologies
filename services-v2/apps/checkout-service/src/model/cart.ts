@@ -3,6 +3,8 @@ import {Stripe} from 'stripe'
 import {firestore} from 'firebase-admin'
 
 import {CardItemDBModel} from '@opn-reservation-v1/models/cart'
+import {TestData} from '@opn-services/checkout/model/appointment'
+import {AppointmentDBModel} from '@opn-reservation-v1/models/appointment'
 
 export type PaymentAuthorizationRequest = {
   paymentMethodId: string
@@ -31,6 +33,8 @@ export type CartItemStatus = {
   appointmentId?: string
   isSuccess: boolean
   errorMessage?: string
+  mailData?: TestData
+  appointment?: AppointmentDBModel
 }
 
 export type AcuityDBModel = {
