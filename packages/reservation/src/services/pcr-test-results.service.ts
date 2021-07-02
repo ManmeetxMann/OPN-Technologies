@@ -196,6 +196,7 @@ export class PCRTestResultsService {
   private async pcrTestResultsWithAdditionalInfo(
     pcrResults,
     queryParams,
+    order = null,
   ): Promise<PCRTestResultByDeadlineListDTO[]> {
     const appointmentIds = []
     const testRunIds = []
@@ -252,7 +253,7 @@ export class PCRTestResultsService {
       }
     })
 
-    return sortBy(pcrFiltered, ['status'])
+    return order ? sortBy(pcrFiltered, [order]) : sortBy(pcrFiltered, ['status'])
   }
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest): Promise<string> {
@@ -1788,9 +1789,10 @@ export class PCRTestResultsService {
 
   async getPCRResultsFromDB(
     queryParams: PcrTestResultsListByDeadlineRequest,
-  ): Promise<PCRTestResultDBModel[]> {
+  ): Promise<[PCRTestResultDBModel[], string]> {
     const pcrTestResultsQuery = []
     const {labId, deadline, barCode, testRunId, organizationId, testType} = queryParams
+    let order
 
     const equals = (key: string, value) => ({
       map: '/',
@@ -1820,6 +1822,7 @@ export class PCRTestResultsService {
 
     if (testRunId) {
       pcrTestResultsQuery.push(equals('testRunId', testRunId))
+      order = 'poolBarcodeId'
     }
 
     if (organizationId) {
@@ -1832,7 +1835,9 @@ export class PCRTestResultsService {
       pcrTestResultsQuery.push(equals('testType', testType))
     }
 
-    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+    const pcrTests = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+
+    return [pcrTests, order]
   }
 
   async getDueDeadlineStats(
@@ -1842,7 +1847,7 @@ export class PCRTestResultsService {
     pcrResultStatsByOrgIdArr: Filter[]
     total: number
   }> {
-    const pcrResults = await this.getPCRResultsFromDB(queryParams)
+    const [pcrResults] = await this.getPCRResultsFromDB(queryParams)
     const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
     const appointments = await this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds)
 
@@ -1904,9 +1909,9 @@ export class PCRTestResultsService {
   async getDueDeadline(
     queryParams: PcrTestResultsListByDeadlineRequest,
   ): Promise<PCRTestResultByDeadlineListDTO[]> {
-    const pcrResults = await this.getPCRResultsFromDB(queryParams)
+    const [pcrResults, order] = await this.getPCRResultsFromDB(queryParams)
 
-    return this.pcrTestResultsWithAdditionalInfo(pcrResults, queryParams)
+    return this.pcrTestResultsWithAdditionalInfo(pcrResults, queryParams, order)
   }
 
   async getReportStatus(action: PCRResultActions, result: ResultTypes): Promise<string> {
