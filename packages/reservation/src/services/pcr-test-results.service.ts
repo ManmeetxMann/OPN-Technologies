@@ -405,25 +405,6 @@ export class PCRTestResultsService {
         labId: pcrResults.data.labId,
       }
 
-      // specific metadata for pooling results
-      const getMetaData = (pcrResult: PCRTestResultDBModel, sendMetaData: TestResultsMetaData) => {
-        if (pcrResult.result == ResultTypes.Negative) {
-          return {
-            resultDate: sendMetaData.resultDate,
-            notify: true,
-            action: PCRResultActions.SendThisResult,
-            autoResult: ResultTypes.Negative,
-          }
-        } else {
-          return {
-            resultDate: sendMetaData.resultDate,
-            notify: false,
-            action: PCRResultActions.ReRunToday,
-            autoResult: sendMetaData.autoResult,
-          }
-        }
-      }
-
       /**
        * If got pooled results
        * - query pool by `poolBarcode` & fetch pooled tests results
@@ -436,7 +417,6 @@ export class PCRTestResultsService {
           const poolSaveAndSend = poolTestResults.map((result) =>
             this.handlePCRResultSaveAndSend({
               ...saveAndSendPayload,
-              metaData: getMetaData(result, metaData),
               barCode: result.barCode,
             }),
           )
